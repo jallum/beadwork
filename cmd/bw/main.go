@@ -389,12 +389,20 @@ func cmdReopen(args []string) {
 func cmdGraph(args []string) {
 	_, store := mustInitialized()
 
+	showAll := hasFlag(args, "--all")
+	jsonOut := hasFlag(args, "--json")
+
 	rootID := ""
 	for _, arg := range args {
-		if arg != "--json" {
-			rootID = arg
-			break
+		if arg == "--json" || arg == "--all" {
+			continue
 		}
+		rootID = arg
+		break
+	}
+
+	if rootID == "" && !showAll {
+		fatal("issue ID required (or use --all for all open issues)")
 	}
 
 	nodes, err := store.Graph(rootID)
@@ -402,7 +410,18 @@ func cmdGraph(args []string) {
 		fatal(err.Error())
 	}
 
-	if hasFlag(args, "--json") {
+	// For --all without a root, filter to non-closed only
+	if showAll && rootID == "" {
+		var filtered []issue.GraphNode
+		for _, n := range nodes {
+			if n.Status != "closed" {
+				filtered = append(filtered, n)
+			}
+		}
+		nodes = filtered
+	}
+
+	if jsonOut {
 		printJSON(nodes)
 		return
 	}
@@ -412,15 +431,27 @@ func cmdGraph(args []string) {
 		return
 	}
 
-	// Build adjacency for ASCII rendering
+	// Build adjacency for tree rendering
 	blocked := make(map[string][]string) // blocker -> blocked
 	hasParent := make(map[string]bool)
 	nodeMap := make(map[string]issue.GraphNode)
 	for _, n := range nodes {
 		nodeMap[n.ID] = n
 		for _, b := range n.Blocks {
-			blocked[n.ID] = append(blocked[n.ID], b)
-			hasParent[b] = true
+			if _, ok := nodeMap[b]; showAll || ok || rootID != "" {
+				blocked[n.ID] = append(blocked[n.ID], b)
+				hasParent[b] = true
+			}
+		}
+	}
+
+	// Rebuild hasParent after all nodes are in nodeMap
+	hasParent = make(map[string]bool)
+	for _, n := range nodes {
+		for _, b := range n.Blocks {
+			if _, ok := nodeMap[b]; ok {
+				hasParent[b] = true
+			}
 		}
 	}
 
@@ -446,9 +477,9 @@ func printTree(id, prefix string, last bool, isRoot bool, children map[string][]
 	}
 	visited[id] = true
 
-	connector := "├── "
+	connector := "\u251c\u2500\u2500 "
 	if last {
-		connector = "└── "
+		connector = "\u2514\u2500\u2500 "
 	}
 	if isRoot {
 		connector = ""
@@ -470,7 +501,7 @@ func printTree(id, prefix string, last bool, isRoot bool, children map[string][]
 		if last {
 			childPrefix += "    "
 		} else {
-			childPrefix += "│   "
+			childPrefix += "\u2502   "
 		}
 	}
 
@@ -656,7 +687,7 @@ Use it to track tasks, bugs, and epics for the current project.
   bw ready [--json]               List issues with no open blockers
   bw link <id> blocks <id>        Create dependency link
   bw unlink <id> blocks <id>      Remove dependency link
-  bw graph [<id>] [--json]        Show dependency graph
+  bw graph <id>|--all [--json]     Show dependency graph
   bw sync                         Fetch, rebase (or replay), push
 
 ## Workflow
