@@ -1,6 +1,7 @@
 package issue_test
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -73,6 +74,30 @@ func TestCreateDefaults(t *testing.T) {
 	}
 	if iss.Priority != 3 {
 		t.Errorf("default priority = %d, want 3", iss.Priority)
+	}
+}
+
+func TestCreateDefaultPriorityFromStore(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.DefaultPriority = 2
+
+	iss, err := env.Store.Create("Custom default", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if iss.Priority != 2 {
+		t.Errorf("priority = %d, want 2 (from store default)", iss.Priority)
+	}
+
+	// Explicit priority should still override
+	iss2, err := env.Store.Create("Explicit priority", issue.CreateOpts{Priority: 1})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if iss2.Priority != 1 {
+		t.Errorf("priority = %d, want 1 (explicit override)", iss2.Priority)
 	}
 }
 
@@ -489,6 +514,196 @@ func TestListByStatus(t *testing.T) {
 	closed, _ := env.Store.List(issue.Filter{Status: "closed"})
 	if len(closed) != 1 {
 		t.Errorf("closed = %d, want 1", len(closed))
+	}
+}
+
+func TestStatusNames(t *testing.T) {
+	names := issue.StatusNames()
+	if len(names) != len(issue.Statuses) {
+		t.Fatalf("StatusNames() returned %d, want %d", len(names), len(issue.Statuses))
+	}
+	for i, s := range issue.Statuses {
+		if names[i] != s.Name {
+			t.Errorf("StatusNames()[%d] = %q, want %q", i, names[i], s.Name)
+		}
+	}
+}
+
+func TestStatusIcon(t *testing.T) {
+	tests := []struct {
+		status string
+		want   string
+	}{
+		{"open", "○"},
+		{"in_progress", "◐"},
+		{"closed", "✓"},
+		{"unknown", "?"},
+	}
+	for _, tt := range tests {
+		got := issue.StatusIcon(tt.status)
+		if got != tt.want {
+			t.Errorf("StatusIcon(%q) = %q, want %q", tt.status, got, tt.want)
+		}
+	}
+}
+
+func TestPriorityDot(t *testing.T) {
+	// Each priority should produce a colored ● with reset
+	for p := 0; p <= 5; p++ {
+		dot := issue.PriorityDot(p)
+		if dot == "" {
+			t.Errorf("PriorityDot(%d) returned empty string", p)
+		}
+		color, ok := issue.PriorityColors[p]
+		if !ok {
+			t.Errorf("PriorityColors missing key %d", p)
+			continue
+		}
+		want := color + "●" + issue.ColorReset
+		if dot != want {
+			t.Errorf("PriorityDot(%d) = %q, want %q", p, dot, want)
+		}
+	}
+
+	// Unknown priority should still return a dot
+	dot := issue.PriorityDot(99)
+	if dot == "" {
+		t.Error("PriorityDot(99) returned empty string")
+	}
+	if dot != "●"+issue.ColorReset {
+		t.Errorf("PriorityDot(99) = %q, want uncolored dot", dot)
+	}
+}
+
+func TestListJSON(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Create issues with different properties
+	bug, _ := env.Store.Create("Fix crash", issue.CreateOpts{Priority: 1, Type: "bug", Assignee: "alice"})
+	env.CommitIntent("create " + bug.ID)
+	task, _ := env.Store.Create("Add search", issue.CreateOpts{Priority: 3, Type: "task"})
+	env.CommitIntent("create " + task.ID)
+
+	// Close the bug
+	env.Store.Close(bug.ID)
+	env.CommitIntent("close " + bug.ID)
+
+	issues, err := env.Store.List(issue.Filter{})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+
+	data, err := json.MarshalIndent(issues, "", "  ")
+	if err != nil {
+		t.Fatalf("MarshalIndent: %v", err)
+	}
+
+	// Unmarshal back to verify round-trip and field presence
+	var parsed []issue.Issue
+	if err := json.Unmarshal(data, &parsed); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+
+	if len(parsed) != 2 {
+		t.Fatalf("got %d issues, want 2", len(parsed))
+	}
+
+	// Issues are sorted by priority, so P1 bug comes first
+	assertJSONFields(t, parsed[0], "closed", 1, "bug", "Fix crash", "alice")
+	assertJSONFields(t, parsed[1], "open", 3, "task", "Add search", "")
+}
+
+func TestReadyJSON(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Unblocked task", issue.CreateOpts{Priority: 2, Type: "task"})
+	env.CommitIntent("create " + a.ID)
+	b, _ := env.Store.Create("Blocked task", issue.CreateOpts{Priority: 3, Type: "task"})
+	env.CommitIntent("create " + b.ID)
+
+	// a blocks b
+	env.Store.Link(a.ID, b.ID)
+	env.CommitIntent("link " + a.ID + " blocks " + b.ID)
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+
+	data, err := json.MarshalIndent(ready, "", "  ")
+	if err != nil {
+		t.Fatalf("MarshalIndent: %v", err)
+	}
+
+	var parsed []issue.Issue
+	if err := json.Unmarshal(data, &parsed); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+
+	// Only the unblocked task should be ready
+	if len(parsed) != 1 {
+		t.Fatalf("got %d ready issues, want 1", len(parsed))
+	}
+	assertJSONFields(t, parsed[0], "open", 2, "task", "Unblocked task", "")
+
+	// Verify blocks/blocked_by are present in JSON
+	if len(parsed[0].Blocks) != 1 || parsed[0].Blocks[0] != b.ID {
+		t.Errorf("blocks = %v, want [%s]", parsed[0].Blocks, b.ID)
+	}
+}
+
+func TestListJSONFilterByStatus(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Open issue", issue.CreateOpts{Priority: 2})
+	env.CommitIntent("create " + a.ID)
+	b, _ := env.Store.Create("Closed issue", issue.CreateOpts{Priority: 2})
+	env.CommitIntent("create " + b.ID)
+	env.Store.Close(b.ID)
+	env.CommitIntent("close " + b.ID)
+
+	issues, err := env.Store.List(issue.Filter{Status: "open"})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+
+	data, _ := json.MarshalIndent(issues, "", "  ")
+	var parsed []issue.Issue
+	json.Unmarshal(data, &parsed)
+
+	if len(parsed) != 1 {
+		t.Fatalf("got %d issues, want 1", len(parsed))
+	}
+	if parsed[0].Status != "open" {
+		t.Errorf("status = %q, want open", parsed[0].Status)
+	}
+}
+
+func assertJSONFields(t *testing.T, iss issue.Issue, status string, priority int, typ, title, assignee string) {
+	t.Helper()
+	if iss.Status != status {
+		t.Errorf("status = %q, want %q", iss.Status, status)
+	}
+	if iss.Priority != priority {
+		t.Errorf("priority = %d, want %d", iss.Priority, priority)
+	}
+	if iss.Type != typ {
+		t.Errorf("type = %q, want %q", iss.Type, typ)
+	}
+	if iss.Title != title {
+		t.Errorf("title = %q, want %q", iss.Title, title)
+	}
+	if iss.Assignee != assignee {
+		t.Errorf("assignee = %q, want %q", iss.Assignee, assignee)
+	}
+	if iss.ID == "" {
+		t.Error("id is empty")
+	}
+	if iss.Created == "" {
+		t.Error("created is empty")
 	}
 }
 

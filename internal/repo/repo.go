@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -183,6 +184,43 @@ func (r *Repo) derivePrefix() string {
 		name = name[:6]
 	}
 	return strings.ToLower(name)
+}
+
+// GetConfig reads a single key from .bwconfig.
+func (r *Repo) GetConfig(key string) (string, bool) {
+	cfg := r.ListConfig()
+	val, ok := cfg[key]
+	return val, ok
+}
+
+// SetConfig writes or updates a key in .bwconfig, preserving other entries.
+func (r *Repo) SetConfig(key, value string) error {
+	path := filepath.Join(r.WorkTree, ".bwconfig")
+	cfg := r.ListConfig()
+	cfg[key] = value
+
+	var lines []string
+	for k, v := range cfg {
+		lines = append(lines, k+"="+v)
+	}
+	sort.Strings(lines)
+	data := strings.Join(lines, "\n") + "\n"
+	return os.WriteFile(path, []byte(data), 0644)
+}
+
+// ListConfig reads all key=value pairs from .bwconfig.
+func (r *Repo) ListConfig() map[string]string {
+	cfg := make(map[string]string)
+	data, err := os.ReadFile(filepath.Join(r.WorkTree, ".bwconfig"))
+	if err != nil {
+		return cfg
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		if i := strings.Index(line, "="); i > 0 {
+			cfg[line[:i]] = line[i+1:]
+		}
+	}
+	return cfg
 }
 
 func (r *Repo) readPrefix() string {

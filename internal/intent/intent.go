@@ -43,6 +43,8 @@ func replayOne(r *repo.Repo, store *issue.Store, raw string) error {
 		return replayUnlink(r, store, parts[1:], raw)
 	case "label":
 		return replayLabel(r, store, parts[1:], raw)
+	case "config":
+		return replayConfig(r, parts[1:], raw)
 	case "init":
 		return nil // skip init intents
 	default:
@@ -178,6 +180,24 @@ func replayLabel(r *repo.Repo, store *issue.Store, parts []string, raw string) e
 	}
 	_, err := store.Label(id, add, remove)
 	if err != nil {
+		return err
+	}
+	return r.Commit(raw)
+}
+
+func replayConfig(r *repo.Repo, parts []string, raw string) error {
+	// config key=value
+	if len(parts) < 1 {
+		return fmt.Errorf("malformed config intent")
+	}
+	kv := parts[0]
+	eqIdx := strings.Index(kv, "=")
+	if eqIdx == -1 {
+		return fmt.Errorf("malformed config intent: missing '='")
+	}
+	key := kv[:eqIdx]
+	value := kv[eqIdx+1:]
+	if err := r.SetConfig(key, value); err != nil {
 		return err
 	}
 	return r.Commit(raw)

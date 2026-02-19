@@ -43,6 +43,8 @@ func main() {
 		cmdLink(args)
 	case "unlink":
 		cmdUnlink(args)
+	case "config":
+		cmdConfig(args)
 	case "sync":
 		cmdSync(args)
 	case "onboard":
@@ -72,6 +74,7 @@ Commands:
   link <id> blocks <id>       Create dependency link
   unlink <id> blocks <id>     Remove dependency link
   graph <id>|--all [--json]   Dependency graph
+  config get|set|list         View/set config options
   sync                        Fetch, rebase/replay, push
   onboard                     Print AGENTS.md snippet
   prime                       Print workflow context for agents

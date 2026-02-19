@@ -12,6 +12,57 @@ import (
 	"time"
 )
 
+// Status definitions
+
+type StatusInfo struct {
+	Name string
+	Icon string
+}
+
+var Statuses = []StatusInfo{
+	{"open", "○"},
+	{"in_progress", "◐"},
+	{"closed", "✓"},
+}
+
+func StatusNames() []string {
+	names := make([]string, len(Statuses))
+	for i, s := range Statuses {
+		names[i] = s.Name
+	}
+	return names
+}
+
+func StatusIcon(status string) string {
+	for _, s := range Statuses {
+		if s.Name == status {
+			return s.Icon
+		}
+	}
+	return "?"
+}
+
+// Priority definitions
+
+var PriorityColors = map[int]string{
+	0: "\033[91m", // bright red (P0 — critical)
+	1: "\033[31m", // red
+	2: "\033[33m", // yellow
+	3: "\033[36m", // cyan
+	4: "\033[2m",  // dim
+	5: "\033[2m",  // dim
+}
+
+const ColorReset = "\033[0m"
+
+func PriorityDot(priority int) string {
+	color, ok := PriorityColors[priority]
+	if !ok {
+		color = ""
+	}
+	return color + "●" + ColorReset
+}
+
 type Issue struct {
 	Assignee    string   `json:"assignee"`
 	BlockedBy   []string `json:"blocked_by"`
@@ -28,8 +79,9 @@ type Issue struct {
 }
 
 type Store struct {
-	WorkTree string
-	Prefix   string
+	WorkTree        string
+	Prefix          string
+	DefaultPriority int
 }
 
 func NewStore(workTree, prefix string) *Store {
@@ -60,7 +112,11 @@ func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
 		issue.Type = "task"
 	}
 	if issue.Priority == 0 {
-		issue.Priority = 3
+		if s.DefaultPriority > 0 {
+			issue.Priority = s.DefaultPriority
+		} else {
+			issue.Priority = 3
+		}
 	}
 
 	if err := s.writeIssue(issue); err != nil {
@@ -81,7 +137,7 @@ func (s *Store) Get(id string) (*Issue, error) {
 }
 
 func (s *Store) List(filter Filter) ([]*Issue, error) {
-	statuses := []string{"open", "in_progress", "closed"}
+	statuses := StatusNames()
 	if filter.Status != "" {
 		statuses = []string{filter.Status}
 	}

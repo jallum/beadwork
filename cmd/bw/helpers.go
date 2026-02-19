@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/j5n/beadwork/internal/issue"
@@ -23,7 +24,13 @@ func mustInitialized() (*repo.Repo, *issue.Store) {
 	if !r.IsInitialized() {
 		fatal("beadwork not initialized. Run: bw init")
 	}
-	return r, issue.NewStore(r.WorkTree, r.Prefix)
+	store := issue.NewStore(r.WorkTree, r.Prefix)
+	if val, ok := r.GetConfig("default.priority"); ok {
+		if p, err := strconv.Atoi(val); err == nil && p > 0 {
+			store.DefaultPriority = p
+		}
+	}
+	return r, store
 }
 
 func fatal(msg string) {
