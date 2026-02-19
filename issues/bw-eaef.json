@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-19T22:41:45Z",
+  "description": "Refactor the monolithic main.go into separate files: main.go (routing), helpers.go (shared utils), and one file per command.",
+  "id": "bw-eaef",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Split cmd/bw/main.go into one file per command",
+  "type": "task"
+}
