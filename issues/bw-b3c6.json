@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-19T22:28:07Z",
+  "description": "Add a version constant, wire it into the CLI (bw --version), and create CHANGELOG.md with the initial release entry.",
+  "id": "bw-b3c6",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Set project version to 0.1.0 and start CHANGELOG.md",
+  "type": "task"
+}
