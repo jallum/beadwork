@@ -1,1 +1,13 @@
-{"assignee":"","blocked_by":[],"blocks":[],"created":"2026-02-19T22:00:00Z","description":"Remote agent issue","id":"bw-aaaa","labels":[],"priority":1,"status":"open","title":"Issue from remote agent","type":"task"}
+{
+  "assignee": "remote-agent",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-19T22:00:00Z",
+  "description": "Remote agent issue",
+  "id": "bw-aaaa",
+  "labels": [],
+  "priority": 1,
+  "status": "in_progress",
+  "title": "Issue from remote agent",
+  "type": "task"
+}
