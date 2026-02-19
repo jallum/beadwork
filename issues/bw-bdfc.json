@@ -1,9 +1,7 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [
-    "bw-2158"
-  ],
+  "blocks": [],
   "created": "2026-02-19T21:24:49Z",
   "description": "Add dependency tracking: bw link \u003cid\u003e blocks \u003cid\u003e creates marker files in blocks/ dir and updates both issue JSONs",
   "id": "bw-bdfc",
