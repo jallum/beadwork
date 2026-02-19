@@ -7,7 +7,7 @@
   "id": "bw-2e6a",
   "labels": [],
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add GitHub Actions CI workflow",
   "type": "task"
 }
