@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-d505"
+  ],
   "blocks": [],
   "created": "2026-02-19T22:18:06Z",
   "description": "Replace hardcoded AGENTS.md content in prompts/onboard.md with a %s placeholder. Update cmdOnboard() in cmd/bw/main.go to use fmt.Printf(prompts.Onboard, prompts.AgentsMD) to compose the output.",
