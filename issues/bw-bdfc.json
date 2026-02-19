@@ -7,7 +7,7 @@
   "id": "bw-bdfc",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Implement bw link and bw unlink commands",
   "type": "task"
 }
