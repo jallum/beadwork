@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-bdfc"
+  ],
   "blocks": [],
   "created": "2026-02-19T21:24:57Z",
   "description": "Dependency graph visualization: ASCII default, JSON with --json",
