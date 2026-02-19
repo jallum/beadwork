@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "bw-fd45"
+  ],
   "created": "2026-02-19T22:18:01Z",
   "description": "Add //go:generate cp ../../AGENTS.md agents.md to prompts/prompts.go. Add //go:embed agents.md with var AgentsMD string. Add prompts/.gitignore to exclude the generated agents.md.",
   "id": "bw-280d",
