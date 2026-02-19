@@ -7,7 +7,7 @@
   "id": "bw-cebb",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Implement bw sync command",
   "type": "task"
 }
