@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-19T22:23:25Z",
+  "description": "Convert the internal design proposal into a proper project README. Remove docs/proposal.md afterward.",
+  "id": "bw-9696",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Rewrite docs/proposal.md into root README.md",
+  "type": "task"
+}
