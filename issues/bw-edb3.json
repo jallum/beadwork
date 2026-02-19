@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-19T21:55:53Z",
+  "description": "onboard: prints static AGENTS.md snippet pointing to bw prime. prime: dynamic workflow context with full command reference and current project state (open issues, ready count).",
+  "id": "bw-edb3",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Redesign onboard and add prime command",
+  "type": "task"
+}
