@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-19T21:24:49Z",
+  "description": "Add dependency tracking: bw link \u003cid\u003e blocks \u003cid\u003e creates marker files in blocks/ dir and updates both issue JSONs",
+  "id": "bw-bdfc",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Implement bw link and bw unlink commands",
+  "type": "task"
+}
