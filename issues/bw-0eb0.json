@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-19T22:18:11Z",
+  "description": "Add a go generate ./... step to .github/workflows/ci.yml before the Build and Test steps so the embedded AGENTS.md is generated in CI.",
+  "id": "bw-0eb0",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Add go generate step to CI workflow",
+  "type": "task"
+}
