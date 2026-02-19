@@ -11,7 +11,7 @@
   "id": "bw-fd45",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Update onboard.md template and cmdOnboard to use embedded AGENTS.md",
   "type": "task"
 }
