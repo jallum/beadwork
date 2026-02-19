@@ -11,7 +11,7 @@
   "id": "bw-d505",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Embed root AGENTS.md into bw onboard via go:generate",
   "type": "task"
 }
