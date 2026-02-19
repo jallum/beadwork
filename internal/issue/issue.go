@@ -128,6 +128,15 @@ func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
 	return issue, nil
 }
 
+// Import writes an issue with a caller-provided ID and fields.
+// Used for importing from external sources where the ID is already known.
+func (s *Store) Import(iss *Issue) error {
+	if err := s.writeIssue(iss); err != nil {
+		return err
+	}
+	return s.setStatus(iss.ID, iss.Status)
+}
+
 func (s *Store) Get(id string) (*Issue, error) {
 	id, err := s.resolveID(id)
 	if err != nil {
@@ -561,7 +570,7 @@ func (s *Store) Ready() ([]*Issue, error) {
 // --- Internal helpers ---
 
 func (s *Store) generateID() (string, error) {
-	existing := s.existingIDs()
+	existing := s.ExistingIDs()
 	for attempts := 0; attempts < 100; attempts++ {
 		b := make([]byte, 3)
 		if _, err := rand.Read(b); err != nil {
@@ -576,7 +585,7 @@ func (s *Store) generateID() (string, error) {
 	return "", fmt.Errorf("failed to generate unique ID after 100 attempts")
 }
 
-func (s *Store) existingIDs() map[string]bool {
+func (s *Store) ExistingIDs() map[string]bool {
 	ids := make(map[string]bool)
 	entries, err := os.ReadDir(filepath.Join(s.WorkTree, "issues"))
 	if err != nil {

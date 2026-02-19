@@ -33,6 +33,9 @@ bw label <id> +lab [-lab] ...  Add/remove labels
 bw link <id> blocks <id>       Create dependency link
 bw unlink <id> blocks <id>     Remove dependency link
 bw graph <id>|--all [--json]   Dependency graph
+bw config get|set|list         View/set config options
+bw export [--status <s>]       Export issues as JSONL
+bw import <file> [--dry-run]   Import issues from JSONL
 bw sync                        Fetch, rebase/replay, push
 bw onboard                     Print AGENTS.md snippet
 bw prime                       Print workflow context for agents

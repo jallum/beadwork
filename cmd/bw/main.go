@@ -45,6 +45,10 @@ func main() {
 		cmdUnlink(args)
 	case "config":
 		cmdConfig(args)
+	case "export":
+		cmdExport(args)
+	case "import":
+		cmdImport(args)
 	case "sync":
 		cmdSync(args)
 	case "onboard":
@@ -75,6 +79,8 @@ Commands:
   unlink <id> blocks <id>     Remove dependency link
   graph <id>|--all [--json]   Dependency graph
   config get|set|list         View/set config options
+  export [--status <s>]       Export issues as JSONL
+  import <file> [--dry-run]   Import issues from JSONL
   sync                        Fetch, rebase/replay, push
   onboard                     Print AGENTS.md snippet
   prime                       Print workflow context for agents
