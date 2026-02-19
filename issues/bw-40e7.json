@@ -7,7 +7,7 @@
   "id": "bw-40e7",
   "labels": [],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add tests for intent replay",
   "type": "task"
 }
