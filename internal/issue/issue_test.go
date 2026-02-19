@@ -1,0 +1,510 @@
+package issue_test
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/j5n/beadwork/internal/issue"
+	"github.com/j5n/beadwork/internal/testutil"
+)
+
+func TestCreateAndGet(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, err := env.Store.Create("Fix auth bug", issue.CreateOpts{
+		Priority:    1,
+		Type:        "bug",
+		Description: "Tokens expire too fast",
+		Assignee:    "agent-1",
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	env.CommitIntent("create " + iss.ID)
+
+	// Verify the issue file exists
+	if !env.IssueFileExists(iss.ID) {
+		t.Fatal("issue file not created")
+	}
+
+	// Verify status marker
+	if !env.MarkerExists(filepath.Join("status", "open", iss.ID)) {
+		t.Fatal("status marker not created")
+	}
+
+	// Get it back
+	got, err := env.Store.Get(iss.ID)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.Title != "Fix auth bug" {
+		t.Errorf("title = %q, want %q", got.Title, "Fix auth bug")
+	}
+	if got.Priority != 1 {
+		t.Errorf("priority = %d, want 1", got.Priority)
+	}
+	if got.Type != "bug" {
+		t.Errorf("type = %q, want %q", got.Type, "bug")
+	}
+	if got.Status != "open" {
+		t.Errorf("status = %q, want %q", got.Status, "open")
+	}
+	if got.Assignee != "agent-1" {
+		t.Errorf("assignee = %q, want %q", got.Assignee, "agent-1")
+	}
+	if got.Description != "Tokens expire too fast" {
+		t.Errorf("description = %q, want %q", got.Description, "Tokens expire too fast")
+	}
+}
+
+func TestCreateDefaults(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, err := env.Store.Create("Simple task", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	if iss.Type != "task" {
+		t.Errorf("default type = %q, want %q", iss.Type, "task")
+	}
+	if iss.Priority != 3 {
+		t.Errorf("default priority = %d, want 3", iss.Priority)
+	}
+}
+
+func TestIDPrefixMatch(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, err := env.Store.Create("Test issue", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	env.CommitIntent("create " + iss.ID)
+
+	// Should resolve by suffix (last 4 chars)
+	suffix := iss.ID[len("test-"):]
+	got, err := env.Store.Get(suffix)
+	if err != nil {
+		t.Fatalf("Get by suffix %q: %v", suffix, err)
+	}
+	if got.ID != iss.ID {
+		t.Errorf("resolved to %q, want %q", got.ID, iss.ID)
+	}
+}
+
+func TestListFilters(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Bug one", issue.CreateOpts{Priority: 1, Type: "bug"})
+	env.CommitIntent("create " + a.ID)
+	b, _ := env.Store.Create("Task two", issue.CreateOpts{Priority: 2, Type: "task", Assignee: "agent-1"})
+	env.CommitIntent("create " + b.ID)
+	c, _ := env.Store.Create("Bug three", issue.CreateOpts{Priority: 1, Type: "bug"})
+	env.CommitIntent("create " + c.ID)
+
+	// Filter by type
+	bugs, err := env.Store.List(issue.Filter{Type: "bug"})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(bugs) != 2 {
+		t.Errorf("got %d bugs, want 2", len(bugs))
+	}
+
+	// Filter by priority
+	p1, err := env.Store.List(issue.Filter{Priority: 1})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(p1) != 2 {
+		t.Errorf("got %d p1 issues, want 2", len(p1))
+	}
+
+	// Filter by assignee
+	assigned, err := env.Store.List(issue.Filter{Assignee: "agent-1"})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(assigned) != 1 {
+		t.Errorf("got %d assigned, want 1", len(assigned))
+	}
+
+	// List sorted by priority then created
+	all, _ := env.Store.List(issue.Filter{})
+	if len(all) != 3 {
+		t.Fatalf("got %d total, want 3", len(all))
+	}
+	if all[0].Priority != 1 {
+		t.Error("first issue should be p1")
+	}
+}
+
+func TestUpdateFields(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Original title", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	newTitle := "Updated title"
+	newPriority := 1
+	newAssignee := "agent-2"
+	updated, err := env.Store.Update(iss.ID, issue.UpdateOpts{
+		Title:    &newTitle,
+		Priority: &newPriority,
+		Assignee: &newAssignee,
+	})
+	if err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+
+	if updated.Title != "Updated title" {
+		t.Errorf("title = %q", updated.Title)
+	}
+	if updated.Priority != 1 {
+		t.Errorf("priority = %d", updated.Priority)
+	}
+	if updated.Assignee != "agent-2" {
+		t.Errorf("assignee = %q", updated.Assignee)
+	}
+}
+
+func TestStatusTransitions(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Lifecycle test", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	// open -> in_progress
+	status := "in_progress"
+	iss, _ = env.Store.Update(iss.ID, issue.UpdateOpts{Status: &status})
+	env.CommitIntent("update " + iss.ID)
+
+	if !env.MarkerExists(filepath.Join("status", "in_progress", iss.ID)) {
+		t.Error("in_progress marker missing")
+	}
+	if env.MarkerExists(filepath.Join("status", "open", iss.ID)) {
+		t.Error("open marker should be gone")
+	}
+
+	// in_progress -> closed
+	iss, err := env.Store.Close(iss.ID)
+	if err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+	env.CommitIntent("close " + iss.ID)
+
+	if !env.MarkerExists(filepath.Join("status", "closed", iss.ID)) {
+		t.Error("closed marker missing")
+	}
+	if env.MarkerExists(filepath.Join("status", "in_progress", iss.ID)) {
+		t.Error("in_progress marker should be gone")
+	}
+
+	// closed -> open (reopen)
+	iss, err = env.Store.Reopen(iss.ID)
+	if err != nil {
+		t.Fatalf("Reopen: %v", err)
+	}
+	env.CommitIntent("reopen " + iss.ID)
+
+	if !env.MarkerExists(filepath.Join("status", "open", iss.ID)) {
+		t.Error("open marker missing after reopen")
+	}
+	if env.MarkerExists(filepath.Join("status", "closed", iss.ID)) {
+		t.Error("closed marker should be gone after reopen")
+	}
+	if iss.Status != "open" {
+		t.Errorf("status = %q, want open", iss.Status)
+	}
+}
+
+func TestCloseAlreadyClosed(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Test", issue.CreateOpts{})
+	env.Store.Close(iss.ID)
+
+	_, err := env.Store.Close(iss.ID)
+	if err == nil {
+		t.Error("expected error closing already-closed issue")
+	}
+}
+
+func TestReopenNotClosed(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Test", issue.CreateOpts{})
+
+	_, err := env.Store.Reopen(iss.ID)
+	if err == nil {
+		t.Error("expected error reopening non-closed issue")
+	}
+}
+
+func TestLink(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	env.CommitIntent("create " + a.ID)
+	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+	env.CommitIntent("create " + b.ID)
+
+	if err := env.Store.Link(a.ID, b.ID); err != nil {
+		t.Fatalf("Link: %v", err)
+	}
+	env.CommitIntent("link " + a.ID + " blocks " + b.ID)
+
+	// Check marker file
+	if !env.MarkerExists(filepath.Join("blocks", a.ID, b.ID)) {
+		t.Error("blocks marker missing")
+	}
+
+	// Check JSON updated on both sides
+	aGot, _ := env.Store.Get(a.ID)
+	if len(aGot.Blocks) != 1 || aGot.Blocks[0] != b.ID {
+		t.Errorf("blocker.Blocks = %v, want [%s]", aGot.Blocks, b.ID)
+	}
+	bGot, _ := env.Store.Get(b.ID)
+	if len(bGot.BlockedBy) != 1 || bGot.BlockedBy[0] != a.ID {
+		t.Errorf("blocked.BlockedBy = %v, want [%s]", bGot.BlockedBy, a.ID)
+	}
+}
+
+func TestUnlink(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.CommitIntent("link " + a.ID + " blocks " + b.ID)
+
+	if err := env.Store.Unlink(a.ID, b.ID); err != nil {
+		t.Fatalf("Unlink: %v", err)
+	}
+	env.CommitIntent("unlink " + a.ID + " blocks " + b.ID)
+
+	// Marker should be gone
+	if env.MarkerExists(filepath.Join("blocks", a.ID, b.ID)) {
+		t.Error("blocks marker should be gone")
+	}
+
+	// JSON updated
+	aGot, _ := env.Store.Get(a.ID)
+	if len(aGot.Blocks) != 0 {
+		t.Errorf("blocker.Blocks = %v, want empty", aGot.Blocks)
+	}
+	bGot, _ := env.Store.Get(b.ID)
+	if len(bGot.BlockedBy) != 0 {
+		t.Errorf("blocked.BlockedBy = %v, want empty", bGot.BlockedBy)
+	}
+}
+
+func TestLinkSelfBlocking(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Self", issue.CreateOpts{})
+	err := env.Store.Link(a.ID, a.ID)
+	if err == nil {
+		t.Error("expected error for self-blocking")
+	}
+}
+
+func TestReady(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	env.CommitIntent("create " + a.ID)
+	b, _ := env.Store.Create("Blocked task", issue.CreateOpts{})
+	env.CommitIntent("create " + b.ID)
+	c, _ := env.Store.Create("Free task", issue.CreateOpts{})
+	env.CommitIntent("create " + c.ID)
+
+	env.Store.Link(a.ID, b.ID)
+	env.CommitIntent("link " + a.ID + " blocks " + b.ID)
+
+	// B is blocked, A and C are ready
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[a.ID] {
+		t.Error("blocker should be ready")
+	}
+	if ids[b.ID] {
+		t.Error("blocked task should NOT be ready")
+	}
+	if !ids[c.ID] {
+		t.Error("free task should be ready")
+	}
+
+	// Close the blocker -> B becomes ready
+	env.Store.Close(a.ID)
+	env.CommitIntent("close " + a.ID)
+
+	ready, _ = env.Store.Ready()
+	ids = make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[b.ID] {
+		t.Error("blocked task should be ready after blocker closed")
+	}
+}
+
+func TestLabel(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Labeled issue", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	// Add labels
+	iss, err := env.Store.Label(iss.ID, []string{"bug", "frontend"}, nil)
+	if err != nil {
+		t.Fatalf("Label add: %v", err)
+	}
+	env.CommitIntent("label " + iss.ID + " +bug +frontend")
+
+	// Check markers
+	if !env.MarkerExists(filepath.Join("labels", "bug", iss.ID)) {
+		t.Error("bug label marker missing")
+	}
+	if !env.MarkerExists(filepath.Join("labels", "frontend", iss.ID)) {
+		t.Error("frontend label marker missing")
+	}
+
+	// Check JSON
+	got, _ := env.Store.Get(iss.ID)
+	if len(got.Labels) != 2 {
+		t.Fatalf("labels = %v, want 2", got.Labels)
+	}
+
+	// Filter by label
+	filtered, _ := env.Store.List(issue.Filter{Label: "bug"})
+	if len(filtered) != 1 {
+		t.Errorf("filtered by bug: got %d, want 1", len(filtered))
+	}
+
+	// Remove label
+	iss, err = env.Store.Label(iss.ID, nil, []string{"frontend"})
+	if err != nil {
+		t.Fatalf("Label remove: %v", err)
+	}
+	env.CommitIntent("label " + iss.ID + " -frontend")
+
+	if env.MarkerExists(filepath.Join("labels", "frontend", iss.ID)) {
+		t.Error("frontend label marker should be gone")
+	}
+	got, _ = env.Store.Get(iss.ID)
+	if len(got.Labels) != 1 || got.Labels[0] != "bug" {
+		t.Errorf("labels = %v, want [bug]", got.Labels)
+	}
+}
+
+func TestLabelDirectoryCleanup(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Test", issue.CreateOpts{})
+	env.Store.Label(iss.ID, []string{"temp"}, nil)
+	env.Store.Label(iss.ID, nil, []string{"temp"})
+
+	// The temp/ directory should be cleaned up
+	_, err := os.Stat(filepath.Join(env.Repo.WorkTree, "labels", "temp"))
+	if err == nil {
+		t.Error("empty label directory should be removed")
+	}
+}
+
+func TestGraph(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Root", issue.CreateOpts{})
+	b, _ := env.Store.Create("Middle", issue.CreateOpts{})
+	c, _ := env.Store.Create("Leaf", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Link(b.ID, c.ID)
+	env.CommitIntent("setup graph")
+
+	// Full graph
+	nodes, err := env.Store.Graph("")
+	if err != nil {
+		t.Fatalf("Graph: %v", err)
+	}
+	if len(nodes) != 3 {
+		t.Errorf("got %d nodes, want 3", len(nodes))
+	}
+
+	// Rooted graph
+	nodes, err = env.Store.Graph(a.ID)
+	if err != nil {
+		t.Fatalf("Graph rooted: %v", err)
+	}
+	if len(nodes) != 3 {
+		t.Errorf("rooted got %d nodes, want 3 (a->b->c)", len(nodes))
+	}
+
+	// Rooted at middle
+	nodes, err = env.Store.Graph(b.ID)
+	if err != nil {
+		t.Fatalf("Graph rooted at middle: %v", err)
+	}
+	if len(nodes) != 2 {
+		t.Errorf("middle-rooted got %d nodes, want 2 (b->c)", len(nodes))
+	}
+}
+
+func TestListByStatus(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Open one", issue.CreateOpts{})
+	env.Store.Create("Open two", issue.CreateOpts{})
+	env.Store.Close(a.ID)
+
+	open, _ := env.Store.List(issue.Filter{Status: "open"})
+	if len(open) != 1 {
+		t.Errorf("open = %d, want 1", len(open))
+	}
+
+	closed, _ := env.Store.List(issue.Filter{Status: "closed"})
+	if len(closed) != 1 {
+		t.Errorf("closed = %d, want 1", len(closed))
+	}
+}
+
+func TestMultipleIDsNeverCollide(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	ids := make(map[string]bool)
+	for i := 0; i < 50; i++ {
+		iss, err := env.Store.Create("Issue", issue.CreateOpts{})
+		if err != nil {
+			t.Fatalf("Create %d: %v", i, err)
+		}
+		if ids[iss.ID] {
+			t.Fatalf("duplicate ID: %s", iss.ID)
+		}
+		ids[iss.ID] = true
+	}
+}

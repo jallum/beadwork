@@ -72,7 +72,7 @@ func (r *Repo) Init(prefix string) error {
 		return fmt.Errorf("create worktree: %w", err)
 	}
 
-	// Create directory skeleton
+	// Create directory skeleton (always, ensures dirs exist locally)
 	dirs := []string{
 		"issues",
 		"status/open",
@@ -93,21 +93,25 @@ func (r *Repo) Init(prefix string) error {
 		prefix = r.derivePrefix()
 	}
 	r.Prefix = prefix
-	if err := os.WriteFile(filepath.Join(r.WorkTree, ".bwconfig"), []byte("prefix="+prefix+"\n"), 0644); err != nil {
-		return err
-	}
 
-	// Commit initial structure with .gitkeep files to preserve empty dirs
-	for _, d := range dirs {
-		keepFile := filepath.Join(r.WorkTree, d, ".gitkeep")
-		os.WriteFile(keepFile, []byte{}, 0644)
-	}
-
-	if _, err := r.gitWt("add", "-A"); err != nil {
-		return err
-	}
-	if _, err := r.gitWt("commit", "-m", "init beadwork"); err != nil {
-		return err
+	// Only commit skeleton if this is a new branch (not cloned from remote)
+	if !remoteExists {
+		if err := os.WriteFile(filepath.Join(r.WorkTree, ".bwconfig"), []byte("prefix="+prefix+"\n"), 0644); err != nil {
+			return err
+		}
+		for _, d := range dirs {
+			keepFile := filepath.Join(r.WorkTree, d, ".gitkeep")
+			os.WriteFile(keepFile, []byte{}, 0644)
+		}
+		if _, err := r.gitWt("add", "-A"); err != nil {
+			return err
+		}
+		if _, err := r.gitWt("commit", "-m", "init beadwork"); err != nil {
+			return err
+		}
+	} else {
+		// Read prefix from existing config
+		r.Prefix = r.readPrefix()
 	}
 
 	r.initialized = true
@@ -138,11 +142,15 @@ func (r *Repo) localBranchExists() bool {
 }
 
 func (r *Repo) createOrphanBranch() error {
-	// Get current branch to return to
-	origBranch, err := r.git("rev-parse", "--abbrev-ref", "HEAD")
+	// We need a commit to return to
+	origRef, err := r.git("rev-parse", "HEAD")
 	if err != nil {
-		origBranch = "main"
+		return fmt.Errorf("repo must have at least one commit before initializing beadwork")
 	}
+	origRef = strings.TrimSpace(origRef)
+
+	// Remember which branch we're on
+	origBranch, _ := r.git("rev-parse", "--abbrev-ref", "HEAD")
 	origBranch = strings.TrimSpace(origBranch)
 
 	if _, err := r.git("checkout", "--orphan", BranchName); err != nil {
@@ -151,11 +159,17 @@ func (r *Repo) createOrphanBranch() error {
 	// Remove all files from the orphan branch index
 	r.git("rm", "-rf", "--quiet", ".")
 	if _, err := r.git("commit", "--allow-empty", "-m", "init beadwork branch"); err != nil {
-		r.git("checkout", origBranch)
+		r.git("checkout", origRef)
 		return err
 	}
-	if _, err := r.git("checkout", origBranch); err != nil {
-		return fmt.Errorf("failed to return to %s: %w", origBranch, err)
+
+	// Return to previous branch, fall back to detached HEAD at the commit
+	if origBranch != "" && origBranch != "HEAD" {
+		if _, err := r.git("checkout", origBranch); err != nil {
+			r.git("checkout", origRef)
+		}
+	} else {
+		r.git("checkout", origRef)
 	}
 	return nil
 }
@@ -182,6 +196,109 @@ func (r *Repo) readPrefix() string {
 		}
 	}
 	return r.derivePrefix()
+}
+
+func (r *Repo) hasRemote() bool {
+	out, err := r.git("remote")
+	if err != nil {
+		return false
+	}
+	return strings.TrimSpace(out) != ""
+}
+
+// Sync fetches from origin, rebases local commits, and pushes.
+// Returns the list of intents that were replayed (if any), or nil if clean.
+func (r *Repo) Sync() (status string, replayed []string, err error) {
+	if !r.hasRemote() {
+		return "no remote configured", nil, nil
+	}
+
+	// Check if remote branch exists
+	if !r.remoteBranchExists() {
+		// No remote branch — just push
+		if _, err := r.gitWt("push", "-u", "origin", BranchName); err != nil {
+			return "", nil, fmt.Errorf("push failed: %w", err)
+		}
+		return "pushed", nil, nil
+	}
+
+	// Fetch
+	if _, err := r.gitWt("fetch", "origin", BranchName); err != nil {
+		return "", nil, fmt.Errorf("fetch failed: %w", err)
+	}
+
+	// Check if we have local commits ahead of origin
+	localCommits, err := r.localOnlyCommits()
+	if err != nil {
+		return "", nil, err
+	}
+
+	if len(localCommits) == 0 {
+		// Nothing local to push, just fast-forward
+		r.gitWt("merge", "--ff-only", "origin/"+BranchName)
+		return "up to date", nil, nil
+	}
+
+	// Try rebase
+	_, rebaseErr := r.gitWt("rebase", "origin/"+BranchName)
+	if rebaseErr == nil {
+		// Clean rebase — push
+		if _, err := r.gitWt("push", "origin", BranchName); err != nil {
+			return "", nil, fmt.Errorf("push after rebase failed: %w", err)
+		}
+		return "rebased and pushed", nil, nil
+	}
+
+	// Dirty rebase — abort and replay intents
+	r.gitWt("rebase", "--abort")
+
+	// Collect intents from local-only commits
+	intents := make([]string, 0, len(localCommits))
+	for _, commit := range localCommits {
+		intents = append(intents, commit.Message)
+	}
+
+	// Reset to origin
+	if _, err := r.gitWt("reset", "--hard", "origin/"+BranchName); err != nil {
+		return "", nil, fmt.Errorf("reset failed: %w", err)
+	}
+
+	return "needs replay", intents, nil
+}
+
+type CommitInfo struct {
+	Hash    string
+	Message string
+}
+
+func (r *Repo) localOnlyCommits() ([]CommitInfo, error) {
+	// Get commits on beadwork that aren't on origin/beadwork
+	out, err := r.gitWt("log", "origin/"+BranchName+".."+BranchName, "--format=%H %s", "--reverse")
+	if err != nil {
+		// If origin/beadwork doesn't exist yet, all commits are local
+		out, err = r.gitWt("log", BranchName, "--format=%H %s", "--reverse")
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var commits []CommitInfo
+	for _, line := range strings.Split(strings.TrimSpace(out), "\n") {
+		if line == "" {
+			continue
+		}
+		parts := strings.SplitN(line, " ", 2)
+		if len(parts) == 2 {
+			commits = append(commits, CommitInfo{Hash: parts[0], Message: parts[1]})
+		}
+	}
+	return commits, nil
+}
+
+// Push pushes the beadwork branch to origin.
+func (r *Repo) Push() error {
+	_, err := r.gitWt("push", "origin", BranchName)
+	return err
 }
 
 // git runs a git command from the main repo.

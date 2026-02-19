@@ -223,6 +223,251 @@ func (s *Store) Reopen(id string) (*Issue, error) {
 	return issue, nil
 }
 
+func (s *Store) Link(blockerID, blockedID string) error {
+	blockerID, err := s.resolveID(blockerID)
+	if err != nil {
+		return fmt.Errorf("blocker: %w", err)
+	}
+	blockedID, err = s.resolveID(blockedID)
+	if err != nil {
+		return fmt.Errorf("blocked: %w", err)
+	}
+	if blockerID == blockedID {
+		return fmt.Errorf("an issue cannot block itself")
+	}
+
+	// Create marker file: blocks/<blocker>/<blocked>
+	dir := filepath.Join(s.WorkTree, "blocks", blockerID)
+	os.MkdirAll(dir, 0755)
+	if err := os.WriteFile(filepath.Join(dir, blockedID), []byte{}, 0644); err != nil {
+		return err
+	}
+
+	// Update blocker's JSON
+	blocker, err := s.readIssue(blockerID)
+	if err != nil {
+		return err
+	}
+	if !containsStr(blocker.Blocks, blockedID) {
+		blocker.Blocks = append(blocker.Blocks, blockedID)
+		sort.Strings(blocker.Blocks)
+		if err := s.writeIssue(blocker); err != nil {
+			return err
+		}
+	}
+
+	// Update blocked's JSON
+	blocked, err := s.readIssue(blockedID)
+	if err != nil {
+		return err
+	}
+	if !containsStr(blocked.BlockedBy, blockerID) {
+		blocked.BlockedBy = append(blocked.BlockedBy, blockerID)
+		sort.Strings(blocked.BlockedBy)
+		if err := s.writeIssue(blocked); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *Store) Unlink(blockerID, blockedID string) error {
+	blockerID, err := s.resolveID(blockerID)
+	if err != nil {
+		return fmt.Errorf("blocker: %w", err)
+	}
+	blockedID, err = s.resolveID(blockedID)
+	if err != nil {
+		return fmt.Errorf("blocked: %w", err)
+	}
+
+	// Remove marker file
+	markerPath := filepath.Join(s.WorkTree, "blocks", blockerID, blockedID)
+	os.Remove(markerPath)
+
+	// Clean up empty directory
+	dir := filepath.Join(s.WorkTree, "blocks", blockerID)
+	entries, _ := os.ReadDir(dir)
+	if len(entries) == 0 {
+		os.Remove(dir)
+	}
+
+	// Update blocker's JSON
+	blocker, err := s.readIssue(blockerID)
+	if err != nil {
+		return err
+	}
+	blocker.Blocks = removeStr(blocker.Blocks, blockedID)
+	if err := s.writeIssue(blocker); err != nil {
+		return err
+	}
+
+	// Update blocked's JSON
+	blocked, err := s.readIssue(blockedID)
+	if err != nil {
+		return err
+	}
+	blocked.BlockedBy = removeStr(blocked.BlockedBy, blockerID)
+	if err := s.writeIssue(blocked); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Store) Label(id string, add, remove []string) (*Issue, error) {
+	id, err := s.resolveID(id)
+	if err != nil {
+		return nil, err
+	}
+	issue, err := s.readIssue(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add labels
+	for _, label := range add {
+		dir := filepath.Join(s.WorkTree, "labels", label)
+		os.MkdirAll(dir, 0755)
+		if err := os.WriteFile(filepath.Join(dir, id), []byte{}, 0644); err != nil {
+			return nil, err
+		}
+		if !containsStr(issue.Labels, label) {
+			issue.Labels = append(issue.Labels, label)
+		}
+	}
+
+	// Remove labels
+	for _, label := range remove {
+		os.Remove(filepath.Join(s.WorkTree, "labels", label, id))
+		// Clean up empty label directory
+		dir := filepath.Join(s.WorkTree, "labels", label)
+		entries, _ := os.ReadDir(dir)
+		empty := true
+		for _, e := range entries {
+			if e.Name() != ".gitkeep" {
+				empty = false
+				break
+			}
+		}
+		if empty {
+			os.RemoveAll(dir)
+		}
+		issue.Labels = removeStr(issue.Labels, label)
+	}
+
+	sort.Strings(issue.Labels)
+	if err := s.writeIssue(issue); err != nil {
+		return nil, err
+	}
+	return issue, nil
+}
+
+type GraphNode struct {
+	ID        string   `json:"id"`
+	Title     string   `json:"title"`
+	Status    string   `json:"status"`
+	Blocks    []string `json:"blocks"`
+	BlockedBy []string `json:"blocked_by"`
+}
+
+func (s *Store) Graph(rootID string) ([]GraphNode, error) {
+	if rootID != "" {
+		rootID, _ = s.resolveID(rootID)
+	}
+
+	// Read all block relationships from the filesystem
+	blocksDir := filepath.Join(s.WorkTree, "blocks")
+	entries, err := os.ReadDir(blocksDir)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+
+	// Collect all issue IDs involved in any relationship
+	involved := make(map[string]bool)
+	edges := make(map[string][]string) // blocker -> []blocked
+
+	for _, e := range entries {
+		if !e.IsDir() || e.Name() == ".gitkeep" {
+			continue
+		}
+		blockerID := e.Name()
+		children, err := os.ReadDir(filepath.Join(blocksDir, blockerID))
+		if err != nil {
+			continue
+		}
+		for _, c := range children {
+			if c.Name() == ".gitkeep" {
+				continue
+			}
+			blockedID := c.Name()
+			edges[blockerID] = append(edges[blockerID], blockedID)
+			involved[blockerID] = true
+			involved[blockedID] = true
+		}
+	}
+
+	// If root specified, walk only reachable nodes
+	if rootID != "" {
+		reachable := make(map[string]bool)
+		s.walkGraph(rootID, edges, reachable)
+		involved = reachable
+	}
+
+	// If no relationships exist, show all open issues
+	if len(involved) == 0 {
+		issues, err := s.List(Filter{})
+		if err != nil {
+			return nil, err
+		}
+		var nodes []GraphNode
+		for _, iss := range issues {
+			if iss.Status == "closed" {
+				continue
+			}
+			nodes = append(nodes, GraphNode{
+				ID:        iss.ID,
+				Title:     iss.Title,
+				Status:    iss.Status,
+				Blocks:    iss.Blocks,
+				BlockedBy: iss.BlockedBy,
+			})
+		}
+		return nodes, nil
+	}
+
+	var nodes []GraphNode
+	for id := range involved {
+		iss, err := s.readIssue(id)
+		if err != nil {
+			continue
+		}
+		nodes = append(nodes, GraphNode{
+			ID:        iss.ID,
+			Title:     iss.Title,
+			Status:    iss.Status,
+			Blocks:    iss.Blocks,
+			BlockedBy: iss.BlockedBy,
+		})
+	}
+
+	sort.Slice(nodes, func(i, j int) bool {
+		return nodes[i].ID < nodes[j].ID
+	})
+	return nodes, nil
+}
+
+func (s *Store) walkGraph(id string, edges map[string][]string, visited map[string]bool) {
+	if visited[id] {
+		return
+	}
+	visited[id] = true
+	for _, child := range edges[id] {
+		s.walkGraph(child, edges, visited)
+	}
+}
+
 func (s *Store) Ready() ([]*Issue, error) {
 	issues, err := s.List(Filter{})
 	if err != nil {
@@ -356,6 +601,19 @@ func containsStr(slice []string, s string) bool {
 		}
 	}
 	return false
+}
+
+func removeStr(slice []string, s string) []string {
+	var result []string
+	for _, v := range slice {
+		if v != s {
+			result = append(result, v)
+		}
+	}
+	if result == nil {
+		return []string{}
+	}
+	return result
 }
 
 type CreateOpts struct {

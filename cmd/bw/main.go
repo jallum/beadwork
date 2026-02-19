@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/j5n/beadwork/internal/intent"
 	"github.com/j5n/beadwork/internal/issue"
 	"github.com/j5n/beadwork/internal/repo"
 )
@@ -37,6 +38,16 @@ func main() {
 		cmdReopen(args)
 	case "ready":
 		cmdReady(args)
+	case "graph":
+		cmdGraph(args)
+	case "label":
+		cmdLabel(args)
+	case "link":
+		cmdLink(args)
+	case "unlink":
+		cmdUnlink(args)
+	case "sync":
+		cmdSync(args)
 	case "onboard":
 		cmdOnboard()
 	default:
@@ -58,6 +69,9 @@ Commands:
   close <id> [--reason <r>]   Close an issue
   reopen <id>                 Reopen a closed issue
   ready [--json]              List issues with no open blockers
+  label <id> +lab [-lab] ...  Add/remove labels
+  link <id> blocks <id>       Create dependency link
+  unlink <id> blocks <id>     Remove dependency link
   onboard                     Print tool description for agents
 `)
 }
@@ -372,6 +386,194 @@ func cmdReopen(args []string) {
 	}
 }
 
+func cmdGraph(args []string) {
+	_, store := mustInitialized()
+
+	rootID := ""
+	for _, arg := range args {
+		if arg != "--json" {
+			rootID = arg
+			break
+		}
+	}
+
+	nodes, err := store.Graph(rootID)
+	if err != nil {
+		fatal(err.Error())
+	}
+
+	if hasFlag(args, "--json") {
+		printJSON(nodes)
+		return
+	}
+
+	if len(nodes) == 0 {
+		fmt.Println("no issues in graph")
+		return
+	}
+
+	// Build adjacency for ASCII rendering
+	blocked := make(map[string][]string) // blocker -> blocked
+	hasParent := make(map[string]bool)
+	nodeMap := make(map[string]issue.GraphNode)
+	for _, n := range nodes {
+		nodeMap[n.ID] = n
+		for _, b := range n.Blocks {
+			blocked[n.ID] = append(blocked[n.ID], b)
+			hasParent[b] = true
+		}
+	}
+
+	// Find roots (nodes with no incoming edges in this graph)
+	var roots []string
+	for _, n := range nodes {
+		if !hasParent[n.ID] {
+			roots = append(roots, n.ID)
+		}
+	}
+
+	// Render tree
+	visited := make(map[string]bool)
+	for i, root := range roots {
+		last := i == len(roots)-1
+		printTree(root, "", last, true, blocked, nodeMap, visited)
+	}
+}
+
+func printTree(id, prefix string, last bool, isRoot bool, children map[string][]string, nodes map[string]issue.GraphNode, visited map[string]bool) {
+	if visited[id] {
+		return
+	}
+	visited[id] = true
+
+	connector := "├── "
+	if last {
+		connector = "└── "
+	}
+	if isRoot {
+		connector = ""
+	}
+
+	n, ok := nodes[id]
+	status := ""
+	if ok {
+		status = fmt.Sprintf(" [%s]", n.Status)
+	}
+	title := ""
+	if ok {
+		title = n.Title
+	}
+	fmt.Printf("%s%s%s%s %s\n", prefix, connector, id, status, title)
+
+	childPrefix := prefix
+	if !isRoot {
+		if last {
+			childPrefix += "    "
+		} else {
+			childPrefix += "│   "
+		}
+	}
+
+	kids := children[id]
+	for i, kid := range kids {
+		printTree(kid, childPrefix, i == len(kids)-1, false, children, nodes, visited)
+	}
+}
+
+func cmdLabel(args []string) {
+	r, store := mustInitialized()
+
+	// bw label <id> +bug +frontend -wontfix
+	if len(args) < 2 {
+		fatal("usage: bw label <id> +label [-label] ...")
+	}
+	id := args[0]
+
+	var add, remove []string
+	for _, arg := range args[1:] {
+		if strings.HasPrefix(arg, "+") {
+			add = append(add, strings.TrimPrefix(arg, "+"))
+		} else if strings.HasPrefix(arg, "-") {
+			remove = append(remove, strings.TrimPrefix(arg, "-"))
+		} else {
+			// bare label name = add
+			add = append(add, arg)
+		}
+	}
+
+	iss, err := store.Label(id, add, remove)
+	if err != nil {
+		fatal(err.Error())
+	}
+
+	var parts []string
+	for _, l := range add {
+		parts = append(parts, "+"+l)
+	}
+	for _, l := range remove {
+		parts = append(parts, "-"+l)
+	}
+	intent := fmt.Sprintf("label %s %s", iss.ID, strings.Join(parts, " "))
+	if err := r.Commit(intent); err != nil {
+		fatal("commit failed: " + err.Error())
+	}
+
+	if hasFlag(os.Args, "--json") {
+		printJSON(iss)
+	} else {
+		fmt.Printf("labeled %s: %s\n", iss.ID, strings.Join(iss.Labels, ", "))
+	}
+}
+
+func cmdLink(args []string) {
+	r, store := mustInitialized()
+
+	// bw link <id1> blocks <id2>
+	if len(args) < 3 || args[1] != "blocks" {
+		fatal("usage: bw link <id> blocks <id>")
+	}
+	blockerID := args[0]
+	blockedID := args[2]
+
+	if err := store.Link(blockerID, blockedID); err != nil {
+		fatal(err.Error())
+	}
+
+	// Resolve full IDs for the commit message
+	blocker, _ := store.Get(blockerID)
+	blocked, _ := store.Get(blockedID)
+	intent := fmt.Sprintf("link %s blocks %s", blocker.ID, blocked.ID)
+	if err := r.Commit(intent); err != nil {
+		fatal("commit failed: " + err.Error())
+	}
+
+	fmt.Printf("linked %s blocks %s\n", blocker.ID, blocked.ID)
+}
+
+func cmdUnlink(args []string) {
+	r, store := mustInitialized()
+
+	// bw unlink <id1> blocks <id2>
+	if len(args) < 3 || args[1] != "blocks" {
+		fatal("usage: bw unlink <id> blocks <id>")
+	}
+	blockerID := args[0]
+	blockedID := args[2]
+
+	if err := store.Unlink(blockerID, blockedID); err != nil {
+		fatal(err.Error())
+	}
+
+	blocker, _ := store.Get(blockerID)
+	blocked, _ := store.Get(blockedID)
+	intent := fmt.Sprintf("unlink %s blocks %s", blocker.ID, blocked.ID)
+	if err := r.Commit(intent); err != nil {
+		fatal("commit failed: " + err.Error())
+	}
+
+	fmt.Printf("unlinked %s blocks %s\n", blocker.ID, blocked.ID)
+}
+
 func cmdReady(args []string) {
 	_, store := mustInitialized()
 
@@ -390,6 +592,32 @@ func cmdReady(args []string) {
 		for _, iss := range issues {
 			fmt.Printf("%-14s p%d %-12s %-12s %s\n", iss.ID, iss.Priority, iss.Status, iss.Type, iss.Title)
 		}
+	}
+}
+
+func cmdSync(args []string) {
+	r, store := mustInitialized()
+	_ = args
+
+	status, intents, err := r.Sync()
+	if err != nil {
+		fatal(err.Error())
+	}
+
+	if status == "needs replay" {
+		fmt.Printf("rebase conflict — replaying %d intent(s)...\n", len(intents))
+		errs := intent.Replay(r, store, intents)
+		if len(errs) > 0 {
+			for _, e := range errs {
+				fmt.Fprintf(os.Stderr, "  warning: %s\n", e)
+			}
+		}
+		if err := r.Push(); err != nil {
+			fatal("push after replay failed: " + err.Error())
+		}
+		fmt.Println("replayed and pushed")
+	} else {
+		fmt.Println(status)
 	}
 }
 
@@ -426,6 +654,10 @@ Use it to track tasks, bugs, and epics for the current project.
   bw close <id> [--reason <r>]    Close an issue
   bw reopen <id>                  Reopen a closed issue
   bw ready [--json]               List issues with no open blockers
+  bw link <id> blocks <id>        Create dependency link
+  bw unlink <id> blocks <id>      Remove dependency link
+  bw graph [<id>] [--json]        Show dependency graph
+  bw sync                         Fetch, rebase (or replay), push
 
 ## Workflow
 
