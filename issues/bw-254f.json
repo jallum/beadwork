@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-19T21:51:30Z",
+  "description": "Show dependency graph with topological layers (layer 0 = ready, layer 1 = blocked by layer 0, etc). Box-drawn cards with status indicators. Require --all for full graph or \u003cid\u003e for rooted graph.",
+  "id": "bw-254f",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Redesign bw graph with layered box rendering",
+  "type": "task"
+}
