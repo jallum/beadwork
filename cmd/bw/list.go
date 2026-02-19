@@ -55,7 +55,14 @@ func cmdList(args []string) {
 			return
 		}
 		for _, iss := range issues {
-			fmt.Printf("%-14s p%d %-12s %-12s %s\n", iss.ID, iss.Priority, iss.Status, iss.Type, iss.Title)
+			fmt.Printf("%s %s [%s P%d] [%s] - %s\n",
+				issue.StatusIcon(iss.Status),
+				iss.ID,
+				issue.PriorityDot(iss.Priority),
+				iss.Priority,
+				iss.Type,
+				iss.Title,
+			)
 		}
 	}
 }

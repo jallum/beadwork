@@ -53,28 +53,55 @@ func printJSON(v interface{}) {
 }
 
 func printIssue(iss *issue.Issue) {
-	fmt.Printf("ID:          %s\n", iss.ID)
-	fmt.Printf("Title:       %s\n", iss.Title)
-	fmt.Printf("Status:      %s\n", iss.Status)
-	fmt.Printf("Priority:    p%d\n", iss.Priority)
-	fmt.Printf("Type:        %s\n", iss.Type)
-	if iss.Assignee != "" {
-		fmt.Printf("Assignee:    %s\n", iss.Assignee)
+	// Header: ○ bw-f0ae · Title   [● P3 · OPEN]
+	fmt.Printf("%s %s · %s   [%s P%d · %s]\n",
+		issue.StatusIcon(iss.Status),
+		iss.ID,
+		iss.Title,
+		issue.PriorityDot(iss.Priority),
+		iss.Priority,
+		strings.ToUpper(iss.Status),
+	)
+
+	// Metadata line: Assignee · Type
+	assignee := iss.Assignee
+	if assignee == "" {
+		assignee = "—"
 	}
-	if iss.Description != "" {
-		fmt.Printf("Description: %s\n", iss.Description)
+	fmt.Printf("Assignee: %s · Type: %s\n", assignee, iss.Type)
+
+	// Created date (trim to date only)
+	created := iss.Created
+	if len(created) >= 10 {
+		created = created[:10]
 	}
+	fmt.Printf("Created: %s\n", created)
+
+	// Optional metadata
 	if len(iss.Labels) > 0 {
-		fmt.Printf("Labels:      %s\n", strings.Join(iss.Labels, ", "))
+		fmt.Printf("Labels: %s\n", strings.Join(iss.Labels, ", "))
 	}
+
+	var deps []string
 	if len(iss.Blocks) > 0 {
-		fmt.Printf("Blocks:      %s\n", strings.Join(iss.Blocks, ", "))
+		deps = append(deps, "Blocks: "+strings.Join(iss.Blocks, ", "))
 	}
 	if len(iss.BlockedBy) > 0 {
-		fmt.Printf("Blocked by:  %s\n", strings.Join(iss.BlockedBy, ", "))
+		deps = append(deps, "Blocked by: "+strings.Join(iss.BlockedBy, ", "))
+	}
+	if len(deps) > 0 {
+		fmt.Println(strings.Join(deps, " · "))
 	}
 	if iss.Parent != "" {
-		fmt.Printf("Parent:      %s\n", iss.Parent)
+		fmt.Printf("Parent: %s\n", iss.Parent)
 	}
-	fmt.Printf("Created:     %s\n", iss.Created)
+
+	// Description
+	if iss.Description != "" {
+		fmt.Printf("\nDESCRIPTION\n\n")
+		for _, line := range strings.Split(iss.Description, "\n") {
+			fmt.Printf("  %s\n", line)
+		}
+		fmt.Println()
+	}
 }

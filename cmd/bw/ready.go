@@ -1,6 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/j5n/beadwork/internal/issue"
+)
 
 func cmdReady(args []string) {
 	_, store := mustInitialized()
@@ -12,13 +17,32 @@ func cmdReady(args []string) {
 
 	if hasFlag(args, "--json") {
 		printJSON(issues)
-	} else {
-		if len(issues) == 0 {
-			fmt.Println("no ready issues")
-			return
-		}
-		for _, iss := range issues {
-			fmt.Printf("%-14s p%d %-12s %-12s %s\n", iss.ID, iss.Priority, iss.Status, iss.Type, iss.Title)
-		}
+		return
 	}
+
+	if len(issues) == 0 {
+		fmt.Println("no ready issues")
+		return
+	}
+
+	for _, iss := range issues {
+		fmt.Printf("%s %s %s P%d %s\n",
+			issue.StatusIcon(iss.Status),
+			iss.ID,
+			issue.PriorityDot(iss.Priority),
+			iss.Priority,
+			iss.Title,
+		)
+	}
+
+	fmt.Println()
+	fmt.Println(strings.Repeat("-", 80))
+	fmt.Printf("Ready: %d issues with no blockers\n", len(issues))
+	fmt.Println()
+
+	var legend []string
+	for _, s := range issue.Statuses {
+		legend = append(legend, s.Icon+" "+s.Name)
+	}
+	fmt.Printf("Status: %s\n", strings.Join(legend, "  "))
 }
