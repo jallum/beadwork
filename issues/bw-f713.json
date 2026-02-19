@@ -9,7 +9,7 @@
     "cli"
   ],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Implement bw label command",
   "type": "task"
 }
