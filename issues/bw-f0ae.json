@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-19T23:03:01Z",
+  "description": "Create a config system with .bwconfig file. Include default priority as first configurable option. Add bw config set/get commands.",
+  "id": "bw-f0ae",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Add .bwconfig with commands to set/view config options",
+  "type": "task"
+}
