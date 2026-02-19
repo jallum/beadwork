@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-19T23:02:59Z",
+  "description": "Centralize status and priority definitions in issue package. Add StatusIcon() and PriorityDot() helpers. Update ready and list commands to use polished format with colored output.",
+  "id": "bw-6e2f",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Redesign bw ready and bw list output with status icons and priority colors",
+  "type": "task"
+}
