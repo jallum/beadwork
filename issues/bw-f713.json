@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-19T21:24:57Z",
+  "description": "Add label management: bw label \u003cid\u003e +bug -frontend creates/removes marker files in labels/ dir and updates issue JSON",
+  "id": "bw-f713",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Implement bw label command",
+  "type": "task"
+}
