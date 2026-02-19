@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-19T21:24:57Z",
+  "description": "Fetch, rebase (or intent replay), push. Core sync mechanism.",
+  "id": "bw-cebb",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Implement bw sync command",
+  "type": "task"
+}
