@@ -13,6 +13,8 @@ import (
 	"github.com/j5n/beadwork/prompts"
 )
 
+const version = "0.1.0"
+
 func main() {
 	if len(os.Args) < 2 {
 		usage()
@@ -23,6 +25,8 @@ func main() {
 	args := os.Args[2:]
 
 	switch cmd {
+	case "--version", "-v":
+		fmt.Println("bw " + version)
 	case "init":
 		cmdInit(args)
 	case "create":
