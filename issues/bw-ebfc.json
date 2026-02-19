@@ -3,7 +3,9 @@
   "blocked_by": [
     "bw-8349"
   ],
-  "blocks": [],
+  "blocks": [
+    "bw-e161"
+  ],
   "created": "2026-02-19T21:29:25Z",
   "description": "",
   "id": "bw-ebfc",
