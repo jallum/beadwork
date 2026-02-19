@@ -10,7 +10,7 @@
   "id": "bw-280d",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Add go:generate directive and embed AGENTS.md in prompts package",
   "type": "task"
 }
