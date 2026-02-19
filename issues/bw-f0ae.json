@@ -7,7 +7,7 @@
   "id": "bw-f0ae",
   "labels": [],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add .bwconfig with commands to set/view config options",
   "type": "task"
 }
