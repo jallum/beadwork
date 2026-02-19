@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-19T21:43:45Z",
+  "description": "Create .github/workflows/ci.yml that runs go test ./... on push and PR. Test on ubuntu-latest with the Go version from .tool-versions.",
+  "id": "bw-2e6a",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Add GitHub Actions CI workflow",
+  "type": "task"
+}
