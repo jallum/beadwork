@@ -7,7 +7,7 @@
   "id": "bw-eaef",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Split cmd/bw/main.go into one file per command",
   "type": "task"
 }
