@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-19T22:18:01Z",
+  "description": "Add //go:generate cp ../../AGENTS.md agents.md to prompts/prompts.go. Add //go:embed agents.md with var AgentsMD string. Add prompts/.gitignore to exclude the generated agents.md.",
+  "id": "bw-280d",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Add go:generate directive and embed AGENTS.md in prompts package",
+  "type": "task"
+}
