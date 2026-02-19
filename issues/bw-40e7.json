@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-19T23:09:15Z",
+  "description": "Add unit/integration tests for the internal/intent package covering Replay and edge cases like replaying closed issues, idempotent operations, and failed intents.",
+  "id": "bw-40e7",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Add tests for intent replay",
+  "type": "task"
+}
