@@ -9,7 +9,7 @@
   "id": "bw-0eb0",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Add go generate step to CI workflow",
   "type": "task"
 }
