@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-19T21:24:57Z",
+  "description": "Dependency graph visualization: ASCII default, JSON with --json",
+  "id": "bw-2158",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Implement bw graph command",
+  "type": "task"
+}
