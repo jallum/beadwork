@@ -50,6 +50,8 @@ func main() {
 		cmdSync(args)
 	case "onboard":
 		cmdOnboard()
+	case "prime":
+		cmdPrime()
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", cmd)
 		usage()
@@ -72,7 +74,10 @@ Commands:
   label <id> +lab [-lab] ...  Add/remove labels
   link <id> blocks <id>       Create dependency link
   unlink <id> blocks <id>     Remove dependency link
-  onboard                     Print tool description for agents
+  graph <id>|--all [--json]   Dependency graph
+  sync                        Fetch, rebase/replay, push
+  onboard                     Print AGENTS.md snippet
+  prime                       Print workflow context for agents
 `)
 }
 
@@ -653,58 +658,120 @@ func cmdSync(args []string) {
 }
 
 func cmdOnboard() {
-	fmt.Print(`# Beadwork — Agent Memory System
+	fmt.Print(`bw Onboarding
 
-Beadwork is a filesystem-native issue tracker that lives on a git orphan branch.
-Use it to track tasks, bugs, and epics for the current project.
+Add this minimal snippet to AGENTS.md (or create it):
+
+--- BEGIN AGENTS.MD CONTENT ---
+## Issue Tracking
+
+This project uses **bw (beadwork)** for issue tracking.
+Run ` + "`bw prime`" + ` for workflow context.
+
+**Quick reference:**
+- ` + "`bw ready`" + ` - Find unblocked work
+- ` + "`bw create \"Title\" --type task --priority 2`" + ` - Create issue
+- ` + "`bw close <id>`" + ` - Complete work
+- ` + "`bw sync`" + ` - Sync with git (run at session end)
+
+For full workflow details: ` + "`bw prime`" + `
+--- END AGENTS.MD CONTENT ---
+
+How it works:
+  - bw prime provides dynamic workflow context
+  - AGENTS.md only needs this minimal pointer, not full instructions
+`)
+}
+
+func cmdPrime() {
+	_, store := mustInitialized()
+
+	fmt.Print(`# Beadwork — Workflow Context
+
+## What is beadwork?
+
+Filesystem-native issue tracker on a git orphan branch.
+All data lives in .git/beadwork/ — invisible to your working tree.
+
+## Session workflow
+
+1. Run "bw prime" at session start
+2. Run "bw ready" to find unblocked work
+3. Pick a task: bw update <id> --status in_progress
+4. Do the work, commit code changes to main
+5. Close the ticket: bw close <id> --reason "done"
+6. Run "bw sync" at session end
+
+IMPORTANT: Always commit code changes BEFORE closing a ticket.
 
 ## Commands
 
-  bw create <title> [flags]      Create an issue
-    --priority, -p <1-5>           Priority (1=highest, default 3)
-    --type, -t <type>              Type: task, bug, epic (default: task)
-    --assignee, -a <name>          Assign to someone
-    --description, -d <text>       Description
+  bw create <title> [flags]        Create an issue
+    -p <1-5>                         Priority (1=highest, default 3)
+    -t <type>                        Type: task, bug, epic (default: task)
+    -a <name>                        Assignee
+    -d <text>                        Description
 
-  bw show <id> [--json]           Show issue details
-  bw list [filters] [--json]      List issues
-    --status <s>                   Filter: open, in_progress, closed
-    --assignee <name>              Filter by assignee
-    --priority <n>                 Filter by priority
-    --type <type>                  Filter by type
-    --label <label>                Filter by label
-
-  bw update <id> [flags]          Update an issue
-    --title <text>                 New title
-    --description, -d <text>       New description
-    --priority, -p <n>             New priority
-    --assignee, -a <name>          New assignee
-    --type, -t <type>              New type
-    --status, -s <status>          New status
-
-  bw close <id> [--reason <r>]    Close an issue
-  bw reopen <id>                  Reopen a closed issue
-  bw ready [--json]               List issues with no open blockers
-  bw link <id> blocks <id>        Create dependency link
-  bw unlink <id> blocks <id>      Remove dependency link
-  bw graph <id>|--all [--json]     Show dependency graph
-  bw sync                         Fetch, rebase (or replay), push
-
-## Workflow
-
-1. Run "bw onboard" at the start of each task to refresh your understanding
-2. Run "bw list" or "bw ready" to see available work
-3. Pick a task, update its status: bw update <id> --status in_progress
-4. Do the work
-5. Close when done: bw close <id>
+  bw show <id> [--json]            Show issue details
+  bw list [--status s] [--json]    List issues (filters: --assignee, --priority, --type, --label)
+  bw update <id> [flags]           Update fields (--title, --status, --priority, --assignee, --type, -d)
+  bw close <id> [--reason <r>]     Close an issue
+  bw reopen <id>                   Reopen a closed issue
+  bw ready [--json]                List unblocked issues
+  bw link <id> blocks <id>         Create dependency
+  bw unlink <id> blocks <id>       Remove dependency
+  bw label <id> +tag [-tag]        Add/remove labels
+  bw graph <id>|--all [--json]     Dependency graph
+  bw sync                          Fetch, rebase/replay, push
 
 ## Notes
 
-- Use --json on any command for structured output
-- IDs support prefix matching (e.g., "a1b2" matches "canon-a1b2")
-- All data lives on the "beadwork" git orphan branch
-- Issues are JSON files in .git/beadwork/issues/
+- --json on any command for structured output
+- IDs support prefix matching ("a1b2" matches "canon-a1b2")
+- Statuses: open, in_progress, closed
 `)
+
+	// Dynamic section: current project state
+	ready, _ := store.Ready()
+	all, _ := store.List(issue.Filter{})
+
+	openCount := 0
+	ipCount := 0
+	closedCount := 0
+	for _, iss := range all {
+		switch iss.Status {
+		case "open":
+			openCount++
+		case "in_progress":
+			ipCount++
+		case "closed":
+			closedCount++
+		}
+	}
+
+	fmt.Println("## Current state")
+	fmt.Println()
+	fmt.Printf("  %d open, %d in progress, %d closed\n", openCount, ipCount, closedCount)
+	fmt.Printf("  %d ready (unblocked)\n", len(ready))
+	fmt.Println()
+
+	if ipCount > 0 {
+		fmt.Println("  In progress:")
+		for _, iss := range all {
+			if iss.Status == "in_progress" {
+				fmt.Printf("    %-14s p%d %s\n", iss.ID, iss.Priority, iss.Title)
+			}
+		}
+		fmt.Println()
+	}
+
+	if len(ready) > 0 {
+		fmt.Println("  Ready for work:")
+		for _, iss := range ready {
+			fmt.Printf("    %-14s p%d %s\n", iss.ID, iss.Priority, iss.Title)
+		}
+		fmt.Println()
+	}
 }
 
 // --- Helpers ---
