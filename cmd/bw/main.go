@@ -659,7 +659,7 @@ func cmdSync(args []string) {
 }
 
 func cmdOnboard() {
-	fmt.Print(prompts.Onboard)
+	fmt.Printf(prompts.Onboard, prompts.AgentsMD)
 }
 
 func cmdPrime() {
