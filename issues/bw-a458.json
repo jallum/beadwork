@@ -7,7 +7,7 @@
   "id": "bw-a458",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Rename getInitialized to getInitializedRepo",
   "type": "task"
 }
