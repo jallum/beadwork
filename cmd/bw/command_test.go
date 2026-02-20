@@ -1,0 +1,141 @@
+package main
+
+import (
+	"bytes"
+	"strings"
+	"testing"
+)
+
+func TestCommandMapContainsAllCommands(t *testing.T) {
+	expected := []string{
+		"init", "create", "show", "list", "update",
+		"close", "reopen", "label",
+		"link", "unlink", "ready", "graph",
+		"sync", "export", "import",
+		"config", "upgrade", "onboard", "prime",
+	}
+	for _, name := range expected {
+		if _, ok := commandMap[name]; !ok {
+			t.Errorf("commandMap missing command %q", name)
+		}
+	}
+}
+
+func TestCommandMapHasNoNilRun(t *testing.T) {
+	for _, cmd := range commands {
+		if cmd.Run == nil {
+			t.Errorf("command %q has nil Run", cmd.Name)
+		}
+	}
+}
+
+func TestCommandsHaveSummary(t *testing.T) {
+	for _, cmd := range commands {
+		if cmd.Summary == "" {
+			t.Errorf("command %q has empty Summary", cmd.Name)
+		}
+	}
+}
+
+func TestPrintUsageContainsAllCommands(t *testing.T) {
+	var buf bytes.Buffer
+	printUsage(&buf)
+	out := buf.String()
+
+	for _, cmd := range commands {
+		if !strings.Contains(out, cmd.Name) {
+			t.Errorf("printUsage output missing command %q", cmd.Name)
+		}
+		if !strings.Contains(out, cmd.Summary) {
+			t.Errorf("printUsage output missing summary for %q: %q", cmd.Name, cmd.Summary)
+		}
+	}
+}
+
+func TestPrintCommandHelp(t *testing.T) {
+	cmd := commandMap["create"]
+	if cmd == nil {
+		t.Fatal("create command not found")
+	}
+
+	var buf bytes.Buffer
+	printCommandHelp(&buf, cmd)
+	out := buf.String()
+
+	// Should contain usage line
+	if !strings.Contains(out, "bw create") {
+		t.Error("missing 'bw create' in help output")
+	}
+
+	// Should contain flag descriptions
+	for _, f := range cmd.Flags {
+		if !strings.Contains(out, f.Long) {
+			t.Errorf("missing flag %q in help output", f.Long)
+		}
+		if f.Help != "" && !strings.Contains(out, f.Help) {
+			t.Errorf("missing help text for %q: %q", f.Long, f.Help)
+		}
+	}
+
+	// Should contain positional descriptions
+	for _, p := range cmd.Positionals {
+		if !strings.Contains(out, p.Name) {
+			t.Errorf("missing positional %q in help output", p.Name)
+		}
+	}
+}
+
+func TestExpandAliases(t *testing.T) {
+	flags := []Flag{
+		{Long: "--priority", Short: "-p", Value: "N"},
+		{Long: "--type", Short: "-t", Value: "TYPE"},
+		{Long: "--json"},
+	}
+
+	raw := []string{"-p", "2", "-t", "bug", "--json", "title"}
+	got := expandAliases(raw, flags)
+
+	if got[0] != "--priority" {
+		t.Errorf("got[0] = %q, want --priority", got[0])
+	}
+	if got[1] != "2" {
+		t.Errorf("got[1] = %q, want 2", got[1])
+	}
+	if got[2] != "--type" {
+		t.Errorf("got[2] = %q, want --type", got[2])
+	}
+	if got[4] != "--json" {
+		t.Errorf("got[4] = %q, want --json (should be unchanged)", got[4])
+	}
+	if got[5] != "title" {
+		t.Errorf("got[5] = %q, want title (should be unchanged)", got[5])
+	}
+}
+
+func TestCommandValueFlags(t *testing.T) {
+	// Verify that Command.valueFlags() returns the right set
+	cmd := commandMap["create"]
+	if cmd == nil {
+		t.Fatal("create command not found")
+	}
+	vf := cmd.valueFlags()
+	// --priority, --type, --assignee, --description should be value flags
+	for _, name := range []string{"--priority", "--type", "--assignee", "--description"} {
+		found := false
+		for _, f := range vf {
+			if f == name {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("valueFlags() missing %q for create command", name)
+		}
+	}
+	// --json should NOT be a value flag
+	for _, f := range vf {
+		if f == "--json" {
+			t.Error("--json should not be a value flag")
+		}
+	}
+}
