@@ -13,24 +13,55 @@ import (
 	"github.com/jallum/beadwork/internal/testutil"
 )
 
-var bwBin string
+var (
+	bwBin      string
+	bwCoverDir string
+)
 
 func TestMain(m *testing.M) {
 	// Build the binary once for all tests
-	tmp, err := os.MkdirTemp("", "bw-test-bin")
+	tmp, err := os.MkdirTemp("", "bw-test-*")
 	if err != nil {
 		panic(err)
 	}
 	bwBin = filepath.Join(tmp, "bw")
-	cmd := exec.Command("go", "build", "-o", bwBin, ".")
+	bwCoverDir = filepath.Join(tmp, "coverdir")
+	os.Mkdir(bwCoverDir, 0755)
+
+	// Build with coverage instrumentation so CLI integration tests
+	// contribute to the coverage profile.
+	cmd := exec.Command("go", "build", "-cover", "-coverpkg=./...", "-o", bwBin, ".")
 	cmd.Dir = filepath.Join(mustCwd(), ".")
 	if out, err := cmd.CombinedOutput(); err != nil {
 		panic("build failed: " + string(out))
 	}
 
 	code := m.Run()
+	mergeCLICoverage()
 	os.RemoveAll(tmp)
 	os.Exit(code)
+}
+
+// mergeCLICoverage converts binary coverage data from the instrumented CLI
+// binary into text format. Set CLI_COVER_PROFILE to an absolute path to
+// enable this (used in CI to merge with go test's coverage profile).
+func mergeCLICoverage() {
+	entries, _ := os.ReadDir(bwCoverDir)
+	if len(entries) == 0 {
+		return
+	}
+	dest := os.Getenv("CLI_COVER_PROFILE")
+	if dest == "" {
+		return
+	}
+	if !filepath.IsAbs(dest) {
+		fmt.Fprintf(os.Stderr, "warning: CLI_COVER_PROFILE must be an absolute path\n")
+		return
+	}
+	cmd := exec.Command("go", "tool", "covdata", "textfmt", "-i="+bwCoverDir, "-o="+dest)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: covdata textfmt: %s: %v\n", out, err)
+	}
 }
 
 func mustCwd() string {
@@ -51,6 +82,7 @@ func bw(t *testing.T, dir string, args ...string) string {
 		"GIT_AUTHOR_EMAIL=test@test.com",
 		"GIT_COMMITTER_NAME=Test",
 		"GIT_COMMITTER_EMAIL=test@test.com",
+		"GOCOVERDIR="+bwCoverDir,
 	)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -69,6 +101,7 @@ func bwFail(t *testing.T, dir string, args ...string) string {
 		"GIT_AUTHOR_EMAIL=test@test.com",
 		"GIT_COMMITTER_NAME=Test",
 		"GIT_COMMITTER_EMAIL=test@test.com",
+		"GOCOVERDIR="+bwCoverDir,
 	)
 	out, err := cmd.CombinedOutput()
 	if err == nil {

@@ -24,6 +24,14 @@ jobs:
 
       - name: Test
         run: go test ./... -coverprofile=coverage.out -covermode=atomic -coverpkg=./...
+        env:
+          CLI_COVER_PROFILE: ${{ github.workspace }}/cli-coverage.out
+
+      - name: Merge coverage profiles
+        run: |
+          if [ -f cli-coverage.out ]; then
+            tail -n +2 cli-coverage.out >> coverage.out
+          fi
 
       - name: Codecov
         uses: codecov/codecov-action@v5
