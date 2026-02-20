@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 — 2026-02-19
+
+- Refactor all command handlers for unit testability: return `error` + write to `io.Writer` instead of `fatal()`/`os.Stdout`
+- Comprehensive test coverage across all packages (74.8% → 78.4%)
+- Fix `os.Args` bug in close, create, label, and update commands (now correctly use `args` parameter)
+
 ## 0.3.3 — 2026-02-19
 
 - Codecov integration for coverage tracking and badges
