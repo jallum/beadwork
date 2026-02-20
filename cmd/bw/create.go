@@ -9,8 +9,7 @@ import (
 
 type CreateArgs struct {
 	Title       string
-	Priority    int
-	PrioritySet bool
+	Priority    *int
 	Type        string
 	Assignee    string
 	Description string
@@ -30,11 +29,12 @@ func parseCreateArgs(raw []string) (CreateArgs, error) {
 	ca.Description = a.String("--description")
 	ca.DeferUntil = a.String("--defer")
 	ca.JSON = a.JSON()
-	if p, set, err := a.IntErr("--priority"); err != nil {
-		return ca, err
-	} else if set {
-		ca.Priority = p
-		ca.PrioritySet = true
+	if a.Has("--priority") {
+		p, err := parsePriority(a.String("--priority"))
+		if err != nil {
+			return ca, err
+		}
+		ca.Priority = &p
 	}
 	if ca.DeferUntil != "" {
 		if err := validateDate(ca.DeferUntil); err != nil {
@@ -56,13 +56,11 @@ func cmdCreate(args []string, w io.Writer) error {
 	}
 
 	opts := issue.CreateOpts{
+		Priority:    ca.Priority,
 		Type:        ca.Type,
 		Assignee:    ca.Assignee,
 		Description: ca.Description,
 		DeferUntil:  ca.DeferUntil,
-	}
-	if ca.PrioritySet {
-		opts.Priority = ca.Priority
 	}
 
 	iss, err := store.Create(ca.Title, opts)

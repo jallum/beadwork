@@ -168,8 +168,8 @@ func TestParseCreateArgsWithFlags(t *testing.T) {
 	if a.Title != "Bug report" {
 		t.Errorf("Title = %q", a.Title)
 	}
-	if a.Priority != 1 || !a.PrioritySet {
-		t.Errorf("Priority = %d, PrioritySet = %v", a.Priority, a.PrioritySet)
+	if a.Priority == nil || *a.Priority != 1 {
+		t.Errorf("Priority = %v, want 1", a.Priority)
 	}
 	if a.Type != "bug" {
 		t.Errorf("Type = %q", a.Type)
@@ -193,6 +193,67 @@ func TestParseCreateArgsInvalidPriority(t *testing.T) {
 	_, err := parseCreateArgs([]string{"Title", "--priority", "abc"})
 	if err == nil {
 		t.Error("expected error for non-numeric priority")
+	}
+}
+
+func TestParseCreateArgsPrefixedPriority(t *testing.T) {
+	tests := []struct {
+		input string
+		want  int
+	}{
+		{"P0", 0},
+		{"P1", 1},
+		{"P2", 2},
+		{"P3", 3},
+		{"P4", 4},
+		{"p0", 0},
+		{"p2", 2},
+		{"p4", 4},
+		{"0", 0},
+		{"4", 4},
+	}
+	for _, tt := range tests {
+		a, err := parseCreateArgs([]string{"Title", "--priority", tt.input})
+		if err != nil {
+			t.Errorf("parseCreateArgs(--priority %q): %v", tt.input, err)
+			continue
+		}
+		if a.Priority == nil || *a.Priority != tt.want {
+			t.Errorf("--priority %q: Priority=%v, want %d", tt.input, a.Priority, tt.want)
+		}
+	}
+}
+
+func TestParseCreateArgsPriorityOutOfRange(t *testing.T) {
+	invalid := []string{"5", "-1", "P5", "P6", "high", "P-1", "10"}
+	for _, v := range invalid {
+		_, err := parseCreateArgs([]string{"Title", "--priority", v})
+		if err == nil {
+			t.Errorf("expected error for --priority %q", v)
+		}
+		if err != nil && !strings.Contains(err.Error(), "invalid priority") {
+			t.Errorf("--priority %q: error = %q, want 'invalid priority' message", v, err.Error())
+		}
+	}
+}
+
+func TestParseUpdateArgsPrefixedPriority(t *testing.T) {
+	a, err := parseUpdateArgs([]string{"bw-1234", "--priority", "P0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.Priority == nil || *a.Priority != 0 {
+		t.Errorf("Priority=%v, want 0", a.Priority)
+	}
+}
+
+func TestParseUpdateArgsPriorityOutOfRange(t *testing.T) {
+	invalid := []string{"5", "-1", "P5", "high"}
+	for _, v := range invalid {
+		_, err := parseUpdateArgs([]string{"bw-1234", "--priority", v})
+		if err == nil {
+			t.Errorf("expected error for --priority %q", v)
+		}
 	}
 }
 
@@ -338,8 +399,8 @@ func TestParseListArgsFilters(t *testing.T) {
 	if a.Status != "open" {
 		t.Errorf("Status = %q", a.Status)
 	}
-	if a.Priority != 1 {
-		t.Errorf("Priority = %d", a.Priority)
+	if a.Priority == nil || *a.Priority != 1 {
+		t.Errorf("Priority = %v, want 1", a.Priority)
 	}
 	if a.Type != "bug" {
 		t.Errorf("Type = %q", a.Type)
@@ -388,8 +449,8 @@ func TestParseUpdateArgs(t *testing.T) {
 	if a.Title != "New title" || !a.TitleSet {
 		t.Errorf("Title = %q, TitleSet = %v", a.Title, a.TitleSet)
 	}
-	if a.Priority != 2 || !a.PrioritySet {
-		t.Errorf("Priority = %d, PrioritySet = %v", a.Priority, a.PrioritySet)
+	if a.Priority == nil || *a.Priority != 2 {
+		t.Errorf("Priority = %v, want 2", a.Priority)
 	}
 }
 
@@ -401,7 +462,7 @@ func TestParseUpdateArgsAllFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !a.TitleSet || !a.DescSet || !a.PrioritySet || !a.AssigneeSet || !a.TypeSet || !a.StatusSet {
+	if !a.TitleSet || !a.DescSet || a.Priority == nil || !a.AssigneeSet || !a.TypeSet || !a.StatusSet {
 		t.Error("expected all fields to be set")
 	}
 	if a.Description != "D" {
@@ -437,8 +498,8 @@ func TestParseUpdateArgsAliases(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if a.Priority != 3 {
-		t.Errorf("Priority = %d", a.Priority)
+	if a.Priority == nil || *a.Priority != 3 {
+		t.Errorf("Priority = %v, want 3", a.Priority)
 	}
 	if a.Assignee != "carol" {
 		t.Errorf("Assignee = %q", a.Assignee)

@@ -12,6 +12,8 @@ import (
 	"github.com/jallum/beadwork/internal/testutil"
 )
 
+func intPtr(n int) *int { return &n }
+
 // --- Create ---
 
 func TestCmdCreateBasic(t *testing.T) {
@@ -339,7 +341,7 @@ func TestCmdUpdatePriority(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	iss, _ := env.Store.Create("Update me", issue.CreateOpts{Priority: 3})
+	iss, _ := env.Store.Create("Update me", issue.CreateOpts{Priority: intPtr(3)})
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
@@ -1461,8 +1463,8 @@ func TestGetInitializedWithDefaultPriority(t *testing.T) {
 	if err != nil {
 		t.Fatalf("getInitialized: %v", err)
 	}
-	if store.DefaultPriority != 2 {
-		t.Errorf("DefaultPriority = %d, want 2", store.DefaultPriority)
+	if store.DefaultPriority == nil || *store.DefaultPriority != 2 {
+		t.Errorf("DefaultPriority = %v, want 2", store.DefaultPriority)
 	}
 }
 
@@ -1487,8 +1489,8 @@ func TestCmdBlockedBasic(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	a, _ := env.Store.Create("Blocker", issue.CreateOpts{Priority: 1})
-	b, _ := env.Store.Create("Blocked task", issue.CreateOpts{Priority: 2})
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{Priority: intPtr(1)})
+	b, _ := env.Store.Create("Blocked task", issue.CreateOpts{Priority: intPtr(2)})
 	env.Store.Link(a.ID, b.ID)
 	env.Repo.Commit("link")
 
@@ -2348,8 +2350,8 @@ func TestCmdUpgradeRepoFromV0(t *testing.T) {
 	if !strings.Contains(out, "upgrading") {
 		t.Errorf("output should contain 'upgrading': %q", out)
 	}
-	if !strings.Contains(out, "upgraded to v1") {
-		t.Errorf("output should contain 'upgraded to v1': %q", out)
+	if !strings.Contains(out, "upgraded to v2") {
+		t.Errorf("output should contain 'upgraded to v2': %q", out)
 	}
 
 	// Commands should work now

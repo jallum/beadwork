@@ -138,7 +138,7 @@ func cmdImport(args []string, w io.Writer) error {
 			iss.Type = "task"
 		}
 		if iss.Priority == 0 {
-			iss.Priority = 3
+			iss.Priority = 2
 		}
 		// Set parent from dependencies
 		for _, dep := range rec.Dependencies {

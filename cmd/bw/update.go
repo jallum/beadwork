@@ -14,8 +14,7 @@ type UpdateArgs struct {
 	TitleSet    bool
 	Description string
 	DescSet     bool
-	Priority    int
-	PrioritySet bool
+	Priority    *int
 	Assignee    string
 	AssigneeSet bool
 	Type        string
@@ -43,12 +42,11 @@ func parseUpdateArgs(raw []string) (UpdateArgs, error) {
 		ua.DescSet = true
 	}
 	if a.Has("--priority") {
-		p, _, err := a.IntErr("--priority")
+		p, err := parsePriority(a.String("--priority"))
 		if err != nil {
 			return ua, err
 		}
-		ua.Priority = p
-		ua.PrioritySet = true
+		ua.Priority = &p
 	}
 	if a.Has("--assignee") {
 		ua.Assignee = a.String("--assignee")
@@ -94,9 +92,9 @@ func cmdUpdate(args []string, w io.Writer) error {
 		opts.Description = &ua.Description
 		changes = append(changes, "description=...")
 	}
-	if ua.PrioritySet {
-		opts.Priority = &ua.Priority
-		changes = append(changes, fmt.Sprintf("priority=%d", ua.Priority))
+	if ua.Priority != nil {
+		opts.Priority = ua.Priority
+		changes = append(changes, fmt.Sprintf("priority=%d", *ua.Priority))
 	}
 	if ua.AssigneeSet {
 		opts.Assignee = &ua.Assignee

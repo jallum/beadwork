@@ -13,6 +13,8 @@ import (
 	"github.com/jallum/beadwork/internal/testutil"
 )
 
+func intPtr(n int) *int { return &n }
+
 var (
 	bwBin      string
 	bwCoverDir string
@@ -117,7 +119,7 @@ func TestShowFormat(t *testing.T) {
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("Fix login timeout", issue.CreateOpts{
-		Priority:    1,
+		Priority:    intPtr(1),
 		Type:        "bug",
 		Description: "Users get kicked out after 30s",
 		Assignee:    "agent-1",
@@ -210,7 +212,7 @@ func TestShowJSON(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	iss, _ := env.Store.Create("JSON test", issue.CreateOpts{Priority: 2, Type: "task"})
+	iss, _ := env.Store.Create("JSON test", issue.CreateOpts{Priority: intPtr(2), Type: "task"})
 	env.CommitIntent("create " + iss.ID)
 
 	out := bw(t, env.Dir, "show", iss.ID, "--json")
@@ -235,7 +237,7 @@ func TestListOutput(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	iss, _ := env.Store.Create("Listed issue", issue.CreateOpts{Priority: 2, Type: "bug"})
+	iss, _ := env.Store.Create("Listed issue", issue.CreateOpts{Priority: intPtr(2), Type: "bug"})
 	env.CommitIntent("create " + iss.ID)
 
 	out := bw(t, env.Dir, "list")
@@ -334,8 +336,8 @@ func TestReadyOutput(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	a, _ := env.Store.Create("Blocker", issue.CreateOpts{Priority: 1})
-	b, _ := env.Store.Create("Blocked task", issue.CreateOpts{Priority: 2})
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{Priority: intPtr(1)})
+	b, _ := env.Store.Create("Blocked task", issue.CreateOpts{Priority: intPtr(2)})
 	env.Store.Link(a.ID, b.ID)
 	env.CommitIntent("setup")
 
@@ -486,7 +488,7 @@ func TestExportFormat(t *testing.T) {
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("Export me", issue.CreateOpts{
-		Priority:    2,
+		Priority:    intPtr(2),
 		Type:        "bug",
 		Description: "Something broke",
 		Assignee:    "agent-1",
@@ -688,8 +690,8 @@ func TestImportRoundtrip(t *testing.T) {
 	defer env.Cleanup()
 
 	// Create issues with various properties
-	a, _ := env.Store.Create("Roundtrip A", issue.CreateOpts{Priority: 1, Type: "bug", Assignee: "alice", Description: "desc A"})
-	b, _ := env.Store.Create("Roundtrip B", issue.CreateOpts{Priority: 2, Type: "task"})
+	a, _ := env.Store.Create("Roundtrip A", issue.CreateOpts{Priority: intPtr(1), Type: "bug", Assignee: "alice", Description: "desc A"})
+	b, _ := env.Store.Create("Roundtrip B", issue.CreateOpts{Priority: intPtr(2), Type: "task"})
 	env.Store.Link(a.ID, b.ID)
 	env.Store.Close(b.ID)
 	env.CommitIntent("setup roundtrip")
@@ -975,7 +977,7 @@ func TestUpdatePriorityOutput(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	iss, _ := env.Store.Create("Priority test", issue.CreateOpts{Priority: 3})
+	iss, _ := env.Store.Create("Priority test", issue.CreateOpts{Priority: intPtr(3)})
 	env.CommitIntent("create " + iss.ID)
 
 	bw(t, env.Dir, "update", iss.ID, "-p", "1")
@@ -1251,7 +1253,7 @@ func TestListJSONOutput(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	iss, _ := env.Store.Create("JSON list", issue.CreateOpts{Priority: 1, Type: "bug"})
+	iss, _ := env.Store.Create("JSON list", issue.CreateOpts{Priority: intPtr(1), Type: "bug"})
 	env.CommitIntent("create " + iss.ID)
 
 	out := bw(t, env.Dir, "list", "--json")
@@ -1297,8 +1299,8 @@ func TestListFilterByPriority(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	env.Store.Create("P1 task", issue.CreateOpts{Priority: 1})
-	env.Store.Create("P3 task", issue.CreateOpts{Priority: 3})
+	env.Store.Create("P1 task", issue.CreateOpts{Priority: intPtr(1)})
+	env.Store.Create("P3 task", issue.CreateOpts{Priority: intPtr(3)})
 	env.CommitIntent("setup")
 
 	out := bw(t, env.Dir, "list", "--priority", "1")
@@ -1326,7 +1328,7 @@ func TestReadyJSONOutput(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	env.Store.Create("Ready task", issue.CreateOpts{Priority: 1})
+	env.Store.Create("Ready task", issue.CreateOpts{Priority: intPtr(1)})
 	env.CommitIntent("setup")
 
 	out := bw(t, env.Dir, "ready", "--json")
@@ -1482,7 +1484,7 @@ func TestUpgradeRepoCLI(t *testing.T) {
 	// Upgrade the repo
 	out = bw(t, env.Dir, "upgrade", "repo")
 	assertContains(t, out, "upgrading")
-	assertContains(t, out, "upgraded to v1")
+	assertContains(t, out, "upgraded to v2")
 
 	// Commands should work now
 	out = bw(t, env.Dir, "list")

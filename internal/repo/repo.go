@@ -18,7 +18,7 @@ import (
 const BranchName = "beadwork"
 
 // CurrentVersion is the highest repo schema version this binary understands.
-const CurrentVersion = 1
+const CurrentVersion = 2
 
 const refLocal = "refs/heads/" + BranchName
 const refRemote = "refs/remotes/origin/" + BranchName

@@ -31,8 +31,8 @@ func getInitialized() (*repo.Repo, *issue.Store, error) {
 	}
 	store := issue.NewStore(r.TreeFS(), r.Prefix)
 	if val, ok := r.GetConfig("default.priority"); ok {
-		if p, err := strconv.Atoi(val); err == nil && p > 0 {
-			store.DefaultPriority = p
+		if p, err := strconv.Atoi(val); err == nil && p >= 0 {
+			store.DefaultPriority = &p
 		}
 	}
 	return r, store, nil
@@ -153,6 +153,21 @@ func (a Args) PosFirst() string {
 
 // PosJoined returns all positional args joined with spaces.
 func (a Args) PosJoined() string { return strings.Join(a.pos, " ") }
+
+// parsePriority parses a priority value from a string.
+// Accepts numeric "0"-"4" or prefixed "P0"-"P4" (case-insensitive).
+// Returns the parsed priority and an error if the value is invalid.
+func parsePriority(s string) (int, error) {
+	v := s
+	if len(v) > 0 && (v[0] == 'P' || v[0] == 'p') {
+		v = v[1:]
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil || n < 0 || n > 4 {
+		return 0, fmt.Errorf("invalid priority %q: expected 0-4 or P0-P4", s)
+	}
+	return n, nil
+}
 
 func fprintJSON(w io.Writer, v interface{}) {
 	data, _ := json.MarshalIndent(v, "", "  ")
