@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T07:24:39Z",
+  "description": "Infrastructure for versioning the beadwork repo schema and migrating data forward. Stores version in .bwconfig, adds version gate in getInitialized(), adds bw upgrade repo subcommand with migration registry.",
+  "id": "bw-2c74",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Repo schema versioning and migration system",
+  "type": "task"
+}
