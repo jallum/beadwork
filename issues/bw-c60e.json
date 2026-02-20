@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T04:50:49Z",
+  "description": "",
+  "id": "bw-c60e",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Refactor Store to use TreeFS instead of os.*",
+  "type": "task"
+}
