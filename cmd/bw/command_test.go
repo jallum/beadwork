@@ -287,3 +287,25 @@ func TestCommandValueFlags(t *testing.T) {
 		}
 	}
 }
+
+func TestPriorityHelpText(t *testing.T) {
+	want := "Priority (0-4 or P0-P4, 0=highest)"
+	for _, name := range []string{"create", "list", "update"} {
+		cmd := commandMap[name]
+		if cmd == nil {
+			t.Fatalf("command %q not found", name)
+		}
+		found := false
+		for _, f := range cmd.Flags {
+			if f.Long == "--priority" {
+				found = true
+				if f.Help != want {
+					t.Errorf("command %q --priority help = %q, want %q", name, f.Help, want)
+				}
+			}
+		}
+		if !found {
+			t.Errorf("command %q missing --priority flag", name)
+		}
+	}
+}

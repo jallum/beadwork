@@ -10,7 +10,7 @@ type Flag struct {
 	Long  string // e.g. "--priority"
 	Short string // e.g. "-p" (optional)
 	Value string // metavar for help, e.g. "N" — empty means boolean
-	Help  string // e.g. "Priority level (1-5)"
+	Help  string // e.g. "Priority (0-4 or P0-P4, 0=highest)"
 }
 
 // Positional describes a positional argument.
@@ -89,7 +89,7 @@ var commands = []Command{
 			{Name: "<title>", Required: true, Help: "Issue title (multiple words joined)"},
 		},
 		Flags: []Flag{
-			{Long: "--priority", Short: "-p", Value: "N", Help: "Priority level (1-5)"},
+			{Long: "--priority", Short: "-p", Value: "N", Help: "Priority (0-4 or P0-P4, 0=highest)"},
 			{Long: "--type", Short: "-t", Value: "TYPE", Help: "Issue type (task, bug, etc.)"},
 			{Long: "--assignee", Short: "-a", Value: "WHO", Help: "Assignee"},
 			{Long: "--description", Short: "-d", Value: "TEXT", Help: "Description"},
@@ -128,7 +128,7 @@ var commands = []Command{
 		Flags: []Flag{
 			{Long: "--status", Short: "-s", Value: "STATUS", Help: "Filter by status"},
 			{Long: "--assignee", Short: "-a", Value: "WHO", Help: "Filter by assignee"},
-			{Long: "--priority", Short: "-p", Value: "N", Help: "Filter by priority"},
+			{Long: "--priority", Short: "-p", Value: "N", Help: "Priority (0-4 or P0-P4, 0=highest)"},
 			{Long: "--type", Short: "-t", Value: "TYPE", Help: "Filter by type"},
 			{Long: "--label", Value: "LABEL", Help: "Filter by label"},
 			{Long: "--limit", Value: "N", Help: "Max results (default 10)"},
@@ -154,7 +154,7 @@ var commands = []Command{
 		Flags: []Flag{
 			{Long: "--title", Value: "TEXT", Help: "New title"},
 			{Long: "--description", Short: "-d", Value: "TEXT", Help: "New description"},
-			{Long: "--priority", Short: "-p", Value: "N", Help: "New priority"},
+			{Long: "--priority", Short: "-p", Value: "N", Help: "Priority (0-4 or P0-P4, 0=highest)"},
 			{Long: "--assignee", Short: "-a", Value: "WHO", Help: "New assignee"},
 			{Long: "--type", Short: "-t", Value: "TYPE", Help: "New type"},
 			{Long: "--status", Short: "-s", Value: "STATUS", Help: "New status"},
