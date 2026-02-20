@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.3 — 2026-02-19
+
+- Codecov integration for coverage tracking and badges
+- Grouped commands by topic in help output and README
+
 ## 0.3.2 — 2026-02-19
 
 - `bw init --force` to reinitialize (destroys and recreates the beadwork branch)
