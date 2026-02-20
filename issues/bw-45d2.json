@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T04:50:49Z",
+  "description": "",
+  "id": "bw-45d2",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Refactor Repo to use go-git instead of exec.Command",
+  "type": "task"
+}
