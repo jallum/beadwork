@@ -1413,6 +1413,104 @@ func TestGetInitializedReturnsError(t *testing.T) {
 	}
 }
 
+// --- Blocked ---
+
+func TestCmdBlockedBasic(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{Priority: 1})
+	b, _ := env.Store.Create("Blocked task", issue.CreateOpts{Priority: 2})
+	env.Store.Link(a.ID, b.ID)
+	env.Repo.Commit("link")
+
+	var buf bytes.Buffer
+	err := cmdBlocked([]string{}, &buf)
+	if err != nil {
+		t.Fatalf("cmdBlocked: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, b.ID) {
+		t.Errorf("output should contain blocked issue %s: %q", b.ID, out)
+	}
+	if !strings.Contains(out, "Blocked task") {
+		t.Errorf("output should contain title: %q", out)
+	}
+	if !strings.Contains(out, a.ID) {
+		t.Errorf("output should list blocker %s: %q", a.ID, out)
+	}
+}
+
+func TestCmdBlockedResolves(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Close(a.ID)
+	env.Repo.Commit("setup")
+
+	var buf bytes.Buffer
+	err := cmdBlocked([]string{}, &buf)
+	if err != nil {
+		t.Fatalf("cmdBlocked: %v", err)
+	}
+	if strings.Contains(buf.String(), b.ID) {
+		t.Error("resolved issue should not appear in blocked output")
+	}
+}
+
+func TestCmdBlockedJSON(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Repo.Commit("link")
+
+	var buf bytes.Buffer
+	err := cmdBlocked([]string{"--json"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdBlocked --json: %v", err)
+	}
+
+	var result []struct {
+		ID           string   `json:"id"`
+		OpenBlockers []string `json:"open_blockers"`
+	}
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("JSON parse: %v", err)
+	}
+	if len(result) != 1 {
+		t.Fatalf("got %d results, want 1", len(result))
+	}
+	if result[0].ID != b.ID {
+		t.Errorf("id = %q, want %q", result[0].ID, b.ID)
+	}
+	if len(result[0].OpenBlockers) != 1 || result[0].OpenBlockers[0] != a.ID {
+		t.Errorf("open_blockers = %v, want [%s]", result[0].OpenBlockers, a.ID)
+	}
+}
+
+func TestCmdBlockedEmpty(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("No deps", issue.CreateOpts{})
+	env.Repo.Commit("create")
+
+	var buf bytes.Buffer
+	err := cmdBlocked([]string{}, &buf)
+	if err != nil {
+		t.Fatalf("cmdBlocked: %v", err)
+	}
+	if !strings.Contains(buf.String(), "no blocked issues") {
+		t.Errorf("expected 'no blocked issues', got: %q", buf.String())
+	}
+}
+
 func init() {
 	os.Setenv("GIT_AUTHOR_NAME", "Test")
 	os.Setenv("GIT_AUTHOR_EMAIL", "test@test.com")

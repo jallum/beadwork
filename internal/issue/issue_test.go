@@ -1131,3 +1131,112 @@ func TestMultipleIDsNeverCollide(t *testing.T) {
 		ids[iss.ID] = true
 	}
 }
+
+func TestBlockedSingle(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.CommitIntent("link")
+
+	blocked, err := env.Store.Blocked()
+	if err != nil {
+		t.Fatalf("Blocked: %v", err)
+	}
+	if len(blocked) != 1 {
+		t.Fatalf("got %d blocked, want 1", len(blocked))
+	}
+	if blocked[0].ID != b.ID {
+		t.Errorf("blocked ID = %q, want %q", blocked[0].ID, b.ID)
+	}
+	if len(blocked[0].OpenBlockers) != 1 || blocked[0].OpenBlockers[0] != a.ID {
+		t.Errorf("open blockers = %v, want [%s]", blocked[0].OpenBlockers, a.ID)
+	}
+}
+
+func TestBlockedMultipleBlockers(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker A", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocker B", issue.CreateOpts{})
+	c, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+	env.Store.Link(a.ID, c.ID)
+	env.Store.Link(b.ID, c.ID)
+	env.Store.Close(b.ID) // close one blocker
+	env.CommitIntent("setup")
+
+	blocked, err := env.Store.Blocked()
+	if err != nil {
+		t.Fatalf("Blocked: %v", err)
+	}
+	if len(blocked) != 1 {
+		t.Fatalf("got %d blocked, want 1", len(blocked))
+	}
+	// Only the open blocker should appear
+	if len(blocked[0].OpenBlockers) != 1 || blocked[0].OpenBlockers[0] != a.ID {
+		t.Errorf("open blockers = %v, want [%s]", blocked[0].OpenBlockers, a.ID)
+	}
+}
+
+func TestBlockedResolves(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.CommitIntent("link")
+
+	// Close the blocker
+	env.Store.Close(a.ID)
+	env.CommitIntent("close")
+
+	blocked, err := env.Store.Blocked()
+	if err != nil {
+		t.Fatalf("Blocked: %v", err)
+	}
+	if len(blocked) != 0 {
+		t.Errorf("got %d blocked, want 0 after resolving blocker", len(blocked))
+	}
+}
+
+func TestBlockedNoBlockers(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("No deps", issue.CreateOpts{})
+	env.CommitIntent("create")
+
+	blocked, err := env.Store.Blocked()
+	if err != nil {
+		t.Fatalf("Blocked: %v", err)
+	}
+	if len(blocked) != 0 {
+		t.Errorf("got %d blocked, want 0", len(blocked))
+	}
+}
+
+func TestBlockedClosedIssueExcluded(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked and closed", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Close(b.ID) // close the blocked issue itself
+	env.CommitIntent("setup")
+
+	blocked, err := env.Store.Blocked()
+	if err != nil {
+		t.Fatalf("Blocked: %v", err)
+	}
+	// Closed issues shouldn't appear even if they have open blockers
+	for _, bi := range blocked {
+		if bi.ID == b.ID {
+			t.Error("closed issue should not appear in blocked list")
+		}
+	}
+}

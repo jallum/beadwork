@@ -569,6 +569,45 @@ func (s *Store) Ready() ([]*Issue, error) {
 	return ready, nil
 }
 
+// BlockedIssue pairs an issue with the IDs of its open (unresolved) blockers.
+type BlockedIssue struct {
+	*Issue
+	OpenBlockers []string `json:"open_blockers"`
+}
+
+// Blocked returns open issues that have at least one open blocker.
+func (s *Store) Blocked() ([]BlockedIssue, error) {
+	issues, err := s.List(Filter{})
+	if err != nil {
+		return nil, err
+	}
+
+	var blocked []BlockedIssue
+	for _, iss := range issues {
+		if iss.Status == "closed" {
+			continue
+		}
+		if len(iss.BlockedBy) == 0 {
+			continue
+		}
+		var open []string
+		for _, blockerID := range iss.BlockedBy {
+			blocker, err := s.readIssue(blockerID)
+			if err != nil {
+				open = append(open, blockerID)
+				continue
+			}
+			if blocker.Status != "closed" {
+				open = append(open, blockerID)
+			}
+		}
+		if len(open) > 0 {
+			blocked = append(blocked, BlockedIssue{Issue: iss, OpenBlockers: open})
+		}
+	}
+	return blocked, nil
+}
+
 // --- Internal helpers ---
 
 func (s *Store) generateID() (string, error) {
