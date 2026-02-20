@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T04:50:49Z",
+  "description": "",
+  "id": "bw-b9aa",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Add TreeFS package with go-git backend",
+  "type": "task"
+}
