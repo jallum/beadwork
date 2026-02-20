@@ -3,7 +3,9 @@
   "blocked_by": [
     "bw-7328"
   ],
-  "blocks": [],
+  "blocks": [
+    "bw-69e5"
+  ],
   "created": "2026-02-20T04:28:46Z",
   "description": "",
   "id": "bw-501d",
