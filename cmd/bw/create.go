@@ -7,31 +7,57 @@ import (
 	"github.com/jallum/beadwork/internal/issue"
 )
 
+type CreateArgs struct {
+	Title       string
+	Priority    int
+	PrioritySet bool
+	Type        string
+	Assignee    string
+	Description string
+	JSON        bool
+}
+
+func parseCreateArgs(raw []string) (CreateArgs, error) {
+	a := ParseArgs(raw, "--priority", "--type", "--assignee", "--description")
+	var ca CreateArgs
+	ca.Title = a.PosJoined()
+	if ca.Title == "" {
+		return ca, fmt.Errorf("title is required")
+	}
+	ca.Type = a.String("--type")
+	ca.Assignee = a.String("--assignee")
+	ca.Description = a.String("--description")
+	ca.JSON = a.JSON()
+	if p, set, err := a.IntErr("--priority"); err != nil {
+		return ca, err
+	} else if set {
+		ca.Priority = p
+		ca.PrioritySet = true
+	}
+	return ca, nil
+}
+
 func cmdCreate(args []string, w io.Writer) error {
+	ca, err := parseCreateArgs(args)
+	if err != nil {
+		return err
+	}
+
 	r, store, err := getInitialized()
 	if err != nil {
 		return err
 	}
 
-	a := ParseArgs(args, "--priority", "--type", "--assignee", "--description")
-
-	title := a.PosJoined()
-	if title == "" {
-		return fmt.Errorf("title is required")
-	}
-
 	opts := issue.CreateOpts{
-		Type:        a.String("--type"),
-		Assignee:    a.String("--assignee"),
-		Description: a.String("--description"),
+		Type:        ca.Type,
+		Assignee:    ca.Assignee,
+		Description: ca.Description,
 	}
-	if p, set, err := a.IntErr("--priority"); err != nil {
-		return err
-	} else if set {
-		opts.Priority = p
+	if ca.PrioritySet {
+		opts.Priority = ca.Priority
 	}
 
-	iss, err := store.Create(title, opts)
+	iss, err := store.Create(ca.Title, opts)
 	if err != nil {
 		return err
 	}
@@ -41,7 +67,7 @@ func cmdCreate(args []string, w io.Writer) error {
 		return fmt.Errorf("commit failed: %w", err)
 	}
 
-	if a.JSON() {
+	if ca.JSON {
 		fprintJSON(w, iss)
 	} else {
 		fmt.Fprintf(w, "created %s: %s\n", iss.ID, iss.Title)

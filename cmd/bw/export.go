@@ -29,14 +29,31 @@ type beadsRecord struct {
 	Dependencies []beadsDep `json:"dependencies,omitempty"`
 }
 
+type ExportArgs struct {
+	Status string
+	JSON   bool
+}
+
+func parseExportArgs(raw []string) (ExportArgs, error) {
+	a := ParseArgs(raw, "--status")
+	return ExportArgs{
+		Status: a.String("--status"),
+		JSON:   a.JSON(),
+	}, nil
+}
+
 func cmdExport(args []string, w io.Writer) error {
+	ea, err := parseExportArgs(args)
+	if err != nil {
+		return err
+	}
+
 	_, store, err := getInitialized()
 	if err != nil {
 		return err
 	}
 
-	a := ParseArgs(args, "--status")
-	filter := issue.Filter{Status: a.String("--status")}
+	filter := issue.Filter{Status: ea.Status}
 
 	issues, err := store.List(filter)
 	if err != nil {

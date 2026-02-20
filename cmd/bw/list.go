@@ -7,35 +7,64 @@ import (
 	"github.com/jallum/beadwork/internal/issue"
 )
 
-func cmdList(args []string, w io.Writer) error {
-	_, store, err := getInitialized()
-	if err != nil {
-		return err
-	}
+type ListArgs struct {
+	Status   string
+	Assignee string
+	Priority int
+	Type     string
+	Label    string
+	Limit    int
+	LimitSet bool
+	All      bool
+	JSON     bool
+}
 
-	a := ParseArgs(args, "--status", "--assignee", "--priority", "--type", "--label", "--limit")
-
-	filter := issue.Filter{
+func parseListArgs(raw []string) (ListArgs, error) {
+	a := ParseArgs(raw, "--status", "--assignee", "--priority", "--type", "--label", "--limit")
+	la := ListArgs{
 		Status:   a.String("--status"),
 		Assignee: a.String("--assignee"),
 		Priority: a.Int("--priority"),
 		Type:     a.String("--type"),
 		Label:    a.String("--label"),
+		All:      a.Bool("--all"),
+		JSON:     a.JSON(),
+		Limit:    10,
 	}
-
-	limit := 10
 	if a.Has("--limit") {
-		limit = a.Int("--limit")
+		la.Limit = a.Int("--limit")
+		la.LimitSet = true
+	}
+	return la, nil
+}
+
+func cmdList(args []string, w io.Writer) error {
+	la, err := parseListArgs(args)
+	if err != nil {
+		return err
 	}
 
-	showAll := a.Bool("--all")
+	_, store, err := getInitialized()
+	if err != nil {
+		return err
+	}
+
+	filter := issue.Filter{
+		Status:   la.Status,
+		Assignee: la.Assignee,
+		Priority: la.Priority,
+		Type:     la.Type,
+		Label:    la.Label,
+	}
+
+	limit := la.Limit
 
 	// Defaults: open status, limit 10. --all overrides both.
-	if showAll {
-		if !a.Has("--limit") {
+	if la.All {
+		if !la.LimitSet {
 			limit = 0
 		}
-	} else if !a.Has("--status") {
+	} else if la.Status == "" {
 		filter.Status = "open"
 	}
 
@@ -44,7 +73,7 @@ func cmdList(args []string, w io.Writer) error {
 		return err
 	}
 
-	if a.JSON() {
+	if la.JSON {
 		if limit > 0 && len(issues) > limit {
 			issues = issues[:limit]
 		}
