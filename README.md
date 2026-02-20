@@ -1,7 +1,7 @@
 # Beadwork
 
 [![CI](https://github.com/jallum/beadwork/actions/workflows/ci.yml/badge.svg)](https://github.com/jallum/beadwork/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/jallum/beadwork/graph/badge.svg?token=ECD80LE1EI)](https://codecov.io/gh/jallum/beadwork)
+[![coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/jallum/beadwork/badges/coverage.json)](https://github.com/jallum/beadwork/actions/workflows/ci.yml)
 
 Filesystem-native issue tracking for AI coding agents. Issues are JSON files, structure is directories, sync is git.
 

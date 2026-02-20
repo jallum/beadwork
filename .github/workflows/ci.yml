@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -24,8 +27,36 @@ jobs:
         env:
           CLI_COVER_PROFILE: ${{ github.workspace }}/cli-coverage.out
 
-      - name: Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          files: coverage.out,cli-coverage.out
-          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Coverage badge
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          # Merge unit-test and CLI integration coverage profiles
+          head -1 coverage.out > merged.out
+          tail -n +2 coverage.out >> merged.out
+          [ -f cli-coverage.out ] && tail -n +2 cli-coverage.out >> merged.out
+          COV=$(go tool cover -func=merged.out | awk '/^total:/{print $NF}')
+          PCT=${COV%%%}
+          COLOR=red
+          awk "BEGIN{exit !($PCT >= 80)}" && COLOR=brightgreen ||
+          awk "BEGIN{exit !($PCT >= 70)}" && COLOR=green ||
+          awk "BEGIN{exit !($PCT >= 60)}" && COLOR=yellowgreen ||
+          awk "BEGIN{exit !($PCT >= 50)}" && COLOR=yellow ||
+          true
+          BADGE='{"schemaVersion":1,"label":"coverage","message":"'"$COV"'","color":"'"$COLOR"'"}'
+          WORK=$(mktemp -d)
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git clone --depth 1 --branch badges \
+            "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" \
+            "$WORK" 2>/dev/null || {
+            git init "$WORK"
+            git -C "$WORK" remote add origin \
+              "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+            git -C "$WORK" checkout --orphan badges
+          }
+          echo "$BADGE" > "$WORK/coverage.json"
+          git -C "$WORK" add coverage.json
+          git -C "$WORK" diff --staged --quiet || {
+            git -C "$WORK" commit -m "coverage: $COV"
+            git -C "$WORK" push -f origin badges
+          }
