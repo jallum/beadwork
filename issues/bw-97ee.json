@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T05:45:03Z",
+  "description": "",
+  "id": "bw-97ee",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Improve per-command help text",
+  "type": "epic"
+}
