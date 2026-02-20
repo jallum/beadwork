@@ -215,6 +215,14 @@ var commands = []Command{
 		Run: cmdReady,
 	},
 	{
+		Name:    "blocked",
+		Summary: "List blocked issues",
+		Flags: []Flag{
+			{Long: "--json", Help: "Output as JSON"},
+		},
+		Run: cmdBlocked,
+	},
+	{
 		Name:        "graph",
 		Summary:     "Dependency graph",
 		Description: "Display the dependency graph for an issue or all open issues.\nWith --all, shows all open issues grouped by connected component.",
@@ -342,7 +350,7 @@ var commandGroups = []struct {
 	cmds []string
 }{
 	{"Working With Issues", []string{"create", "show", "list", "update", "close", "reopen", "label"}},
-	{"Finding Work", []string{"ready"}},
+	{"Finding Work", []string{"ready", "blocked"}},
 	{"Dependencies", []string{"dep", "graph"}},
 	{"Sync & Data", []string{"sync", "export", "import"}},
 	{"Setup & Config", []string{"init", "config", "upgrade", "onboard", "prime"}},
