@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T04:56:28Z",
+  "description": "",
+  "id": "bw-4ebc",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Add Command/Flag/Positional types and registry dispatch",
+  "type": "task"
+}
