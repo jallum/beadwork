@@ -24,12 +24,13 @@ const releaseURL = "https://api.github.com/repos/jallum/beadwork/releases/latest
 
 // Injectable dependencies for testing. Production code uses the defaults.
 var (
-	upgradeFetchRelease  = fetchLatestRelease
-	upgradeDownloadAsset = downloadAsset
-	upgradeResolveBinary = resolveBinary
-	upgradeStdin         io.Reader = os.Stdin
-	upgradeCurrentVersion          = func() string { return version }
-	upgradeVerify                  = func(execPath string) (string, error) {
+	upgradeFetchRelease   = fetchLatestRelease
+	upgradeDownloadAsset  = downloadAsset
+	upgradeResolveBinary  = resolveBinary
+	upgradeFetchChangelog = fetchChangelog
+	upgradeStdin          io.Reader = os.Stdin
+	upgradeCurrentVersion           = func() string { return version }
+	upgradeVerify                   = func(execPath string) (string, error) {
 		out, err := exec.Command(execPath, "--version").Output()
 		return strings.TrimSpace(string(out)), err
 	}
@@ -43,6 +44,7 @@ type ghRelease struct {
 type ghAsset struct {
 	Name string `json:"name"`
 	URL  string `json:"browser_download_url"`
+	Size int64  `json:"size"`
 }
 
 type UpgradeArgs struct {
@@ -92,11 +94,26 @@ func cmdUpgrade(args []string, w Writer) error {
 
 	cur := upgradeCurrentVersion()
 	if compareVersions(cur, latest) >= 0 {
-		fmt.Fprintf(w, "bw %s (up to date)\n", cur)
+		fmt.Fprintf(w, "bw %s (up to date)\n", w.Style(cur, Dim))
 		return nil
 	}
 
-	fmt.Fprintf(w, "bw %s → %s available\n", cur, latest)
+	fmt.Fprintf(w, "bw %s %s %s available\n",
+		w.Style(cur, Dim), w.Style("→", Dim), w.Style(latest, Bold))
+
+	// Fetch and display changelog (non-fatal on failure)
+	if changelogContent, cerr := upgradeFetchChangelog(latest); cerr == nil {
+		if parsed := parseChangelog(changelogContent, cur, latest); parsed != "" {
+			fmt.Fprintln(w)
+			for _, line := range strings.Split(parsed, "\n") {
+				if strings.HasPrefix(line, "## ") {
+					fmt.Fprintf(w, "  %s\n", w.Style(strings.TrimPrefix(line, "## "), Bold))
+				} else {
+					fmt.Fprintf(w, "  %s\n", line)
+				}
+			}
+		}
+	}
 
 	if check {
 		return nil
@@ -123,7 +140,7 @@ func cmdUpgrade(args []string, w Writer) error {
 
 	// Prompt unless --yes
 	if !yes {
-		fmt.Fprintf(w, "download and install? [y/N] ")
+		fmt.Fprintf(w, "\ndownload and install? [y/N] ")
 		reader := bufio.NewReader(upgradeStdin)
 		answer, _ := reader.ReadString('\n')
 		answer = strings.TrimSpace(strings.ToLower(answer))
@@ -134,13 +151,14 @@ func cmdUpgrade(args []string, w Writer) error {
 	}
 
 	// Download
-	fmt.Fprintf(w, "downloading %s...\n", asset.Name)
-	archiveData, err := upgradeDownloadAsset(asset.URL)
+	fmt.Fprintf(w, "downloading %s...\n", w.Style(asset.Name, Cyan))
+	archiveData, err := upgradeDownloadAsset(asset.URL, asset.Size, w)
 	if err != nil {
 		return fmt.Errorf("download failed: %w", err)
 	}
 
 	// Extract binary from archive
+	fmt.Fprintln(w, "extracting binary from archive...")
 	binaryData, err := extractBinary(asset.Name, archiveData)
 	if err != nil {
 		return fmt.Errorf("extract failed: %w", err)
@@ -148,8 +166,11 @@ func cmdUpgrade(args []string, w Writer) error {
 
 	// Install
 	if symlink {
+		fmt.Fprintf(w, "installing %s → %s (symlink)\n",
+			w.Style("bw-"+latest, Bold), w.Style(execPath, Cyan))
 		err = installSymlink(execPath, targetPath, installDir, latest, binaryData)
 	} else {
+		fmt.Fprintf(w, "replacing %s...\n", w.Style(execPath, Cyan))
 		err = installDirect(execPath, binaryData)
 	}
 	if err != nil {
@@ -157,11 +178,12 @@ func cmdUpgrade(args []string, w Writer) error {
 	}
 
 	// Verify
+	fmt.Fprintf(w, "verifying... ")
 	verOut, verr := upgradeVerify(execPath)
 	if verr != nil {
 		return fmt.Errorf("installed binary failed verification: %w", verr)
 	}
-	fmt.Fprintln(w, verOut)
+	fmt.Fprintln(w, w.Style(verOut, Green))
 	return nil
 }
 
@@ -223,7 +245,7 @@ func findAsset(release *ghRelease, ver string) (*ghAsset, error) {
 	return nil, fmt.Errorf("no release asset for %s/%s (looking for %s)", runtime.GOOS, runtime.GOARCH, want)
 }
 
-func downloadAsset(url string) ([]byte, error) {
+func downloadAsset(url string, size int64, w Writer) ([]byte, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -233,7 +255,48 @@ func downloadAsset(url string) ([]byte, error) {
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
 	}
-	return io.ReadAll(resp.Body)
+
+	total := size
+	if resp.ContentLength > 0 {
+		total = resp.ContentLength
+	}
+
+	var buf bytes.Buffer
+	if total > 0 {
+		buf.Grow(int(total))
+	}
+
+	// Stream with progress reporting
+	_, isTTY := w.(*colorWriter)
+	written := int64(0)
+	chunk := make([]byte, 32*1024)
+	for {
+		n, readErr := resp.Body.Read(chunk)
+		if n > 0 {
+			buf.Write(chunk[:n])
+			written += int64(n)
+			if isTTY && total > 0 {
+				fmt.Fprintf(w, "\r  %s",
+					w.Style(fmt.Sprintf("%s/%s (%d%%)",
+						formatBytes(written), formatBytes(total),
+						written*100/total), Dim))
+			}
+		}
+		if readErr == io.EOF {
+			break
+		}
+		if readErr != nil {
+			return nil, readErr
+		}
+	}
+
+	if isTTY && total > 0 {
+		fmt.Fprintf(w, "\r  %s %s\n", formatBytes(written), w.Style("done", Green))
+	} else {
+		fmt.Fprintf(w, "  %s %s\n", formatBytes(written), w.Style("done", Green))
+	}
+
+	return buf.Bytes(), nil
 }
 
 func extractBinary(assetName string, data []byte) ([]byte, error) {
@@ -408,6 +471,61 @@ func cmdUpgradeRepo(args []string, w Writer) error {
 
 	fmt.Fprintf(w, "repo upgraded to v%d\n", to)
 	return nil
+}
+
+const changelogURL = "https://raw.githubusercontent.com/jallum/beadwork/v%s/CHANGELOG.md"
+
+func fetchChangelog(version string) (string, error) {
+	resp, err := http.Get(fmt.Sprintf(changelogURL, version))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("HTTP %d", resp.StatusCode)
+	}
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// parseChangelog extracts changelog entries for versions in the range (from, to].
+func parseChangelog(content, from, to string) string {
+	var result strings.Builder
+	lines := strings.Split(content, "\n")
+	include := false
+
+	for _, line := range lines {
+		if strings.HasPrefix(line, "## ") {
+			// Extract version: "## 0.6.0 — 2026-02-21" -> "0.6.0"
+			rest := strings.TrimPrefix(line, "## ")
+			ver := strings.Fields(rest)[0]
+			if !validVersion(ver) {
+				include = false
+				continue
+			}
+			// Include if from < ver <= to
+			include = compareVersions(ver, from) > 0 && compareVersions(ver, to) <= 0
+		}
+		if include {
+			result.WriteString(line)
+			result.WriteByte('\n')
+		}
+	}
+	return strings.TrimRight(result.String(), "\n")
+}
+
+func formatBytes(n int64) string {
+	switch {
+	case n >= 1<<20:
+		return fmt.Sprintf("%.1f MB", float64(n)/float64(1<<20))
+	case n >= 1<<10:
+		return fmt.Sprintf("%.1f KB", float64(n)/float64(1<<10))
+	default:
+		return fmt.Sprintf("%d B", n)
+	}
 }
 
 func compareVersions(a, b string) int {
