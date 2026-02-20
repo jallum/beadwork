@@ -1,0 +1,17 @@
+version: 2
+
+builds:
+  - main: ./cmd/bw
+    binary: bw
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - format_overrides:
+      - goos: windows
+        format: zip
