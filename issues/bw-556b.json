@@ -7,7 +7,7 @@
   "id": "bw-556b",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "Improve test coverage for cmd/bw/prime.go",
   "type": "task"
 }
