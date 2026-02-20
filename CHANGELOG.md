@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.3 — 2026-02-20
+
+- `bw import -` reads from stdin, enabling piping (`bd export | bw import -`)
+- Dependency injection for upgrade command enables deterministic testing (84% coverage)
+- Increased test coverage for init and blocked commands
+
 ## 0.5.2 — 2026-02-20
 
 - Issue IDs now use base36 (`0-9a-z`) with adaptive length starting at 3 characters, growing as needed to avoid collisions
