@@ -1198,6 +1198,44 @@ func TestCmdPrimeBasic(t *testing.T) {
 	}
 }
 
+func TestCmdPrimeInProgress(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("In progress task", issue.CreateOpts{})
+	statusIP := "in_progress"
+	env.Store.Update(iss.ID, issue.UpdateOpts{Status: &statusIP})
+	env.Repo.Commit("create and update " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdPrime(&buf)
+	if err != nil {
+		t.Fatalf("cmdPrime: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "In progress:") {
+		t.Errorf("output missing 'In progress:': %q", out)
+	}
+	if !strings.Contains(out, "In progress task") {
+		t.Errorf("output missing in_progress task: %q", out)
+	}
+}
+
+func TestCmdPrimeEmpty(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdPrime(&buf)
+	if err != nil {
+		t.Fatalf("cmdPrime: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "0 open") {
+		t.Errorf("output missing '0 open': %q", out)
+	}
+}
+
 // --- Onboard ---
 
 func TestCmdOnboardBasic(t *testing.T) {
