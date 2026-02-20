@@ -1,5 +1,5 @@
 # The application binary
-/bw
+/bw*
 
 # AI Agent cruft
 CLAUDE.md
