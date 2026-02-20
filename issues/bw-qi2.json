@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T22:14:27Z",
+  "description": "",
+  "id": "bw-qi2",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "TTY-aware color output with Writer interface",
+  "type": "task",
+  "updated_at": "2026-02-20T22:14:27Z"
+}
