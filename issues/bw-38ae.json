@@ -14,7 +14,7 @@
   "id": "bw-38ae",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Command registry with typed parsing and struct-driven help",
   "type": "task"
 }
