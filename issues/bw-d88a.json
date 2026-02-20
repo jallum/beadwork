@@ -12,7 +12,7 @@
   "id": "bw-d88a",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Add typed parse functions for simple commands (show, reopen, ready, close)",
   "type": "task"
 }
