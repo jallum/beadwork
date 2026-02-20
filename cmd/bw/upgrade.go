@@ -30,10 +30,26 @@ type ghAsset struct {
 	URL  string `json:"browser_download_url"`
 }
 
+type UpgradeArgs struct {
+	Check bool
+	Yes   bool
+}
+
+func parseUpgradeArgs(raw []string) (UpgradeArgs, error) {
+	a := ParseArgs(raw)
+	return UpgradeArgs{
+		Check: a.Bool("--check"),
+		Yes:   a.Bool("--yes"),
+	}, nil
+}
+
 func cmdUpgrade(args []string, w io.Writer) error {
-	a := ParseArgs(args)
-	check := a.Bool("--check")
-	yes := a.Bool("--yes")
+	ua, err := parseUpgradeArgs(args)
+	if err != nil {
+		return err
+	}
+	check := ua.Check
+	yes := ua.Yes
 
 	// Resolve our binary location
 	execPath, symlink, targetPath, err := resolveBinary()

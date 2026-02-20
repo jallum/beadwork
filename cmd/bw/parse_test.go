@@ -447,3 +447,228 @@ func TestParseUpdateArgsAliases(t *testing.T) {
 		t.Errorf("Type = %q", a.Type)
 	}
 }
+
+// --- parseLabelArgs ---
+
+func TestParseLabelArgs(t *testing.T) {
+	a, err := parseLabelArgs([]string{"bw-1234", "+bug", "+urgent"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.ID != "bw-1234" {
+		t.Errorf("ID = %q", a.ID)
+	}
+	if len(a.Add) != 2 || a.Add[0] != "bug" || a.Add[1] != "urgent" {
+		t.Errorf("Add = %v", a.Add)
+	}
+}
+
+func TestParseLabelArgsRemove(t *testing.T) {
+	a, err := parseLabelArgs([]string{"bw-1234", "-bug"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(a.Remove) != 1 || a.Remove[0] != "bug" {
+		t.Errorf("Remove = %v", a.Remove)
+	}
+}
+
+func TestParseLabelArgsBareAdd(t *testing.T) {
+	a, err := parseLabelArgs([]string{"bw-1234", "feature"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(a.Add) != 1 || a.Add[0] != "feature" {
+		t.Errorf("Add = %v, want [feature]", a.Add)
+	}
+}
+
+func TestParseLabelArgsJSON(t *testing.T) {
+	a, err := parseLabelArgs([]string{"bw-1234", "+bug", "--json"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !a.JSON {
+		t.Error("expected JSON = true")
+	}
+	if len(a.Add) != 1 || a.Add[0] != "bug" {
+		t.Errorf("Add = %v", a.Add)
+	}
+}
+
+func TestParseLabelArgsMissing(t *testing.T) {
+	_, err := parseLabelArgs([]string{"bw-1234"})
+	if err == nil {
+		t.Error("expected error for missing label args")
+	}
+}
+
+func TestParseLabelArgsMissingID(t *testing.T) {
+	_, err := parseLabelArgs([]string{})
+	if err == nil {
+		t.Error("expected error for missing args")
+	}
+}
+
+// --- parseLinkArgs / parseUnlinkArgs ---
+
+func TestParseLinkArgs(t *testing.T) {
+	a, err := parseLinkArgs([]string{"bw-aaaa", "blocks", "bw-bbbb"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.BlockerID != "bw-aaaa" {
+		t.Errorf("BlockerID = %q", a.BlockerID)
+	}
+	if a.BlockedID != "bw-bbbb" {
+		t.Errorf("BlockedID = %q", a.BlockedID)
+	}
+}
+
+func TestParseLinkArgsBadSyntax(t *testing.T) {
+	_, err := parseLinkArgs([]string{"a", "b"})
+	if err == nil {
+		t.Error("expected error for bad syntax")
+	}
+}
+
+func TestParseLinkArgsMissing(t *testing.T) {
+	_, err := parseLinkArgs([]string{})
+	if err == nil {
+		t.Error("expected error for missing args")
+	}
+}
+
+func TestParseUnlinkArgs(t *testing.T) {
+	a, err := parseUnlinkArgs([]string{"bw-aaaa", "blocks", "bw-bbbb"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.BlockerID != "bw-aaaa" || a.BlockedID != "bw-bbbb" {
+		t.Errorf("got %+v", a)
+	}
+}
+
+func TestParseUnlinkArgsBadSyntax(t *testing.T) {
+	_, err := parseUnlinkArgs([]string{"a", "b"})
+	if err == nil {
+		t.Error("expected error for bad syntax")
+	}
+}
+
+// --- parseConfigArgs ---
+
+func TestParseConfigArgsGet(t *testing.T) {
+	a, err := parseConfigArgs([]string{"get", "default.priority"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.Subcmd != "get" || a.Key != "default.priority" {
+		t.Errorf("got %+v", a)
+	}
+}
+
+func TestParseConfigArgsSet(t *testing.T) {
+	a, err := parseConfigArgs([]string{"set", "default.priority", "2"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.Subcmd != "set" || a.Key != "default.priority" || a.Value != "2" {
+		t.Errorf("got %+v", a)
+	}
+}
+
+func TestParseConfigArgsList(t *testing.T) {
+	a, err := parseConfigArgs([]string{"list"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.Subcmd != "list" {
+		t.Errorf("Subcmd = %q", a.Subcmd)
+	}
+}
+
+func TestParseConfigArgsMissing(t *testing.T) {
+	_, err := parseConfigArgs([]string{})
+	if err == nil {
+		t.Error("expected error for missing subcommand")
+	}
+}
+
+func TestParseConfigArgsUnknown(t *testing.T) {
+	_, err := parseConfigArgs([]string{"delete"})
+	if err == nil {
+		t.Error("expected error for unknown subcommand")
+	}
+}
+
+func TestParseConfigArgsGetNoKey(t *testing.T) {
+	_, err := parseConfigArgs([]string{"get"})
+	if err == nil {
+		t.Error("expected error for get without key")
+	}
+}
+
+func TestParseConfigArgsSetNoValue(t *testing.T) {
+	_, err := parseConfigArgs([]string{"set", "key"})
+	if err == nil {
+		t.Error("expected error for set without value")
+	}
+}
+
+// --- parseInitArgs ---
+
+func TestParseInitArgs(t *testing.T) {
+	a, err := parseInitArgs([]string{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.Prefix != "" || a.Force {
+		t.Errorf("got %+v, want empty defaults", a)
+	}
+}
+
+func TestParseInitArgsWithFlags(t *testing.T) {
+	a, err := parseInitArgs([]string{"--prefix", "test", "--force"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.Prefix != "test" {
+		t.Errorf("Prefix = %q", a.Prefix)
+	}
+	if !a.Force {
+		t.Error("expected Force = true")
+	}
+}
+
+// --- parseUpgradeArgs ---
+
+func TestParseUpgradeArgs(t *testing.T) {
+	a, err := parseUpgradeArgs([]string{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.Check || a.Yes {
+		t.Errorf("got %+v, want empty defaults", a)
+	}
+}
+
+func TestParseUpgradeArgsCheck(t *testing.T) {
+	a, err := parseUpgradeArgs([]string{"--check"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !a.Check {
+		t.Error("expected Check = true")
+	}
+}
+
+func TestParseUpgradeArgsYes(t *testing.T) {
+	a, err := parseUpgradeArgs([]string{"--yes"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !a.Yes {
+		t.Error("expected Yes = true")
+	}
+}
