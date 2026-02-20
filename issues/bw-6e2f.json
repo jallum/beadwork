@@ -6,7 +6,7 @@
   "description": "Centralize status and priority definitions in issue package. Add StatusIcon() and PriorityDot() helpers. Update ready and list commands to use polished format with colored output.",
   "id": "bw-6e2f",
   "labels": [],
-  "priority": 2,
+  "priority": 1,
   "status": "closed",
   "title": "Redesign bw ready and bw list output with status icons and priority colors",
   "type": "task"

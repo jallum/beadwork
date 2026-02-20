@@ -6,7 +6,7 @@
   "description": "Create a config system with .bwconfig file. Include default priority as first configurable option. Add bw config set/get commands.",
   "id": "bw-f0ae",
   "labels": [],
-  "priority": 3,
+  "priority": 2,
   "status": "closed",
   "title": "Add .bwconfig with commands to set/view config options",
   "type": "task"

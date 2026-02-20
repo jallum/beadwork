@@ -6,7 +6,7 @@
   "description": "",
   "id": "bw-3db1",
   "labels": [],
-  "priority": 1,
+  "priority": 0,
   "status": "closed",
   "title": "Improve test coverage for internal/store/issue.go",
   "type": "task"

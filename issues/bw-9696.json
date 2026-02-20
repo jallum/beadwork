@@ -6,7 +6,7 @@
   "description": "Convert the internal design proposal into a proper project README. Remove docs/proposal.md afterward.",
   "id": "bw-9696",
   "labels": [],
-  "priority": 2,
+  "priority": 1,
   "status": "closed",
   "title": "Rewrite docs/proposal.md into root README.md",
   "type": "task"

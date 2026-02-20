@@ -6,7 +6,7 @@
   "description": "Create .github/workflows/ci.yml that runs go test ./... on push and PR. Test on ubuntu-latest with the Go version from .tool-versions.",
   "id": "bw-2e6a",
   "labels": [],
-  "priority": 1,
+  "priority": 0,
   "status": "closed",
   "title": "Add GitHub Actions CI workflow",
   "type": "task"

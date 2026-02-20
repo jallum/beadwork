@@ -6,7 +6,7 @@
   "description": "",
   "id": "bw-ff9b",
   "labels": [],
-  "priority": 1,
+  "priority": 0,
   "status": "closed",
   "title": "Improve test coverage for internal/repo/repo.go",
   "type": "task"

@@ -6,7 +6,7 @@
   "description": "Refactor the monolithic main.go into separate files: main.go (routing), helpers.go (shared utils), and one file per command.",
   "id": "bw-eaef",
   "labels": [],
-  "priority": 2,
+  "priority": 1,
   "status": "closed",
   "title": "Split cmd/bw/main.go into one file per command",
   "type": "task"

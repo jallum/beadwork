@@ -6,7 +6,7 @@
   "description": "Add a version constant, wire it into the CLI (bw --version), and create CHANGELOG.md with the initial release entry.",
   "id": "bw-b3c6",
   "labels": [],
-  "priority": 2,
+  "priority": 1,
   "status": "closed",
   "title": "Set project version to 0.1.0 and start CHANGELOG.md",
   "type": "task"

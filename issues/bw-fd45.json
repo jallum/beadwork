@@ -10,7 +10,7 @@
   "description": "Replace hardcoded AGENTS.md content in prompts/onboard.md with a %s placeholder. Update cmdOnboard() in cmd/bw/main.go to use fmt.Printf(prompts.Onboard, prompts.AgentsMD) to compose the output.",
   "id": "bw-fd45",
   "labels": [],
-  "priority": 2,
+  "priority": 1,
   "status": "closed",
   "title": "Update onboard.md template and cmdOnboard to use embedded AGENTS.md",
   "type": "task"

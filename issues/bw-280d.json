@@ -9,7 +9,7 @@
   "description": "Add //go:generate cp ../../AGENTS.md agents.md to prompts/prompts.go. Add //go:embed agents.md with var AgentsMD string. Add prompts/.gitignore to exclude the generated agents.md.",
   "id": "bw-280d",
   "labels": [],
-  "priority": 2,
+  "priority": 1,
   "status": "closed",
   "title": "Add go:generate directive and embed AGENTS.md in prompts package",
   "type": "task"

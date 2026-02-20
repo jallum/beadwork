@@ -6,7 +6,7 @@
   "description": "",
   "id": "bw-e6f3",
   "labels": [],
-  "priority": 1,
+  "priority": 0,
   "status": "closed",
   "title": "Improve test coverage for cmd/bw/label.go",
   "type": "task"

@@ -6,7 +6,7 @@
   "description": "Dependency graph visualization: ASCII default, JSON with --json",
   "id": "bw-2158",
   "labels": [],
-  "priority": 3,
+  "priority": 2,
   "status": "closed",
   "title": "Implement bw graph command",
   "type": "task"

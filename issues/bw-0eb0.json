@@ -8,7 +8,7 @@
   "description": "Add a go generate ./... step to .github/workflows/ci.yml before the Build and Test steps so the embedded AGENTS.md is generated in CI.",
   "id": "bw-0eb0",
   "labels": [],
-  "priority": 2,
+  "priority": 1,
   "status": "closed",
   "title": "Add go generate step to CI workflow",
   "type": "task"

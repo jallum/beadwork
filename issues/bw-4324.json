@@ -6,7 +6,7 @@
   "description": "Align with bd's priority system: 0-4 scale where 0 is highest, default P2. Accept both numeric (0-4) and string (P0-P4) input. Current bw uses 1-5 with 1=highest, default 3. Breaking change — existing issues with priorities 1-5 need migration. Also reject out-of-range values (covers bw-eea7).",
   "id": "bw-4324",
   "labels": [],
-  "priority": 1,
+  "priority": 0,
   "status": "closed",
   "title": "Shift priority scale to 0-4 (P0=highest)",
   "type": "task"

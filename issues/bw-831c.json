@@ -11,7 +11,7 @@
   "description": "",
   "id": "bw-831c",
   "labels": [],
-  "priority": 1,
+  "priority": 0,
   "status": "closed",
   "title": "Add typed parse functions for custom-positional commands (label, link/unlink, config, init, upgrade)",
   "type": "task"

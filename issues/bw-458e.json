@@ -6,7 +6,7 @@
   "description": "Align with bd: treat only the first positional arg as the title. Multi-word titles must be quoted. Currently bw joins all unquoted positional args into the title, which masks errors when flags are misspelled (they get absorbed into the title). This also aligns with the unknown-flags fix (bw-5ddd) — once we stop absorbing unknowns, bare words after flags would error anyway.",
   "id": "bw-458e",
   "labels": [],
-  "priority": 1,
+  "priority": 0,
   "status": "closed",
   "title": "Require quoted multi-word titles",
   "type": "task"

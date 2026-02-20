@@ -13,7 +13,7 @@
   "description": "",
   "id": "bw-4ebc",
   "labels": [],
-  "priority": 1,
+  "priority": 0,
   "status": "closed",
   "title": "Add Command/Flag/Positional types and registry dispatch",
   "type": "task"

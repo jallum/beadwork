@@ -6,7 +6,7 @@
   "description": "bd supports '-l, --labels frontend,urgent' at create time. bw requires a separate 'bw label' call after creation. Adding labels at create time reduces round-trips and is more natural for scripting.",
   "id": "bw-55d0",
   "labels": [],
-  "priority": 3,
+  "priority": 2,
   "status": "open",
   "title": "Add --labels flag to create",
   "type": "feature"

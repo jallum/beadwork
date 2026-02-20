@@ -6,7 +6,7 @@
   "description": "",
   "id": "bw-f75b",
   "labels": [],
-  "priority": 2,
+  "priority": 1,
   "status": "closed",
   "title": "Lossless export/import + integration scenario test",
   "type": "task"

@@ -6,7 +6,7 @@
   "description": "Fetch, rebase (or intent replay), push. Core sync mechanism.",
   "id": "bw-cebb",
   "labels": [],
-  "priority": 2,
+  "priority": 1,
   "status": "closed",
   "title": "Implement bw sync command",
   "type": "task"

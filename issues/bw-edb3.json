@@ -6,7 +6,7 @@
   "description": "onboard: prints static AGENTS.md snippet pointing to bw prime. prime: dynamic workflow context with full command reference and current project state (open issues, ready count).",
   "id": "bw-edb3",
   "labels": [],
-  "priority": 1,
+  "priority": 0,
   "status": "closed",
   "title": "Redesign onboard and add prime command",
   "type": "task"

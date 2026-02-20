@@ -10,7 +10,7 @@
   "description": "",
   "id": "bw-c60e",
   "labels": [],
-  "priority": 2,
+  "priority": 1,
   "status": "closed",
   "title": "Refactor Store to use TreeFS instead of os.*",
   "type": "task"

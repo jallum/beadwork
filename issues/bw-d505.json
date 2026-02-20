@@ -10,7 +10,7 @@
   "description": "Add go:generate directive to copy root AGENTS.md into prompts/ at build time, embed it, and have cmdOnboard compose the output using the embedded content instead of hardcoded duplicate. Includes: go:generate in prompts.go, .gitignore for generated file, onboard.md template with placeholder, cmdOnboard fmt.Printf, and CI workflow update.",
   "id": "bw-d505",
   "labels": [],
-  "priority": 2,
+  "priority": 1,
   "status": "closed",
   "title": "Embed root AGENTS.md into bw onboard via go:generate",
   "type": "task"

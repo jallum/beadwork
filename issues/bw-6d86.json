@@ -9,7 +9,7 @@
   "description": "",
   "id": "bw-6d86",
   "labels": [],
-  "priority": 1,
+  "priority": 0,
   "status": "closed",
   "title": "Auto-generate help text from Command structs",
   "type": "task"

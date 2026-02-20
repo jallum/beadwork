@@ -11,7 +11,7 @@
   "description": "",
   "id": "bw-7328",
   "labels": [],
-  "priority": 1,
+  "priority": 0,
   "status": "closed",
   "title": "Convert cmdShow, cmdInit, cmdGraph to ParseArgs",
   "type": "task"

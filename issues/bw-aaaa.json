@@ -6,7 +6,7 @@
   "description": "Remote agent issue",
   "id": "bw-aaaa",
   "labels": [],
-  "priority": 1,
+  "priority": 0,
   "status": "closed",
   "title": "Issue from remote agent",
   "type": "task"
