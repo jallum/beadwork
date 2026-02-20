@@ -1193,6 +1193,34 @@ func TestCmdImportPriorityAbsent(t *testing.T) {
 	}
 }
 
+func TestCmdImportStdin(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	jsonl := `{"id":"stdin-1","title":"From stdin","status":"open","issue_type":"task","created_at":"2024-01-01T00:00:00Z"}`
+
+	orig := importStdin
+	importStdin = bytes.NewReader([]byte(jsonl + "\n"))
+	t.Cleanup(func() { importStdin = orig })
+
+	var buf bytes.Buffer
+	if err := cmdImport([]string{"-"}, &buf); err != nil {
+		t.Fatalf("cmdImport stdin: %v", err)
+	}
+
+	if !bytes.Contains(buf.Bytes(), []byte("imported 1 issues")) {
+		t.Errorf("output = %q, want 'imported 1 issues'", buf.String())
+	}
+
+	iss, err := env.Store.Get("stdin-1")
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if iss.Title != "From stdin" {
+		t.Errorf("title = %q, want %q", iss.Title, "From stdin")
+	}
+}
+
 // --- Sync ---
 
 func TestCmdSyncNoRemote(t *testing.T) {

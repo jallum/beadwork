@@ -32,6 +32,8 @@ type ImportArgs struct {
 	DryRun   bool
 }
 
+var importStdin io.Reader = os.Stdin
+
 func parseImportArgs(raw []string) (ImportArgs, error) {
 	a, err := ParseArgs(raw, nil, []string{"--dry-run"})
 	if err != nil {
@@ -62,14 +64,20 @@ func cmdImport(args []string, w io.Writer) error {
 	filePath := ia.FilePath
 
 	// Phase 1: Parse
-	f, err := os.Open(filePath)
-	if err != nil {
-		return err
+	var reader io.Reader
+	if filePath == "-" {
+		reader = importStdin
+	} else {
+		f, err := os.Open(filePath)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		reader = f
 	}
-	defer f.Close()
 
 	var records []importRecord
-	scanner := bufio.NewScanner(f)
+	scanner := bufio.NewScanner(reader)
 	scanner.Buffer(make([]byte, 1024*1024), 1024*1024) // 1MB line buffer
 	lineNum := 0
 	for scanner.Scan() {
