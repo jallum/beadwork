@@ -3,7 +3,6 @@ package testutil
 import (
 	"os"
 	"os/exec"
-	"path/filepath"
 	"testing"
 
 	"github.com/jallum/beadwork/internal/issue"
@@ -12,11 +11,11 @@ import (
 
 // Env is a self-contained test environment with a real git repo.
 type Env struct {
-	T        *testing.T
-	Dir      string
-	Repo     *repo.Repo
-	Store    *issue.Store
-	Cleanup  func()
+	T       *testing.T
+	Dir     string
+	Repo    *repo.Repo
+	Store   *issue.Store
+	Cleanup func()
 }
 
 // NewEnv creates a temp directory with a git repo, initializes beadwork,
@@ -29,7 +28,7 @@ func NewEnv(t *testing.T) *Env {
 	run(t, dir, "git", "init")
 	run(t, dir, "git", "config", "user.email", "test@test.com")
 	run(t, dir, "git", "config", "user.name", "Test")
-	os.WriteFile(filepath.Join(dir, "README"), []byte("test"), 0644)
+	os.WriteFile(dir+"/README", []byte("test"), 0644)
 	run(t, dir, "git", "add", ".")
 	run(t, dir, "git", "commit", "-m", "initial")
 
@@ -45,7 +44,7 @@ func NewEnv(t *testing.T) *Env {
 		t.Fatalf("Init: %v", err)
 	}
 
-	store := issue.NewStore(r.WorkTree, r.Prefix)
+	store := issue.NewStore(r.TreeFS(), r.Prefix)
 
 	return &Env{
 		T:     t,
@@ -62,7 +61,7 @@ func NewEnv(t *testing.T) *Env {
 // "origin" to the test env, and returns the bare repo path.
 func (e *Env) NewBareRemote() string {
 	e.T.Helper()
-	bare := filepath.Join(e.Dir, "remote.git")
+	bare := e.Dir + "/remote.git"
 	run(e.T, e.Dir, "git", "init", "--bare", bare)
 	run(e.T, e.Dir, "git", "remote", "add", "origin", bare)
 	return bare
@@ -72,7 +71,7 @@ func (e *Env) NewBareRemote() string {
 // beadwork from the existing remote branch. Returns a second Env.
 func (e *Env) CloneEnv(barePath string) *Env {
 	e.T.Helper()
-	cloneDir := filepath.Join(e.Dir, "clone")
+	cloneDir := e.Dir + "/clone"
 	run(e.T, e.Dir, "git", "clone", barePath, cloneDir)
 
 	orig, _ := os.Getwd()
@@ -90,7 +89,7 @@ func (e *Env) CloneEnv(barePath string) *Env {
 		e.T.Fatalf("Init in clone: %v", err)
 	}
 
-	store := issue.NewStore(r.WorkTree, r.Prefix)
+	store := issue.NewStore(r.TreeFS(), r.Prefix)
 
 	return &Env{
 		T:     e.T,
@@ -117,15 +116,15 @@ func (e *Env) CommitIntent(msg string) {
 }
 
 // MarkerExists checks if a zero-byte marker file exists at the given
-// path relative to the beadwork worktree.
+// path relative to the beadwork tree (via TreeFS).
 func (e *Env) MarkerExists(relPath string) bool {
-	_, err := os.Stat(filepath.Join(e.Repo.WorkTree, relPath))
+	_, err := e.Repo.TreeFS().Stat(relPath)
 	return err == nil
 }
 
 // IssueFileExists checks if an issue JSON file exists.
 func (e *Env) IssueFileExists(id string) bool {
-	_, err := os.Stat(filepath.Join(e.Repo.WorkTree, "issues", id+".json"))
+	_, err := e.Repo.TreeFS().Stat("issues/" + id + ".json")
 	return err == nil
 }
 

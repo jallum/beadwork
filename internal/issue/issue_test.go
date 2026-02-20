@@ -2,7 +2,6 @@ package issue_test
 
 import (
 	"encoding/json"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -453,8 +452,8 @@ func TestLabelDirectoryCleanup(t *testing.T) {
 	env.Store.Label(iss.ID, []string{"temp"}, nil)
 	env.Store.Label(iss.ID, nil, []string{"temp"})
 
-	// The temp/ directory should be cleaned up
-	_, err := os.Stat(filepath.Join(env.Repo.WorkTree, "labels", "temp"))
+	// The temp/ directory should be cleaned up (no entry in TreeFS)
+	_, err := env.Repo.TreeFS().Stat("labels/temp")
 	if err == nil {
 		t.Error("empty label directory should be removed")
 	}
@@ -976,8 +975,7 @@ func TestReadCorruptJSON(t *testing.T) {
 
 	// Create a valid issue, then corrupt it
 	iss, _ := env.Store.Create("Valid", issue.CreateOpts{})
-	path := filepath.Join(env.Repo.WorkTree, "issues", iss.ID+".json")
-	os.WriteFile(path, []byte("{invalid json"), 0644)
+	env.Repo.TreeFS().WriteFile("issues/"+iss.ID+".json", []byte("{invalid json"))
 
 	_, err := env.Store.Get(iss.ID)
 	if err == nil {
