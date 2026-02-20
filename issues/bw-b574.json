@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T06:41:33Z",
+  "description": "",
+  "id": "bw-b574",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Ready parity: exclude in_progress + defer support",
+  "type": "task"
+}
