@@ -9,7 +9,7 @@
   "id": "bw-8a22",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Replace git CLI + worktree with go-git for atomic operations",
   "type": "epic"
 }
