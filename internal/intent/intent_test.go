@@ -385,12 +385,12 @@ func TestReplayIdempotentLink(t *testing.T) {
 	env.CommitIntent("setup")
 
 	// Replay the same link again — the link is a no-op on disk,
-	// so git commit fails with "nothing to commit". This is expected.
+	// so commit is silently skipped. No error expected.
 	errs := intent.Replay(env.Repo, env.Store, []string{
 		"link " + a.ID + " blocks " + b.ID,
 	})
-	if len(errs) != 1 {
-		t.Fatalf("expected 1 error (nothing to commit), got %d: %v", len(errs), errs)
+	if len(errs) != 0 {
+		t.Fatalf("expected no errors (noop commit), got %d: %v", len(errs), errs)
 	}
 
 	// The link should still be intact

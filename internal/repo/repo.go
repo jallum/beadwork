@@ -123,10 +123,11 @@ func (r *Repo) Commit(message string) error {
 	if _, err := r.gitWt("add", "-A"); err != nil {
 		return err
 	}
-	if _, err := r.gitWt("commit", "--no-verify", "-m", message); err != nil {
-		return err
+	out, err := r.gitWt("commit", "--no-verify", "-m", message)
+	if err != nil && strings.Contains(out, "nothing to commit") {
+		return nil
 	}
-	return nil
+	return err
 }
 
 func (r *Repo) remoteBranchExists() bool {

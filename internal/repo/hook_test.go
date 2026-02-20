@@ -82,3 +82,31 @@ func TestCommitWithPreCommitHook(t *testing.T) {
 		t.Fatalf("Commit should succeed despite pre-commit hook: %v", err)
 	}
 }
+
+func TestCommitNoop(t *testing.T) {
+	dir := t.TempDir()
+
+	gitRun(t, dir, "init")
+	gitRun(t, dir, "config", "user.email", "test@test.com")
+	gitRun(t, dir, "config", "user.name", "Test")
+	os.WriteFile(filepath.Join(dir, "README"), []byte("test"), 0644)
+	gitRun(t, dir, "add", ".")
+	gitRun(t, dir, "commit", "-m", "initial")
+
+	orig, _ := os.Getwd()
+	os.Chdir(dir)
+	defer os.Chdir(orig)
+
+	r, err := repo.FindRepo()
+	if err != nil {
+		t.Fatalf("FindRepo: %v", err)
+	}
+	if err := r.Init("test"); err != nil {
+		t.Fatalf("Init: %v", err)
+	}
+
+	// Commit with no changes should succeed (noop)
+	if err := r.Commit("noop"); err != nil {
+		t.Fatalf("Commit with no changes should succeed: %v", err)
+	}
+}
