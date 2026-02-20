@@ -2800,6 +2800,122 @@ func TestValidateDate(t *testing.T) {
 	}
 }
 
+// --- Undefer (additional coverage) ---
+
+func TestCmdUndeferNoArgs(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdUndefer([]string{}, &buf)
+	if err == nil {
+		t.Error("expected error for no args")
+	}
+	if !strings.Contains(err.Error(), "usage") {
+		t.Errorf("error = %q, want usage message", err)
+	}
+}
+
+func TestCmdUndeferNonExistentIssue(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdUndefer([]string{"bw-0000"}, &buf)
+	if err == nil {
+		t.Error("expected error for non-existent issue")
+	}
+}
+
+func TestCmdUndeferAlreadyOpen(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Already open", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	// Undefer an issue that's already open (no defer_until set)
+	var buf bytes.Buffer
+	err := cmdUndefer([]string{iss.ID}, &buf)
+	if err != nil {
+		t.Fatalf("cmdUndefer on open issue: %v", err)
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.Status != "open" {
+		t.Errorf("status = %q, want open", got.Status)
+	}
+	if got.DeferUntil != "" {
+		t.Errorf("defer_until = %q, want empty", got.DeferUntil)
+	}
+}
+
+func TestCmdUndeferUnknownFlag(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Flag test", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdUndefer([]string{iss.ID, "--unknown"}, &buf)
+	if err == nil {
+		t.Error("expected error for unknown flag")
+	}
+}
+
+func TestCmdUndeferVerifyCommit(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Verify commit", issue.CreateOpts{DeferUntil: "2027-06-01"})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdUndefer([]string{iss.ID}, &buf)
+	if err != nil {
+		t.Fatalf("cmdUndefer: %v", err)
+	}
+	if !strings.Contains(buf.String(), "undeferred") {
+		t.Errorf("output = %q, want 'undeferred'", buf.String())
+	}
+
+	// Verify the issue was updated and committed
+	got, _ := env.Store.Get(iss.ID)
+	if got.Status != "open" {
+		t.Errorf("status = %q, want open", got.Status)
+	}
+	if got.DeferUntil != "" {
+		t.Errorf("defer_until = %q, want empty", got.DeferUntil)
+	}
+}
+
+func TestParseUndeferArgs(t *testing.T) {
+	ua, err := parseUndeferArgs([]string{"bw-1234"})
+	if err != nil {
+		t.Fatalf("parseUndeferArgs: %v", err)
+	}
+	if ua.ID != "bw-1234" {
+		t.Errorf("ID = %q, want bw-1234", ua.ID)
+	}
+	if ua.JSON {
+		t.Error("expected JSON=false")
+	}
+}
+
+func TestParseUndeferArgsJSON(t *testing.T) {
+	ua, err := parseUndeferArgs([]string{"bw-1234", "--json"})
+	if err != nil {
+		t.Fatalf("parseUndeferArgs: %v", err)
+	}
+	if ua.ID != "bw-1234" {
+		t.Errorf("ID = %q, want bw-1234", ua.ID)
+	}
+	if !ua.JSON {
+		t.Error("expected JSON=true")
+	}
+}
+
 func init() {
 	os.Setenv("GIT_AUTHOR_NAME", "Test")
 	os.Setenv("GIT_AUTHOR_EMAIL", "test@test.com")
