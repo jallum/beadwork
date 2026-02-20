@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T07:02:37Z",
+  "description": "bw silently absorbs unknown flags. Value-bearing unknown flags leak their values into the title (e.g., 'bw create task --labels frontend,urgent' creates title 'task frontend,urgent'). Should reject unknown flags with a clear error like bd does.",
+  "id": "bw-5ddd",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Reject unknown flags",
+  "type": "bug"
+}
