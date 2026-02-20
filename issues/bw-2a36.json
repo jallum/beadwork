@@ -1,0 +1,16 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T18:54:56Z",
+  "description": "",
+  "id": "bw-2a36",
+  "labels": [
+    "coverage"
+  ],
+  "priority": 3,
+  "status": "open",
+  "title": "Increase code coverage for sync",
+  "type": "task",
+  "updated_at": "2026-02-20T18:54:56Z"
+}
