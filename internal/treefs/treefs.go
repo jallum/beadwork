@@ -732,6 +732,8 @@ func (t *TreeFS) CommitsBetween(localHash, remoteHash plumbing.Hash) ([]CommitIn
 		commits = append(commits, CommitInfo{
 			Hash:    c.Hash.String(),
 			Message: strings.TrimSpace(c.Message),
+			Time:    c.Author.When,
+			Author:  c.Author.Name,
 		})
 		return nil
 	})
@@ -740,6 +742,28 @@ func (t *TreeFS) CommitsBetween(localHash, remoteHash plumbing.Hash) ([]CommitIn
 	for i, j := 0, len(commits)-1; i < j; i, j = i+1, j-1 {
 		commits[i], commits[j] = commits[j], commits[i]
 	}
+	return commits, nil
+}
+
+// AllCommits returns all commits on the tracked ref, newest-first.
+func (t *TreeFS) AllCommits() ([]CommitInfo, error) {
+	if t.baseRef.IsZero() {
+		return nil, nil
+	}
+	var commits []CommitInfo
+	iter, err := t.repo.Log(&git.LogOptions{From: t.baseRef})
+	if err != nil {
+		return nil, fmt.Errorf("walk commits: %w", err)
+	}
+	iter.ForEach(func(c *object.Commit) error {
+		commits = append(commits, CommitInfo{
+			Hash:    c.Hash.String(),
+			Message: strings.TrimSpace(c.Message),
+			Time:    c.Author.When,
+			Author:  c.Author.Name,
+		})
+		return nil
+	})
 	return commits, nil
 }
 
@@ -791,6 +815,8 @@ func (t *TreeFS) DeleteRef(name string) error {
 type CommitInfo struct {
 	Hash    string
 	Message string
+	Time    time.Time
+	Author  string
 }
 
 // MergeCommit attempts a 3-way merge between the local tree, remote tree,

@@ -186,6 +186,11 @@ func (r *Repo) Init(prefix string) error {
 	return nil
 }
 
+// AllCommits returns all commits on the beadwork branch, newest-first.
+func (r *Repo) AllCommits() ([]treefs.CommitInfo, error) {
+	return r.tfs.AllCommits()
+}
+
 func (r *Repo) Commit(message string) error {
 	return r.tfs.Commit(message)
 }
