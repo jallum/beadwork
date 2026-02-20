@@ -290,6 +290,26 @@ func TestParseCreateArgsJSON(t *testing.T) {
 	}
 }
 
+func TestParseCreateArgsWithLabels(t *testing.T) {
+	a, err := parseCreateArgs([]string{"Title", "--labels", "frontend,urgent"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(a.Labels) != 2 || a.Labels[0] != "frontend" || a.Labels[1] != "urgent" {
+		t.Errorf("Labels = %v, want [frontend urgent]", a.Labels)
+	}
+}
+
+func TestParseCreateArgsWithLabelsAlias(t *testing.T) {
+	a, err := parseCreateArgs([]string{"Title", "-l", "backend"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(a.Labels) != 1 || a.Labels[0] != "backend" {
+		t.Errorf("Labels = %v, want [backend]", a.Labels)
+	}
+}
+
 // --- parseExportArgs ---
 
 func TestParseExportArgs(t *testing.T) {
@@ -839,9 +859,9 @@ func TestParseArgsKnownFlagsPass(t *testing.T) {
 // --- Command-level unknown flag rejection ---
 
 func TestParseCreateArgsUnknownFlag(t *testing.T) {
-	_, err := parseCreateArgs([]string{"My task", "--labels", "bug"})
+	_, err := parseCreateArgs([]string{"My task", "--verbose"})
 	if err == nil {
-		t.Error("expected error for unknown flag --labels")
+		t.Error("expected error for unknown flag --verbose")
 	}
 	if err != nil && !strings.Contains(err.Error(), "unknown flag") {
 		t.Errorf("error = %q, want unknown flag message", err.Error())

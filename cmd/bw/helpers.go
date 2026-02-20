@@ -59,6 +59,7 @@ var aliases = map[string]string{
 	"-a": "--assignee",
 	"-d": "--description",
 	"-s": "--status",
+	"-l": "--labels",
 }
 
 // Args holds parsed command-line arguments separated into boolean flags,

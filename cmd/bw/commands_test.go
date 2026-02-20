@@ -81,6 +81,53 @@ func TestCmdCreateJSON(t *testing.T) {
 	}
 }
 
+func TestCmdCreateWithLabels(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdCreate([]string{"Labeled task", "--labels", "frontend,urgent"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdCreate: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "Labeled task") {
+		t.Errorf("output missing title: %q", out)
+	}
+
+	// Verify labels were applied by re-reading via store
+	issues, _ := env.Store.List(issue.Filter{})
+	if len(issues) != 1 {
+		t.Fatalf("expected 1 issue, got %d", len(issues))
+	}
+	iss := issues[0]
+	if len(iss.Labels) != 2 {
+		t.Fatalf("Labels = %v, want 2 labels", iss.Labels)
+	}
+	if iss.Labels[0] != "frontend" || iss.Labels[1] != "urgent" {
+		t.Errorf("Labels = %v, want [frontend urgent]", iss.Labels)
+	}
+}
+
+func TestCmdCreateWithLabelsJSON(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdCreate([]string{"Labeled JSON", "--labels", "backend", "--json"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdCreate: %v", err)
+	}
+
+	var iss issue.Issue
+	if err := json.Unmarshal(buf.Bytes(), &iss); err != nil {
+		t.Fatalf("JSON parse: %v", err)
+	}
+	if len(iss.Labels) != 1 || iss.Labels[0] != "backend" {
+		t.Errorf("Labels = %v, want [backend]", iss.Labels)
+	}
+}
+
 // --- Show ---
 
 func TestCmdShowBasic(t *testing.T) {
