@@ -3,7 +3,9 @@
   "blocked_by": [
     "bw-b972"
   ],
-  "blocks": [],
+  "blocks": [
+    "bw-6d5d"
+  ],
   "created": "2026-02-20T05:45:08Z",
   "description": "",
   "id": "bw-295c",
