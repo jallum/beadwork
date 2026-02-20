@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "bw-57f5"
+  ],
   "created": "2026-02-20T18:51:22Z",
   "description": "When creating an issue with --parent, generate the ID as parent.N (e.g., bw-abc.1) instead of an independent random ID. The dotted format is cosmetic — a human-readable hint. The ID is permanent even if the parent link is later severed. Requires a child counter per parent (max existing child number + 1). Depends on bw-57f5 (base36 IDs).",
   "id": "bw-0937",
@@ -10,5 +12,5 @@
   "status": "open",
   "title": "Dotted child IDs for parent-child creation",
   "type": "feature",
-  "updated_at": "2026-02-20T18:51:22Z"
+  "updated_at": "2026-02-20T18:51:33Z"
 }
