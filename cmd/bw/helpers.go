@@ -71,11 +71,16 @@ type Args struct {
 
 // ParseArgs separates raw args into booleans, key-value pairs, and positionals.
 // valueFlags lists flags that consume the next token as a value (e.g. "--status").
-// Everything starting with "--" not in valueFlags is a boolean. The rest is positional.
-func ParseArgs(raw []string, valueFlags ...string) Args {
+// boolFlags lists boolean flags (e.g. "--json", "--all").
+// Any "--" prefixed token not in valueFlags or boolFlags returns an error.
+func ParseArgs(raw []string, valueFlags []string, boolFlags []string) (Args, error) {
 	vf := make(map[string]bool, len(valueFlags))
 	for _, f := range valueFlags {
 		vf[f] = true
+	}
+	bf := make(map[string]bool, len(boolFlags))
+	for _, f := range boolFlags {
+		bf[f] = true
 	}
 
 	a := Args{
@@ -99,11 +104,13 @@ func ParseArgs(raw []string, valueFlags ...string) Args {
 				a.flags[tok] = raw[i+1]
 				i++
 			}
-		} else {
+		} else if bf[tok] {
 			a.bools[tok] = true
+		} else {
+			return a, fmt.Errorf("unknown flag: %s", tok)
 		}
 	}
-	return a
+	return a, nil
 }
 
 // Bool returns true if the named boolean flag was present.

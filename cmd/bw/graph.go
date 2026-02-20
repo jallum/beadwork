@@ -14,7 +14,10 @@ type GraphArgs struct {
 }
 
 func parseGraphArgs(raw []string) (GraphArgs, error) {
-	a := ParseArgs(raw)
+	a, err := ParseArgs(raw, nil, []string{"--all", "--json"})
+	if err != nil {
+		return GraphArgs{}, err
+	}
 	ga := GraphArgs{
 		RootID: a.PosFirst(),
 		All:    a.Bool("--all"),

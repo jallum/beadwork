@@ -19,7 +19,13 @@ type CreateArgs struct {
 }
 
 func parseCreateArgs(raw []string) (CreateArgs, error) {
-	a := ParseArgs(raw, "--priority", "--type", "--assignee", "--description", "--defer")
+	a, err := ParseArgs(raw,
+		[]string{"--priority", "--type", "--assignee", "--description", "--defer"},
+		[]string{"--json"},
+	)
+	if err != nil {
+		return CreateArgs{}, err
+	}
 	var ca CreateArgs
 	ca.Title = a.PosJoined()
 	if ca.Title == "" {

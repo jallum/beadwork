@@ -72,7 +72,10 @@ type ExportArgs struct {
 }
 
 func parseExportArgs(raw []string) (ExportArgs, error) {
-	a := ParseArgs(raw, "--status")
+	a, err := ParseArgs(raw, []string{"--status"}, []string{"--json"})
+	if err != nil {
+		return ExportArgs{}, err
+	}
 	return ExportArgs{
 		Status: a.String("--status"),
 		JSON:   a.JSON(),

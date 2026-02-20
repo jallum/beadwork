@@ -21,7 +21,13 @@ type ListArgs struct {
 }
 
 func parseListArgs(raw []string) (ListArgs, error) {
-	a := ParseArgs(raw, "--status", "--assignee", "--priority", "--type", "--label", "--limit")
+	a, err := ParseArgs(raw,
+		[]string{"--status", "--assignee", "--priority", "--type", "--label", "--limit"},
+		[]string{"--all", "--deferred", "--json"},
+	)
+	if err != nil {
+		return ListArgs{}, err
+	}
 	la := ListArgs{
 		Status:   a.String("--status"),
 		Assignee: a.String("--assignee"),

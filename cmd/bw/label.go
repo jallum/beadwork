@@ -22,6 +22,9 @@ func parseLabelArgs(raw []string) (LabelArgs, error) {
 		if arg == "--json" {
 			continue
 		}
+		if strings.HasPrefix(arg, "--") {
+			return LabelArgs{}, fmt.Errorf("unknown flag: %s", arg)
+		}
 		if strings.HasPrefix(arg, "+") {
 			la.Add = append(la.Add, strings.TrimPrefix(arg, "+"))
 		} else if strings.HasPrefix(arg, "-") {

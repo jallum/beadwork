@@ -48,6 +48,17 @@ func (c *Command) valueFlags() []string {
 	return vf
 }
 
+// boolFlags returns the long names of boolean flags (no value).
+func (c *Command) boolFlags() []string {
+	var bf []string
+	for _, f := range c.Flags {
+		if f.Value == "" {
+			bf = append(bf, f.Long)
+		}
+	}
+	return bf
+}
+
 // expandAliases replaces short flags with their long equivalents.
 func expandAliases(raw []string, flags []Flag) []string {
 	shorts := make(map[string]string, len(flags))

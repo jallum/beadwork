@@ -510,6 +510,16 @@ func TestParseLabelArgsMissingID(t *testing.T) {
 	}
 }
 
+func TestParseLabelArgsUnknownFlag(t *testing.T) {
+	_, err := parseLabelArgs([]string{"bw-1234", "+bug", "--verbose"})
+	if err == nil {
+		t.Error("expected error for unknown flag --verbose")
+	}
+	if err != nil && !strings.Contains(err.Error(), "unknown flag: --verbose") {
+		t.Errorf("error = %q, want 'unknown flag: --verbose'", err.Error())
+	}
+}
+
 // --- parseDepArgs / parseDepAddArgs / parseDepRemoveArgs ---
 
 func TestParseDepArgs(t *testing.T) {
@@ -694,5 +704,111 @@ func TestParseUpgradeArgsYes(t *testing.T) {
 	}
 	if !a.Yes {
 		t.Error("expected Yes = true")
+	}
+}
+
+// --- ParseArgs unknown flag rejection ---
+
+func TestParseArgsUnknownFlag(t *testing.T) {
+	_, err := ParseArgs([]string{"--foo"}, nil, []string{"--json"})
+	if err == nil {
+		t.Error("expected error for unknown flag --foo")
+	}
+	if err != nil && !strings.Contains(err.Error(), "unknown flag: --foo") {
+		t.Errorf("error = %q, want 'unknown flag: --foo'", err.Error())
+	}
+}
+
+func TestParseArgsUnknownValueFlag(t *testing.T) {
+	_, err := ParseArgs([]string{"--labels", "bug"}, nil, []string{"--json"})
+	if err == nil {
+		t.Error("expected error for unknown flag --labels")
+	}
+	if err != nil && !strings.Contains(err.Error(), "unknown flag: --labels") {
+		t.Errorf("error = %q, want 'unknown flag: --labels'", err.Error())
+	}
+}
+
+func TestParseArgsKnownFlagsPass(t *testing.T) {
+	a, err := ParseArgs(
+		[]string{"positional", "--json", "--status", "open", "-p", "2"},
+		[]string{"--status", "--priority"},
+		[]string{"--json"},
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !a.JSON() {
+		t.Error("expected JSON() to be true")
+	}
+	if a.String("--status") != "open" {
+		t.Errorf("status = %q, want open", a.String("--status"))
+	}
+	if a.Int("--priority") != 2 {
+		t.Errorf("priority = %d, want 2", a.Int("--priority"))
+	}
+	if a.PosFirst() != "positional" {
+		t.Errorf("PosFirst() = %q, want positional", a.PosFirst())
+	}
+}
+
+// --- Command-level unknown flag rejection ---
+
+func TestParseCreateArgsUnknownFlag(t *testing.T) {
+	_, err := parseCreateArgs([]string{"My task", "--labels", "bug"})
+	if err == nil {
+		t.Error("expected error for unknown flag --labels")
+	}
+	if err != nil && !strings.Contains(err.Error(), "unknown flag") {
+		t.Errorf("error = %q, want unknown flag message", err.Error())
+	}
+}
+
+func TestParseListArgsUnknownFlag(t *testing.T) {
+	_, err := parseListArgs([]string{"--foo"})
+	if err == nil {
+		t.Error("expected error for unknown flag --foo")
+	}
+}
+
+func TestParseUpdateArgsUnknownFlag(t *testing.T) {
+	_, err := parseUpdateArgs([]string{"bw-1234", "--unknown", "val"})
+	if err == nil {
+		t.Error("expected error for unknown flag --unknown")
+	}
+}
+
+func TestParseShowArgsUnknownFlag(t *testing.T) {
+	_, err := parseShowArgs([]string{"bw-1234", "--verbose"})
+	if err == nil {
+		t.Error("expected error for unknown flag --verbose")
+	}
+}
+
+func TestParseCloseArgsUnknownFlag(t *testing.T) {
+	_, err := parseCloseArgs([]string{"bw-1234", "--force"})
+	if err == nil {
+		t.Error("expected error for unknown flag --force")
+	}
+}
+
+func TestParseReadyArgsUnknownFlag(t *testing.T) {
+	_, err := parseReadyArgs([]string{"--verbose"})
+	if err == nil {
+		t.Error("expected error for unknown flag --verbose")
+	}
+}
+
+func TestParseImportArgsUnknownFlag(t *testing.T) {
+	_, err := parseImportArgs([]string{"file.jsonl", "--force"})
+	if err == nil {
+		t.Error("expected error for unknown flag --force")
+	}
+}
+
+func TestParseInitArgsUnknownFlag(t *testing.T) {
+	_, err := parseInitArgs([]string{"--verbose"})
+	if err == nil {
+		t.Error("expected error for unknown flag --verbose")
 	}
 }

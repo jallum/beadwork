@@ -16,7 +16,10 @@ func parseUndeferArgs(raw []string) (UndeferArgs, error) {
 	if len(raw) == 0 {
 		return UndeferArgs{}, fmt.Errorf("usage: bw undefer <id>")
 	}
-	a := ParseArgs(raw[1:])
+	a, err := ParseArgs(raw[1:], nil, []string{"--json"})
+	if err != nil {
+		return UndeferArgs{}, err
+	}
 	return UndeferArgs{ID: raw[0], JSON: a.JSON()}, nil
 }
 
