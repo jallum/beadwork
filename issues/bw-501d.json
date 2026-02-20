@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T04:28:46Z",
+  "description": "",
+  "id": "bw-501d",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Convert cmdCreate, cmdUpdate, cmdList to ParseArgs",
+  "type": "task"
+}
