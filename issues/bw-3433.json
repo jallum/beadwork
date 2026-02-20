@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T18:21:18Z",
+  "description": "Output bare issue ID only, enabling scripting patterns like id=$(bw create \"Fix bug\" --silent). Useful for piping into other commands without parsing human-readable output.",
+  "id": "bw-3433",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Add --silent flag to create",
+  "type": "feature",
+  "updated_at": "2026-02-20T18:21:18Z"
+}
