@@ -7,7 +7,7 @@
   "id": "bw-ee5f",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "Improve test coverage for cmd/bw/onboard.go",
   "type": "task"
 }
