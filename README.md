@@ -59,7 +59,7 @@ bw graph <id>|--all [--json]   Dependency graph
 ```
 bw sync                        Fetch, rebase/replay, push
 bw export [--status <s>]       Export issues as JSONL
-bw import <file> [--dry-run]   Import issues from JSONL
+bw import <file> [--dry-run]   Import issues from JSONL (use - for stdin)
 ```
 
 **Setup & Config**
@@ -122,9 +122,8 @@ Both tools use a shared JSONL interchange format, so migrating is an export/impo
 ### Beads → Beadwork
 
 ```bash
-bd export -o issues.jsonl         # export from beads
 bw init                           # initialize beadwork in the same repo
-bw import issues.jsonl            # import into beadwork
+bd export | bw import -           # pipe directly from beads
 bw sync                           # push the beadwork branch
 ```
 

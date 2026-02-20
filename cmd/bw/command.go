@@ -314,7 +314,7 @@ var commands = []Command{
 		Summary:     "Import issues from JSONL",
 		Description: "Import issues from a JSONL file. Detects ID collisions and wires dependencies.",
 		Positionals: []Positional{
-			{Name: "<file>", Required: true, Help: "JSONL file path"},
+			{Name: "<file>", Required: true, Help: "JSONL file path (use - for stdin)"},
 		},
 		Flags: []Flag{
 			{Long: "--dry-run", Help: "Preview without importing"},
@@ -322,6 +322,7 @@ var commands = []Command{
 		Examples: []Example{
 			{Cmd: "bw import issues.jsonl"},
 			{Cmd: "bw import issues.jsonl --dry-run"},
+			{Cmd: "bw import - < issues.jsonl"},
 		},
 		Run: cmdImport,
 	},
