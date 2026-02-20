@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
@@ -25,7 +24,7 @@ func parseShowArgs(raw []string) (ShowArgs, error) {
 	return ShowArgs{IDs: ids, JSON: a.JSON(), Short: a.Bool("--short")}, nil
 }
 
-func cmdShow(args []string, w io.Writer) error {
+func cmdShow(args []string, w Writer) error {
 	sa, err := parseShowArgs(args)
 	if err != nil {
 		return err
@@ -55,11 +54,12 @@ func cmdShow(args []string, w io.Writer) error {
 			fmt.Fprintln(w)
 		}
 		if sa.Short {
-			fmt.Fprintf(w, "%s %s [%s P%d] [%s] %s\n",
+			ps := PriorityStyle(iss.Priority)
+			fmt.Fprintf(w, "%s %s [%s %s] [%s] %s\n",
 				issue.StatusIcon(iss.Status),
 				iss.ID,
-				issue.PriorityDot(iss.Priority),
-				iss.Priority,
+				w.Style("●", ps),
+				w.Style(fmt.Sprintf("P%d", iss.Priority), ps),
 				iss.Type,
 				iss.Title,
 			)

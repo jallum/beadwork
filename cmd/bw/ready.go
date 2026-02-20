@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
@@ -20,7 +19,7 @@ func parseReadyArgs(raw []string) (ReadyArgs, error) {
 	return ReadyArgs{JSON: a.JSON()}, nil
 }
 
-func cmdReady(args []string, w io.Writer) error {
+func cmdReady(args []string, w Writer) error {
 	ra, err := parseReadyArgs(args)
 	if err != nil {
 		return err
@@ -47,11 +46,12 @@ func cmdReady(args []string, w io.Writer) error {
 	}
 
 	for _, iss := range issues {
-		fmt.Fprintf(w, "%s %s %s P%d %s\n",
+		ps := PriorityStyle(iss.Priority)
+		fmt.Fprintf(w, "%s %s %s %s %s\n",
 			issue.StatusIcon(iss.Status),
 			iss.ID,
-			issue.PriorityDot(iss.Priority),
-			iss.Priority,
+			w.Style("●", ps),
+			w.Style(fmt.Sprintf("P%d", iss.Priority), ps),
 			iss.Title,
 		)
 	}

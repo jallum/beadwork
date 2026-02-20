@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
@@ -23,7 +22,7 @@ func parseUndeferArgs(raw []string) (UndeferArgs, error) {
 	return UndeferArgs{ID: raw[0], JSON: a.JSON()}, nil
 }
 
-func cmdUndefer(args []string, w io.Writer) error {
+func cmdUndefer(args []string, w Writer) error {
 	ua, err := parseUndeferArgs(args)
 	if err != nil {
 		return err

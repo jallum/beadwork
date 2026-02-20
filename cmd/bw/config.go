@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"sort"
 )
 
@@ -37,7 +36,7 @@ func parseConfigArgs(raw []string) (ConfigArgs, error) {
 	return ca, nil
 }
 
-func cmdConfig(args []string, w io.Writer) error {
+func cmdConfig(args []string, w Writer) error {
 	ca, err := parseConfigArgs(args)
 	if err != nil {
 		return err

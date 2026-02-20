@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/jallum/beadwork/internal/issue"
@@ -33,7 +32,7 @@ func validateDate(s string) error {
 	return nil
 }
 
-func cmdDefer(args []string, w io.Writer) error {
+func cmdDefer(args []string, w Writer) error {
 	da, err := parseDeferArgs(args)
 	if err != nil {
 		return err

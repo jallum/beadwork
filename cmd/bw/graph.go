@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
@@ -29,7 +28,7 @@ func parseGraphArgs(raw []string) (GraphArgs, error) {
 	return ga, nil
 }
 
-func cmdGraph(args []string, w io.Writer) error {
+func cmdGraph(args []string, w Writer) error {
 	ga, err := parseGraphArgs(args)
 	if err != nil {
 		return err
@@ -99,7 +98,7 @@ func cmdGraph(args []string, w io.Writer) error {
 	return nil
 }
 
-func fprintTree(w io.Writer, id, prefix string, last bool, isRoot bool, children map[string][]string, nodes map[string]issue.GraphNode, visited map[string]bool) {
+func fprintTree(w Writer, id, prefix string, last bool, isRoot bool, children map[string][]string, nodes map[string]issue.GraphNode, visited map[string]bool) {
 	if visited[id] {
 		return
 	}

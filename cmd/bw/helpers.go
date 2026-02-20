@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -182,24 +181,25 @@ func parsePriority(s string) (int, error) {
 	return n, nil
 }
 
-func fprintJSON(w io.Writer, v interface{}) {
+func fprintJSON(w Writer, v interface{}) {
 	data, _ := json.MarshalIndent(v, "", "  ")
 	fmt.Fprintln(w, string(data))
 }
 
-func fprintIssue(w io.Writer, iss *issue.Issue) {
+func fprintIssue(w Writer, iss *issue.Issue) {
 	// Header: ○ bw-f0ae [BUG] · Title   [● P1 · OPEN]
 	typeTag := ""
 	if iss.Type != "" && iss.Type != "task" {
 		typeTag = " [" + strings.ToUpper(iss.Type) + "]"
 	}
-	fmt.Fprintf(w, "%s %s%s · %s   [%s P%d · %s]\n",
+	ps := PriorityStyle(iss.Priority)
+	fmt.Fprintf(w, "%s %s%s · %s   [%s %s · %s]\n",
 		issue.StatusIcon(iss.Status),
 		iss.ID,
 		typeTag,
 		iss.Title,
-		issue.PriorityDot(iss.Priority),
-		iss.Priority,
+		w.Style("●", ps),
+		w.Style(fmt.Sprintf("P%d", iss.Priority), ps),
 		strings.ToUpper(iss.Status),
 	)
 
@@ -236,7 +236,7 @@ func fprintIssue(w io.Writer, iss *issue.Issue) {
 
 	// Description
 	if iss.Description != "" {
-		fmt.Fprintf(w, "\nDESCRIPTION\n\n")
+		fmt.Fprintf(w, "\n%s\n\n", w.Style("DESCRIPTION", Bold))
 		for _, line := range strings.Split(iss.Description, "\n") {
 			fmt.Fprintf(w, "  %s\n", line)
 		}
@@ -245,33 +245,35 @@ func fprintIssue(w io.Writer, iss *issue.Issue) {
 }
 
 // fprintDeps renders rich dependency sections using store lookups.
-func fprintDeps(w io.Writer, iss *issue.Issue, store *issue.Store) {
+func fprintDeps(w Writer, iss *issue.Issue, store *issue.Store) {
 	if len(iss.Blocks) > 0 {
 		fmt.Fprintln(w)
-		fmt.Fprintln(w, "BLOCKS")
+		fmt.Fprintln(w, w.Style("BLOCKS", Bold))
 		for _, id := range iss.Blocks {
 			dep, err := store.Get(id)
 			if err != nil {
 				fmt.Fprintf(w, "  ← %s\n", id)
 				continue
 			}
-			fmt.Fprintf(w, "  ← %s %s: %s  [%s P%d]\n",
+			ps := PriorityStyle(dep.Priority)
+			fmt.Fprintf(w, "  ← %s %s: %s  [%s %s]\n",
 				issue.StatusIcon(dep.Status), dep.ID, dep.Title,
-				issue.PriorityDot(dep.Priority), dep.Priority)
+				w.Style("●", ps), w.Style(fmt.Sprintf("P%d", dep.Priority), ps))
 		}
 	}
 	if len(iss.BlockedBy) > 0 {
 		fmt.Fprintln(w)
-		fmt.Fprintln(w, "DEPENDS ON")
+		fmt.Fprintln(w, w.Style("DEPENDS ON", Bold))
 		for _, id := range iss.BlockedBy {
 			dep, err := store.Get(id)
 			if err != nil {
 				fmt.Fprintf(w, "  → %s\n", id)
 				continue
 			}
-			fmt.Fprintf(w, "  → %s %s: %s  [%s P%d]\n",
+			ps := PriorityStyle(dep.Priority)
+			fmt.Fprintf(w, "  → %s %s: %s  [%s %s]\n",
 				issue.StatusIcon(dep.Status), dep.ID, dep.Title,
-				issue.PriorityDot(dep.Priority), dep.Priority)
+				w.Style("●", ps), w.Style(fmt.Sprintf("P%d", dep.Priority), ps))
 		}
 	}
 }

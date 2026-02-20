@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
@@ -76,7 +75,7 @@ func parseUpdateArgs(raw []string) (UpdateArgs, error) {
 	return ua, nil
 }
 
-func cmdUpdate(args []string, w io.Writer) error {
+func cmdUpdate(args []string, w Writer) error {
 	ua, err := parseUpdateArgs(args)
 	if err != nil {
 		return err

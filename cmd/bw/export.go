@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
@@ -85,7 +84,7 @@ func parseExportArgs(raw []string) (ExportArgs, error) {
 	}, nil
 }
 
-func cmdExport(args []string, w io.Writer) error {
+func cmdExport(args []string, w Writer) error {
 	ea, err := parseExportArgs(args)
 	if err != nil {
 		return err

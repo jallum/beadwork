@@ -21,7 +21,7 @@ func TestCmdCreateBasic(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdCreate([]string{"Test issue"}, &buf)
+	err := cmdCreate([]string{"Test issue"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdCreate: %v", err)
 	}
@@ -35,7 +35,7 @@ func TestCmdCreateWithFlags(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdCreate([]string{"Bug report", "--priority", "1", "--type", "bug", "--assignee", "alice"}, &buf)
+	err := cmdCreate([]string{"Bug report", "--priority", "1", "--type", "bug", "--assignee", "alice"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdCreate: %v", err)
 	}
@@ -67,7 +67,7 @@ func TestCmdCreateJSON(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdCreate([]string{"JSON test", "--json"}, &buf)
+	err := cmdCreate([]string{"JSON test", "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdCreate: %v", err)
 	}
@@ -86,7 +86,7 @@ func TestCmdCreateWithLabels(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdCreate([]string{"Labeled task", "--labels", "frontend,urgent"}, &buf)
+	err := cmdCreate([]string{"Labeled task", "--labels", "frontend,urgent"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdCreate: %v", err)
 	}
@@ -114,7 +114,7 @@ func TestCmdCreateWithLabelsJSON(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdCreate([]string{"Labeled JSON", "--labels", "backend", "--json"}, &buf)
+	err := cmdCreate([]string{"Labeled JSON", "--labels", "backend", "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdCreate: %v", err)
 	}
@@ -138,7 +138,7 @@ func TestCmdShowBasic(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{iss.ID}, &buf)
+	err := cmdShow([]string{iss.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow: %v", err)
 	}
@@ -155,7 +155,7 @@ func TestCmdShowJSON(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{iss.ID, "--json"}, &buf)
+	err := cmdShow([]string{iss.ID, "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow: %v", err)
 	}
@@ -182,7 +182,7 @@ func TestCmdShowMultiID(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{a.ID, b.ID}, &buf)
+	err := cmdShow([]string{a.ID, b.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow multi: %v", err)
 	}
@@ -204,7 +204,7 @@ func TestCmdShowMultiIDJSON(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{a.ID, b.ID, "--json"}, &buf)
+	err := cmdShow([]string{a.ID, b.ID, "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow multi --json: %v", err)
 	}
@@ -226,7 +226,7 @@ func TestCmdShowShort(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{iss.ID, "--short"}, &buf)
+	err := cmdShow([]string{iss.ID, "--short"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow --short: %v", err)
 	}
@@ -255,7 +255,7 @@ func TestCmdShowRichDeps(t *testing.T) {
 
 	// Show b — should display rich dep info for its blocker
 	var buf bytes.Buffer
-	err := cmdShow([]string{b.ID}, &buf)
+	err := cmdShow([]string{b.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow: %v", err)
 	}
@@ -274,7 +274,7 @@ func TestCmdShowNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{"nonexistent"}, &buf)
+	err := cmdShow([]string{"nonexistent"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for nonexistent issue")
 	}
@@ -291,7 +291,7 @@ func TestCmdListBasic(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdList([]string{}, &buf)
+	err := cmdList([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList: %v", err)
 	}
@@ -308,7 +308,7 @@ func TestCmdListJSON(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdList([]string{"--json"}, &buf)
+	err := cmdList([]string{"--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList: %v", err)
 	}
@@ -327,7 +327,7 @@ func TestCmdListEmpty(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdList([]string{}, &buf)
+	err := cmdList([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList: %v", err)
 	}
@@ -345,7 +345,7 @@ func TestCmdListFilterByStatus(t *testing.T) {
 	env.Repo.Commit("create and close")
 
 	var buf bytes.Buffer
-	err := cmdList([]string{"--status", "closed"}, &buf)
+	err := cmdList([]string{"--status", "closed"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList: %v", err)
 	}
@@ -364,7 +364,7 @@ func TestCmdCloseBasic(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdClose([]string{iss.ID}, &buf)
+	err := cmdClose([]string{iss.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdClose: %v", err)
 	}
@@ -386,7 +386,7 @@ func TestCmdCloseWithReason(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdClose([]string{iss.ID, "--reason", "duplicate"}, &buf)
+	err := cmdClose([]string{iss.ID, "--reason", "duplicate"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdClose: %v", err)
 	}
@@ -400,7 +400,7 @@ func TestCmdCloseJSON(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdClose([]string{iss.ID, "--json"}, &buf)
+	err := cmdClose([]string{iss.ID, "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdClose --json: %v", err)
 	}
@@ -419,7 +419,7 @@ func TestCmdCloseNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdClose([]string{"nonexistent"}, &buf)
+	err := cmdClose([]string{"nonexistent"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for nonexistent issue")
 	}
@@ -434,7 +434,7 @@ func TestCmdReopenBasic(t *testing.T) {
 	env.Repo.Commit("create and close " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdReopen([]string{iss.ID}, &buf)
+	err := cmdReopen([]string{iss.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdReopen: %v", err)
 	}
@@ -457,7 +457,7 @@ func TestCmdReopenJSON(t *testing.T) {
 	env.Repo.Commit("create and close " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdReopen([]string{iss.ID, "--json"}, &buf)
+	err := cmdReopen([]string{iss.ID, "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdReopen --json: %v", err)
 	}
@@ -476,7 +476,7 @@ func TestCmdReopenNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdReopen([]string{"nonexistent"}, &buf)
+	err := cmdReopen([]string{"nonexistent"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for nonexistent issue")
 	}
@@ -492,7 +492,7 @@ func TestCmdUpdatePriority(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUpdate([]string{iss.ID, "--priority", "1"}, &buf)
+	err := cmdUpdate([]string{iss.ID, "--priority", "1"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpdate: %v", err)
 	}
@@ -511,7 +511,7 @@ func TestCmdUpdateMultipleFields(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUpdate([]string{iss.ID, "--assignee", "bob", "--type", "bug", "--title", "Updated title"}, &buf)
+	err := cmdUpdate([]string{iss.ID, "--assignee", "bob", "--type", "bug", "--title", "Updated title"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpdate: %v", err)
 	}
@@ -536,7 +536,7 @@ func TestCmdUpdateJSON(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUpdate([]string{iss.ID, "--assignee", "alice", "--json"}, &buf)
+	err := cmdUpdate([]string{iss.ID, "--assignee", "alice", "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpdate: %v", err)
 	}
@@ -558,7 +558,7 @@ func TestCmdUpdateDescription(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUpdate([]string{iss.ID, "--description", "new description"}, &buf)
+	err := cmdUpdate([]string{iss.ID, "--description", "new description"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpdate: %v", err)
 	}
@@ -577,7 +577,7 @@ func TestCmdUpdateStatus(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUpdate([]string{iss.ID, "--status", "in_progress"}, &buf)
+	err := cmdUpdate([]string{iss.ID, "--status", "in_progress"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpdate: %v", err)
 	}
@@ -593,7 +593,7 @@ func TestCmdUpdateNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdUpdate([]string{"nonexistent", "--title", "x"}, &buf)
+	err := cmdUpdate([]string{"nonexistent", "--title", "x"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for nonexistent issue")
 	}
@@ -609,7 +609,7 @@ func TestCmdLabelAdd(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdLabel([]string{iss.ID, "+bug", "+urgent"}, &buf)
+	err := cmdLabel([]string{iss.ID, "+bug", "+urgent"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdLabel: %v", err)
 	}
@@ -629,7 +629,7 @@ func TestCmdLabelRemove(t *testing.T) {
 	env.Repo.Commit("create and label " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdLabel([]string{iss.ID, "-bug"}, &buf)
+	err := cmdLabel([]string{iss.ID, "-bug"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdLabel: %v", err)
 	}
@@ -650,7 +650,7 @@ func TestCmdLabelJSON(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdLabel([]string{iss.ID, "+bug", "--json"}, &buf)
+	err := cmdLabel([]string{iss.ID, "+bug", "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdLabel --json: %v", err)
 	}
@@ -672,7 +672,7 @@ func TestCmdLabelBareAdd(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdLabel([]string{iss.ID, "feature"}, &buf)
+	err := cmdLabel([]string{iss.ID, "feature"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdLabel bare: %v", err)
 	}
@@ -688,7 +688,7 @@ func TestCmdLabelNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdLabel([]string{"nonexistent", "+bug"}, &buf)
+	err := cmdLabel([]string{"nonexistent", "+bug"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for nonexistent issue")
 	}
@@ -705,7 +705,7 @@ func TestCmdDepAddBasic(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdDepAdd([]string{a.ID, "blocks", b.ID}, &buf)
+	err := cmdDepAdd([]string{a.ID, "blocks", b.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdDepAdd: %v", err)
 	}
@@ -724,7 +724,7 @@ func TestCmdDepAddNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdDepAdd([]string{"nonexistent", "blocks", "also-missing"}, &buf)
+	err := cmdDepAdd([]string{"nonexistent", "blocks", "also-missing"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for nonexistent issues")
 	}
@@ -740,7 +740,7 @@ func TestCmdDepRemoveBasic(t *testing.T) {
 	env.Repo.Commit("create and link")
 
 	var buf bytes.Buffer
-	err := cmdDepRemove([]string{a.ID, "blocks", b.ID}, &buf)
+	err := cmdDepRemove([]string{a.ID, "blocks", b.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdDepRemove: %v", err)
 	}
@@ -754,7 +754,7 @@ func TestCmdDepRemoveNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdDepRemove([]string{"nonexistent", "blocks", "also-missing"}, &buf)
+	err := cmdDepRemove([]string{"nonexistent", "blocks", "also-missing"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for nonexistent issues")
 	}
@@ -770,7 +770,7 @@ func TestCmdReadyBasic(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdReady([]string{}, &buf)
+	err := cmdReady([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -787,7 +787,7 @@ func TestCmdReadyJSON(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdReady([]string{"--json"}, &buf)
+	err := cmdReady([]string{"--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -806,7 +806,7 @@ func TestCmdReadyEmpty(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdReady([]string{}, &buf)
+	err := cmdReady([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -827,7 +827,7 @@ func TestCmdGraphAll(t *testing.T) {
 	env.Repo.Commit("create and link")
 
 	var buf bytes.Buffer
-	err := cmdGraph([]string{"--all"}, &buf)
+	err := cmdGraph([]string{"--all"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdGraph: %v", err)
 	}
@@ -844,7 +844,7 @@ func TestCmdGraphJSON(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdGraph([]string{"--all", "--json"}, &buf)
+	err := cmdGraph([]string{"--all", "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdGraph: %v", err)
 	}
@@ -865,7 +865,7 @@ func TestCmdGraphRooted(t *testing.T) {
 	env.Repo.Commit("create and link")
 
 	var buf bytes.Buffer
-	err := cmdGraph([]string{a.ID}, &buf)
+	err := cmdGraph([]string{a.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdGraph: %v", err)
 	}
@@ -879,7 +879,7 @@ func TestCmdGraphEmpty(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdGraph([]string{"--all"}, &buf)
+	err := cmdGraph([]string{"--all"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdGraph --all: %v", err)
 	}
@@ -902,7 +902,7 @@ func TestCmdGraphMultipleRoots(t *testing.T) {
 	env.Repo.Commit("setup graph")
 
 	var buf bytes.Buffer
-	err := cmdGraph([]string{"--all"}, &buf)
+	err := cmdGraph([]string{"--all"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdGraph: %v", err)
 	}
@@ -928,7 +928,7 @@ func TestCmdGraphAllShowsClosedIssues(t *testing.T) {
 	env.Repo.Commit("create, link, and close")
 
 	var buf bytes.Buffer
-	err := cmdGraph([]string{"--all"}, &buf)
+	err := cmdGraph([]string{"--all"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdGraph --all: %v", err)
 	}
@@ -946,7 +946,7 @@ func TestCmdGraphNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdGraph([]string{"nonexistent"}, &buf)
+	err := cmdGraph([]string{"nonexistent"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for nonexistent root ID")
 	}
@@ -959,7 +959,7 @@ func TestCmdConfigSetAndGet(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdConfig([]string{"set", "default.priority", "2"}, &buf)
+	err := cmdConfig([]string{"set", "default.priority", "2"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("config set: %v", err)
 	}
@@ -968,7 +968,7 @@ func TestCmdConfigSetAndGet(t *testing.T) {
 	}
 
 	buf.Reset()
-	err = cmdConfig([]string{"get", "default.priority"}, &buf)
+	err = cmdConfig([]string{"get", "default.priority"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("config get: %v", err)
 	}
@@ -982,7 +982,7 @@ func TestCmdConfigList(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdConfig([]string{"list"}, &buf)
+	err := cmdConfig([]string{"list"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("config list: %v", err)
 	}
@@ -996,7 +996,7 @@ func TestCmdConfigGetMissing(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdConfig([]string{"get", "nonexistent"}, &buf)
+	err := cmdConfig([]string{"get", "nonexistent"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for missing key")
 	}
@@ -1015,7 +1015,7 @@ func TestCmdExportBasic(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdExport([]string{}, &buf)
+	err := cmdExport([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdExport: %v", err)
 	}
@@ -1078,7 +1078,7 @@ func TestCmdExportWithParent(t *testing.T) {
 	env.Repo.Commit("create with parent")
 
 	var buf bytes.Buffer
-	if err := cmdExport([]string{}, &buf); err != nil {
+	if err := cmdExport([]string{}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("cmdExport: %v", err)
 	}
 
@@ -1114,7 +1114,7 @@ func TestCmdImportBasic(t *testing.T) {
 	os.WriteFile(tmpFile, []byte(jsonl+"\n"), 0644)
 
 	var buf bytes.Buffer
-	err := cmdImport([]string{tmpFile}, &buf)
+	err := cmdImport([]string{tmpFile}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdImport: %v", err)
 	}
@@ -1132,7 +1132,7 @@ func TestCmdImportDryRun(t *testing.T) {
 	os.WriteFile(tmpFile, []byte(jsonl+"\n"), 0644)
 
 	var buf bytes.Buffer
-	err := cmdImport([]string{tmpFile, "--dry-run"}, &buf)
+	err := cmdImport([]string{tmpFile, "--dry-run"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdImport: %v", err)
 	}
@@ -1157,7 +1157,7 @@ func TestCmdImportPriorityZero(t *testing.T) {
 	os.WriteFile(tmpFile, []byte(jsonl+"\n"), 0644)
 
 	var buf bytes.Buffer
-	if err := cmdImport([]string{tmpFile}, &buf); err != nil {
+	if err := cmdImport([]string{tmpFile}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("cmdImport: %v", err)
 	}
 
@@ -1180,7 +1180,7 @@ func TestCmdImportPriorityAbsent(t *testing.T) {
 	os.WriteFile(tmpFile, []byte(jsonl+"\n"), 0644)
 
 	var buf bytes.Buffer
-	if err := cmdImport([]string{tmpFile}, &buf); err != nil {
+	if err := cmdImport([]string{tmpFile}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("cmdImport: %v", err)
 	}
 
@@ -1204,7 +1204,7 @@ func TestCmdImportStdin(t *testing.T) {
 	t.Cleanup(func() { importStdin = orig })
 
 	var buf bytes.Buffer
-	if err := cmdImport([]string{"-"}, &buf); err != nil {
+	if err := cmdImport([]string{"-"}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("cmdImport stdin: %v", err)
 	}
 
@@ -1228,7 +1228,7 @@ func TestCmdSyncNoRemote(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdSync([]string{}, &buf)
+	err := cmdSync([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdSync: %v", err)
 	}
@@ -1247,7 +1247,7 @@ func TestCmdSyncPush(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdSync([]string{}, &buf)
+	err := cmdSync([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdSync: %v", err)
 	}
@@ -1267,7 +1267,7 @@ func TestCmdSyncUpToDate(t *testing.T) {
 	env.Repo.Sync() // initial push
 
 	var buf bytes.Buffer
-	err := cmdSync([]string{}, &buf)
+	err := cmdSync([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdSync: %v", err)
 	}
@@ -1304,7 +1304,7 @@ func TestCmdSyncReplay(t *testing.T) {
 	env.Repo.Commit("update " + shared.ID + " assignee=agent")
 
 	var buf bytes.Buffer
-	err := cmdSync([]string{}, &buf)
+	err := cmdSync([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdSync: %v", err)
 	}
@@ -1325,7 +1325,7 @@ func TestCmdPrimeBasic(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdPrime(&buf)
+	err := cmdPrime(PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}
@@ -1347,7 +1347,7 @@ func TestCmdPrimeInProgress(t *testing.T) {
 	env.Repo.Commit("create and update " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdPrime(&buf)
+	err := cmdPrime(PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}
@@ -1365,7 +1365,7 @@ func TestCmdPrimeEmpty(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdPrime(&buf)
+	err := cmdPrime(PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}
@@ -1379,7 +1379,7 @@ func TestCmdPrimeEmpty(t *testing.T) {
 
 func TestCmdOnboardBasic(t *testing.T) {
 	var buf bytes.Buffer
-	err := cmdOnboard(&buf)
+	err := cmdOnboard(PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdOnboard: %v", err)
 	}
@@ -1414,7 +1414,7 @@ func TestCmdInitFresh(t *testing.T) {
 	defer os.Chdir(orig)
 
 	var buf bytes.Buffer
-	err := cmdInit([]string{"--prefix", "fresh"}, &buf)
+	err := cmdInit([]string{"--prefix", "fresh"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdInit: %v", err)
 	}
@@ -1431,7 +1431,7 @@ func TestCmdInitAlreadyInitialized(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdInit([]string{}, &buf)
+	err := cmdInit([]string{}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for already initialized")
 	}
@@ -1445,7 +1445,7 @@ func TestCmdInitForce(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdInit([]string{"--force", "--prefix", "newpfx"}, &buf)
+	err := cmdInit([]string{"--force", "--prefix", "newpfx"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdInit --force: %v", err)
 	}
@@ -1624,7 +1624,7 @@ func TestHasFlag(t *testing.T) {
 
 func TestFprintJSON(t *testing.T) {
 	var buf bytes.Buffer
-	fprintJSON(&buf, map[string]string{"key": "value"})
+	fprintJSON(PlainWriter(&buf), map[string]string{"key": "value"})
 	if !strings.Contains(buf.String(), `"key": "value"`) {
 		t.Errorf("output = %q", buf.String())
 	}
@@ -1643,7 +1643,7 @@ func TestFprintIssue(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	fprintIssue(&buf, iss)
+	fprintIssue(PlainWriter(&buf), iss)
 	out := buf.String()
 	if !strings.Contains(out, "test-1234") {
 		t.Errorf("missing ID in output: %q", out)
@@ -1676,7 +1676,7 @@ func TestFprintIssueFull(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	fprintIssue(&buf, iss)
+	fprintIssue(PlainWriter(&buf), iss)
 	out := buf.String()
 	if !strings.Contains(out, "[BUG]") {
 		t.Errorf("missing [BUG] type tag: %q", out)
@@ -1708,7 +1708,7 @@ func TestFprintIssueTypeTag(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	fprintIssue(&buf, iss)
+	fprintIssue(PlainWriter(&buf), iss)
 	out := buf.String()
 	if !strings.Contains(out, "[BUG]") {
 		t.Errorf("should contain [BUG] tag: %q", out)
@@ -1717,7 +1717,7 @@ func TestFprintIssueTypeTag(t *testing.T) {
 	// Task type should NOT have a tag
 	iss.Type = "task"
 	buf.Reset()
-	fprintIssue(&buf, iss)
+	fprintIssue(PlainWriter(&buf), iss)
 	out = buf.String()
 	if strings.Contains(out, "[TASK]") {
 		t.Errorf("task should not have type tag: %q", out)
@@ -1736,7 +1736,7 @@ func TestFprintIssueDateLine(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	fprintIssue(&buf, iss)
+	fprintIssue(PlainWriter(&buf), iss)
 	out := buf.String()
 	if !strings.Contains(out, "Created: 2024-01-15") {
 		t.Errorf("missing Created date: %q", out)
@@ -1748,7 +1748,7 @@ func TestFprintIssueDateLine(t *testing.T) {
 	// Deferred should be on same line
 	iss.DeferUntil = "2027-06-01"
 	buf.Reset()
-	fprintIssue(&buf, iss)
+	fprintIssue(PlainWriter(&buf), iss)
 	out = buf.String()
 	if !strings.Contains(out, "Deferred: 2027-06-01") {
 		t.Errorf("missing Deferred date: %q", out)
@@ -1768,7 +1768,7 @@ func TestFprintIssueCloseReason(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	fprintIssue(&buf, iss)
+	fprintIssue(PlainWriter(&buf), iss)
 	out := buf.String()
 	if !strings.Contains(out, "Close reason: duplicate") {
 		t.Errorf("should contain close reason: %q", out)
@@ -1819,7 +1819,7 @@ func TestCmdBlockedBasic(t *testing.T) {
 	env.Repo.Commit("link")
 
 	var buf bytes.Buffer
-	err := cmdBlocked([]string{}, &buf)
+	err := cmdBlocked([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdBlocked: %v", err)
 	}
@@ -1846,7 +1846,7 @@ func TestCmdBlockedResolves(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdBlocked([]string{}, &buf)
+	err := cmdBlocked([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdBlocked: %v", err)
 	}
@@ -1865,7 +1865,7 @@ func TestCmdBlockedJSON(t *testing.T) {
 	env.Repo.Commit("link")
 
 	var buf bytes.Buffer
-	err := cmdBlocked([]string{"--json"}, &buf)
+	err := cmdBlocked([]string{"--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdBlocked --json: %v", err)
 	}
@@ -1896,7 +1896,7 @@ func TestCmdBlockedEmpty(t *testing.T) {
 	env.Repo.Commit("create")
 
 	var buf bytes.Buffer
-	err := cmdBlocked([]string{}, &buf)
+	err := cmdBlocked([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdBlocked: %v", err)
 	}
@@ -1915,7 +1915,7 @@ func TestCmdDefer(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdDefer([]string{iss.ID, "2027-06-01"}, &buf)
+	err := cmdDefer([]string{iss.ID, "2027-06-01"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdDefer: %v", err)
 	}
@@ -1940,7 +1940,7 @@ func TestCmdDeferJSON(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdDefer([]string{iss.ID, "2027-06-01", "--json"}, &buf)
+	err := cmdDefer([]string{iss.ID, "2027-06-01", "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdDefer --json: %v", err)
 	}
@@ -1965,7 +1965,7 @@ func TestCmdDeferInvalidDate(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdDefer([]string{iss.ID, "not-a-date"}, &buf)
+	err := cmdDefer([]string{iss.ID, "not-a-date"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for invalid date")
 	}
@@ -1979,7 +1979,7 @@ func TestCmdUndefer(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUndefer([]string{iss.ID}, &buf)
+	err := cmdUndefer([]string{iss.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUndefer: %v", err)
 	}
@@ -2004,7 +2004,7 @@ func TestCmdUndeferJSON(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUndefer([]string{iss.ID, "--json"}, &buf)
+	err := cmdUndefer([]string{iss.ID, "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUndefer --json: %v", err)
 	}
@@ -2023,7 +2023,7 @@ func TestCmdCreateWithDefer(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdCreate([]string{"Deferred task", "--defer", "2027-03-15"}, &buf)
+	err := cmdCreate([]string{"Deferred task", "--defer", "2027-03-15"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdCreate --defer: %v", err)
 	}
@@ -2045,7 +2045,7 @@ func TestCmdUpdateWithDefer(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUpdate([]string{iss.ID, "--defer", "2027-09-01"}, &buf)
+	err := cmdUpdate([]string{iss.ID, "--defer", "2027-09-01"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpdate --defer: %v", err)
 	}
@@ -2069,7 +2069,7 @@ func TestCmdListDeferred(t *testing.T) {
 
 	// Default list should show only open
 	var buf bytes.Buffer
-	err := cmdList([]string{}, &buf)
+	err := cmdList([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList: %v", err)
 	}
@@ -2082,7 +2082,7 @@ func TestCmdListDeferred(t *testing.T) {
 
 	// --deferred should show only deferred
 	buf.Reset()
-	err = cmdList([]string{"--deferred"}, &buf)
+	err = cmdList([]string{"--deferred"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList --deferred: %v", err)
 	}
@@ -2105,7 +2105,7 @@ func TestCmdReadyExcludesInProgress(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdReady([]string{}, &buf)
+	err := cmdReady([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -2127,7 +2127,7 @@ func TestCmdReadyExcludesDeferred(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdReady([]string{}, &buf)
+	err := cmdReady([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -2148,7 +2148,7 @@ func TestCmdShowDeferred(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{iss.ID}, &buf)
+	err := cmdShow([]string{iss.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow: %v", err)
 	}
@@ -2171,23 +2171,23 @@ func TestScenarioFullWorkflow(t *testing.T) {
 
 	// ── Step 1: Create 5 issues ──
 	var bufA bytes.Buffer
-	if err := cmdCreate([]string{"API design", "--priority", "1", "--type", "bug", "--assignee", "alice"}, &bufA); err != nil {
+	if err := cmdCreate([]string{"API design", "--priority", "1", "--type", "bug", "--assignee", "alice"}, PlainWriter(&bufA)); err != nil {
 		t.Fatalf("create A: %v", err)
 	}
 	var bufB bytes.Buffer
-	if err := cmdCreate([]string{"Database schema", "--priority", "1", "--type", "task"}, &bufB); err != nil {
+	if err := cmdCreate([]string{"Database schema", "--priority", "1", "--type", "task"}, PlainWriter(&bufB)); err != nil {
 		t.Fatalf("create B: %v", err)
 	}
 	var bufC bytes.Buffer
-	if err := cmdCreate([]string{"Frontend UI", "--priority", "2", "--type", "task"}, &bufC); err != nil {
+	if err := cmdCreate([]string{"Frontend UI", "--priority", "2", "--type", "task"}, PlainWriter(&bufC)); err != nil {
 		t.Fatalf("create C: %v", err)
 	}
 	var bufD bytes.Buffer
-	if err := cmdCreate([]string{"Documentation", "--priority", "3", "--type", "task", "--defer", "2027-06-01"}, &bufD); err != nil {
+	if err := cmdCreate([]string{"Documentation", "--priority", "3", "--type", "task", "--defer", "2027-06-01"}, PlainWriter(&bufD)); err != nil {
 		t.Fatalf("create D: %v", err)
 	}
 	var bufE bytes.Buffer
-	if err := cmdCreate([]string{"Performance audit", "--priority", "2", "--type", "task"}, &bufE); err != nil {
+	if err := cmdCreate([]string{"Performance audit", "--priority", "2", "--type", "task"}, PlainWriter(&bufE)); err != nil {
 		t.Fatalf("create E: %v", err)
 	}
 
@@ -2209,38 +2209,38 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ── Step 2: Wire dependencies ──
 	// A blocks B, B blocks C
 	var buf bytes.Buffer
-	if err := cmdDepAdd([]string{idA, "blocks", idB}, &buf); err != nil {
+	if err := cmdDepAdd([]string{idA, "blocks", idB}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("dep add A→B: %v", err)
 	}
 	buf.Reset()
-	if err := cmdDepAdd([]string{idB, "blocks", idC}, &buf); err != nil {
+	if err := cmdDepAdd([]string{idB, "blocks", idC}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("dep add B→C: %v", err)
 	}
 
 	// ── Step 3: Label ──
 	buf.Reset()
-	if err := cmdLabel([]string{idA, "+backend", "+critical"}, &buf); err != nil {
+	if err := cmdLabel([]string{idA, "+backend", "+critical"}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("label A: %v", err)
 	}
 	buf.Reset()
-	if err := cmdLabel([]string{idC, "+frontend"}, &buf); err != nil {
+	if err := cmdLabel([]string{idC, "+frontend"}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("label C: %v", err)
 	}
 
 	// ── Step 4: Progress ──
 	// Close A
 	buf.Reset()
-	if err := cmdClose([]string{idA}, &buf); err != nil {
+	if err := cmdClose([]string{idA}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("close A: %v", err)
 	}
 	// B to in_progress
 	buf.Reset()
-	if err := cmdUpdate([]string{idB, "--status", "in_progress"}, &buf); err != nil {
+	if err := cmdUpdate([]string{idB, "--status", "in_progress"}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("update B: %v", err)
 	}
 	// Defer E
 	buf.Reset()
-	if err := cmdDefer([]string{idE, "2027-09-01"}, &buf); err != nil {
+	if err := cmdDefer([]string{idE, "2027-09-01"}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("defer E: %v", err)
 	}
 
@@ -2249,7 +2249,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("list_all_json", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdList([]string{"--all", "--json"}, &buf); err != nil {
+		if err := cmdList([]string{"--all", "--json"}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("list --all --json: %v", err)
 		}
 		var issues []issue.Issue
@@ -2346,7 +2346,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("list_default", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdList([]string{}, &buf); err != nil {
+		if err := cmdList([]string{}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("list: %v", err)
 		}
 		out := buf.String()
@@ -2366,7 +2366,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("list_in_progress", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdList([]string{"--status", "in_progress"}, &buf); err != nil {
+		if err := cmdList([]string{"--status", "in_progress"}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("list --status in_progress: %v", err)
 		}
 		out := buf.String()
@@ -2383,7 +2383,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("list_deferred", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdList([]string{"--deferred"}, &buf); err != nil {
+		if err := cmdList([]string{"--deferred"}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("list --deferred: %v", err)
 		}
 		out := buf.String()
@@ -2403,7 +2403,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("show_deferred", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdShow([]string{idD, "--json"}, &buf); err != nil {
+		if err := cmdShow([]string{idD, "--json"}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("show D: %v", err)
 		}
 		var arr []issue.Issue
@@ -2430,7 +2430,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("ready_text", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdReady([]string{}, &buf); err != nil {
+		if err := cmdReady([]string{}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("ready: %v", err)
 		}
 		if !strings.Contains(buf.String(), "no ready issues") {
@@ -2443,7 +2443,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("ready_json", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdReady([]string{"--json"}, &buf); err != nil {
+		if err := cmdReady([]string{"--json"}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("ready --json: %v", err)
 		}
 		var issues []issue.Issue
@@ -2460,7 +2460,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("blocked_json", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdBlocked([]string{"--json"}, &buf); err != nil {
+		if err := cmdBlocked([]string{"--json"}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("blocked --json: %v", err)
 		}
 		var result []struct {
@@ -2487,7 +2487,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("graph_all", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdGraph([]string{"--all"}, &buf); err != nil {
+		if err := cmdGraph([]string{"--all"}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("graph --all: %v", err)
 		}
 		out := buf.String()
@@ -2508,7 +2508,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("export", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdExport([]string{}, &buf); err != nil {
+		if err := cmdExport([]string{}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("export: %v", err)
 		}
 		lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
@@ -2609,7 +2609,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	t.Run("export_import_roundtrip", func(t *testing.T) {
 		// Export to JSONL
 		var exportBuf bytes.Buffer
-		if err := cmdExport([]string{}, &exportBuf); err != nil {
+		if err := cmdExport([]string{}, PlainWriter(&exportBuf)); err != nil {
 			t.Fatalf("export: %v", err)
 		}
 
@@ -2619,7 +2619,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 
 		// Try dry-run import — should detect all 5 as collisions
 		var dryBuf bytes.Buffer
-		if err := cmdImport([]string{tmpFile, "--dry-run"}, &dryBuf); err != nil {
+		if err := cmdImport([]string{tmpFile, "--dry-run"}, PlainWriter(&dryBuf)); err != nil {
 			t.Fatalf("import dry-run: %v", err)
 		}
 		out := dryBuf.String()
@@ -2643,7 +2643,7 @@ func TestVersionGateBlocksOlderRepo(t *testing.T) {
 	env.Repo.Commit("downgrade to v0")
 
 	var buf bytes.Buffer
-	err := cmdList([]string{}, &buf)
+	err := cmdList([]string{}, PlainWriter(&buf))
 	if err == nil {
 		t.Fatal("expected error for v0 repo")
 	}
@@ -2661,7 +2661,7 @@ func TestVersionGateBlocksNewerRepo(t *testing.T) {
 	env.Repo.Commit("future version")
 
 	var buf bytes.Buffer
-	err := cmdList([]string{}, &buf)
+	err := cmdList([]string{}, PlainWriter(&buf))
 	if err == nil {
 		t.Fatal("expected error for v99 repo")
 	}
@@ -2682,7 +2682,7 @@ func TestCmdUpgradeRepoFromV0(t *testing.T) {
 	env.Repo.Commit("downgrade to v0")
 
 	var buf bytes.Buffer
-	err := cmdUpgradeRepo([]string{}, &buf)
+	err := cmdUpgradeRepo([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpgradeRepo: %v", err)
 	}
@@ -2696,7 +2696,7 @@ func TestCmdUpgradeRepoFromV0(t *testing.T) {
 
 	// Commands should work now
 	buf.Reset()
-	err = cmdList([]string{}, &buf)
+	err = cmdList([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList after upgrade: %v", err)
 	}
@@ -2707,7 +2707,7 @@ func TestCmdUpgradeRepoAlreadyCurrent(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdUpgradeRepo([]string{}, &buf)
+	err := cmdUpgradeRepo([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpgradeRepo: %v", err)
 	}
@@ -2723,7 +2723,7 @@ func TestCmdDeferNoArgs(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdDefer([]string{}, &buf)
+	err := cmdDefer([]string{}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for no args")
 	}
@@ -2737,7 +2737,7 @@ func TestCmdDeferOneArg(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdDefer([]string{"bw-1234"}, &buf)
+	err := cmdDefer([]string{"bw-1234"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for missing date arg")
 	}
@@ -2748,7 +2748,7 @@ func TestCmdDeferNonExistentIssue(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdDefer([]string{"bw-0000", "2027-06-01"}, &buf)
+	err := cmdDefer([]string{"bw-0000", "2027-06-01"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for non-existent issue")
 	}
@@ -2771,7 +2771,7 @@ func TestCmdDeferVariousInvalidDates(t *testing.T) {
 	}
 	for _, d := range invalidDates {
 		var buf bytes.Buffer
-		err := cmdDefer([]string{iss.ID, d}, &buf)
+		err := cmdDefer([]string{iss.ID, d}, PlainWriter(&buf))
 		if err == nil {
 			t.Errorf("expected error for invalid date %q", d)
 		}
@@ -2787,7 +2787,7 @@ func TestCmdDeferAlreadyDeferred(t *testing.T) {
 
 	// Defer again with a new date
 	var buf bytes.Buffer
-	err := cmdDefer([]string{iss.ID, "2027-12-01"}, &buf)
+	err := cmdDefer([]string{iss.ID, "2027-12-01"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdDefer on already deferred: %v", err)
 	}
@@ -2806,7 +2806,7 @@ func TestCmdDeferUnknownFlag(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdDefer([]string{iss.ID, "2027-06-01", "--unknown"}, &buf)
+	err := cmdDefer([]string{iss.ID, "2027-06-01", "--unknown"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for unknown flag")
 	}
@@ -2835,7 +2835,7 @@ func TestCmdUndeferNoArgs(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdUndefer([]string{}, &buf)
+	err := cmdUndefer([]string{}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for no args")
 	}
@@ -2849,7 +2849,7 @@ func TestCmdUndeferNonExistentIssue(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdUndefer([]string{"bw-0000"}, &buf)
+	err := cmdUndefer([]string{"bw-0000"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for non-existent issue")
 	}
@@ -2864,7 +2864,7 @@ func TestCmdUndeferAlreadyOpen(t *testing.T) {
 
 	// Undefer an issue that's already open (no defer_until set)
 	var buf bytes.Buffer
-	err := cmdUndefer([]string{iss.ID}, &buf)
+	err := cmdUndefer([]string{iss.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUndefer on open issue: %v", err)
 	}
@@ -2886,7 +2886,7 @@ func TestCmdUndeferUnknownFlag(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUndefer([]string{iss.ID, "--unknown"}, &buf)
+	err := cmdUndefer([]string{iss.ID, "--unknown"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for unknown flag")
 	}
@@ -2900,7 +2900,7 @@ func TestCmdUndeferVerifyCommit(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUndefer([]string{iss.ID}, &buf)
+	err := cmdUndefer([]string{iss.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUndefer: %v", err)
 	}
@@ -2970,7 +2970,7 @@ func TestCmdInitDefaultPrefix(t *testing.T) {
 	defer os.Chdir(orig)
 
 	var buf bytes.Buffer
-	err := cmdInit([]string{}, &buf)
+	err := cmdInit([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdInit: %v", err)
 	}
@@ -2984,7 +2984,7 @@ func TestCmdInitForceInvalidPrefix(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdInit([]string{"--force", "--prefix", "has space"}, &buf)
+	err := cmdInit([]string{"--force", "--prefix", "has space"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for invalid prefix")
 	}
@@ -2995,7 +2995,7 @@ func TestCmdInitUnknownFlag(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdInit([]string{"--verbose"}, &buf)
+	err := cmdInit([]string{"--verbose"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for unknown flag")
 	}
@@ -3007,7 +3007,7 @@ func TestCmdInitForceDefaultPrefix(t *testing.T) {
 
 	// Force reinit without specifying prefix (uses empty string -> derives from repo)
 	var buf bytes.Buffer
-	err := cmdInit([]string{"--force"}, &buf)
+	err := cmdInit([]string{"--force"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdInit --force: %v", err)
 	}
@@ -3039,7 +3039,7 @@ func TestCmdInitInvalidPrefix(t *testing.T) {
 	defer os.Chdir(orig)
 
 	var buf bytes.Buffer
-	err := cmdInit([]string{"--prefix", "invalid prefix!"}, &buf)
+	err := cmdInit([]string{"--prefix", "invalid prefix!"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for invalid prefix")
 	}
@@ -3059,7 +3059,7 @@ func TestCmdBlockedMultipleBlockers(t *testing.T) {
 	env.Repo.Commit("link")
 
 	var buf bytes.Buffer
-	err := cmdBlocked([]string{}, &buf)
+	err := cmdBlocked([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdBlocked: %v", err)
 	}
@@ -3080,7 +3080,7 @@ func TestCmdBlockedUnknownFlag(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdBlocked([]string{"--verbose"}, &buf)
+	err := cmdBlocked([]string{"--verbose"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for unknown flag")
 	}
@@ -3094,7 +3094,7 @@ func TestCmdBlockedJSONEmpty(t *testing.T) {
 	env.Repo.Commit("create")
 
 	var buf bytes.Buffer
-	err := cmdBlocked([]string{"--json"}, &buf)
+	err := cmdBlocked([]string{"--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdBlocked --json: %v", err)
 	}
@@ -3124,7 +3124,7 @@ func TestCmdBlockedPartiallyResolved(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdBlocked([]string{}, &buf)
+	err := cmdBlocked([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdBlocked: %v", err)
 	}

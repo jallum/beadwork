@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/jallum/beadwork/internal/intent"
 )
 
-func cmdSync(args []string, w io.Writer) error {
+func cmdSync(args []string, w Writer) error {
 	r, store, err := getInitializedRepo()
 	if err != nil {
 		return err
