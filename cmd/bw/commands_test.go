@@ -498,6 +498,58 @@ func TestCmdLabelRemove(t *testing.T) {
 	}
 }
 
+func TestCmdLabelJSON(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Label JSON", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdLabel([]string{iss.ID, "+bug", "--json"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdLabel --json: %v", err)
+	}
+
+	var got issue.Issue
+	if err := json.Unmarshal(buf.Bytes(), &got); err != nil {
+		t.Fatalf("JSON parse: %v", err)
+	}
+	if len(got.Labels) == 0 || got.Labels[0] != "bug" {
+		t.Errorf("labels = %v, want [bug]", got.Labels)
+	}
+}
+
+func TestCmdLabelBareAdd(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Bare label", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdLabel([]string{iss.ID, "feature"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdLabel bare: %v", err)
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if len(got.Labels) != 1 || got.Labels[0] != "feature" {
+		t.Errorf("labels = %v, want [feature]", got.Labels)
+	}
+}
+
+func TestCmdLabelNotFound(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdLabel([]string{"nonexistent", "+bug"}, &buf)
+	if err == nil {
+		t.Error("expected error for nonexistent issue")
+	}
+}
+
 func TestCmdLabelMissingArg(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
