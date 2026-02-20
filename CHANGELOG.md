@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1 — 2026-02-19
+
+- Fix `bw graph --all` incorrectly filtering out closed issues that have dependency links
+- CLI integration tests now contribute to coverage via instrumented binary (Codecov: 69% → 77%)
+- Add beads/beadwork migration guide to README
+
 ## 0.4.0 — 2026-02-19
 
 - Refactor all command handlers for unit testability: return `error` + write to `io.Writer` instead of `fatal()`/`os.Stdout`
