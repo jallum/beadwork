@@ -510,10 +510,34 @@ func TestParseLabelArgsMissingID(t *testing.T) {
 	}
 }
 
-// --- parseLinkArgs / parseUnlinkArgs ---
+// --- parseDepArgs / parseDepAddArgs / parseDepRemoveArgs ---
 
-func TestParseLinkArgs(t *testing.T) {
-	a, err := parseLinkArgs([]string{"bw-aaaa", "blocks", "bw-bbbb"})
+func TestParseDepArgs(t *testing.T) {
+	a, err := parseDepArgs([]string{"add", "bw-aaaa", "blocks", "bw-bbbb"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.Subcmd != "add" || a.BlockerID != "bw-aaaa" || a.BlockedID != "bw-bbbb" {
+		t.Errorf("got %+v", a)
+	}
+}
+
+func TestParseDepArgsMissing(t *testing.T) {
+	_, err := parseDepArgs([]string{})
+	if err == nil {
+		t.Error("expected error for missing subcommand")
+	}
+}
+
+func TestParseDepArgsUnknown(t *testing.T) {
+	_, err := parseDepArgs([]string{"list"})
+	if err == nil {
+		t.Error("expected error for unknown subcommand")
+	}
+}
+
+func TestParseDepAddArgs(t *testing.T) {
+	a, err := parseDepAddArgs([]string{"bw-aaaa", "blocks", "bw-bbbb"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -525,22 +549,22 @@ func TestParseLinkArgs(t *testing.T) {
 	}
 }
 
-func TestParseLinkArgsBadSyntax(t *testing.T) {
-	_, err := parseLinkArgs([]string{"a", "b"})
+func TestParseDepAddArgsBadSyntax(t *testing.T) {
+	_, err := parseDepAddArgs([]string{"a", "b"})
 	if err == nil {
 		t.Error("expected error for bad syntax")
 	}
 }
 
-func TestParseLinkArgsMissing(t *testing.T) {
-	_, err := parseLinkArgs([]string{})
+func TestParseDepAddArgsMissing(t *testing.T) {
+	_, err := parseDepAddArgs([]string{})
 	if err == nil {
 		t.Error("expected error for missing args")
 	}
 }
 
-func TestParseUnlinkArgs(t *testing.T) {
-	a, err := parseUnlinkArgs([]string{"bw-aaaa", "blocks", "bw-bbbb"})
+func TestParseDepRemoveArgs(t *testing.T) {
+	a, err := parseDepRemoveArgs([]string{"bw-aaaa", "blocks", "bw-bbbb"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -549,8 +573,8 @@ func TestParseUnlinkArgs(t *testing.T) {
 	}
 }
 
-func TestParseUnlinkArgsBadSyntax(t *testing.T) {
-	_, err := parseUnlinkArgs([]string{"a", "b"})
+func TestParseDepRemoveArgsBadSyntax(t *testing.T) {
+	_, err := parseDepRemoveArgs([]string{"a", "b"})
 	if err == nil {
 		t.Error("expected error for bad syntax")
 	}

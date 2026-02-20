@@ -545,9 +545,9 @@ func TestCmdLabelNotFound(t *testing.T) {
 	}
 }
 
-// --- Link / Unlink ---
+// --- Dep Add / Dep Remove ---
 
-func TestCmdLinkBasic(t *testing.T) {
+func TestCmdDepAddBasic(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
@@ -556,11 +556,11 @@ func TestCmdLinkBasic(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdLink([]string{a.ID, "blocks", b.ID}, &buf)
+	err := cmdDepAdd([]string{a.ID, "blocks", b.ID}, &buf)
 	if err != nil {
-		t.Fatalf("cmdLink: %v", err)
+		t.Fatalf("cmdDepAdd: %v", err)
 	}
-	if !strings.Contains(buf.String(), "linked") {
+	if !strings.Contains(buf.String(), "added dep") {
 		t.Errorf("output = %q", buf.String())
 	}
 
@@ -570,18 +570,18 @@ func TestCmdLinkBasic(t *testing.T) {
 	}
 }
 
-func TestCmdLinkNotFound(t *testing.T) {
+func TestCmdDepAddNotFound(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdLink([]string{"nonexistent", "blocks", "also-missing"}, &buf)
+	err := cmdDepAdd([]string{"nonexistent", "blocks", "also-missing"}, &buf)
 	if err == nil {
 		t.Error("expected error for nonexistent issues")
 	}
 }
 
-func TestCmdUnlinkBasic(t *testing.T) {
+func TestCmdDepRemoveBasic(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
@@ -591,21 +591,21 @@ func TestCmdUnlinkBasic(t *testing.T) {
 	env.Repo.Commit("create and link")
 
 	var buf bytes.Buffer
-	err := cmdUnlink([]string{a.ID, "blocks", b.ID}, &buf)
+	err := cmdDepRemove([]string{a.ID, "blocks", b.ID}, &buf)
 	if err != nil {
-		t.Fatalf("cmdUnlink: %v", err)
+		t.Fatalf("cmdDepRemove: %v", err)
 	}
-	if !strings.Contains(buf.String(), "unlinked") {
+	if !strings.Contains(buf.String(), "removed dep") {
 		t.Errorf("output = %q", buf.String())
 	}
 }
 
-func TestCmdUnlinkNotFound(t *testing.T) {
+func TestCmdDepRemoveNotFound(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdUnlink([]string{"nonexistent", "blocks", "also-missing"}, &buf)
+	err := cmdDepRemove([]string{"nonexistent", "blocks", "also-missing"}, &buf)
 	if err == nil {
 		t.Error("expected error for nonexistent issues")
 	}

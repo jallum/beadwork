@@ -193,28 +193,18 @@ var commands = []Command{
 		Run: cmdLabel,
 	},
 	{
-		Name:        "link",
-		Summary:     "Create dependency link",
-		Description: "Create a dependency: the first issue blocks the second.",
+		Name:        "dep",
+		Summary:     "Manage dependencies",
+		Description: "Add or remove dependency links between issues.\nSubcommands: add, remove.",
 		Positionals: []Positional{
+			{Name: "add|remove", Required: true, Help: "Subcommand"},
 			{Name: "<id> blocks <id>", Required: true, Help: "Blocker and blocked issue IDs"},
 		},
 		Examples: []Example{
-			{Cmd: "bw link bw-1234 blocks bw-5678"},
+			{Cmd: "bw dep add bw-1234 blocks bw-5678"},
+			{Cmd: "bw dep remove bw-1234 blocks bw-5678"},
 		},
-		Run: cmdLink,
-	},
-	{
-		Name:        "unlink",
-		Summary:     "Remove dependency link",
-		Description: "Remove a previously created dependency link.",
-		Positionals: []Positional{
-			{Name: "<id> blocks <id>", Required: true, Help: "Blocker and blocked issue IDs"},
-		},
-		Examples: []Example{
-			{Cmd: "bw unlink bw-1234 blocks bw-5678"},
-		},
-		Run: cmdUnlink,
+		Run: cmdDep,
 	},
 	{
 		Name:    "ready",
@@ -351,9 +341,10 @@ var commandGroups = []struct {
 	name string
 	cmds []string
 }{
-	{"Issues", []string{"create", "show", "list", "update", "close", "reopen", "label"}},
-	{"Dependencies", []string{"link", "unlink", "ready", "graph"}},
-	{"Collaboration", []string{"sync", "export", "import"}},
+	{"Working With Issues", []string{"create", "show", "list", "update", "close", "reopen", "label"}},
+	{"Finding Work", []string{"ready"}},
+	{"Dependencies", []string{"dep", "graph"}},
+	{"Sync & Data", []string{"sync", "export", "import"}},
 	{"Setup & Config", []string{"init", "config", "upgrade", "onboard", "prime"}},
 }
 

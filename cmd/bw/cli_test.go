@@ -893,7 +893,7 @@ func TestLabelOnlyID(t *testing.T) {
 
 // --- Link/Unlink ---
 
-func TestLinkOutput(t *testing.T) {
+func TestDepAddOutput(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
@@ -901,8 +901,8 @@ func TestLinkOutput(t *testing.T) {
 	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
 	env.CommitIntent("setup")
 
-	out := bw(t, env.Dir, "link", a.ID, "blocks", b.ID)
-	assertContains(t, out, "linked")
+	out := bw(t, env.Dir, "dep", "add", a.ID, "blocks", b.ID)
+	assertContains(t, out, "added dep")
 	assertContains(t, out, a.ID)
 	assertContains(t, out, b.ID)
 
@@ -911,7 +911,7 @@ func TestLinkOutput(t *testing.T) {
 	assertContains(t, show, "Blocks: "+b.ID)
 }
 
-func TestUnlinkOutput(t *testing.T) {
+func TestDepRemoveOutput(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
@@ -920,38 +920,38 @@ func TestUnlinkOutput(t *testing.T) {
 	env.Store.Link(a.ID, b.ID)
 	env.CommitIntent("setup link")
 
-	out := bw(t, env.Dir, "unlink", a.ID, "blocks", b.ID)
-	assertContains(t, out, "unlinked")
+	out := bw(t, env.Dir, "dep", "remove", a.ID, "blocks", b.ID)
+	assertContains(t, out, "removed dep")
 
 	// Verify unlinked
 	show := bw(t, env.Dir, "show", a.ID)
 	assertNotContains(t, show, "Blocks:")
 }
 
-func TestLinkMissingBlocks(t *testing.T) {
+func TestDepAddMissingBlocks(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	out := bwFail(t, env.Dir, "link", "a", "b")
+	out := bwFail(t, env.Dir, "dep", "add", "a", "b")
 	assertContains(t, out, "usage:")
 }
 
-func TestUnlinkMissingBlocks(t *testing.T) {
+func TestDepRemoveMissingBlocks(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	out := bwFail(t, env.Dir, "unlink", "a", "b")
+	out := bwFail(t, env.Dir, "dep", "remove", "a", "b")
 	assertContains(t, out, "usage:")
 }
 
-func TestLinkSelfBlockingCLI(t *testing.T) {
+func TestDepAddSelfBlockingCLI(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
 	a, _ := env.Store.Create("Self", issue.CreateOpts{})
 	env.CommitIntent("create " + a.ID)
 
-	out := bwFail(t, env.Dir, "link", a.ID, "blocks", a.ID)
+	out := bwFail(t, env.Dir, "dep", "add", a.ID, "blocks", a.ID)
 	assertContains(t, out, "cannot block itself")
 }
 
