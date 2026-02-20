@@ -7,7 +7,7 @@
   "id": "bw-16cd",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Improve test coverage for cmd/bw/close.go",
   "type": "task"
 }
