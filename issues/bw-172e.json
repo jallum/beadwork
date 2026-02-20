@@ -12,7 +12,7 @@
   "id": "bw-172e",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Reorganize help groups and rename link/unlink to dep add/remove",
   "type": "epic"
 }
