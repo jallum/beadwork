@@ -70,7 +70,7 @@ func cmdDepAdd(args []string, w io.Writer) error {
 		return err
 	}
 
-	r, store, err := getInitialized()
+	r, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func cmdDepRemove(args []string, w io.Writer) error {
 		return err
 	}
 
-	r, store, err := getInitialized()
+	r, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}

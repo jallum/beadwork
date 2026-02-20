@@ -61,7 +61,7 @@ func cmdCreate(args []string, w io.Writer) error {
 		return err
 	}
 
-	r, store, err := getInitialized()
+	r, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}

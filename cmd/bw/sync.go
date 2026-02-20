@@ -8,7 +8,7 @@ import (
 )
 
 func cmdSync(args []string, w io.Writer) error {
-	r, store, err := getInitialized()
+	r, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}

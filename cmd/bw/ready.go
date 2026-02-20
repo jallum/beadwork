@@ -26,7 +26,7 @@ func cmdReady(args []string, w io.Writer) error {
 		return err
 	}
 
-	_, store, err := getInitialized()
+	_, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}

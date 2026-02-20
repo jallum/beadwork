@@ -16,7 +16,7 @@ func getRepo() (*repo.Repo, error) {
 	return repo.FindRepo()
 }
 
-func getInitialized() (*repo.Repo, *issue.Store, error) {
+func getInitializedRepo() (*repo.Repo, *issue.Store, error) {
 	r, err := getRepo()
 	if err != nil {
 		return nil, nil, err

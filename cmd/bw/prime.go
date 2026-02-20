@@ -9,7 +9,7 @@ import (
 )
 
 func cmdPrime(w io.Writer) error {
-	_, store, err := getInitialized()
+	_, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}

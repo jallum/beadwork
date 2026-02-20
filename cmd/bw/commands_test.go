@@ -1532,9 +1532,9 @@ func TestGetInitializedWithDefaultPriority(t *testing.T) {
 	env.Repo.SetConfig("default.priority", "2")
 	env.Repo.Commit("config default.priority=2")
 
-	_, store, err := getInitialized()
+	_, store, err := getInitializedRepo()
 	if err != nil {
-		t.Fatalf("getInitialized: %v", err)
+		t.Fatalf("getInitializedRepo: %v", err)
 	}
 	if store.DefaultPriority == nil || *store.DefaultPriority != 2 {
 		t.Errorf("DefaultPriority = %v, want 2", store.DefaultPriority)
@@ -1542,14 +1542,14 @@ func TestGetInitializedWithDefaultPriority(t *testing.T) {
 }
 
 func TestGetInitializedReturnsError(t *testing.T) {
-	// getRepo / getInitialized should return errors, not crash
+	// getRepo / getInitializedRepo should return errors, not crash
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
 	// Verify it works when initialized
-	r, s, err := getInitialized()
+	r, s, err := getInitializedRepo()
 	if err != nil {
-		t.Fatalf("getInitialized: %v", err)
+		t.Fatalf("getInitializedRepo: %v", err)
 	}
 	if r == nil || s == nil {
 		t.Error("expected non-nil repo and store")

@@ -43,7 +43,7 @@ func cmdConfig(args []string, w io.Writer) error {
 		return err
 	}
 
-	r, _, err := getInitialized()
+	r, _, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}
