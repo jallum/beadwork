@@ -15,12 +15,13 @@ type CreateArgs struct {
 	Assignee    string
 	Description string
 	DeferUntil  string
+	Labels      []string
 	JSON        bool
 }
 
 func parseCreateArgs(raw []string) (CreateArgs, error) {
 	a, err := ParseArgs(raw,
-		[]string{"--priority", "--type", "--assignee", "--description", "--defer"},
+		[]string{"--priority", "--type", "--assignee", "--description", "--defer", "--labels"},
 		[]string{"--json"},
 	)
 	if err != nil {
@@ -46,6 +47,14 @@ func parseCreateArgs(raw []string) (CreateArgs, error) {
 			return ca, err
 		}
 		ca.Priority = &p
+	}
+	if a.Has("--labels") {
+		for _, l := range strings.Split(a.String("--labels"), ",") {
+			l = strings.TrimSpace(l)
+			if l != "" {
+				ca.Labels = append(ca.Labels, l)
+			}
+		}
 	}
 	if ca.DeferUntil != "" {
 		if err := validateDate(ca.DeferUntil); err != nil {
@@ -77,6 +86,13 @@ func cmdCreate(args []string, w io.Writer) error {
 	iss, err := store.Create(ca.Title, opts)
 	if err != nil {
 		return err
+	}
+
+	if len(ca.Labels) > 0 {
+		iss, err = store.Label(iss.ID, ca.Labels, nil)
+		if err != nil {
+			return err
+		}
 	}
 
 	intent := fmt.Sprintf("create %s p%d %s %q", iss.ID, iss.Priority, iss.Type, iss.Title)
