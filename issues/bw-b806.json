@@ -7,7 +7,7 @@
   "id": "bw-b806",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Improve test coverage for cmd/bw/config.go",
   "type": "task"
 }
