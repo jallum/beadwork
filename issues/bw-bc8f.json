@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T03:56:15Z",
+  "description": "",
+  "id": "bw-bc8f",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Fix bw graph --all filtering out closed issues",
+  "type": "bug"
+}
