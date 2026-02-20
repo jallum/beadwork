@@ -59,6 +59,9 @@ type beadsRecord struct {
 	IssueType    string     `json:"issue_type"`
 	Owner        string     `json:"owner,omitempty"`
 	CreatedAt    string     `json:"created_at"`
+	UpdatedAt    string     `json:"updated_at,omitempty"`
+	ClosedAt     string     `json:"closed_at,omitempty"`
+	CloseReason  string     `json:"close_reason,omitempty"`
 	Labels       []string   `json:"labels,omitempty"`
 	DeferUntil   string     `json:"defer_until,omitempty"`
 	Blocks       []string   `json:"blocks,omitempty"`
@@ -110,6 +113,9 @@ func cmdExport(args []string, w io.Writer) error {
 			IssueType:   iss.Type,
 			Owner:       iss.Assignee,
 			CreatedAt:   iss.Created,
+			UpdatedAt:   iss.UpdatedAt,
+			ClosedAt:    iss.ClosedAt,
+			CloseReason: iss.CloseReason,
 			Labels:      nilIfEmpty(iss.Labels),
 			DeferUntil:  toRFC3339Date(iss.DeferUntil),
 			Blocks:      nilIfEmpty(iss.Blocks),

@@ -19,6 +19,9 @@ type importRecord struct {
 	IssueType    string     `json:"issue_type"`
 	Owner        string     `json:"owner"`
 	CreatedAt    string     `json:"created_at"`
+	UpdatedAt    string     `json:"updated_at"`
+	ClosedAt     string     `json:"closed_at"`
+	CloseReason  string     `json:"close_reason"`
 	Labels       []string   `json:"labels"`
 	DeferUntil   string     `json:"defer_until"`
 	Dependencies []beadsDep `json:"dependencies"`
@@ -133,6 +136,9 @@ func cmdImport(args []string, w io.Writer) error {
 			Type:        rec.IssueType,
 			Assignee:    rec.Owner,
 			Created:     rec.CreatedAt,
+			UpdatedAt:   rec.UpdatedAt,
+			ClosedAt:    rec.ClosedAt,
+			CloseReason: rec.CloseReason,
 			DeferUntil:  fromRFC3339Date(rec.DeferUntil),
 			Labels:      labels,
 			Blocks:      []string{},

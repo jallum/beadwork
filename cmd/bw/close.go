@@ -37,7 +37,7 @@ func cmdClose(args []string, w io.Writer) error {
 		return err
 	}
 
-	iss, err := store.Close(ca.ID)
+	iss, err := store.Close(ca.ID, ca.Reason)
 	if err != nil {
 		return err
 	}

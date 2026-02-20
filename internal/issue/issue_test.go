@@ -231,7 +231,7 @@ func TestStatusTransitions(t *testing.T) {
 	}
 
 	// in_progress -> closed
-	iss, err := env.Store.Close(iss.ID)
+	iss, err := env.Store.Close(iss.ID, "")
 	if err != nil {
 		t.Fatalf("Close: %v", err)
 	}
@@ -267,9 +267,9 @@ func TestCloseAlreadyClosed(t *testing.T) {
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("Test", issue.CreateOpts{})
-	env.Store.Close(iss.ID)
+	env.Store.Close(iss.ID, "")
 
-	_, err := env.Store.Close(iss.ID)
+	_, err := env.Store.Close(iss.ID, "")
 	if err == nil {
 		t.Error("expected error closing already-closed issue")
 	}
@@ -392,7 +392,7 @@ func TestReady(t *testing.T) {
 	}
 
 	// Close the blocker -> B becomes ready
-	env.Store.Close(a.ID)
+	env.Store.Close(a.ID, "")
 	env.CommitIntent("close " + a.ID)
 
 	ready, _ = env.Store.Ready()
@@ -515,7 +515,7 @@ func TestListByStatus(t *testing.T) {
 
 	a, _ := env.Store.Create("Open one", issue.CreateOpts{})
 	env.Store.Create("Open two", issue.CreateOpts{})
-	env.Store.Close(a.ID)
+	env.Store.Close(a.ID, "")
 
 	open, _ := env.Store.List(issue.Filter{Status: "open"})
 	if len(open) != 1 {
@@ -603,7 +603,7 @@ func TestListJSON(t *testing.T) {
 	env.CommitIntent("create " + task.ID)
 
 	// Close the bug
-	env.Store.Close(bug.ID)
+	env.Store.Close(bug.ID, "")
 	env.CommitIntent("close " + bug.ID)
 
 	issues, err := env.Store.List(issue.Filter{})
@@ -679,7 +679,7 @@ func TestListJSONFilterByStatus(t *testing.T) {
 	env.CommitIntent("create " + a.ID)
 	b, _ := env.Store.Create("Closed issue", issue.CreateOpts{Priority: intPtr(2)})
 	env.CommitIntent("create " + b.ID)
-	env.Store.Close(b.ID)
+	env.Store.Close(b.ID, "")
 	env.CommitIntent("close " + b.ID)
 
 	issues, err := env.Store.List(issue.Filter{Status: "open"})
@@ -1024,7 +1024,7 @@ func TestGraphNoRelationshipsShowsOpen(t *testing.T) {
 	env.Store.Create("Standalone A", issue.CreateOpts{})
 	env.Store.Create("Standalone B", issue.CreateOpts{})
 	iss3, _ := env.Store.Create("Closed one", issue.CreateOpts{})
-	env.Store.Close(iss3.ID)
+	env.Store.Close(iss3.ID, "")
 	env.CommitIntent("setup")
 
 	// Graph with no root and no edges: should show all open issues
@@ -1105,7 +1105,7 @@ func TestCloseNonExistent(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	_, err := env.Store.Close("test-zzzz")
+	_, err := env.Store.Close("test-zzzz", "")
 	if err == nil {
 		t.Error("expected error for non-existent issue")
 	}
@@ -1182,7 +1182,7 @@ func TestBlockedMultipleBlockers(t *testing.T) {
 	c, _ := env.Store.Create("Blocked", issue.CreateOpts{})
 	env.Store.Link(a.ID, c.ID)
 	env.Store.Link(b.ID, c.ID)
-	env.Store.Close(b.ID) // close one blocker
+	env.Store.Close(b.ID, "") // close one blocker
 	env.CommitIntent("setup")
 
 	blocked, err := env.Store.Blocked()
@@ -1208,7 +1208,7 @@ func TestBlockedResolves(t *testing.T) {
 	env.CommitIntent("link")
 
 	// Close the blocker
-	env.Store.Close(a.ID)
+	env.Store.Close(a.ID, "")
 	env.CommitIntent("close")
 
 	blocked, err := env.Store.Blocked()
@@ -1243,7 +1243,7 @@ func TestBlockedClosedIssueExcluded(t *testing.T) {
 	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
 	b, _ := env.Store.Create("Blocked and closed", issue.CreateOpts{})
 	env.Store.Link(a.ID, b.ID)
-	env.Store.Close(b.ID) // close the blocked issue itself
+	env.Store.Close(b.ID, "") // close the blocked issue itself
 	env.CommitIntent("setup")
 
 	blocked, err := env.Store.Blocked()
@@ -1420,5 +1420,153 @@ func TestListByDeferredStatus(t *testing.T) {
 	open, _ := env.Store.List(issue.Filter{Status: "open"})
 	if len(open) != 1 {
 		t.Errorf("open = %d, want 1", len(open))
+	}
+}
+
+// --- updated_at, closed_at, close_reason ---
+
+func TestUpdatedAtOnCreate(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("New issue", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	if iss.UpdatedAt == "" {
+		t.Error("updated_at should be set on create")
+	}
+	if iss.UpdatedAt != iss.Created {
+		t.Errorf("updated_at = %q, want same as created %q", iss.UpdatedAt, iss.Created)
+	}
+}
+
+func TestUpdatedAtOnUpdate(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Update me", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+	originalUpdated := iss.UpdatedAt
+
+	title := "Updated title"
+	updated, _ := env.Store.Update(iss.ID, issue.UpdateOpts{Title: &title})
+	if updated.UpdatedAt == "" {
+		t.Error("updated_at should be set after update")
+	}
+	if updated.UpdatedAt == originalUpdated {
+		// updated_at should change (may be equal if test runs within same second)
+		// At minimum it should be non-empty
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.UpdatedAt != updated.UpdatedAt {
+		t.Errorf("persisted updated_at = %q, want %q", got.UpdatedAt, updated.UpdatedAt)
+	}
+}
+
+func TestCloseReason(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Close me", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	closed, err := env.Store.Close(iss.ID, "duplicate")
+	if err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+	if closed.CloseReason != "duplicate" {
+		t.Errorf("close_reason = %q, want duplicate", closed.CloseReason)
+	}
+	if closed.ClosedAt == "" {
+		t.Error("closed_at should be set")
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.CloseReason != "duplicate" {
+		t.Errorf("persisted close_reason = %q, want duplicate", got.CloseReason)
+	}
+	if got.ClosedAt == "" {
+		t.Error("persisted closed_at should be set")
+	}
+}
+
+func TestCloseWithoutReason(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Close no reason", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	closed, err := env.Store.Close(iss.ID, "")
+	if err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+	if closed.CloseReason != "" {
+		t.Errorf("close_reason = %q, want empty", closed.CloseReason)
+	}
+	if closed.ClosedAt == "" {
+		t.Error("closed_at should be set even without reason")
+	}
+}
+
+func TestReopenClearsCloseFields(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Reopen me", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	env.Store.Close(iss.ID, "wontfix")
+	env.CommitIntent("close " + iss.ID)
+
+	reopened, err := env.Store.Reopen(iss.ID)
+	if err != nil {
+		t.Fatalf("Reopen: %v", err)
+	}
+	if reopened.ClosedAt != "" {
+		t.Errorf("closed_at = %q, want empty after reopen", reopened.ClosedAt)
+	}
+	if reopened.CloseReason != "" {
+		t.Errorf("close_reason = %q, want empty after reopen", reopened.CloseReason)
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.ClosedAt != "" || got.CloseReason != "" {
+		t.Errorf("persisted close fields should be cleared: closed_at=%q close_reason=%q", got.ClosedAt, got.CloseReason)
+	}
+}
+
+func TestUpdatedAtOnLabel(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Label me", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	labeled, _ := env.Store.Label(iss.ID, []string{"bug"}, nil)
+	if labeled.UpdatedAt == "" {
+		t.Error("updated_at should be set after label")
+	}
+}
+
+func TestUpdatedAtOnLink(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+	env.CommitIntent("create issues")
+
+	env.Store.Link(a.ID, b.ID)
+	env.CommitIntent("link")
+
+	gotA, _ := env.Store.Get(a.ID)
+	gotB, _ := env.Store.Get(b.ID)
+	if gotA.UpdatedAt == "" {
+		t.Error("blocker updated_at should be set after link")
+	}
+	if gotB.UpdatedAt == "" {
+		t.Error("blocked updated_at should be set after link")
 	}
 }

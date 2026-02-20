@@ -67,6 +67,8 @@ type Issue struct {
 	Assignee    string   `json:"assignee"`
 	BlockedBy   []string `json:"blocked_by"`
 	Blocks      []string `json:"blocks"`
+	ClosedAt    string   `json:"closed_at,omitempty"`
+	CloseReason string   `json:"close_reason,omitempty"`
 	Created     string   `json:"created"`
 	DeferUntil  string   `json:"defer_until,omitempty"`
 	Description string   `json:"description"`
@@ -77,6 +79,7 @@ type Issue struct {
 	Status      string   `json:"status"`
 	Title       string   `json:"title"`
 	Type        string   `json:"type"`
+	UpdatedAt   string   `json:"updated_at,omitempty"`
 }
 
 type Store struct {
@@ -112,6 +115,7 @@ func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
 		Status:      status,
 		Title:       title,
 		Type:        opts.Type,
+		UpdatedAt:   now,
 	}
 	if issue.Type == "" {
 		issue.Type = "task"
@@ -241,13 +245,14 @@ func (s *Store) Update(id string, opts UpdateOpts) (*Issue, error) {
 		}
 	}
 
+	issue.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
 	if err := s.writeIssue(issue); err != nil {
 		return nil, err
 	}
 	return issue, nil
 }
 
-func (s *Store) Close(id string) (*Issue, error) {
+func (s *Store) Close(id, reason string) (*Issue, error) {
 	id, err := s.resolveID(id)
 	if err != nil {
 		return nil, err
@@ -263,7 +268,11 @@ func (s *Store) Close(id string) (*Issue, error) {
 	if err := s.moveStatus(id, issue.Status, "closed"); err != nil {
 		return nil, err
 	}
+	now := time.Now().UTC().Format(time.RFC3339)
 	issue.Status = "closed"
+	issue.ClosedAt = now
+	issue.CloseReason = reason
+	issue.UpdatedAt = now
 	if err := s.writeIssue(issue); err != nil {
 		return nil, err
 	}
@@ -287,6 +296,9 @@ func (s *Store) Reopen(id string) (*Issue, error) {
 		return nil, err
 	}
 	issue.Status = "open"
+	issue.ClosedAt = ""
+	issue.CloseReason = ""
+	issue.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
 	if err := s.writeIssue(issue); err != nil {
 		return nil, err
 	}
@@ -313,6 +325,7 @@ func (s *Store) Link(blockerID, blockedID string) error {
 	}
 
 	// Update blocker's JSON
+	now := time.Now().UTC().Format(time.RFC3339)
 	blocker, err := s.readIssue(blockerID)
 	if err != nil {
 		return err
@@ -320,9 +333,10 @@ func (s *Store) Link(blockerID, blockedID string) error {
 	if !containsStr(blocker.Blocks, blockedID) {
 		blocker.Blocks = append(blocker.Blocks, blockedID)
 		sort.Strings(blocker.Blocks)
-		if err := s.writeIssue(blocker); err != nil {
-			return err
-		}
+	}
+	blocker.UpdatedAt = now
+	if err := s.writeIssue(blocker); err != nil {
+		return err
 	}
 
 	// Update blocked's JSON
@@ -333,9 +347,10 @@ func (s *Store) Link(blockerID, blockedID string) error {
 	if !containsStr(blocked.BlockedBy, blockerID) {
 		blocked.BlockedBy = append(blocked.BlockedBy, blockerID)
 		sort.Strings(blocked.BlockedBy)
-		if err := s.writeIssue(blocked); err != nil {
-			return err
-		}
+	}
+	blocked.UpdatedAt = now
+	if err := s.writeIssue(blocked); err != nil {
+		return err
 	}
 
 	return nil
@@ -368,11 +383,13 @@ func (s *Store) Unlink(blockerID, blockedID string) error {
 	}
 
 	// Update blocker's JSON
+	now := time.Now().UTC().Format(time.RFC3339)
 	blocker, err := s.readIssue(blockerID)
 	if err != nil {
 		return err
 	}
 	blocker.Blocks = removeStr(blocker.Blocks, blockedID)
+	blocker.UpdatedAt = now
 	if err := s.writeIssue(blocker); err != nil {
 		return err
 	}
@@ -383,6 +400,7 @@ func (s *Store) Unlink(blockerID, blockedID string) error {
 		return err
 	}
 	blocked.BlockedBy = removeStr(blocked.BlockedBy, blockerID)
+	blocked.UpdatedAt = now
 	if err := s.writeIssue(blocked); err != nil {
 		return err
 	}
@@ -430,6 +448,7 @@ func (s *Store) Label(id string, add, remove []string) (*Issue, error) {
 	}
 
 	sort.Strings(issue.Labels)
+	issue.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
 	if err := s.writeIssue(issue); err != nil {
 		return nil, err
 	}

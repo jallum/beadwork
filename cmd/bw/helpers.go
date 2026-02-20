@@ -182,10 +182,15 @@ func fprintJSON(w io.Writer, v interface{}) {
 }
 
 func fprintIssue(w io.Writer, iss *issue.Issue) {
-	// Header: ○ bw-f0ae · Title   [● P3 · OPEN]
-	fmt.Fprintf(w, "%s %s · %s   [%s P%d · %s]\n",
+	// Header: ○ bw-f0ae [BUG] · Title   [● P1 · OPEN]
+	typeTag := ""
+	if iss.Type != "" && iss.Type != "task" {
+		typeTag = " [" + strings.ToUpper(iss.Type) + "]"
+	}
+	fmt.Fprintf(w, "%s %s%s · %s   [%s P%d · %s]\n",
 		issue.StatusIcon(iss.Status),
 		iss.ID,
+		typeTag,
 		iss.Title,
 		issue.PriorityDot(iss.Priority),
 		iss.Priority,
@@ -199,15 +204,19 @@ func fprintIssue(w io.Writer, iss *issue.Issue) {
 	}
 	fmt.Fprintf(w, "Assignee: %s · Type: %s\n", assignee, iss.Type)
 
-	// Created date (trim to date only)
-	created := iss.Created
-	if len(created) >= 10 {
-		created = created[:10]
+	// Date line: Created · Updated · Deferred
+	dateParts := []string{"Created: " + trimDate(iss.Created)}
+	if iss.UpdatedAt != "" {
+		dateParts = append(dateParts, "Updated: "+trimDate(iss.UpdatedAt))
 	}
-	fmt.Fprintf(w, "Created: %s\n", created)
-
 	if iss.DeferUntil != "" {
-		fmt.Fprintf(w, "Deferred: %s\n", iss.DeferUntil)
+		dateParts = append(dateParts, "Deferred: "+iss.DeferUntil)
+	}
+	fmt.Fprintln(w, strings.Join(dateParts, " · "))
+
+	// Close reason
+	if iss.CloseReason != "" {
+		fmt.Fprintf(w, "Close reason: %s\n", iss.CloseReason)
 	}
 
 	// Optional metadata
@@ -215,16 +224,6 @@ func fprintIssue(w io.Writer, iss *issue.Issue) {
 		fmt.Fprintf(w, "Labels: %s\n", strings.Join(iss.Labels, ", "))
 	}
 
-	var deps []string
-	if len(iss.Blocks) > 0 {
-		deps = append(deps, "Blocks: "+strings.Join(iss.Blocks, ", "))
-	}
-	if len(iss.BlockedBy) > 0 {
-		deps = append(deps, "Blocked by: "+strings.Join(iss.BlockedBy, ", "))
-	}
-	if len(deps) > 0 {
-		fmt.Fprintln(w, strings.Join(deps, " · "))
-	}
 	if iss.Parent != "" {
 		fmt.Fprintf(w, "Parent: %s\n", iss.Parent)
 	}
@@ -237,4 +236,43 @@ func fprintIssue(w io.Writer, iss *issue.Issue) {
 		}
 		fmt.Fprintln(w)
 	}
+}
+
+// fprintDeps renders rich dependency sections using store lookups.
+func fprintDeps(w io.Writer, iss *issue.Issue, store *issue.Store) {
+	if len(iss.Blocks) > 0 {
+		fmt.Fprintln(w)
+		fmt.Fprintln(w, "BLOCKS")
+		for _, id := range iss.Blocks {
+			dep, err := store.Get(id)
+			if err != nil {
+				fmt.Fprintf(w, "  ← %s\n", id)
+				continue
+			}
+			fmt.Fprintf(w, "  ← %s %s: %s  [%s P%d]\n",
+				issue.StatusIcon(dep.Status), dep.ID, dep.Title,
+				issue.PriorityDot(dep.Priority), dep.Priority)
+		}
+	}
+	if len(iss.BlockedBy) > 0 {
+		fmt.Fprintln(w)
+		fmt.Fprintln(w, "DEPENDS ON")
+		for _, id := range iss.BlockedBy {
+			dep, err := store.Get(id)
+			if err != nil {
+				fmt.Fprintf(w, "  → %s\n", id)
+				continue
+			}
+			fmt.Fprintf(w, "  → %s %s: %s  [%s P%d]\n",
+				issue.StatusIcon(dep.Status), dep.ID, dep.Title,
+				issue.PriorityDot(dep.Priority), dep.Priority)
+		}
+	}
+}
+
+func trimDate(s string) string {
+	if len(s) >= 10 {
+		return s[:10]
+	}
+	return s
 }

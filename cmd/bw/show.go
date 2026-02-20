@@ -3,23 +3,26 @@ package main
 import (
 	"fmt"
 	"io"
+
+	"github.com/jallum/beadwork/internal/issue"
 )
 
 type ShowArgs struct {
-	ID   string
-	JSON bool
+	IDs   []string
+	JSON  bool
+	Short bool
 }
 
 func parseShowArgs(raw []string) (ShowArgs, error) {
-	a, err := ParseArgs(raw, nil, []string{"--json"})
+	a, err := ParseArgs(raw, nil, []string{"--json", "--short"})
 	if err != nil {
 		return ShowArgs{}, err
 	}
-	id := a.PosFirst()
-	if id == "" {
-		return ShowArgs{}, fmt.Errorf("usage: bw show <id>")
+	ids := a.Pos()
+	if len(ids) == 0 {
+		return ShowArgs{}, fmt.Errorf("usage: bw show <id> [<id>...]")
 	}
-	return ShowArgs{ID: id, JSON: a.JSON()}, nil
+	return ShowArgs{IDs: ids, JSON: a.JSON(), Short: a.Bool("--short")}, nil
 }
 
 func cmdShow(args []string, w io.Writer) error {
@@ -33,15 +36,37 @@ func cmdShow(args []string, w io.Writer) error {
 		return err
 	}
 
-	iss, err := store.Get(sa.ID)
-	if err != nil {
-		return err
+	var issues []*issue.Issue
+	for _, id := range sa.IDs {
+		iss, err := store.Get(id)
+		if err != nil {
+			return err
+		}
+		issues = append(issues, iss)
 	}
 
 	if sa.JSON {
-		fprintJSON(w, iss)
-	} else {
-		fprintIssue(w, iss)
+		fprintJSON(w, issues)
+		return nil
+	}
+
+	for i, iss := range issues {
+		if i > 0 {
+			fmt.Fprintln(w)
+		}
+		if sa.Short {
+			fmt.Fprintf(w, "%s %s [%s P%d] [%s] %s\n",
+				issue.StatusIcon(iss.Status),
+				iss.ID,
+				issue.PriorityDot(iss.Priority),
+				iss.Priority,
+				iss.Type,
+				iss.Title,
+			)
+		} else {
+			fprintIssue(w, iss)
+			fprintDeps(w, iss, store)
+		}
 	}
 	return nil
 }

@@ -129,7 +129,7 @@ func TestShowFormat(t *testing.T) {
 	out := bw(t, env.Dir, "show", iss.ID)
 
 	// Header line: icon, ID, title, priority, status
-	assertContains(t, out, iss.ID+" · Fix login timeout")
+	assertContains(t, out, iss.ID+" [BUG] · Fix login timeout")
 	assertContains(t, out, "P1 · OPEN")
 
 	// Metadata line
@@ -186,13 +186,15 @@ func TestShowWithDependencies(t *testing.T) {
 	env.Store.Link(a.ID, b.ID)
 	env.CommitIntent("setup deps")
 
-	// Check blocker shows "Blocks:"
+	// Check blocker shows BLOCKS section with rich dep
 	outA := bw(t, env.Dir, "show", a.ID)
-	assertContains(t, outA, "Blocks: "+b.ID)
+	assertContains(t, outA, "BLOCKS")
+	assertContains(t, outA, b.ID)
 
-	// Check blocked shows "Blocked by:"
+	// Check blocked shows DEPENDS ON section with rich dep
 	outB := bw(t, env.Dir, "show", b.ID)
-	assertContains(t, outB, "Blocked by: "+a.ID)
+	assertContains(t, outB, "DEPENDS ON")
+	assertContains(t, outB, a.ID)
 }
 
 func TestShowClosedStatus(t *testing.T) {
@@ -200,7 +202,7 @@ func TestShowClosedStatus(t *testing.T) {
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("Done task", issue.CreateOpts{})
-	env.Store.Close(iss.ID)
+	env.Store.Close(iss.ID, "")
 	env.CommitIntent("create and close " + iss.ID)
 
 	out := bw(t, env.Dir, "show", iss.ID)
@@ -251,7 +253,7 @@ func TestListDefaultsToOpen(t *testing.T) {
 
 	open, _ := env.Store.Create("Open one", issue.CreateOpts{})
 	closed, _ := env.Store.Create("Closed one", issue.CreateOpts{})
-	env.Store.Close(closed.ID)
+	env.Store.Close(closed.ID, "")
 	env.CommitIntent("setup")
 
 	out := bw(t, env.Dir, "list")
@@ -540,7 +542,7 @@ func TestExportFilterByStatus(t *testing.T) {
 	a, _ := env.Store.Create("Open issue", issue.CreateOpts{})
 	env.CommitIntent("create " + a.ID)
 	b, _ := env.Store.Create("Closed issue", issue.CreateOpts{})
-	env.Store.Close(b.ID)
+	env.Store.Close(b.ID, "")
 	env.CommitIntent("create and close " + b.ID)
 
 	out := bw(t, env.Dir, "export", "--status", "open")
@@ -633,12 +635,14 @@ func TestImportDependencies(t *testing.T) {
 
 	bw(t, env.Dir, "import", f)
 
-	// Check blocks relationship
+	// Check blocks relationship (rich dep format)
 	outB := bw(t, env.Dir, "show", "dep-bbb")
-	assertContains(t, outB, "Blocked by: dep-aaa")
+	assertContains(t, outB, "DEPENDS ON")
+	assertContains(t, outB, "dep-aaa")
 
 	outA := bw(t, env.Dir, "show", "dep-aaa")
-	assertContains(t, outA, "Blocks: dep-bbb")
+	assertContains(t, outA, "BLOCKS")
+	assertContains(t, outA, "dep-bbb")
 
 	// Check parent relationship
 	outC := bw(t, env.Dir, "show", "dep-ccc")
@@ -693,7 +697,7 @@ func TestImportRoundtrip(t *testing.T) {
 	a, _ := env.Store.Create("Roundtrip A", issue.CreateOpts{Priority: intPtr(1), Type: "bug", Assignee: "alice", Description: "desc A"})
 	b, _ := env.Store.Create("Roundtrip B", issue.CreateOpts{Priority: intPtr(2), Type: "task"})
 	env.Store.Link(a.ID, b.ID)
-	env.Store.Close(b.ID)
+	env.Store.Close(b.ID, "")
 	env.CommitIntent("setup roundtrip")
 
 	// Export
@@ -795,7 +799,7 @@ func TestCloseAlreadyClosedCLI(t *testing.T) {
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("Already closed", issue.CreateOpts{})
-	env.Store.Close(iss.ID)
+	env.Store.Close(iss.ID, "")
 	env.CommitIntent("close " + iss.ID)
 
 	out := bwFail(t, env.Dir, "close", iss.ID)
@@ -807,7 +811,7 @@ func TestReopenOutput(t *testing.T) {
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("Closed task", issue.CreateOpts{})
-	env.Store.Close(iss.ID)
+	env.Store.Close(iss.ID, "")
 	env.CommitIntent("close " + iss.ID)
 
 	out := bw(t, env.Dir, "reopen", iss.ID)
@@ -908,9 +912,10 @@ func TestDepAddOutput(t *testing.T) {
 	assertContains(t, out, a.ID)
 	assertContains(t, out, b.ID)
 
-	// Verify link via show
+	// Verify link via show (rich dep format)
 	show := bw(t, env.Dir, "show", a.ID)
-	assertContains(t, show, "Blocks: "+b.ID)
+	assertContains(t, show, "BLOCKS")
+	assertContains(t, show, b.ID)
 }
 
 func TestDepRemoveOutput(t *testing.T) {
@@ -1140,7 +1145,7 @@ func TestGraphAllExcludesClosedUnlinked(t *testing.T) {
 
 	a, _ := env.Store.Create("Open issue", issue.CreateOpts{})
 	b, _ := env.Store.Create("Closed unlinked", issue.CreateOpts{})
-	env.Store.Close(b.ID)
+	env.Store.Close(b.ID, "")
 	env.CommitIntent("setup")
 
 	// --all without a root filters closed nodes that have no relationships

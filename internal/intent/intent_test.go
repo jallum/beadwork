@@ -94,7 +94,7 @@ func TestReplayCloseAlreadyClosed(t *testing.T) {
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("Already closed", issue.CreateOpts{})
-	env.Store.Close(iss.ID)
+	env.Store.Close(iss.ID, "")
 	env.CommitIntent("create and close " + iss.ID)
 
 	errs := intent.Replay(env.Repo, env.Store, []string{"close " + iss.ID})
@@ -114,7 +114,7 @@ func TestReplayReopen(t *testing.T) {
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("To reopen", issue.CreateOpts{})
-	env.Store.Close(iss.ID)
+	env.Store.Close(iss.ID, "")
 	env.CommitIntent("setup " + iss.ID)
 
 	errs := intent.Replay(env.Repo, env.Store, []string{"reopen " + iss.ID})
