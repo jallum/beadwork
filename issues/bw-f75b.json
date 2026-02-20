@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T07:00:41Z",
+  "description": "",
+  "id": "bw-f75b",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Lossless export/import + integration scenario test",
+  "type": "task"
+}
