@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"os/exec"
 	"strings"
 	"testing"
 
@@ -1100,6 +1101,42 @@ func TestCmdOnboardBasic(t *testing.T) {
 }
 
 // --- Init ---
+
+func TestCmdInitFresh(t *testing.T) {
+	// Create a bare git repo (not initialized with beadwork)
+	dir := t.TempDir()
+	run := func(args ...string) {
+		t.Helper()
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Dir = dir
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("%v: %s: %v", args, out, err)
+		}
+	}
+	run("git", "init")
+	run("git", "config", "user.email", "test@test.com")
+	run("git", "config", "user.name", "Test")
+	os.WriteFile(dir+"/README", []byte("test"), 0644)
+	run("git", "add", ".")
+	run("git", "commit", "-m", "initial")
+
+	orig, _ := os.Getwd()
+	os.Chdir(dir)
+	defer os.Chdir(orig)
+
+	var buf bytes.Buffer
+	err := cmdInit([]string{"--prefix", "fresh"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdInit: %v", err)
+	}
+	if !strings.Contains(buf.String(), "initialized") {
+		t.Errorf("output = %q, want 'initialized'", buf.String())
+	}
+	if !strings.Contains(buf.String(), "fresh") {
+		t.Errorf("output = %q, want prefix 'fresh'", buf.String())
+	}
+}
 
 func TestCmdInitAlreadyInitialized(t *testing.T) {
 	env := testutil.NewEnv(t)
