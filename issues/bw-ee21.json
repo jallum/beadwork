@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T04:50:49Z",
+  "description": "",
+  "id": "bw-ee21",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Cleanup: remove worktree code, update testutil to go-git",
+  "type": "task"
+}
