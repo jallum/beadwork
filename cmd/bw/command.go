@@ -20,12 +20,20 @@ type Positional struct {
 	Help     string
 }
 
+// Example describes a usage example shown in per-command help.
+type Example struct {
+	Cmd  string // e.g. "bw graph --all"
+	Help string // e.g. "Show all open issues"
+}
+
 // Command describes a CLI subcommand.
 type Command struct {
 	Name        string
 	Summary     string // one-line description for top-level usage
+	Description string // multi-line, shown in per-command help (falls back to Summary)
 	Positionals []Positional
 	Flags       []Flag
+	Examples    []Example
 	Run         func(args []string, w io.Writer) error
 }
 
@@ -303,6 +311,13 @@ func printUsage(w io.Writer) {
 }
 
 func printCommandHelp(w io.Writer, c *Command) {
+	// Description (or Summary fallback)
+	desc := c.Description
+	if desc == "" {
+		desc = c.Summary
+	}
+	fmt.Fprintf(w, "%s\n", desc)
+
 	// Usage line
 	usage := "bw " + c.Name
 	for _, p := range c.Positionals {
@@ -311,8 +326,7 @@ func printCommandHelp(w io.Writer, c *Command) {
 	if len(c.Flags) > 0 {
 		usage += " [flags]"
 	}
-	fmt.Fprintf(w, "Usage: %s\n\n", usage)
-	fmt.Fprintf(w, "%s\n", c.Summary)
+	fmt.Fprintf(w, "\nUsage:\n  %s\n", usage)
 
 	if len(c.Positionals) > 0 {
 		fmt.Fprintln(w, "\nArguments:")
@@ -332,6 +346,16 @@ func printCommandHelp(w io.Writer, c *Command) {
 				flag += " " + f.Value
 			}
 			fmt.Fprintf(w, "  %-28s %s\n", flag, f.Help)
+		}
+	}
+
+	if len(c.Examples) > 0 {
+		fmt.Fprintln(w, "\nExamples:")
+		for _, ex := range c.Examples {
+			fmt.Fprintf(w, "  %s\n", ex.Cmd)
+			if ex.Help != "" {
+				fmt.Fprintf(w, "      %s\n", ex.Help)
+			}
 		}
 	}
 }
