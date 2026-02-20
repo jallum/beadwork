@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T06:07:19Z",
+  "description": "",
+  "id": "bw-fba5",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Rename link.go to dep.go with cmdDep dispatcher",
+  "type": "task"
+}
