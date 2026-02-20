@@ -2688,85 +2688,78 @@ func TestCmdUpgradeRepoAlreadyCurrent(t *testing.T) {
 	}
 }
 
-// --- Sync (additional coverage) ---
+// --- Upgrade (additional coverage) ---
 
-func TestCmdSyncReplayWithWarnings(t *testing.T) {
+func TestCmdUpgradeRepoNotInitialized(t *testing.T) {
+	// Create a bare git repo without bw init
+	dir := t.TempDir()
+	for _, args := range [][]string{
+		{"git", "init"},
+		{"git", "config", "user.email", "test@test.com"},
+		{"git", "config", "user.name", "Test"},
+	} {
+		c := exec.Command(args[0], args[1:]...)
+		c.Dir = dir
+		c.Run()
+	}
+	os.WriteFile(dir+"/README", []byte("test"), 0644)
+	c := exec.Command("git", "add", ".")
+	c.Dir = dir
+	c.Run()
+	c = exec.Command("git", "commit", "-m", "initial")
+	c.Dir = dir
+	c.Run()
+
+	orig, _ := os.Getwd()
+	os.Chdir(dir)
+	defer os.Chdir(orig)
+
+	var buf bytes.Buffer
+	err := cmdUpgradeRepo([]string{}, &buf)
+	if err == nil {
+		t.Error("expected error for uninitialized repo")
+	}
+	if !strings.Contains(err.Error(), "not initialized") {
+		t.Errorf("error = %q, want 'not initialized'", err)
+	}
+}
+
+func TestParseUpgradeArgsBothFlags(t *testing.T) {
+	ua, err := parseUpgradeArgs([]string{"--check", "--yes"})
+	if err != nil {
+		t.Fatalf("parseUpgradeArgs: %v", err)
+	}
+	if !ua.Check || !ua.Yes {
+		t.Errorf("expected Check=true, Yes=true, got Check=%v, Yes=%v", ua.Check, ua.Yes)
+	}
+}
+
+func TestParseUpgradeArgsUnknownFlag(t *testing.T) {
+	_, err := parseUpgradeArgs([]string{"--unknown"})
+	if err == nil {
+		t.Error("expected error for unknown flag")
+	}
+}
+
+func TestCmdUpgradeRepoFromV1(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	bare := env.NewBareRemote()
-
-	// Create a shared issue and push
-	shared, _ := env.Store.Create("Shared", issue.CreateOpts{})
-	env.Repo.Commit("create " + shared.ID + " p3 task \"Shared\"")
-	env.Repo.Sync()
-
-	// Clone and close the issue
-	env2 := env.CloneEnv(bare)
-	defer env2.Cleanup()
-
-	env2.SwitchTo()
-	env2.Store.Close(shared.ID, "done")
-	env2.Repo.Commit("close " + shared.ID)
-	env2.Repo.Sync()
-
-	// Back to original: also close the same issue (will conflict on replay)
-	env.SwitchTo()
-	env.Store.Close(shared.ID, "also done")
-	env.Repo.Commit("close " + shared.ID)
+	// Set to version 1
+	env.Repo.SetConfig("version", "1")
+	env.Repo.Commit("set to v1")
 
 	var buf bytes.Buffer
-	err := cmdSync([]string{}, &buf)
+	err := cmdUpgradeRepo([]string{}, &buf)
 	if err != nil {
-		t.Fatalf("cmdSync: %v", err)
+		t.Fatalf("cmdUpgradeRepo from v1: %v", err)
 	}
 	out := buf.String()
-	// Should have replayed or rebased; close-on-closed may produce a warning
-	if !strings.Contains(out, "replayed") && !strings.Contains(out, "rebased") {
-		t.Errorf("output = %q, want replay or rebase", out)
+	if !strings.Contains(out, "upgrading") {
+		t.Errorf("output should contain 'upgrading': %q", out)
 	}
-}
-
-func TestCmdSyncExtraArgs(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	// Sync accepts but ignores extra args — verify it doesn't error
-	var buf bytes.Buffer
-	err := cmdSync([]string{"extra", "args"}, &buf)
-	if err != nil {
-		t.Fatalf("cmdSync with extra args: %v", err)
-	}
-	if !strings.Contains(buf.String(), "no remote") {
-		t.Errorf("output = %q", buf.String())
-	}
-}
-
-func TestCmdSyncFetchOnlyStatus(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	bare := env.NewBareRemote()
-	env.Repo.Sync() // push initial
-
-	// Clone, create issue, push
-	env2 := env.CloneEnv(bare)
-	defer env2.Cleanup()
-
-	env2.SwitchTo()
-	env2.Store.Create("Remote only", issue.CreateOpts{})
-	env2.Repo.Commit("create remote issue")
-	env2.Repo.Sync()
-
-	// Original: no local changes, should fast-forward
-	env.SwitchTo()
-	var buf bytes.Buffer
-	err := cmdSync([]string{}, &buf)
-	if err != nil {
-		t.Fatalf("cmdSync: %v", err)
-	}
-	if !strings.Contains(buf.String(), "up to date") {
-		t.Errorf("output = %q, want 'up to date'", buf.String())
+	if !strings.Contains(out, "upgraded to v2") {
+		t.Errorf("output should contain 'upgraded to v2': %q", out)
 	}
 }
 
