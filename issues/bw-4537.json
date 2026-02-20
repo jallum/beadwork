@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T04:56:33Z",
+  "description": "",
+  "id": "bw-4537",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Migrate arg-validation tests from commands_test.go to parse_test.go",
+  "type": "task"
+}
