@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-20T19:17:56Z",
   "created": "2026-02-20T19:17:40Z",
   "description": "",
   "id": "bw-5im",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "test",
   "type": "task",
-  "updated_at": "2026-02-20T19:17:40Z"
+  "updated_at": "2026-02-20T19:17:56Z"
 }
