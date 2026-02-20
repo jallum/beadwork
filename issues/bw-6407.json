@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T07:02:53Z",
+  "description": "bd has --dry-run (preview without creating) and --silent (output bare ID only). Both are useful for scripting. --dry-run helps verify complex create commands. --silent enables 'id=$(bw create ...)' without parsing.",
+  "id": "bw-6407",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Add --dry-run and --silent flags",
+  "type": "feature"
+}
