@@ -47,8 +47,8 @@
 - `bw label <id> +bug +urgent -wontfix` - Add/remove labels
 
 ### Dependencies
-- `bw link <blocker> blocks <blocked>` - Add dependency (blocker must close before blocked is ready)
-- `bw unlink <blocker> blocks <blocked>` - Remove dependency
+- `bw dep add <blocker> blocks <blocked>` - Add dependency (blocker must close before blocked is ready)
+- `bw dep remove <blocker> blocks <blocked>` - Remove dependency
 - `bw graph <id>` - Show dependency tree for an issue
 - `bw graph --all` - Show all open issue dependencies
 
@@ -76,7 +76,7 @@ bw sync
 ```
 bw create "Implement feature X" -t task -p 2
 bw create "Write tests for X" -t task -p 2
-bw link <feature-id> blocks <test-id>
+bw dep add <feature-id> blocks <test-id>
 ```
 
 ## Notes

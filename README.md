@@ -31,7 +31,7 @@ bw sync                                    # push to remote
 
 ## Commands
 
-**Issues**
+**Working With Issues**
 ```
 bw create <title> [flags]      Create an issue
 bw show <id> [--json]          Show issue details
@@ -42,15 +42,19 @@ bw reopen <id>                 Reopen a closed issue
 bw label <id> +lab [-lab] ...  Add/remove labels
 ```
 
+**Finding Work**
+```
+bw ready [--json]              List unblocked issues
+```
+
 **Dependencies**
 ```
-bw link <id> blocks <id>       Create dependency link
-bw unlink <id> blocks <id>     Remove dependency link
-bw ready [--json]              List unblocked issues
+bw dep add <id> blocks <id>    Add a dependency
+bw dep remove <id> blocks <id> Remove a dependency
 bw graph <id>|--all [--json]   Dependency graph
 ```
 
-**Collaboration**
+**Sync & Data**
 ```
 bw sync                        Fetch, rebase/replay, push
 bw export [--status <s>]       Export issues as JSONL
