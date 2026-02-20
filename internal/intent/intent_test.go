@@ -4,9 +4,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/j5n/beadwork/internal/intent"
-	"github.com/j5n/beadwork/internal/issue"
-	"github.com/j5n/beadwork/internal/testutil"
+	"github.com/jallum/beadwork/internal/intent"
+	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/testutil"
 )
 
 func TestReplayCreate(t *testing.T) {
@@ -397,6 +397,86 @@ func TestReplayIdempotentLink(t *testing.T) {
 	blocker, _ := env.Store.Get(a.ID)
 	if len(blocker.Blocks) != 1 {
 		t.Errorf("blocks = %v, want exactly 1 entry", blocker.Blocks)
+	}
+}
+
+func TestExtractQuoted(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{`create test-0000 p1 bug "Login crashes on timeout"`, "Login crashes on timeout"},
+		{`create test-0000 p1 bug no-quotes`, ""},
+		{`create test-0000 p1 bug "Unmatched opening`, ""},
+		{`create test-0000 p1 bug ""`, ""},
+		{`create test-0000 p1 bug "one" extra "two"`, "one"},
+	}
+	for _, tt := range tests {
+		got := intent.ExtractQuoted(tt.input)
+		if got != tt.want {
+			t.Errorf("ExtractQuoted(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
+func TestParseIntent(t *testing.T) {
+	tests := []struct {
+		input string
+		want  []string
+	}{
+		{`create test-0000 p1 bug "Login crashes"`, []string{"create", "test-0000", "p1", "bug", "Login crashes"}},
+		{`close test-1234`, []string{"close", "test-1234"}},
+		{``, nil},
+		{`link a blocks b`, []string{"link", "a", "blocks", "b"}},
+	}
+	for _, tt := range tests {
+		got := intent.ParseIntent(tt.input)
+		if len(got) != len(tt.want) {
+			t.Errorf("ParseIntent(%q) = %v (len %d), want %v (len %d)", tt.input, got, len(got), tt.want, len(tt.want))
+			continue
+		}
+		for i := range got {
+			if got[i] != tt.want[i] {
+				t.Errorf("ParseIntent(%q)[%d] = %q, want %q", tt.input, i, got[i], tt.want[i])
+			}
+		}
+	}
+}
+
+func TestReplayIdempotentUnlink(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("A", issue.CreateOpts{})
+	b, _ := env.Store.Create("B", issue.CreateOpts{})
+	env.CommitIntent("setup")
+
+	// Unlink when no link exists — should succeed (idempotent)
+	errs := intent.Replay(env.Repo, env.Store, []string{
+		"unlink " + a.ID + " blocks " + b.ID,
+	})
+	if len(errs) != 0 {
+		t.Fatalf("expected no errors for unlinking unlinked issues, got %d: %v", len(errs), errs)
+	}
+}
+
+func TestReplayUpdateType(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Test", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	errs := intent.Replay(env.Repo, env.Store, []string{
+		"update " + iss.ID + " type=bug",
+	})
+	if len(errs) > 0 {
+		t.Fatalf("Replay errors: %v", errs)
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.Type != "bug" {
+		t.Errorf("type = %q, want bug", got.Type)
 	}
 }
 

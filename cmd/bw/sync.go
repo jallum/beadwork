@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/j5n/beadwork/internal/intent"
+	"github.com/jallum/beadwork/internal/intent"
 )
 
 func cmdSync(args []string) {

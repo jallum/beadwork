@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/j5n/beadwork/internal/issue"
-	"github.com/j5n/beadwork/prompts"
+	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/prompts"
 )
 
 func cmdPrime() {

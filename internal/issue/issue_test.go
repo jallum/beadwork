@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
-	"github.com/j5n/beadwork/internal/issue"
-	"github.com/j5n/beadwork/internal/testutil"
+	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/testutil"
 )
 
 func TestCreateAndGet(t *testing.T) {
@@ -704,6 +705,268 @@ func assertJSONFields(t *testing.T, iss issue.Issue, status string, priority int
 	}
 	if iss.Created == "" {
 		t.Error("created is empty")
+	}
+}
+
+func TestImportDirect(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss := &issue.Issue{
+		ID:          "ext-001",
+		Title:       "Imported directly",
+		Description: "From external source",
+		Status:      "open",
+		Priority:    2,
+		Type:        "task",
+		Assignee:    "someone",
+		Created:     "2026-01-01T00:00:00Z",
+		Labels:      []string{},
+		Blocks:      []string{},
+		BlockedBy:   []string{},
+	}
+
+	if err := env.Store.Import(iss); err != nil {
+		t.Fatalf("Import: %v", err)
+	}
+	env.CommitIntent("import ext-001")
+
+	got, err := env.Store.Get("ext-001")
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.Title != "Imported directly" {
+		t.Errorf("title = %q", got.Title)
+	}
+	if got.Status != "open" {
+		t.Errorf("status = %q", got.Status)
+	}
+	if got.Assignee != "someone" {
+		t.Errorf("assignee = %q", got.Assignee)
+	}
+}
+
+func TestImportClosedStatus(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss := &issue.Issue{
+		ID:        "ext-closed",
+		Title:     "Closed import",
+		Status:    "closed",
+		Priority:  1,
+		Type:      "bug",
+		Created:   "2026-01-01T00:00:00Z",
+		Labels:    []string{},
+		Blocks:    []string{},
+		BlockedBy: []string{},
+	}
+
+	if err := env.Store.Import(iss); err != nil {
+		t.Fatalf("Import: %v", err)
+	}
+	env.CommitIntent("import closed")
+
+	got, err := env.Store.Get("ext-closed")
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.Status != "closed" {
+		t.Errorf("status = %q, want closed", got.Status)
+	}
+	if !env.MarkerExists(filepath.Join("status", "closed", "ext-closed")) {
+		t.Error("closed status marker missing")
+	}
+}
+
+func TestAmbiguousID(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Create issues with similar IDs that share a prefix
+	for _, id := range []string{"test-ab01", "test-ab02"} {
+		env.Store.Import(&issue.Issue{
+			ID:        id,
+			Title:     "Issue " + id,
+			Status:    "open",
+			Priority:  3,
+			Type:      "task",
+			Created:   "2026-01-01T00:00:00Z",
+			Labels:    []string{},
+			Blocks:    []string{},
+			BlockedBy: []string{},
+		})
+	}
+	env.CommitIntent("import two similar issues")
+
+	// Searching for "test-ab0" should be ambiguous (matches both via prefix)
+	_, err := env.Store.Get("test-ab0")
+	if err == nil {
+		t.Error("expected ambiguous ID error")
+	}
+	if err != nil && !strings.Contains(err.Error(), "ambiguous") {
+		t.Errorf("expected 'ambiguous' in error, got: %v", err)
+	}
+
+	// Exact match should work
+	got, err := env.Store.Get("test-ab01")
+	if err != nil {
+		t.Fatalf("Get exact: %v", err)
+	}
+	if got.ID != "test-ab01" {
+		t.Errorf("id = %q", got.ID)
+	}
+}
+
+func TestLinkIdempotent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("A", issue.CreateOpts{})
+	b, _ := env.Store.Create("B", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+
+	// Link again — should be a noop, not create duplicate entries
+	if err := env.Store.Link(a.ID, b.ID); err != nil {
+		t.Fatalf("second Link: %v", err)
+	}
+
+	aGot, _ := env.Store.Get(a.ID)
+	if len(aGot.Blocks) != 1 {
+		t.Errorf("blocks = %v, want exactly 1 entry", aGot.Blocks)
+	}
+	bGot, _ := env.Store.Get(b.ID)
+	if len(bGot.BlockedBy) != 1 {
+		t.Errorf("blockedBy = %v, want exactly 1 entry", bGot.BlockedBy)
+	}
+}
+
+func TestUnlinkIdempotent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("A", issue.CreateOpts{})
+	b, _ := env.Store.Create("B", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Unlink(a.ID, b.ID)
+
+	// Unlink again — should be a noop
+	if err := env.Store.Unlink(a.ID, b.ID); err != nil {
+		t.Fatalf("second Unlink: %v", err)
+	}
+
+	aGot, _ := env.Store.Get(a.ID)
+	if len(aGot.Blocks) != 0 {
+		t.Errorf("blocks = %v, want empty", aGot.Blocks)
+	}
+}
+
+func TestLabelIdempotent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Label test", issue.CreateOpts{})
+	env.Store.Label(iss.ID, []string{"bug"}, nil)
+
+	// Add same label again — should not duplicate
+	iss2, err := env.Store.Label(iss.ID, []string{"bug"}, nil)
+	if err != nil {
+		t.Fatalf("second Label: %v", err)
+	}
+	if len(iss2.Labels) != 1 {
+		t.Errorf("labels = %v, want exactly 1 entry", iss2.Labels)
+	}
+}
+
+func TestRemoveNonexistentLabel(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("No labels", issue.CreateOpts{})
+
+	// Remove a label that doesn't exist — should be fine
+	iss2, err := env.Store.Label(iss.ID, nil, []string{"nonexistent"})
+	if err != nil {
+		t.Fatalf("Label remove nonexistent: %v", err)
+	}
+	if len(iss2.Labels) != 0 {
+		t.Errorf("labels = %v, want empty", iss2.Labels)
+	}
+}
+
+func TestGetNonExistent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	_, err := env.Store.Get("test-zzzz")
+	if err == nil {
+		t.Error("expected error for non-existent issue")
+	}
+}
+
+func TestGraphEmpty(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// No issues at all — graph should return empty
+	nodes, err := env.Store.Graph("")
+	if err != nil {
+		t.Fatalf("Graph: %v", err)
+	}
+	if len(nodes) != 0 {
+		t.Errorf("got %d nodes, want 0", len(nodes))
+	}
+}
+
+func TestGraphRootedSubset(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Root A", issue.CreateOpts{})
+	b, _ := env.Store.Create("Child B", issue.CreateOpts{})
+	c, _ := env.Store.Create("Independent C", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.CommitIntent("setup")
+
+	// Rooted at A should only return A and B, not C
+	nodes, err := env.Store.Graph(a.ID)
+	if err != nil {
+		t.Fatalf("Graph: %v", err)
+	}
+	ids := make(map[string]bool)
+	for _, n := range nodes {
+		ids[n.ID] = true
+	}
+	if !ids[a.ID] || !ids[b.ID] {
+		t.Error("expected A and B in rooted graph")
+	}
+	if ids[c.ID] {
+		t.Error("C should not be in graph rooted at A")
+	}
+	_ = c
+}
+
+func TestLinkNonExistentBlocker(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+
+	err := env.Store.Link("test-zzzz", b.ID)
+	if err == nil {
+		t.Error("expected error for non-existent blocker")
+	}
+}
+
+func TestLinkNonExistentBlocked(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+
+	err := env.Store.Link(a.ID, "test-zzzz")
+	if err == nil {
+		t.Error("expected error for non-existent blocked")
 	}
 }
 

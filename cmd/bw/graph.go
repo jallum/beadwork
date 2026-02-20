@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/j5n/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/issue"
 )
 
 func cmdGraph(args []string) {

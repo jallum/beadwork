@@ -1,3 +1,3 @@
-module github.com/j5n/beadwork
+module github.com/jallum/beadwork
 
 go 1.24.4

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/j5n/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/issue"
 )
 
 type importRecord struct {

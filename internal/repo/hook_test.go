@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/j5n/beadwork/internal/repo"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 func gitRun(t *testing.T, dir string, args ...string) {

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/j5n/beadwork/internal/repo"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 func TestForceReinit(t *testing.T) {

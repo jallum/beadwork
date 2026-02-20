@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/j5n/beadwork/internal/issue"
-	"github.com/j5n/beadwork/internal/repo"
+	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 // Replay executes a list of intent strings against the current state.
@@ -22,7 +22,7 @@ func Replay(r *repo.Repo, store *issue.Store, intents []string) []error {
 }
 
 func replayOne(r *repo.Repo, store *issue.Store, raw string) error {
-	parts := parseIntent(raw)
+	parts := ParseIntent(raw)
 	if len(parts) == 0 {
 		return nil // skip empty or unparseable
 	}
@@ -65,7 +65,7 @@ func replayCreate(r *repo.Repo, store *issue.Store, parts []string, raw string) 
 	issueType := parts[2]
 
 	// Extract quoted title
-	title := extractQuoted(raw)
+	title := ExtractQuoted(raw)
 	if title == "" {
 		title = strings.Join(parts[3:], " ")
 	}
@@ -203,8 +203,8 @@ func replayConfig(r *repo.Repo, parts []string, raw string) error {
 	return r.Commit(raw)
 }
 
-// parseIntent splits an intent string respecting quoted strings.
-func parseIntent(raw string) []string {
+// ParseIntent splits an intent string respecting quoted strings.
+func ParseIntent(raw string) []string {
 	var parts []string
 	var current strings.Builder
 	inQuote := false
@@ -229,8 +229,8 @@ func parseIntent(raw string) []string {
 	return parts
 }
 
-// extractQuoted extracts the first quoted string from a raw intent.
-func extractQuoted(raw string) string {
+// ExtractQuoted extracts the first quoted string from a raw intent.
+func ExtractQuoted(raw string) string {
 	start := strings.Index(raw, "\"")
 	if start == -1 {
 		return ""
