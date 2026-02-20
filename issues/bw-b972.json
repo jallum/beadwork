@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-b239"
+  ],
   "blocks": [],
   "created": "2026-02-20T05:45:08Z",
   "description": "",
