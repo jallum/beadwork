@@ -107,7 +107,7 @@ func (r *Repo) Init(prefix string) error {
 		if _, err := r.gitWt("add", "-A"); err != nil {
 			return err
 		}
-		if _, err := r.gitWt("commit", "-m", "init beadwork"); err != nil {
+		if _, err := r.gitWt("commit", "--no-verify", "-m", "init beadwork"); err != nil {
 			return err
 		}
 	} else {
@@ -123,7 +123,7 @@ func (r *Repo) Commit(message string) error {
 	if _, err := r.gitWt("add", "-A"); err != nil {
 		return err
 	}
-	if _, err := r.gitWt("commit", "-m", message); err != nil {
+	if _, err := r.gitWt("commit", "--no-verify", "-m", message); err != nil {
 		return err
 	}
 	return nil
@@ -159,7 +159,7 @@ func (r *Repo) createOrphanBranch() error {
 	}
 	// Remove all files from the orphan branch index
 	r.git("rm", "-rf", "--quiet", ".")
-	if _, err := r.git("commit", "--allow-empty", "-m", "init beadwork branch"); err != nil {
+	if _, err := r.git("commit", "--allow-empty", "--no-verify", "-m", "init beadwork branch"); err != nil {
 		r.git("checkout", origRef)
 		return err
 	}
