@@ -302,6 +302,7 @@ func TestReplayMalformedIntents(t *testing.T) {
 	intents := []string{
 		"create",                // too few parts
 		"close",                 // missing id
+		"delete",               // missing id
 		"update",               // missing id and fields
 		"link foo",             // missing blocks keyword
 		"unlink foo bar",       // missing blocks keyword
@@ -505,4 +506,32 @@ func init() {
 	os.Setenv("GIT_AUTHOR_EMAIL", "test@test.com")
 	os.Setenv("GIT_COMMITTER_NAME", "Test")
 	os.Setenv("GIT_COMMITTER_EMAIL", "test@test.com")
+}
+
+func TestReplayDelete(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("To delete", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	errs := intent.Replay(env.Repo, env.Store, []string{"delete " + iss.ID})
+	if len(errs) > 0 {
+		t.Fatalf("Replay errors: %v", errs)
+	}
+
+	_, err := env.Store.Get(iss.ID)
+	if err == nil {
+		t.Error("issue should not exist after replay delete")
+	}
+}
+
+func TestReplayDeleteNonexistent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	errs := intent.Replay(env.Repo, env.Store, []string{"delete test-zzzz"})
+	if len(errs) != 1 {
+		t.Fatalf("expected 1 error, got %d: %v", len(errs), errs)
+	}
 }
