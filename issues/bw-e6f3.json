@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T02:20:02Z",
+  "description": "",
+  "id": "bw-e6f3",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Improve test coverage for cmd/bw/label.go",
+  "type": "task"
+}
