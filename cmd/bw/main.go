@@ -22,7 +22,7 @@ func main() {
 		fmt.Fprintln(w, "bw "+version)
 		return
 	case "--help", "-h":
-		printUsage(os.Stderr)
+		printUsage(os.Stdout)
 		return
 	}
 
@@ -34,7 +34,7 @@ func main() {
 	}
 
 	if hasFlag(args, "--help") || hasFlag(args, "-h") {
-		printCommandHelp(os.Stderr, c)
+		printCommandHelp(os.Stdout, c)
 		return
 	}
 
