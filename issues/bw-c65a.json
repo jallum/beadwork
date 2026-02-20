@@ -1,0 +1,16 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T18:58:31Z",
+  "description": "",
+  "id": "bw-c65a",
+  "labels": [
+    "coverage"
+  ],
+  "priority": 3,
+  "status": "open",
+  "title": "Increase code coverage for blocked",
+  "type": "task",
+  "updated_at": "2026-02-20T18:58:31Z"
+}
