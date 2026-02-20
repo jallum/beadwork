@@ -31,26 +31,39 @@ bw sync                                    # push to remote
 
 ## Commands
 
+**Issues**
 ```
-bw init [--prefix] [--force]   Initialize beadwork
 bw create <title> [flags]      Create an issue
 bw show <id> [--json]          Show issue details
 bw list [filters] [--json]     List issues
 bw update <id> [flags]         Update an issue
 bw close <id> [--reason <r>]   Close an issue
 bw reopen <id>                 Reopen a closed issue
-bw ready [--json]              List issues with no open blockers
 bw label <id> +lab [-lab] ...  Add/remove labels
+```
+
+**Dependencies**
+```
 bw link <id> blocks <id>       Create dependency link
 bw unlink <id> blocks <id>     Remove dependency link
+bw ready [--json]              List unblocked issues
 bw graph <id>|--all [--json]   Dependency graph
-bw config get|set|list         View/set config options
+```
+
+**Collaboration**
+```
+bw sync                        Fetch, rebase/replay, push
 bw export [--status <s>]       Export issues as JSONL
 bw import <file> [--dry-run]   Import issues from JSONL
-bw sync                        Fetch, rebase/replay, push
+```
+
+**Setup & Config**
+```
+bw init [--prefix] [--force]   Initialize beadwork
+bw config get|set|list         View/set config options
+bw upgrade [--check] [--yes]   Check for / install updates
 bw onboard                     Print AGENTS.md snippet
 bw prime                       Print workflow context for agents
-bw upgrade [--check] [--yes]   Check for / install updates
 ```
 
 ## Design
