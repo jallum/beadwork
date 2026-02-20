@@ -7,7 +7,7 @@
   "id": "bw-fa9b",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Improve test coverage for internal/intent/intent.go",
   "type": "task"
 }
