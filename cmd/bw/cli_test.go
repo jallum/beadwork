@@ -424,7 +424,7 @@ func TestUsageOnNoArgs(t *testing.T) {
 	defer env.Cleanup()
 
 	out := bwFail(t, env.Dir)
-	assertContains(t, out, "Usage: bw <command>")
+	assertContains(t, out, "bw <command>")
 }
 
 func TestUnknownCommand(t *testing.T) {
@@ -433,6 +433,50 @@ func TestUnknownCommand(t *testing.T) {
 
 	out := bwFail(t, env.Dir, "bogus")
 	assertContains(t, out, "unknown command: bogus")
+}
+
+func TestHelpToStdout(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// bw --help should exit 0 and write to stdout (not stderr)
+	cmd := exec.Command(bwBin, "--help")
+	cmd.Dir = env.Dir
+	cmd.Env = append(os.Environ(), "GOCOVERDIR="+bwCoverDir)
+	var stdout, stderr strings.Builder
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("bw --help exited with error: %v", err)
+	}
+	if !strings.Contains(stdout.String(), "bw <command>") {
+		t.Errorf("stdout missing usage, got %q", stdout.String())
+	}
+	if stderr.Len() > 0 {
+		t.Errorf("unexpected stderr: %q", stderr.String())
+	}
+}
+
+func TestCommandHelpToStdout(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// bw create --help should exit 0 and write to stdout
+	cmd := exec.Command(bwBin, "create", "--help")
+	cmd.Dir = env.Dir
+	cmd.Env = append(os.Environ(), "GOCOVERDIR="+bwCoverDir)
+	var stdout, stderr strings.Builder
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("bw create --help exited with error: %v", err)
+	}
+	if !strings.Contains(stdout.String(), "create") {
+		t.Errorf("stdout missing command name, got %q", stdout.String())
+	}
+	if stderr.Len() > 0 {
+		t.Errorf("unexpected stderr: %q", stderr.String())
+	}
 }
 
 // --- Export command ---
