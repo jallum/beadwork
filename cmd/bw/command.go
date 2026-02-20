@@ -340,15 +340,16 @@ var commands = []Command{
 	},
 	{
 		Name:        "upgrade",
-		Summary:     "Check for / install updates",
-		Description: "Check for and install newer versions from GitHub releases.",
+		Summary:     "Upgrade binary or repo schema",
+		Description: "Upgrade the bw binary from GitHub releases, or migrate the repo schema.\nSubcommands: repo (migrate schema). Default: binary upgrade.",
 		Flags: []Flag{
-			{Long: "--check", Help: "Check only, don't install"},
-			{Long: "--yes", Help: "Skip confirmation prompt"},
+			{Long: "--check", Help: "Check only, don't install (binary mode)"},
+			{Long: "--yes", Help: "Skip confirmation prompt (binary mode)"},
 		},
 		Examples: []Example{
 			{Cmd: "bw upgrade"},
 			{Cmd: "bw upgrade --check"},
+			{Cmd: "bw upgrade repo"},
 		},
 		Run: cmdUpgrade,
 	},

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
@@ -15,6 +16,9 @@ import (
 )
 
 const BranchName = "beadwork"
+
+// CurrentVersion is the highest repo schema version this binary understands.
+const CurrentVersion = 1
 
 const refLocal = "refs/heads/" + BranchName
 const refRemote = "refs/remotes/origin/" + BranchName
@@ -168,7 +172,7 @@ func (r *Repo) Init(prefix string) error {
 		for _, d := range dirs {
 			r.tfs.WriteFile(d+"/.gitkeep", []byte{})
 		}
-		r.tfs.WriteFile(".bwconfig", []byte("prefix="+prefix+"\n"))
+		r.tfs.WriteFile(".bwconfig", []byte("prefix="+prefix+"\nversion="+strconv.Itoa(CurrentVersion)+"\n"))
 
 		if err := r.tfs.Commit("init beadwork"); err != nil {
 			return fmt.Errorf("init commit: %w", err)
@@ -235,6 +239,19 @@ func (r *Repo) derivePrefix() string {
 		clean = clean[:8]
 	}
 	return string(clean)
+}
+
+// Version returns the repo schema version (0 if unset or invalid).
+func (r *Repo) Version() int {
+	v, ok := r.GetConfig("version")
+	if !ok {
+		return 0
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		return 0
+	}
+	return n
 }
 
 // GetConfig reads a single key from .bwconfig.
