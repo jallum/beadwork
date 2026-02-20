@@ -535,3 +535,50 @@ func TestReplayDeleteNonexistent(t *testing.T) {
 		t.Fatalf("expected 1 error, got %d: %v", len(errs), errs)
 	}
 }
+
+func TestReplayComment(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Commentable", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	errs := intent.Replay(env.Repo, env.Store, []string{
+		`comment ` + iss.ID + ` "Replayed comment"`,
+	})
+	if len(errs) > 0 {
+		t.Fatalf("Replay errors: %v", errs)
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if len(got.Comments) != 1 {
+		t.Fatalf("expected 1 comment, got %d", len(got.Comments))
+	}
+	if got.Comments[0].Text != "Replayed comment" {
+		t.Errorf("text = %q, want %q", got.Comments[0].Text, "Replayed comment")
+	}
+}
+
+func TestReplayCommentMalformed(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	errs := intent.Replay(env.Repo, env.Store, []string{
+		"comment",
+	})
+	if len(errs) != 1 {
+		t.Fatalf("expected 1 error, got %d: %v", len(errs), errs)
+	}
+}
+
+func TestReplayCommentNonexistent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	errs := intent.Replay(env.Repo, env.Store, []string{
+		`comment test-zzzz "Missing issue"`,
+	})
+	if len(errs) != 1 {
+		t.Fatalf("expected 1 error, got %d: %v", len(errs), errs)
+	}
+}

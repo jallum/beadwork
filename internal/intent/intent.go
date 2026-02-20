@@ -47,6 +47,8 @@ func replayOne(r *repo.Repo, store *issue.Store, raw string) error {
 		return replayDelete(r, store, parts[1:], raw)
 	case "config":
 		return replayConfig(r, parts[1:], raw)
+	case "comment":
+		return replayComment(r, store, parts[1:], raw)
 	case "init":
 		return nil // skip init intents
 	default:
@@ -213,6 +215,21 @@ func replayConfig(r *repo.Repo, parts []string, raw string) error {
 	key := kv[:eqIdx]
 	value := kv[eqIdx+1:]
 	if err := r.SetConfig(key, value); err != nil {
+		return err
+	}
+	return r.Commit(raw)
+}
+
+func replayComment(r *repo.Repo, store *issue.Store, parts []string, raw string) error {
+	if len(parts) < 1 {
+		return fmt.Errorf("malformed comment intent")
+	}
+	text := ExtractQuoted(raw)
+	if text == "" && len(parts) > 1 {
+		text = strings.Join(parts[1:], " ")
+	}
+	_, err := store.Comment(parts[0], text, "")
+	if err != nil {
 		return err
 	}
 	return r.Commit(raw)

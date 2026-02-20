@@ -243,6 +243,21 @@ func fprintIssue(w Writer, iss *issue.Issue) {
 		}
 		fmt.Fprintln(w)
 	}
+
+	// Comments
+	if len(iss.Comments) > 0 {
+		fmt.Fprintln(w)
+		fmt.Fprintln(w, "COMMENTS")
+		for _, c := range iss.Comments {
+			ts := trimDate(c.Timestamp)
+			if c.Author != "" {
+				fmt.Fprintf(w, "  %s %s\n", ts, c.Author)
+			} else {
+				fmt.Fprintf(w, "  %s\n", ts)
+			}
+			fmt.Fprintf(w, "    %s\n", c.Text)
+		}
+	}
 }
 
 // fprintDeps renders rich dependency sections using store lookups.

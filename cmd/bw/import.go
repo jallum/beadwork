@@ -10,21 +10,28 @@ import (
 	"github.com/jallum/beadwork/internal/issue"
 )
 
+type importComment struct {
+	Author    string `json:"author"`
+	Text      string `json:"text"`
+	CreatedAt string `json:"created_at"`
+}
+
 type importRecord struct {
-	ID           string     `json:"id"`
-	Title        string     `json:"title"`
-	Description  string     `json:"description"`
-	Status       string     `json:"status"`
-	Priority     *int       `json:"priority"`
-	IssueType    string     `json:"issue_type"`
-	Owner        string     `json:"owner"`
-	CreatedAt    string     `json:"created_at"`
-	UpdatedAt    string     `json:"updated_at"`
-	ClosedAt     string     `json:"closed_at"`
-	CloseReason  string     `json:"close_reason"`
-	Labels       []string   `json:"labels"`
-	DeferUntil   string     `json:"defer_until"`
-	Dependencies []beadsDep `json:"dependencies"`
+	ID           string          `json:"id"`
+	Title        string          `json:"title"`
+	Description  string          `json:"description"`
+	Status       string          `json:"status"`
+	Priority     *int            `json:"priority"`
+	IssueType    string          `json:"issue_type"`
+	Owner        string          `json:"owner"`
+	CreatedAt    string          `json:"created_at"`
+	UpdatedAt    string          `json:"updated_at"`
+	ClosedAt     string          `json:"closed_at"`
+	CloseReason  string          `json:"close_reason"`
+	Labels       []string        `json:"labels"`
+	DeferUntil   string          `json:"defer_until"`
+	Dependencies []beadsDep      `json:"dependencies"`
+	Comments     []importComment `json:"comments"`
 }
 
 type ImportArgs struct {
@@ -163,6 +170,14 @@ func cmdImport(args []string, w Writer) error {
 			if dep.Type == "parent-child" {
 				iss.Parent = dep.DependsOnID
 			}
+		}
+		// Convert comments
+		for _, c := range rec.Comments {
+			iss.Comments = append(iss.Comments, issue.Comment{
+				Text:      c.Text,
+				Author:    c.Author,
+				Timestamp: c.CreatedAt,
+			})
 		}
 		if err := store.Import(iss); err != nil {
 			return fmt.Errorf("import %s: %v", rec.ID, err)

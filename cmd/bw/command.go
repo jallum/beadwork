@@ -186,6 +186,23 @@ var commands = []Command{
 		Run: cmdClose,
 	},
 	{
+		Name:    "comments",
+		Summary: "View or add comments on an issue",
+		Description: "List comments or add a new comment.\nSubcommands: add.",
+		Positionals: []Positional{
+			{Name: "[add] <id> [text]", Required: true, Help: "Issue ID (or 'add <id> <text>' to add)"},
+		},
+		Flags: []Flag{
+			{Long: "--author", Short: "-a", Value: "NAME", Help: "Comment author (add mode)"},
+			{Long: "--json", Help: "Output as JSON"},
+		},
+		Examples: []Example{
+			{Cmd: `bw comments bw-a3f8`, Help: "List comments"},
+			{Cmd: `bw comments add bw-a3f8 "Fixed in latest deploy"`, Help: "Add a comment"},
+		},
+		Run: cmdComments,
+	},
+	{
 		Name:    "reopen",
 		Summary: "Reopen a closed issue",
 		Positionals: []Positional{
@@ -423,7 +440,7 @@ var commandGroups = []struct {
 	name string
 	cmds []string
 }{
-	{"Working With Issues", []string{"create", "show", "list", "update", "close", "reopen", "delete", "label", "defer", "undefer"}},
+	{"Working With Issues", []string{"create", "show", "list", "update", "close", "reopen", "delete", "comments", "label", "defer", "undefer"}},
 	{"Finding Work", []string{"ready", "blocked"}},
 	{"Dependencies", []string{"dep", "graph"}},
 	{"Sync & Data", []string{"sync", "export", "import"}},
