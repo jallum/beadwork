@@ -11,7 +11,7 @@
   "id": "bw-b9aa",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Add TreeFS package with go-git backend",
   "type": "task"
 }
