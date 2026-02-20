@@ -2041,3 +2041,218 @@ func TestDeleteNonexistent(t *testing.T) {
 		t.Error("expected error for nonexistent issue")
 	}
 }
+
+// --- Parent field tests ---
+
+func TestCreateWithParent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	parent, err := env.Store.Create("Parent issue", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create parent: %v", err)
+	}
+	env.CommitIntent("create " + parent.ID)
+
+	child, err := env.Store.Create("Child issue", issue.CreateOpts{
+		Parent: parent.ID,
+	})
+	if err != nil {
+		t.Fatalf("Create child: %v", err)
+	}
+	env.CommitIntent("create " + child.ID)
+
+	got, err := env.Store.Get(child.ID)
+	if err != nil {
+		t.Fatalf("Get child: %v", err)
+	}
+	if got.Parent != parent.ID {
+		t.Errorf("child.Parent = %q, want %q", got.Parent, parent.ID)
+	}
+}
+
+func TestCreateWithNonexistentParent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	_, err := env.Store.Create("Orphan", issue.CreateOpts{
+		Parent: "test-zzzz",
+	})
+	if err == nil {
+		t.Fatal("expected error for nonexistent parent")
+	}
+}
+
+func TestUpdateSetParent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	parent, err := env.Store.Create("Parent", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create parent: %v", err)
+	}
+	child, err := env.Store.Create("Child", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create child: %v", err)
+	}
+	env.CommitIntent("create issues")
+
+	parentID := parent.ID
+	updated, err := env.Store.Update(child.ID, issue.UpdateOpts{
+		Parent: &parentID,
+	})
+	if err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+	if updated.Parent != parent.ID {
+		t.Errorf("Parent = %q, want %q", updated.Parent, parent.ID)
+	}
+
+	got, err := env.Store.Get(child.ID)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.Parent != parent.ID {
+		t.Errorf("persisted Parent = %q, want %q", got.Parent, parent.ID)
+	}
+}
+
+func TestUpdateClearParent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	parent, err := env.Store.Create("Parent", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create parent: %v", err)
+	}
+	child, err := env.Store.Create("Child", issue.CreateOpts{
+		Parent: parent.ID,
+	})
+	if err != nil {
+		t.Fatalf("Create child: %v", err)
+	}
+	env.CommitIntent("create issues")
+
+	empty := ""
+	updated, err := env.Store.Update(child.ID, issue.UpdateOpts{
+		Parent: &empty,
+	})
+	if err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+	if updated.Parent != "" {
+		t.Errorf("Parent = %q, want empty", updated.Parent)
+	}
+}
+
+func TestUpdateSelfParentRejected(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, err := env.Store.Create("Self", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	env.CommitIntent("create " + iss.ID)
+
+	selfID := iss.ID
+	_, err = env.Store.Update(iss.ID, issue.UpdateOpts{
+		Parent: &selfID,
+	})
+	if err == nil {
+		t.Fatal("expected error for self-parent")
+	}
+	if !strings.Contains(err.Error(), "own parent") {
+		t.Errorf("error = %q, want mention of 'own parent'", err.Error())
+	}
+}
+
+func TestUpdateDirectCycleRejected(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, err := env.Store.Create("A", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create A: %v", err)
+	}
+	b, err := env.Store.Create("B", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create B: %v", err)
+	}
+	env.CommitIntent("create issues")
+
+	aID := a.ID
+	_, err = env.Store.Update(b.ID, issue.UpdateOpts{Parent: &aID})
+	if err != nil {
+		t.Fatalf("Set A as parent of B: %v", err)
+	}
+	env.CommitIntent("update parent")
+
+	bID := b.ID
+	_, err = env.Store.Update(a.ID, issue.UpdateOpts{Parent: &bID})
+	if err == nil {
+		t.Fatal("expected error for direct cycle")
+	}
+	if !strings.Contains(err.Error(), "circular") {
+		t.Errorf("error = %q, want mention of 'circular'", err.Error())
+	}
+}
+
+func TestUpdateDeepCycleRejected(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, err := env.Store.Create("A", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create A: %v", err)
+	}
+	b, err := env.Store.Create("B", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create B: %v", err)
+	}
+	c, err := env.Store.Create("C", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create C: %v", err)
+	}
+	env.CommitIntent("create issues")
+
+	aID := a.ID
+	_, err = env.Store.Update(b.ID, issue.UpdateOpts{Parent: &aID})
+	if err != nil {
+		t.Fatalf("Set A as parent of B: %v", err)
+	}
+	bID := b.ID
+	_, err = env.Store.Update(c.ID, issue.UpdateOpts{Parent: &bID})
+	if err != nil {
+		t.Fatalf("Set B as parent of C: %v", err)
+	}
+	env.CommitIntent("setup chain")
+
+	cID := c.ID
+	_, err = env.Store.Update(a.ID, issue.UpdateOpts{Parent: &cID})
+	if err == nil {
+		t.Fatal("expected error for deep cycle")
+	}
+	if !strings.Contains(err.Error(), "circular") {
+		t.Errorf("error = %q, want mention of 'circular'", err.Error())
+	}
+}
+
+func TestUpdateParentNonexistentRejected(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, err := env.Store.Create("Issue", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	env.CommitIntent("create " + iss.ID)
+
+	bad := "test-zzzz"
+	_, err = env.Store.Update(iss.ID, issue.UpdateOpts{
+		Parent: &bad,
+	})
+	if err == nil {
+		t.Fatal("expected error for nonexistent parent")
+	}
+}
