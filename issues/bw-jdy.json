@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T22:34:46Z",
+  "description": "",
+  "id": "bw-jdy",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Show blocking/blocked-by relationships in list output",
+  "type": "feature",
+  "updated_at": "2026-02-20T22:34:46Z"
+}
