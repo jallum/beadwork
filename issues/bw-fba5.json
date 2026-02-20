@@ -11,7 +11,7 @@
   "id": "bw-fba5",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Rename link.go to dep.go with cmdDep dispatcher",
   "type": "task"
 }
