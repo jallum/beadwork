@@ -5,25 +5,37 @@ import (
 	"io"
 )
 
+type ShowArgs struct {
+	ID   string
+	JSON bool
+}
+
+func parseShowArgs(raw []string) (ShowArgs, error) {
+	a := ParseArgs(raw)
+	id := a.PosFirst()
+	if id == "" {
+		return ShowArgs{}, fmt.Errorf("usage: bw show <id>")
+	}
+	return ShowArgs{ID: id, JSON: a.JSON()}, nil
+}
+
 func cmdShow(args []string, w io.Writer) error {
+	sa, err := parseShowArgs(args)
+	if err != nil {
+		return err
+	}
+
 	_, store, err := getInitialized()
 	if err != nil {
 		return err
 	}
 
-	a := ParseArgs(args)
-
-	id := a.PosFirst()
-	if id == "" {
-		return fmt.Errorf("usage: bw show <id>")
-	}
-
-	iss, err := store.Get(id)
+	iss, err := store.Get(sa.ID)
 	if err != nil {
 		return err
 	}
 
-	if a.JSON() {
+	if sa.JSON {
 		fprintJSON(w, iss)
 	} else {
 		fprintIssue(w, iss)
