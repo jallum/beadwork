@@ -12,7 +12,7 @@
   "id": "bw-96c4",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "DRY up CLI argument parsing with Args helper",
   "type": "task"
 }
