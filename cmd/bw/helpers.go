@@ -182,10 +182,15 @@ func fprintJSON(w io.Writer, v interface{}) {
 }
 
 func fprintIssue(w io.Writer, iss *issue.Issue) {
-	// Header: ○ bw-f0ae · Title   [● P3 · OPEN]
-	fmt.Fprintf(w, "%s %s · %s   [%s P%d · %s]\n",
+	// Header: ○ bw-f0ae [BUG] · Title   [● P1 · OPEN]
+	typeTag := ""
+	if iss.Type != "" && iss.Type != "task" {
+		typeTag = " [" + strings.ToUpper(iss.Type) + "]"
+	}
+	fmt.Fprintf(w, "%s %s%s · %s   [%s P%d · %s]\n",
 		issue.StatusIcon(iss.Status),
 		iss.ID,
+		typeTag,
 		iss.Title,
 		issue.PriorityDot(iss.Priority),
 		iss.Priority,
@@ -199,15 +204,19 @@ func fprintIssue(w io.Writer, iss *issue.Issue) {
 	}
 	fmt.Fprintf(w, "Assignee: %s · Type: %s\n", assignee, iss.Type)
 
-	// Created date (trim to date only)
-	created := iss.Created
-	if len(created) >= 10 {
-		created = created[:10]
+	// Date line: Created · Updated · Deferred
+	dateParts := []string{"Created: " + trimDate(iss.Created)}
+	if iss.UpdatedAt != "" {
+		dateParts = append(dateParts, "Updated: "+trimDate(iss.UpdatedAt))
 	}
-	fmt.Fprintf(w, "Created: %s\n", created)
-
 	if iss.DeferUntil != "" {
-		fmt.Fprintf(w, "Deferred: %s\n", iss.DeferUntil)
+		dateParts = append(dateParts, "Deferred: "+iss.DeferUntil)
+	}
+	fmt.Fprintln(w, strings.Join(dateParts, " · "))
+
+	// Close reason
+	if iss.CloseReason != "" {
+		fmt.Fprintf(w, "Close reason: %s\n", iss.CloseReason)
 	}
 
 	// Optional metadata
@@ -237,4 +246,11 @@ func fprintIssue(w io.Writer, iss *issue.Issue) {
 		}
 		fmt.Fprintln(w)
 	}
+}
+
+func trimDate(s string) string {
+	if len(s) >= 10 {
+		return s[:10]
+	}
+	return s
 }

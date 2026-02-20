@@ -1503,6 +1503,9 @@ func TestFprintIssueFull(t *testing.T) {
 	var buf bytes.Buffer
 	fprintIssue(&buf, iss)
 	out := buf.String()
+	if !strings.Contains(out, "[BUG]") {
+		t.Errorf("missing [BUG] type tag: %q", out)
+	}
 	if !strings.Contains(out, "Blocks: test-aaaa") {
 		t.Errorf("missing Blocks in output: %q", out)
 	}
@@ -1521,6 +1524,84 @@ func TestFprintIssueFull(t *testing.T) {
 	// No assignee → should show "—"
 	if !strings.Contains(out, "—") {
 		t.Errorf("missing dash for empty assignee: %q", out)
+	}
+}
+
+func TestFprintIssueTypeTag(t *testing.T) {
+	iss := &issue.Issue{
+		ID:       "test-9999",
+		Title:    "Bug report",
+		Status:   "open",
+		Priority: 1,
+		Type:     "bug",
+		Created:  "2024-01-15T12:00:00Z",
+	}
+
+	var buf bytes.Buffer
+	fprintIssue(&buf, iss)
+	out := buf.String()
+	if !strings.Contains(out, "[BUG]") {
+		t.Errorf("should contain [BUG] tag: %q", out)
+	}
+
+	// Task type should NOT have a tag
+	iss.Type = "task"
+	buf.Reset()
+	fprintIssue(&buf, iss)
+	out = buf.String()
+	if strings.Contains(out, "[TASK]") {
+		t.Errorf("task should not have type tag: %q", out)
+	}
+}
+
+func TestFprintIssueDateLine(t *testing.T) {
+	iss := &issue.Issue{
+		ID:        "test-date",
+		Title:     "Date test",
+		Status:    "open",
+		Priority:  2,
+		Type:      "task",
+		Created:   "2024-01-15T12:00:00Z",
+		UpdatedAt: "2024-02-20T14:00:00Z",
+	}
+
+	var buf bytes.Buffer
+	fprintIssue(&buf, iss)
+	out := buf.String()
+	if !strings.Contains(out, "Created: 2024-01-15") {
+		t.Errorf("missing Created date: %q", out)
+	}
+	if !strings.Contains(out, "Updated: 2024-02-20") {
+		t.Errorf("missing Updated date: %q", out)
+	}
+
+	// Deferred should be on same line
+	iss.DeferUntil = "2027-06-01"
+	buf.Reset()
+	fprintIssue(&buf, iss)
+	out = buf.String()
+	if !strings.Contains(out, "Deferred: 2027-06-01") {
+		t.Errorf("missing Deferred date: %q", out)
+	}
+}
+
+func TestFprintIssueCloseReason(t *testing.T) {
+	iss := &issue.Issue{
+		ID:          "test-closed",
+		Title:       "Closed issue",
+		Status:      "closed",
+		Priority:    2,
+		Type:        "task",
+		Created:     "2024-01-15T12:00:00Z",
+		ClosedAt:    "2024-03-01T10:00:00Z",
+		CloseReason: "duplicate",
+	}
+
+	var buf bytes.Buffer
+	fprintIssue(&buf, iss)
+	out := buf.String()
+	if !strings.Contains(out, "Close reason: duplicate") {
+		t.Errorf("should contain close reason: %q", out)
 	}
 }
 

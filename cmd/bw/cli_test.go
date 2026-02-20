@@ -129,7 +129,7 @@ func TestShowFormat(t *testing.T) {
 	out := bw(t, env.Dir, "show", iss.ID)
 
 	// Header line: icon, ID, title, priority, status
-	assertContains(t, out, iss.ID+" · Fix login timeout")
+	assertContains(t, out, iss.ID+" [BUG] · Fix login timeout")
 	assertContains(t, out, "P1 · OPEN")
 
 	// Metadata line
