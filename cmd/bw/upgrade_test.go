@@ -326,6 +326,54 @@ func TestExtractBinaryRoutesCorrectly(t *testing.T) {
 	}
 }
 
+func TestExtractBinaryRoutesTarGz(t *testing.T) {
+	// Test that extractBinary routes .tar.gz to extractFromTarGz
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	tw := tar.NewWriter(gw)
+
+	content := []byte("tar binary")
+	tw.WriteHeader(&tar.Header{
+		Name: "bw",
+		Size: int64(len(content)),
+		Mode: 0755,
+	})
+	tw.Write(content)
+	tw.Close()
+	gw.Close()
+
+	got, err := extractBinary("beadwork_1.0.0_linux_amd64.tar.gz", buf.Bytes())
+	if err != nil {
+		t.Fatalf("extractBinary(.tar.gz): %v", err)
+	}
+	if !bytes.Equal(got, content) {
+		t.Errorf("got %q, want %q", got, content)
+	}
+}
+
+func TestResolveBinaryPathNotExist(t *testing.T) {
+	_, _, _, err := resolveBinaryPath("/nonexistent/path/bw")
+	if err == nil {
+		t.Error("expected error for non-existent binary path")
+	}
+}
+
+func TestInstallDirectNewFile(t *testing.T) {
+	dir := t.TempDir()
+	target := filepath.Join(dir, "bw")
+
+	// Install without an existing file
+	content := []byte("brand-new-binary")
+	if err := installDirect(target, content); err != nil {
+		t.Fatalf("installDirect: %v", err)
+	}
+
+	got, _ := os.ReadFile(target)
+	if !bytes.Equal(got, content) {
+		t.Errorf("binary content = %q, want %q", got, content)
+	}
+}
+
 func TestCheckWritableNoPermission(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("permission test not reliable on Windows")

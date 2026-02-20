@@ -34,6 +34,26 @@ func TestReplayCreate(t *testing.T) {
 	}
 }
 
+func TestReplayCreateNoQuotes(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Create without quoted title — should use remaining parts as title
+	intents := []string{`create test-0000 p2 task Unquoted title words`}
+	errs := intent.Replay(env.Repo, env.Store, intents)
+	if len(errs) > 0 {
+		t.Fatalf("Replay errors: %v", errs)
+	}
+
+	issues, _ := env.Store.List(issue.Filter{})
+	if len(issues) != 1 {
+		t.Fatalf("got %d issues, want 1", len(issues))
+	}
+	if issues[0].Title != "Unquoted title words" {
+		t.Errorf("title = %q, want 'Unquoted title words'", issues[0].Title)
+	}
+}
+
 func TestReplayCreateDefaultPriority(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()

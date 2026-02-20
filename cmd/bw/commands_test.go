@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"os/exec"
 	"strings"
 	"testing"
 
@@ -264,6 +265,39 @@ func TestCmdCloseWithReason(t *testing.T) {
 	}
 }
 
+func TestCmdCloseJSON(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Close JSON", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdClose([]string{iss.ID, "--json"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdClose --json: %v", err)
+	}
+
+	var got issue.Issue
+	if err := json.Unmarshal(buf.Bytes(), &got); err != nil {
+		t.Fatalf("JSON parse: %v", err)
+	}
+	if got.Status != "closed" {
+		t.Errorf("status = %q, want closed", got.Status)
+	}
+}
+
+func TestCmdCloseNotFound(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdClose([]string{"nonexistent"}, &buf)
+	if err == nil {
+		t.Error("expected error for nonexistent issue")
+	}
+}
+
 func TestCmdCloseMissingArg(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -295,6 +329,40 @@ func TestCmdReopenBasic(t *testing.T) {
 	got, _ := env.Store.Get(iss.ID)
 	if got.Status != "open" {
 		t.Errorf("status = %q, want open", got.Status)
+	}
+}
+
+func TestCmdReopenJSON(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Reopen JSON", issue.CreateOpts{})
+	env.Store.Close(iss.ID)
+	env.Repo.Commit("create and close " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdReopen([]string{iss.ID, "--json"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdReopen --json: %v", err)
+	}
+
+	var got issue.Issue
+	if err := json.Unmarshal(buf.Bytes(), &got); err != nil {
+		t.Fatalf("JSON parse: %v", err)
+	}
+	if got.Status != "open" {
+		t.Errorf("status = %q, want open", got.Status)
+	}
+}
+
+func TestCmdReopenNotFound(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdReopen([]string{"nonexistent"}, &buf)
+	if err == nil {
+		t.Error("expected error for nonexistent issue")
 	}
 }
 
@@ -377,6 +445,69 @@ func TestCmdUpdateJSON(t *testing.T) {
 	}
 }
 
+func TestCmdUpdateDescription(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Desc update", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdUpdate([]string{iss.ID, "--description", "new description"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdUpdate: %v", err)
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.Description != "new description" {
+		t.Errorf("description = %q, want %q", got.Description, "new description")
+	}
+}
+
+func TestCmdUpdateStatus(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Status update", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdUpdate([]string{iss.ID, "--status", "in_progress"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdUpdate: %v", err)
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.Status != "in_progress" {
+		t.Errorf("status = %q, want in_progress", got.Status)
+	}
+}
+
+func TestCmdUpdateInvalidPriority(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Bad priority", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdUpdate([]string{iss.ID, "--priority", "abc"}, &buf)
+	if err == nil {
+		t.Error("expected error for non-numeric priority")
+	}
+}
+
+func TestCmdUpdateNotFound(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdUpdate([]string{"nonexistent", "--title", "x"}, &buf)
+	if err == nil {
+		t.Error("expected error for nonexistent issue")
+	}
+}
+
 func TestCmdUpdateMissingArg(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -431,6 +562,58 @@ func TestCmdLabelRemove(t *testing.T) {
 	}
 }
 
+func TestCmdLabelJSON(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Label JSON", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdLabel([]string{iss.ID, "+bug", "--json"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdLabel --json: %v", err)
+	}
+
+	var got issue.Issue
+	if err := json.Unmarshal(buf.Bytes(), &got); err != nil {
+		t.Fatalf("JSON parse: %v", err)
+	}
+	if len(got.Labels) == 0 || got.Labels[0] != "bug" {
+		t.Errorf("labels = %v, want [bug]", got.Labels)
+	}
+}
+
+func TestCmdLabelBareAdd(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Bare label", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdLabel([]string{iss.ID, "feature"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdLabel bare: %v", err)
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if len(got.Labels) != 1 || got.Labels[0] != "feature" {
+		t.Errorf("labels = %v, want [feature]", got.Labels)
+	}
+}
+
+func TestCmdLabelNotFound(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdLabel([]string{"nonexistent", "+bug"}, &buf)
+	if err == nil {
+		t.Error("expected error for nonexistent issue")
+	}
+}
+
 func TestCmdLabelMissingArg(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -478,6 +661,28 @@ func TestCmdLinkBadSyntax(t *testing.T) {
 	}
 }
 
+func TestCmdLinkNotFound(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdLink([]string{"nonexistent", "blocks", "also-missing"}, &buf)
+	if err == nil {
+		t.Error("expected error for nonexistent issues")
+	}
+}
+
+func TestCmdLinkMissingArg(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdLink([]string{}, &buf)
+	if err == nil {
+		t.Error("expected error for missing args")
+	}
+}
+
 func TestCmdUnlinkBasic(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -494,6 +699,28 @@ func TestCmdUnlinkBasic(t *testing.T) {
 	}
 	if !strings.Contains(buf.String(), "unlinked") {
 		t.Errorf("output = %q", buf.String())
+	}
+}
+
+func TestCmdUnlinkBadSyntax(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdUnlink([]string{"a", "b"}, &buf)
+	if err == nil {
+		t.Error("expected error for bad syntax")
+	}
+}
+
+func TestCmdUnlinkNotFound(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdUnlink([]string{"nonexistent", "blocks", "also-missing"}, &buf)
+	if err == nil {
+		t.Error("expected error for nonexistent issues")
 	}
 }
 
@@ -611,6 +838,60 @@ func TestCmdGraphRooted(t *testing.T) {
 	}
 }
 
+func TestCmdGraphEmpty(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdGraph([]string{"--all"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdGraph --all: %v", err)
+	}
+	if !strings.Contains(buf.String(), "no issues") {
+		t.Errorf("output = %q, want 'no issues'", buf.String())
+	}
+}
+
+func TestCmdGraphMultipleRoots(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Create a graph with two independent trees
+	a, _ := env.Store.Create("Root A", issue.CreateOpts{})
+	b, _ := env.Store.Create("Child B", issue.CreateOpts{})
+	c, _ := env.Store.Create("Root C", issue.CreateOpts{})
+	d, _ := env.Store.Create("Child D", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Link(c.ID, d.ID)
+	env.Repo.Commit("setup graph")
+
+	var buf bytes.Buffer
+	err := cmdGraph([]string{"--all"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdGraph: %v", err)
+	}
+	// Should show all 4 nodes
+	out := buf.String()
+	if !strings.Contains(out, "Root A") || !strings.Contains(out, "Child B") {
+		t.Errorf("missing tree A in output: %q", out)
+	}
+	if !strings.Contains(out, "Root C") || !strings.Contains(out, "Child D") {
+		t.Errorf("missing tree C in output: %q", out)
+	}
+}
+
+func TestCmdGraphNotFound(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdGraph([]string{"nonexistent"}, &buf)
+	// Graph with a root ID that doesn't exist — should return empty graph
+	if err != nil {
+		t.Fatalf("cmdGraph: %v", err)
+	}
+}
+
 func TestCmdGraphMissingArg(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -669,6 +950,39 @@ func TestCmdConfigGetMissing(t *testing.T) {
 	err := cmdConfig([]string{"get", "nonexistent"}, &buf)
 	if err == nil {
 		t.Error("expected error for missing key")
+	}
+}
+
+func TestCmdConfigGetNoKey(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdConfig([]string{"get"}, &buf)
+	if err == nil {
+		t.Error("expected error for get without key")
+	}
+}
+
+func TestCmdConfigSetNoArgs(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdConfig([]string{"set", "key"}, &buf)
+	if err == nil {
+		t.Error("expected error for set without value")
+	}
+}
+
+func TestCmdConfigUnknownSubcmd(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdConfig([]string{"delete"}, &buf)
+	if err == nil {
+		t.Error("expected error for unknown subcommand")
 	}
 }
 
@@ -784,6 +1098,84 @@ func TestCmdSyncNoRemote(t *testing.T) {
 	}
 }
 
+func TestCmdSyncPush(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.NewBareRemote()
+
+	env.Store.Create("Sync test", issue.CreateOpts{})
+	env.Repo.Commit("create issue")
+
+	var buf bytes.Buffer
+	err := cmdSync([]string{}, &buf)
+	if err != nil {
+		t.Fatalf("cmdSync: %v", err)
+	}
+	if !strings.Contains(buf.String(), "pushed") {
+		t.Errorf("output = %q, want 'pushed'", buf.String())
+	}
+}
+
+func TestCmdSyncUpToDate(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.NewBareRemote()
+
+	env.Store.Create("Sync test", issue.CreateOpts{})
+	env.Repo.Commit("create issue")
+	env.Repo.Sync() // initial push
+
+	var buf bytes.Buffer
+	err := cmdSync([]string{}, &buf)
+	if err != nil {
+		t.Fatalf("cmdSync: %v", err)
+	}
+	if !strings.Contains(buf.String(), "up to date") {
+		t.Errorf("output = %q, want 'up to date'", buf.String())
+	}
+}
+
+func TestCmdSyncReplay(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	bare := env.NewBareRemote()
+
+	// Create a shared issue and push
+	shared, _ := env.Store.Create("Shared", issue.CreateOpts{})
+	env.Repo.Commit("create " + shared.ID + " p3 task \"Shared\"")
+	env.Repo.Sync()
+
+	// Clone and modify the same issue
+	env2 := env.CloneEnv(bare)
+	defer env2.Cleanup()
+
+	env2.SwitchTo()
+	statusIP := "in_progress"
+	env2.Store.Update(shared.ID, issue.UpdateOpts{Status: &statusIP})
+	env2.Repo.Commit("update " + shared.ID + " status=in_progress")
+	env2.Repo.Sync()
+
+	// Back to original, modify the same issue (potential conflict)
+	env.SwitchTo()
+	assignee := "agent"
+	env.Store.Update(shared.ID, issue.UpdateOpts{Assignee: &assignee})
+	env.Repo.Commit("update " + shared.ID + " assignee=agent")
+
+	var buf bytes.Buffer
+	err := cmdSync([]string{}, &buf)
+	if err != nil {
+		t.Fatalf("cmdSync: %v", err)
+	}
+	out := buf.String()
+	// Should either replay or clean rebase
+	if !strings.Contains(out, "replayed") && !strings.Contains(out, "rebased") {
+		t.Errorf("output = %q, want replay or rebase", out)
+	}
+}
+
 // --- Prime ---
 
 func TestCmdPrimeBasic(t *testing.T) {
@@ -806,6 +1198,44 @@ func TestCmdPrimeBasic(t *testing.T) {
 	}
 }
 
+func TestCmdPrimeInProgress(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("In progress task", issue.CreateOpts{})
+	statusIP := "in_progress"
+	env.Store.Update(iss.ID, issue.UpdateOpts{Status: &statusIP})
+	env.Repo.Commit("create and update " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdPrime(&buf)
+	if err != nil {
+		t.Fatalf("cmdPrime: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "In progress:") {
+		t.Errorf("output missing 'In progress:': %q", out)
+	}
+	if !strings.Contains(out, "In progress task") {
+		t.Errorf("output missing in_progress task: %q", out)
+	}
+}
+
+func TestCmdPrimeEmpty(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdPrime(&buf)
+	if err != nil {
+		t.Fatalf("cmdPrime: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "0 open") {
+		t.Errorf("output missing '0 open': %q", out)
+	}
+}
+
 // --- Onboard ---
 
 func TestCmdOnboardBasic(t *testing.T) {
@@ -820,6 +1250,42 @@ func TestCmdOnboardBasic(t *testing.T) {
 }
 
 // --- Init ---
+
+func TestCmdInitFresh(t *testing.T) {
+	// Create a bare git repo (not initialized with beadwork)
+	dir := t.TempDir()
+	run := func(args ...string) {
+		t.Helper()
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Dir = dir
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("%v: %s: %v", args, out, err)
+		}
+	}
+	run("git", "init")
+	run("git", "config", "user.email", "test@test.com")
+	run("git", "config", "user.name", "Test")
+	os.WriteFile(dir+"/README", []byte("test"), 0644)
+	run("git", "add", ".")
+	run("git", "commit", "-m", "initial")
+
+	orig, _ := os.Getwd()
+	os.Chdir(dir)
+	defer os.Chdir(orig)
+
+	var buf bytes.Buffer
+	err := cmdInit([]string{"--prefix", "fresh"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdInit: %v", err)
+	}
+	if !strings.Contains(buf.String(), "initialized") {
+		t.Errorf("output = %q, want 'initialized'", buf.String())
+	}
+	if !strings.Contains(buf.String(), "fresh") {
+		t.Errorf("output = %q, want prefix 'fresh'", buf.String())
+	}
+}
 
 func TestCmdInitAlreadyInitialized(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -904,6 +1370,63 @@ func TestFprintIssue(t *testing.T) {
 	}
 	if !strings.Contains(out, "Labels: bug") {
 		t.Errorf("missing labels in output: %q", out)
+	}
+}
+
+func TestFprintIssueFull(t *testing.T) {
+	iss := &issue.Issue{
+		ID:          "test-5678",
+		Title:       "Full issue",
+		Status:      "in_progress",
+		Priority:    1,
+		Type:        "bug",
+		Assignee:    "",
+		Created:     "2024-06-15T12:00:00Z",
+		Labels:      []string{},
+		Blocks:      []string{"test-aaaa"},
+		BlockedBy:   []string{"test-bbbb"},
+		Parent:      "test-cccc",
+		Description: "Line one\nLine two",
+	}
+
+	var buf bytes.Buffer
+	fprintIssue(&buf, iss)
+	out := buf.String()
+	if !strings.Contains(out, "Blocks: test-aaaa") {
+		t.Errorf("missing Blocks in output: %q", out)
+	}
+	if !strings.Contains(out, "Blocked by: test-bbbb") {
+		t.Errorf("missing BlockedBy in output: %q", out)
+	}
+	if !strings.Contains(out, "Parent: test-cccc") {
+		t.Errorf("missing Parent in output: %q", out)
+	}
+	if !strings.Contains(out, "DESCRIPTION") {
+		t.Errorf("missing DESCRIPTION in output: %q", out)
+	}
+	if !strings.Contains(out, "Line one") || !strings.Contains(out, "Line two") {
+		t.Errorf("missing description lines in output: %q", out)
+	}
+	// No assignee → should show "—"
+	if !strings.Contains(out, "—") {
+		t.Errorf("missing dash for empty assignee: %q", out)
+	}
+}
+
+func TestGetInitializedWithDefaultPriority(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Set a default priority config
+	env.Repo.SetConfig("default.priority", "2")
+	env.Repo.Commit("config default.priority=2")
+
+	_, store, err := getInitialized()
+	if err != nil {
+		t.Fatalf("getInitialized: %v", err)
+	}
+	if store.DefaultPriority != 2 {
+		t.Errorf("DefaultPriority = %d, want 2", store.DefaultPriority)
 	}
 }
 
