@@ -124,13 +124,14 @@ var commands = []Command{
 	{
 		Name:        "list",
 		Summary:     "List issues",
-		Description: "List issues matching filters. Defaults to open issues, limit 10.",
+		Description: "List issues matching filters. Defaults to open and in-progress issues, limit 10.",
 		Flags: []Flag{
 			{Long: "--status", Short: "-s", Value: "STATUS", Help: "Filter by status"},
 			{Long: "--assignee", Short: "-a", Value: "WHO", Help: "Filter by assignee"},
 			{Long: "--priority", Short: "-p", Value: "N", Help: "Priority (0-4 or P0-P4, 0=highest)"},
 			{Long: "--type", Short: "-t", Value: "TYPE", Help: "Filter by type"},
 			{Long: "--label", Value: "LABEL", Help: "Filter by label"},
+			{Long: "--grep", Short: "-g", Value: "TEXT", Help: "Search title and description"},
 			{Long: "--limit", Value: "N", Help: "Max results (default 10)"},
 			{Long: "--all", Help: "Show all issues (no status/limit filter)"},
 			{Long: "--deferred", Help: "Show only deferred issues"},
