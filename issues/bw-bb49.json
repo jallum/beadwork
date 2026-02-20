@@ -7,7 +7,7 @@
   "id": "bw-bb49",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Improve test coverage for cmd/bw/graph.go",
   "type": "task"
 }
