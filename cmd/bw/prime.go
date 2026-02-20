@@ -2,13 +2,12 @@ package main
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/prompts"
 )
 
-func cmdPrime(w io.Writer) error {
+func cmdPrime(w Writer) error {
 	_, store, err := getInitializedRepo()
 	if err != nil {
 		return err

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 )
 
 // Flag describes a single command-line flag.
@@ -35,7 +34,7 @@ type Command struct {
 	Positionals []Positional
 	Flags       []Flag
 	Examples    []Example
-	Run         func(args []string, w io.Writer) error
+	Run         func(args []string, w Writer) error
 }
 
 // valueFlags returns the long names of flags that take a value (non-boolean).
@@ -382,9 +381,9 @@ var commands = []Command{
 	},
 }
 
-// wrapNoArgs adapts a func(io.Writer) error to the standard command signature.
-func wrapNoArgs(fn func(w io.Writer) error) func([]string, io.Writer) error {
-	return func(_ []string, w io.Writer) error {
+// wrapNoArgs adapts a func(Writer) error to the standard command signature.
+func wrapNoArgs(fn func(w Writer) error) func([]string, Writer) error {
+	return func(_ []string, w Writer) error {
 		return fn(w)
 	}
 }
@@ -414,14 +413,14 @@ var commandGroups = []struct {
 	{"Setup & Config", []string{"init", "config", "upgrade", "onboard", "prime"}},
 }
 
-func printUsage(w io.Writer) {
+func printUsage(w Writer) {
 	fmt.Fprintln(w, "bw — lightweight issue tracking with first-class dependency support")
-	fmt.Fprintln(w, "\nUsage:")
+	fmt.Fprintf(w, "\n%s\n", w.Style("Usage:", Cyan))
 	fmt.Fprintln(w, "  bw <command> [args]")
 	fmt.Fprintln(w, "  bw <command> --help")
 
 	for _, g := range commandGroups {
-		fmt.Fprintf(w, "\n%s:\n", g.name)
+		fmt.Fprintf(w, "\n%s\n", w.Style(g.name+":", Cyan))
 		for _, name := range g.cmds {
 			c := commandMap[name]
 			if c == nil {
@@ -441,7 +440,7 @@ func printUsage(w io.Writer) {
 	fmt.Fprintln(w, "\nUse \"bw <command> --help\" for more information about a command.")
 }
 
-func printCommandHelp(w io.Writer, c *Command) {
+func printCommandHelp(w Writer, c *Command) {
 	// Description (or Summary fallback)
 	desc := c.Description
 	if desc == "" {
@@ -457,17 +456,17 @@ func printCommandHelp(w io.Writer, c *Command) {
 	if len(c.Flags) > 0 {
 		usage += " [flags]"
 	}
-	fmt.Fprintf(w, "\nUsage:\n  %s\n", usage)
+	fmt.Fprintf(w, "\n%s\n  %s\n", w.Style("Usage:", Cyan), usage)
 
 	if len(c.Positionals) > 0 {
-		fmt.Fprintln(w, "\nArguments:")
+		fmt.Fprintf(w, "\n%s\n", w.Style("Arguments:", Cyan))
 		for _, p := range c.Positionals {
 			fmt.Fprintf(w, "  %-24s %s\n", p.Name, p.Help)
 		}
 	}
 
 	if len(c.Flags) > 0 {
-		fmt.Fprintln(w, "\nFlags:")
+		fmt.Fprintf(w, "\n%s\n", w.Style("Flags:", Cyan))
 		for _, f := range c.Flags {
 			flag := f.Long
 			if f.Short != "" {
@@ -481,7 +480,7 @@ func printCommandHelp(w io.Writer, c *Command) {
 	}
 
 	if len(c.Examples) > 0 {
-		fmt.Fprintln(w, "\nExamples:")
+		fmt.Fprintf(w, "\n%s\n", w.Style("Examples:", Cyan))
 		for _, ex := range c.Examples {
 			fmt.Fprintf(w, "  %s\n", ex.Cmd)
 			if ex.Help != "" {

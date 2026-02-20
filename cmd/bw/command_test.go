@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"io"
 	"strings"
 	"testing"
 )
@@ -40,7 +39,7 @@ func TestCommandsHaveSummary(t *testing.T) {
 
 func TestPrintUsageContainsAllCommands(t *testing.T) {
 	var buf bytes.Buffer
-	printUsage(&buf)
+	printUsage(PlainWriter(&buf))
 	out := buf.String()
 
 	for _, cmd := range commands {
@@ -55,7 +54,7 @@ func TestPrintUsageContainsAllCommands(t *testing.T) {
 
 func TestPrintUsageLayout(t *testing.T) {
 	var buf bytes.Buffer
-	printUsage(&buf)
+	printUsage(PlainWriter(&buf))
 	out := buf.String()
 
 	// Header line with app name
@@ -84,7 +83,7 @@ func TestPrintCommandHelp(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	printCommandHelp(&buf, cmd)
+	printCommandHelp(PlainWriter(&buf), cmd)
 	out := buf.String()
 
 	// Should contain usage line
@@ -126,11 +125,11 @@ func TestPrintCommandHelpLayout(t *testing.T) {
 			{Cmd: "bw test abc123", Help: "Show test for abc123"},
 			{Cmd: "bw test abc123 --verbose", Help: "Verbose output"},
 		},
-		Run: func([]string, io.Writer) error { return nil },
+		Run: func([]string, Writer) error { return nil },
 	}
 
 	var buf bytes.Buffer
-	printCommandHelp(&buf, cmd)
+	printCommandHelp(PlainWriter(&buf), cmd)
 	out := buf.String()
 
 	// Description appears first (before Usage:)
@@ -186,11 +185,11 @@ func TestPrintCommandHelpNoDescription(t *testing.T) {
 		Flags: []Flag{
 			{Long: "--json", Help: "Output as JSON"},
 		},
-		Run: func([]string, io.Writer) error { return nil },
+		Run: func([]string, Writer) error { return nil },
 	}
 
 	var buf bytes.Buffer
-	printCommandHelp(&buf, cmd)
+	printCommandHelp(PlainWriter(&buf), cmd)
 	out := buf.String()
 
 	// Falls back to Summary when Description is empty
@@ -203,11 +202,11 @@ func TestPrintCommandHelpNoExamples(t *testing.T) {
 	cmd := &Command{
 		Name:    "bare",
 		Summary: "Bare command",
-		Run:     func([]string, io.Writer) error { return nil },
+		Run:     func([]string, Writer) error { return nil },
 	}
 
 	var buf bytes.Buffer
-	printCommandHelp(&buf, cmd)
+	printCommandHelp(PlainWriter(&buf), cmd)
 	out := buf.String()
 
 	if strings.Contains(out, "Examples:") {

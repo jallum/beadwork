@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
@@ -54,7 +53,7 @@ func parseListArgs(raw []string) (ListArgs, error) {
 	return la, nil
 }
 
-func cmdList(args []string, w io.Writer) error {
+func cmdList(args []string, w Writer) error {
 	la, err := parseListArgs(args)
 	if err != nil {
 		return err
@@ -108,11 +107,12 @@ func cmdList(args []string, w io.Writer) error {
 			displayed = displayed[:limit]
 		}
 		for _, iss := range displayed {
-			fmt.Fprintf(w, "%s %s [%s P%d] [%s] - %s\n",
+			ps := PriorityStyle(iss.Priority)
+			fmt.Fprintf(w, "%s %s [%s %s] [%s] - %s\n",
 				issue.StatusIcon(iss.Status),
 				iss.ID,
-				issue.PriorityDot(iss.Priority),
-				iss.Priority,
+				w.Style("●", ps),
+				w.Style(fmt.Sprintf("P%d", iss.Priority), ps),
 				iss.Type,
 				iss.Title,
 			)

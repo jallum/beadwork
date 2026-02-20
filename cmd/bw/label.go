@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"strings"
 )
 
@@ -37,7 +36,7 @@ func parseLabelArgs(raw []string) (LabelArgs, error) {
 	return la, nil
 }
 
-func cmdLabel(args []string, w io.Writer) error {
+func cmdLabel(args []string, w Writer) error {
 	la, err := parseLabelArgs(args)
 	if err != nil {
 		return err

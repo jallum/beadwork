@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
@@ -64,7 +63,7 @@ func parseCreateArgs(raw []string) (CreateArgs, error) {
 	return ca, nil
 }
 
-func cmdCreate(args []string, w io.Writer) error {
+func cmdCreate(args []string, w Writer) error {
 	ca, err := parseCreateArgs(args)
 	if err != nil {
 		return err

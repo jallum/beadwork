@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 )
 
 type CloseArgs struct {
@@ -26,7 +25,7 @@ func parseCloseArgs(raw []string) (CloseArgs, error) {
 	}, nil
 }
 
-func cmdClose(args []string, w io.Writer) error {
+func cmdClose(args []string, w Writer) error {
 	ca, err := parseCloseArgs(args)
 	if err != nil {
 		return err
@@ -75,7 +74,7 @@ func parseReopenArgs(raw []string) (ReopenArgs, error) {
 	return ReopenArgs{ID: id, JSON: a.JSON()}, nil
 }
 
-func cmdReopen(args []string, w io.Writer) error {
+func cmdReopen(args []string, w Writer) error {
 	ra, err := parseReopenArgs(args)
 	if err != nil {
 		return err

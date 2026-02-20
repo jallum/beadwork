@@ -2,10 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"strings"
-
-	"github.com/jallum/beadwork/internal/issue"
 )
 
 type BlockedArgs struct {
@@ -20,7 +17,7 @@ func parseBlockedArgs(raw []string) (BlockedArgs, error) {
 	return BlockedArgs{JSON: a.JSON()}, nil
 }
 
-func cmdBlocked(args []string, w io.Writer) error {
+func cmdBlocked(args []string, w Writer) error {
 	ba, err := parseBlockedArgs(args)
 	if err != nil {
 		return err
@@ -49,9 +46,10 @@ func cmdBlocked(args []string, w io.Writer) error {
 	fmt.Fprintf(w, "\n● Blocked (%d):\n", len(blocked))
 
 	for _, bi := range blocked {
-		fmt.Fprintf(w, "\n[%s P%d] %s: %s\n",
-			issue.PriorityDot(bi.Priority),
-			bi.Priority,
+		ps := PriorityStyle(bi.Priority)
+		fmt.Fprintf(w, "\n[%s %s] %s: %s\n",
+			w.Style("●", ps),
+			w.Style(fmt.Sprintf("P%d", bi.Priority), ps),
 			bi.ID,
 			bi.Title,
 		)

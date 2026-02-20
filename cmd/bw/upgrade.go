@@ -61,7 +61,7 @@ func parseUpgradeArgs(raw []string) (UpgradeArgs, error) {
 	}, nil
 }
 
-func cmdUpgrade(args []string, w io.Writer) error {
+func cmdUpgrade(args []string, w Writer) error {
 	if len(args) > 0 && args[0] == "repo" {
 		return cmdUpgradeRepo(args[1:], w)
 	}
@@ -381,7 +381,7 @@ func validVersion(v string) bool {
 	return true
 }
 
-func cmdUpgradeRepo(args []string, w io.Writer) error {
+func cmdUpgradeRepo(args []string, w Writer) error {
 	r, err := getRepo()
 	if err != nil {
 		return err

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 )
 
 type InitArgs struct {
@@ -21,7 +20,7 @@ func parseInitArgs(raw []string) (InitArgs, error) {
 	}, nil
 }
 
-func cmdInit(args []string, w io.Writer) error {
+func cmdInit(args []string, w Writer) error {
 	ia, err := parseInitArgs(args)
 	if err != nil {
 		return err

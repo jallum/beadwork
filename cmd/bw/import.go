@@ -49,7 +49,7 @@ func parseImportArgs(raw []string) (ImportArgs, error) {
 	}, nil
 }
 
-func cmdImport(args []string, w io.Writer) error {
+func cmdImport(args []string, w Writer) error {
 	ia, err := parseImportArgs(args)
 	if err != nil {
 		return err
