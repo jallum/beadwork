@@ -12,7 +12,7 @@
   "id": "bw-501d",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Convert cmdCreate, cmdUpdate, cmdList to ParseArgs",
   "type": "task"
 }
