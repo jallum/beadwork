@@ -2,12 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-20T18:21:05Z",
+  "close_reason": "won't-fix: atomic commits make dry-run unnecessary; --silent can be revisited separately",
   "created": "2026-02-20T07:02:53Z",
   "description": "bd has --dry-run (preview without creating) and --silent (output bare ID only). Both are useful for scripting. --dry-run helps verify complex create commands. --silent enables 'id=$(bw create ...)' without parsing.",
   "id": "bw-6407",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Add --dry-run and --silent flags",
-  "type": "feature"
+  "type": "feature",
+  "updated_at": "2026-02-20T18:21:05Z"
 }
