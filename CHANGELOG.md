@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.2 — 2026-02-20
+
+- Per-command `--help` with flag/positional descriptions, auto-generated from command metadata
+- Replace git CLI + worktree with go-git for atomic internal operations
+
 ## 0.4.1 — 2026-02-19
 
 - Fix `bw graph --all` incorrectly filtering out closed issues that have dependency links
