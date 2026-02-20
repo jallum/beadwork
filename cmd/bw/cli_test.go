@@ -2,6 +2,7 @@ package main_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -207,6 +208,91 @@ func TestListOutput(t *testing.T) {
 	out := bw(t, env.Dir, "list")
 	assertContains(t, out, iss.ID)
 	assertContains(t, out, "Listed issue")
+}
+
+func TestListDefaultsToOpen(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	open, _ := env.Store.Create("Open one", issue.CreateOpts{})
+	closed, _ := env.Store.Create("Closed one", issue.CreateOpts{})
+	env.Store.Close(closed.ID)
+	env.CommitIntent("setup")
+
+	out := bw(t, env.Dir, "list")
+	assertContains(t, out, open.ID)
+	assertNotContains(t, out, closed.ID)
+
+	// --all shows both
+	outAll := bw(t, env.Dir, "list", "--all")
+	assertContains(t, outAll, open.ID)
+	assertContains(t, outAll, closed.ID)
+
+	// --status closed shows only closed
+	outClosed := bw(t, env.Dir, "list", "--status", "closed")
+	assertNotContains(t, outClosed, open.ID)
+	assertContains(t, outClosed, closed.ID)
+}
+
+func TestListDefaultLimit(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	for i := 0; i < 12; i++ {
+		env.Store.Create(fmt.Sprintf("Issue %d", i), issue.CreateOpts{})
+	}
+	env.CommitIntent("create 12 issues")
+
+	out := bw(t, env.Dir, "list")
+	lines := nonEmptyLines(out)
+	// 10 issues + 1 "... and N more" line
+	issueLines := 0
+	for _, l := range lines {
+		if strings.Contains(l, "test-") {
+			issueLines++
+		}
+	}
+	if issueLines != 10 {
+		t.Errorf("expected 10 issue lines, got %d:\n%s", issueLines, out)
+	}
+	assertContains(t, out, "... and 2 more")
+
+	// --all removes the limit
+	outAll := bw(t, env.Dir, "list", "--all")
+	allLines := 0
+	for _, l := range nonEmptyLines(outAll) {
+		if strings.Contains(l, "test-") {
+			allLines++
+		}
+	}
+	if allLines != 12 {
+		t.Errorf("expected 12 issue lines with --all, got %d", allLines)
+	}
+
+	// --limit 5 overrides
+	outLimit := bw(t, env.Dir, "list", "--limit", "5")
+	limitLines := 0
+	for _, l := range nonEmptyLines(outLimit) {
+		if strings.Contains(l, "test-") {
+			limitLines++
+		}
+	}
+	if limitLines != 5 {
+		t.Errorf("expected 5 issue lines with --limit 5, got %d", limitLines)
+	}
+	assertContains(t, outLimit, "... and 7 more")
+
+	// --limit 0 means no limit
+	outZero := bw(t, env.Dir, "list", "--limit", "0")
+	zeroLines := 0
+	for _, l := range nonEmptyLines(outZero) {
+		if strings.Contains(l, "test-") {
+			zeroLines++
+		}
+	}
+	if zeroLines != 12 {
+		t.Errorf("expected 12 issue lines with --limit 0, got %d", zeroLines)
+	}
 }
 
 // --- Ready command ---
