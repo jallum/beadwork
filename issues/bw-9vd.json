@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T23:44:49Z",
+  "description": "Add a reusable line-wrapping function that wraps long text to a configurable width (e.g. terminal width or 80 cols). Should handle indented blocks correctly. Needed by show, comments, and potentially other commands that render long-form text.",
+  "id": "bw-9vd",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Add text line wrapping utility",
+  "type": "task",
+  "updated_at": "2026-02-20T23:44:49Z"
+}
