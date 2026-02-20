@@ -2,16 +2,19 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"io"
 	"strings"
 )
 
-func cmdLabel(args []string) {
-	r, store := mustInitialized()
+func cmdLabel(args []string, w io.Writer) error {
+	r, store, err := getInitialized()
+	if err != nil {
+		return err
+	}
 
 	// bw label <id> +bug +frontend -wontfix
 	if len(args) < 2 {
-		fatal("usage: bw label <id> +label [-label] ...")
+		return fmt.Errorf("usage: bw label <id> +label [-label] ...")
 	}
 	id := args[0]
 
@@ -29,7 +32,7 @@ func cmdLabel(args []string) {
 
 	iss, err := store.Label(id, add, remove)
 	if err != nil {
-		fatal(err.Error())
+		return err
 	}
 
 	var parts []string
@@ -41,12 +44,13 @@ func cmdLabel(args []string) {
 	}
 	intent := fmt.Sprintf("label %s %s", iss.ID, strings.Join(parts, " "))
 	if err := r.Commit(intent); err != nil {
-		fatal("commit failed: " + err.Error())
+		return fmt.Errorf("commit failed: %w", err)
 	}
 
-	if hasFlag(os.Args, "--json") {
-		printJSON(iss)
+	if hasFlag(args, "--json") {
+		fprintJSON(w, iss)
 	} else {
-		fmt.Printf("labeled %s: %s\n", iss.ID, strings.Join(iss.Labels, ", "))
+		fmt.Fprintf(w, "labeled %s: %s\n", iss.ID, strings.Join(iss.Labels, ", "))
 	}
+	return nil
 }

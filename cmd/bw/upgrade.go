@@ -30,39 +30,42 @@ type ghAsset struct {
 	URL  string `json:"browser_download_url"`
 }
 
-func cmdUpgrade(args []string) {
+func cmdUpgrade(args []string, w io.Writer) error {
 	check := hasFlag(args, "--check")
 	yes := hasFlag(args, "--yes")
 
 	// Resolve our binary location
-	execPath, symlink, targetPath := resolveBinary()
+	execPath, symlink, targetPath, err := resolveBinary()
+	if err != nil {
+		return err
+	}
 
 	// Fetch latest release info
 	release, err := fetchLatestRelease()
 	if err != nil {
-		fatal("failed to check for updates: " + err.Error())
+		return fmt.Errorf("failed to check for updates: %w", err)
 	}
 
 	latest := strings.TrimPrefix(release.TagName, "v")
 	if !validVersion(latest) {
-		fatal("invalid version from release: " + release.TagName)
+		return fmt.Errorf("invalid version from release: %s", release.TagName)
 	}
 
 	if compareVersions(version, latest) >= 0 {
-		fmt.Printf("bw %s (up to date)\n", version)
-		return
+		fmt.Fprintf(w, "bw %s (up to date)\n", version)
+		return nil
 	}
 
-	fmt.Printf("bw %s → %s available\n", version, latest)
+	fmt.Fprintf(w, "bw %s → %s available\n", version, latest)
 
 	if check {
-		return
+		return nil
 	}
 
 	// Find matching asset
 	asset, err := findAsset(release, latest)
 	if err != nil {
-		fatal(err.Error())
+		return err
 	}
 
 	// Determine where we'll write
@@ -75,32 +78,32 @@ func cmdUpgrade(args []string) {
 
 	// Precheck: write permission
 	if err := checkWritable(installDir); err != nil {
-		fatal(fmt.Sprintf("no write permission to %s: %v", installDir, err))
+		return fmt.Errorf("no write permission to %s: %v", installDir, err)
 	}
 
 	// Prompt unless --yes
 	if !yes {
-		fmt.Printf("download and install? [y/N] ")
+		fmt.Fprintf(w, "download and install? [y/N] ")
 		reader := bufio.NewReader(os.Stdin)
 		answer, _ := reader.ReadString('\n')
 		answer = strings.TrimSpace(strings.ToLower(answer))
 		if answer != "y" && answer != "yes" {
-			fmt.Println("cancelled")
-			return
+			fmt.Fprintln(w, "cancelled")
+			return nil
 		}
 	}
 
 	// Download
-	fmt.Printf("downloading %s...\n", asset.Name)
+	fmt.Fprintf(w, "downloading %s...\n", asset.Name)
 	archiveData, err := downloadAsset(asset.URL)
 	if err != nil {
-		fatal("download failed: " + err.Error())
+		return fmt.Errorf("download failed: %w", err)
 	}
 
 	// Extract binary from archive
 	binaryData, err := extractBinary(asset.Name, archiveData)
 	if err != nil {
-		fatal("extract failed: " + err.Error())
+		return fmt.Errorf("extract failed: %w", err)
 	}
 
 	// Install
@@ -110,41 +113,42 @@ func cmdUpgrade(args []string) {
 		err = installDirect(execPath, binaryData)
 	}
 	if err != nil {
-		fatal("install failed: " + err.Error())
+		return fmt.Errorf("install failed: %w", err)
 	}
 
 	// Verify
 	out, verr := exec.Command(execPath, "--version").Output()
 	if verr != nil {
-		fatal("installed binary failed verification: " + verr.Error())
+		return fmt.Errorf("installed binary failed verification: %w", verr)
 	}
-	fmt.Print(strings.TrimSpace(string(out)) + "\n")
+	fmt.Fprint(w, strings.TrimSpace(string(out))+"\n")
+	return nil
 }
 
 // resolveBinary returns the executable path, whether it's a symlink, and
 // the resolved target path.
-func resolveBinary() (execPath string, symlink bool, targetPath string) {
-	execPath, err := os.Executable()
+func resolveBinary() (execPath string, symlink bool, targetPath string, err error) {
+	execPath, err = os.Executable()
 	if err != nil {
-		fatal("cannot determine binary path: " + err.Error())
+		return "", false, "", fmt.Errorf("cannot determine binary path: %w", err)
 	}
-	execPath, symlink, targetPath = resolveBinaryPath(execPath)
+	execPath, symlink, targetPath, err = resolveBinaryPath(execPath)
 	return
 }
 
 // resolveBinaryPath is the testable core of resolveBinary.
-func resolveBinaryPath(execPath string) (string, bool, string) {
+func resolveBinaryPath(execPath string) (string, bool, string, error) {
 	targetPath, err := filepath.EvalSymlinks(execPath)
 	if err != nil {
-		fatal("cannot resolve binary path: " + err.Error())
+		return "", false, "", fmt.Errorf("cannot resolve binary path: %w", err)
 	}
 	// Check if execPath itself is a symlink (not just path canonicalization)
 	fi, err := os.Lstat(execPath)
 	if err != nil {
-		fatal("cannot stat binary: " + err.Error())
+		return "", false, "", fmt.Errorf("cannot stat binary: %w", err)
 	}
 	isSymlink := fi.Mode()&os.ModeSymlink != 0
-	return execPath, isSymlink, targetPath
+	return execPath, isSymlink, targetPath, nil
 }
 
 func fetchLatestRelease() (*ghRelease, error) {

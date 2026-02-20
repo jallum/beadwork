@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
@@ -17,19 +18,22 @@ type beadsDep struct {
 }
 
 type beadsRecord struct {
-	ID           string      `json:"id"`
-	Title        string      `json:"title"`
-	Description  string      `json:"description,omitempty"`
-	Status       string      `json:"status"`
-	Priority     int         `json:"priority"`
-	IssueType    string      `json:"issue_type"`
-	Owner        string      `json:"owner,omitempty"`
-	CreatedAt    string      `json:"created_at"`
-	Dependencies []beadsDep  `json:"dependencies,omitempty"`
+	ID           string     `json:"id"`
+	Title        string     `json:"title"`
+	Description  string     `json:"description,omitempty"`
+	Status       string     `json:"status"`
+	Priority     int        `json:"priority"`
+	IssueType    string     `json:"issue_type"`
+	Owner        string     `json:"owner,omitempty"`
+	CreatedAt    string     `json:"created_at"`
+	Dependencies []beadsDep `json:"dependencies,omitempty"`
 }
 
-func cmdExport(args []string) {
-	_, store := mustInitialized()
+func cmdExport(args []string, w io.Writer) error {
+	_, store, err := getInitialized()
+	if err != nil {
+		return err
+	}
 
 	filter := issue.Filter{}
 	for i := 0; i < len(args); i++ {
@@ -41,19 +45,19 @@ func cmdExport(args []string) {
 
 	issues, err := store.List(filter)
 	if err != nil {
-		fatal(err.Error())
+		return err
 	}
 
 	for _, iss := range issues {
 		rec := beadsRecord{
-			ID:        iss.ID,
-			Title:     iss.Title,
+			ID:          iss.ID,
+			Title:       iss.Title,
 			Description: iss.Description,
-			Status:    iss.Status,
-			Priority:  iss.Priority,
-			IssueType: iss.Type,
-			Owner:     iss.Assignee,
-			CreatedAt: iss.Created,
+			Status:      iss.Status,
+			Priority:    iss.Priority,
+			IssueType:   iss.Type,
+			Owner:       iss.Assignee,
+			CreatedAt:   iss.Created,
 		}
 
 		// Build dependencies from BlockedBy and Parent
@@ -80,8 +84,9 @@ func cmdExport(args []string) {
 
 		data, err := json.Marshal(rec)
 		if err != nil {
-			fatal(err.Error())
+			return err
 		}
-		fmt.Println(string(data))
+		fmt.Fprintln(w, string(data))
 	}
+	return nil
 }

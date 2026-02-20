@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -11,18 +12,17 @@ import (
 	"github.com/jallum/beadwork/internal/repo"
 )
 
-func mustRepo() *repo.Repo {
-	r, err := repo.FindRepo()
-	if err != nil {
-		fatal(err.Error())
-	}
-	return r
+func getRepo() (*repo.Repo, error) {
+	return repo.FindRepo()
 }
 
-func mustInitialized() (*repo.Repo, *issue.Store) {
-	r := mustRepo()
+func getInitialized() (*repo.Repo, *issue.Store, error) {
+	r, err := getRepo()
+	if err != nil {
+		return nil, nil, err
+	}
 	if !r.IsInitialized() {
-		fatal("beadwork not initialized. Run: bw init")
+		return nil, nil, fmt.Errorf("beadwork not initialized. Run: bw init")
 	}
 	store := issue.NewStore(r.WorkTree, r.Prefix)
 	if val, ok := r.GetConfig("default.priority"); ok {
@@ -30,7 +30,7 @@ func mustInitialized() (*repo.Repo, *issue.Store) {
 			store.DefaultPriority = p
 		}
 	}
-	return r, store
+	return r, store, nil
 }
 
 func fatal(msg string) {
@@ -47,14 +47,14 @@ func hasFlag(args []string, flag string) bool {
 	return false
 }
 
-func printJSON(v interface{}) {
+func fprintJSON(w io.Writer, v interface{}) {
 	data, _ := json.MarshalIndent(v, "", "  ")
-	fmt.Println(string(data))
+	fmt.Fprintln(w, string(data))
 }
 
-func printIssue(iss *issue.Issue) {
+func fprintIssue(w io.Writer, iss *issue.Issue) {
 	// Header: ○ bw-f0ae · Title   [● P3 · OPEN]
-	fmt.Printf("%s %s · %s   [%s P%d · %s]\n",
+	fmt.Fprintf(w, "%s %s · %s   [%s P%d · %s]\n",
 		issue.StatusIcon(iss.Status),
 		iss.ID,
 		iss.Title,
@@ -68,18 +68,18 @@ func printIssue(iss *issue.Issue) {
 	if assignee == "" {
 		assignee = "—"
 	}
-	fmt.Printf("Assignee: %s · Type: %s\n", assignee, iss.Type)
+	fmt.Fprintf(w, "Assignee: %s · Type: %s\n", assignee, iss.Type)
 
 	// Created date (trim to date only)
 	created := iss.Created
 	if len(created) >= 10 {
 		created = created[:10]
 	}
-	fmt.Printf("Created: %s\n", created)
+	fmt.Fprintf(w, "Created: %s\n", created)
 
 	// Optional metadata
 	if len(iss.Labels) > 0 {
-		fmt.Printf("Labels: %s\n", strings.Join(iss.Labels, ", "))
+		fmt.Fprintf(w, "Labels: %s\n", strings.Join(iss.Labels, ", "))
 	}
 
 	var deps []string
@@ -90,18 +90,18 @@ func printIssue(iss *issue.Issue) {
 		deps = append(deps, "Blocked by: "+strings.Join(iss.BlockedBy, ", "))
 	}
 	if len(deps) > 0 {
-		fmt.Println(strings.Join(deps, " · "))
+		fmt.Fprintln(w, strings.Join(deps, " · "))
 	}
 	if iss.Parent != "" {
-		fmt.Printf("Parent: %s\n", iss.Parent)
+		fmt.Fprintf(w, "Parent: %s\n", iss.Parent)
 	}
 
 	// Description
 	if iss.Description != "" {
-		fmt.Printf("\nDESCRIPTION\n\n")
+		fmt.Fprintf(w, "\nDESCRIPTION\n\n")
 		for _, line := range strings.Split(iss.Description, "\n") {
-			fmt.Printf("  %s\n", line)
+			fmt.Fprintf(w, "  %s\n", line)
 		}
-		fmt.Println()
+		fmt.Fprintln(w)
 	}
 }

@@ -2,14 +2,17 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"io"
 	"strconv"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
 
-func cmdCreate(args []string) {
-	r, store := mustInitialized()
+func cmdCreate(args []string, w io.Writer) error {
+	r, store, err := getInitialized()
+	if err != nil {
+		return err
+	}
 	opts := issue.CreateOpts{}
 	var title string
 
@@ -19,7 +22,7 @@ func cmdCreate(args []string) {
 			if i+1 < len(args) {
 				p, err := strconv.Atoi(args[i+1])
 				if err != nil {
-					fatal("invalid priority: " + args[i+1])
+					return fmt.Errorf("invalid priority: %s", args[i+1])
 				}
 				opts.Priority = p
 				i++
@@ -39,6 +42,8 @@ func cmdCreate(args []string) {
 				opts.Description = args[i+1]
 				i++
 			}
+		case "--json":
+			// handled after creation
 		default:
 			if title == "" {
 				title = args[i]
@@ -49,22 +54,23 @@ func cmdCreate(args []string) {
 	}
 
 	if title == "" {
-		fatal("title is required")
+		return fmt.Errorf("title is required")
 	}
 
 	iss, err := store.Create(title, opts)
 	if err != nil {
-		fatal(err.Error())
+		return err
 	}
 
 	intent := fmt.Sprintf("create %s p%d %s %q", iss.ID, iss.Priority, iss.Type, iss.Title)
 	if err := r.Commit(intent); err != nil {
-		fatal("commit failed: " + err.Error())
+		return fmt.Errorf("commit failed: %w", err)
 	}
 
-	if hasFlag(os.Args, "--json") {
-		printJSON(iss)
+	if hasFlag(args, "--json") {
+		fprintJSON(w, iss)
 	} else {
-		fmt.Printf("created %s: %s\n", iss.ID, iss.Title)
+		fmt.Fprintf(w, "created %s: %s\n", iss.ID, iss.Title)
 	}
+	return nil
 }

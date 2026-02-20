@@ -1,8 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+)
 
-func cmdInit(args []string) {
+func cmdInit(args []string, w io.Writer) error {
 	prefix := ""
 	force := false
 	for i := 0; i < len(args); i++ {
@@ -17,19 +20,23 @@ func cmdInit(args []string) {
 		}
 	}
 
-	r := mustRepo()
+	r, err := getRepo()
+	if err != nil {
+		return err
+	}
 	if force {
 		if err := r.ForceReinit(prefix); err != nil {
-			fatal(err.Error())
+			return err
 		}
-		fmt.Printf("reinitialized beadwork (prefix: %s)\n", r.Prefix)
-		return
+		fmt.Fprintf(w, "reinitialized beadwork (prefix: %s)\n", r.Prefix)
+		return nil
 	}
 	if r.IsInitialized() {
-		fatal("beadwork already initialized")
+		return fmt.Errorf("beadwork already initialized")
 	}
 	if err := r.Init(prefix); err != nil {
-		fatal(err.Error())
+		return err
 	}
-	fmt.Printf("initialized beadwork (prefix: %s)\n", r.Prefix)
+	fmt.Fprintf(w, "initialized beadwork (prefix: %s)\n", r.Prefix)
+	return nil
 }

@@ -2,31 +2,35 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
 
-func cmdReady(args []string) {
-	_, store := mustInitialized()
+func cmdReady(args []string, w io.Writer) error {
+	_, store, err := getInitialized()
+	if err != nil {
+		return err
+	}
 
 	issues, err := store.Ready()
 	if err != nil {
-		fatal(err.Error())
+		return err
 	}
 
 	if hasFlag(args, "--json") {
-		printJSON(issues)
-		return
+		fprintJSON(w, issues)
+		return nil
 	}
 
 	if len(issues) == 0 {
-		fmt.Println("no ready issues")
-		return
+		fmt.Fprintln(w, "no ready issues")
+		return nil
 	}
 
 	for _, iss := range issues {
-		fmt.Printf("%s %s %s P%d %s\n",
+		fmt.Fprintf(w, "%s %s %s P%d %s\n",
 			issue.StatusIcon(iss.Status),
 			iss.ID,
 			issue.PriorityDot(iss.Priority),
@@ -35,14 +39,15 @@ func cmdReady(args []string) {
 		)
 	}
 
-	fmt.Println()
-	fmt.Println(strings.Repeat("-", 80))
-	fmt.Printf("Ready: %d issues with no blockers\n", len(issues))
-	fmt.Println()
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, strings.Repeat("-", 80))
+	fmt.Fprintf(w, "Ready: %d issues with no blockers\n", len(issues))
+	fmt.Fprintln(w)
 
 	var legend []string
 	for _, s := range issue.Statuses {
 		legend = append(legend, s.Icon+" "+s.Name)
 	}
-	fmt.Printf("Status: %s\n", strings.Join(legend, "  "))
+	fmt.Fprintf(w, "Status: %s\n", strings.Join(legend, "  "))
+	return nil
 }

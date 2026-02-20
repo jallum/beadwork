@@ -2,18 +2,21 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"io"
 	"strconv"
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
 
-func cmdUpdate(args []string) {
-	r, store := mustInitialized()
+func cmdUpdate(args []string, w io.Writer) error {
+	r, store, err := getInitialized()
+	if err != nil {
+		return err
+	}
 
 	if len(args) == 0 {
-		fatal("usage: bw update <id> [flags]")
+		return fmt.Errorf("usage: bw update <id> [flags]")
 	}
 	id := args[0]
 	rest := args[1:]
@@ -39,7 +42,7 @@ func cmdUpdate(args []string) {
 			if i+1 < len(rest) {
 				p, err := strconv.Atoi(rest[i+1])
 				if err != nil {
-					fatal("invalid priority: " + rest[i+1])
+					return fmt.Errorf("invalid priority: %s", rest[i+1])
 				}
 				opts.Priority = &p
 				changes = append(changes, "priority="+rest[i+1])
@@ -68,17 +71,18 @@ func cmdUpdate(args []string) {
 
 	iss, err := store.Update(id, opts)
 	if err != nil {
-		fatal(err.Error())
+		return err
 	}
 
 	intent := fmt.Sprintf("update %s %s", iss.ID, strings.Join(changes, " "))
 	if err := r.Commit(intent); err != nil {
-		fatal("commit failed: " + err.Error())
+		return fmt.Errorf("commit failed: %w", err)
 	}
 
-	if hasFlag(os.Args, "--json") {
-		printJSON(iss)
+	if hasFlag(args, "--json") {
+		fprintJSON(w, iss)
 	} else {
-		fmt.Printf("updated %s\n", iss.ID)
+		fmt.Fprintf(w, "updated %s\n", iss.ID)
 	}
+	return nil
 }
