@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T04:56:32Z",
+  "description": "",
+  "id": "bw-6d86",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Auto-generate help text from Command structs",
+  "type": "task"
+}
