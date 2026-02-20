@@ -7,7 +7,7 @@
   "id": "bw-3c1f",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "Improve test coverage for cmd/bw/upgrade.go",
   "type": "task"
 }
