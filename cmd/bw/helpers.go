@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/j5n/beadwork/internal/issue"
-	"github.com/j5n/beadwork/internal/repo"
+	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 func mustRepo() *repo.Repo {

@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/j5n/beadwork/internal/issue"
-	"github.com/j5n/beadwork/internal/testutil"
+	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/testutil"
 )
 
 var bwBin string

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/j5n/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/issue"
 )
 
 func cmdList(args []string) {

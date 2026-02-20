@@ -10,7 +10,7 @@ Filesystem-native issue tracking for AI coding agents. Issues are JSON files, st
 Download a prebuilt binary from [releases](https://github.com/jallum/beadwork/releases/latest), or build from source:
 
 ```bash
-go install github.com/j5n/beadwork/cmd/bw@latest
+go install github.com/jallum/beadwork/cmd/bw@latest
 ```
 
 To update an existing install:

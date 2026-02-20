@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/j5n/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/issue"
 )
 
 type beadsDep struct {

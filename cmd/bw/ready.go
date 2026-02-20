@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/j5n/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/issue"
 )
 
 func cmdReady(args []string) {

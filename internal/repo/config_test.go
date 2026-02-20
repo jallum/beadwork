@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/j5n/beadwork/internal/testutil"
+	"github.com/jallum/beadwork/internal/testutil"
 )
 
 func TestGetConfigExistingKey(t *testing.T) {

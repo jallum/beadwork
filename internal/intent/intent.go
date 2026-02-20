@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/j5n/beadwork/internal/issue"
-	"github.com/j5n/beadwork/internal/repo"
+	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 // Replay executes a list of intent strings against the current state.
