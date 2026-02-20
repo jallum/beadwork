@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T04:56:29Z",
+  "description": "",
+  "id": "bw-d88a",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Add typed parse functions for simple commands (show, reopen, ready, close)",
+  "type": "task"
+}
