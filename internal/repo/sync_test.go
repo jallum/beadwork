@@ -283,6 +283,83 @@ func TestIntentReplayIdempotent(t *testing.T) {
 	}
 }
 
+func TestPush(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	bare := env.NewBareRemote()
+	_ = bare
+
+	// Push initial (to create remote branch)
+	env.Store.Create("Initial", issue.CreateOpts{})
+	env.CommitIntent("create initial")
+	env.Repo.Sync()
+
+	// Create another issue and push
+	env.Store.Create("Push test", issue.CreateOpts{Priority: 1})
+	env.CommitIntent("create push test")
+
+	if err := env.Repo.Push(); err != nil {
+		t.Fatalf("Push: %v", err)
+	}
+
+	// Clone to verify push worked
+	env2 := env.CloneEnv(bare)
+	defer env2.Cleanup()
+
+	env2.SwitchTo()
+	all, _ := env2.Store.List(issue.Filter{})
+	if len(all) < 2 {
+		t.Errorf("expected at least 2 issues after push, got %d", len(all))
+	}
+}
+
+func TestSyncFetchOnly(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	bare := env.NewBareRemote()
+	env.Repo.Sync() // push initial
+
+	// Clone, create issue, push
+	env2 := env.CloneEnv(bare)
+	defer env2.Cleanup()
+
+	env2.SwitchTo()
+	remote, _ := env2.Store.Create("Remote only", issue.CreateOpts{Priority: 1})
+	env2.CommitIntent("create " + remote.ID)
+	env2.Repo.Sync()
+
+	// Original: no local changes, should fast-forward
+	env.SwitchTo()
+	status, _, err := env.Repo.Sync()
+	if err != nil {
+		t.Fatalf("Sync: %v", err)
+	}
+	if status != "up to date" {
+		t.Errorf("status = %q, want 'up to date'", status)
+	}
+
+	// Remote issue should now exist locally
+	got, err := env.Store.Get(remote.ID)
+	if err != nil {
+		t.Fatalf("remote issue not found: %v", err)
+	}
+	if got.Title != "Remote only" {
+		t.Errorf("title = %q", got.Title)
+	}
+}
+
+func TestForceReinitInvalidPrefix(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	err := env.Repo.ForceReinit("has space")
+	if err == nil {
+		t.Error("expected error for invalid prefix")
+	}
+}
+
 func init() {
 	// Ensure we don't accidentally run tests against the real repo
 	os.Setenv("GIT_AUTHOR_NAME", "Test")

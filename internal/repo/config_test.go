@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/jallum/beadwork/internal/repo"
 	"github.com/jallum/beadwork/internal/testutil"
 )
 
@@ -109,6 +110,42 @@ func TestListConfigEmpty(t *testing.T) {
 	cfg := env.Repo.ListConfig()
 	if len(cfg) != 0 {
 		t.Errorf("got %d config entries, want 0", len(cfg))
+	}
+}
+
+func TestReadPrefixFallback(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Remove .bwconfig to test fallback
+	os.Remove(env.Repo.WorkTree + "/.bwconfig")
+
+	// Re-read prefix — should derive from directory name
+	env.Repo = nil
+	r, err := repo.FindRepo()
+	if err != nil {
+		t.Fatalf("FindRepo: %v", err)
+	}
+	// Prefix should be non-empty (derived)
+	if r.Prefix == "" {
+		t.Error("prefix should not be empty when .bwconfig is missing")
+	}
+}
+
+func TestReadPrefixNoPrefixLine(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Write a .bwconfig without a prefix= line
+	os.WriteFile(env.Repo.WorkTree+"/.bwconfig", []byte("default.priority=2\n"), 0644)
+
+	r, err := repo.FindRepo()
+	if err != nil {
+		t.Fatalf("FindRepo: %v", err)
+	}
+	// Should derive prefix from directory name
+	if r.Prefix == "" {
+		t.Error("prefix should be derived when prefix= line is missing")
 	}
 }
 

@@ -678,6 +678,716 @@ func assertNotContains(t *testing.T, output, substr string) {
 	}
 }
 
+// --- Close/Reopen ---
+
+func TestCloseWithReason(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Close with reason", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	out := bw(t, env.Dir, "close", iss.ID, "--reason", "completed")
+	assertContains(t, out, "closed "+iss.ID)
+
+	// Verify it's actually closed
+	show := bw(t, env.Dir, "show", iss.ID, "--json")
+	assertContains(t, show, `"status": "closed"`)
+}
+
+func TestCloseNonExistent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bwFail(t, env.Dir, "close", "test-zzzz")
+	assertContains(t, out, "no issue found")
+}
+
+func TestCloseNoArgs(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bwFail(t, env.Dir, "close")
+	assertContains(t, out, "usage:")
+}
+
+func TestCloseAlreadyClosedCLI(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Already closed", issue.CreateOpts{})
+	env.Store.Close(iss.ID)
+	env.CommitIntent("close " + iss.ID)
+
+	out := bwFail(t, env.Dir, "close", iss.ID)
+	assertContains(t, out, "already closed")
+}
+
+func TestReopenOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Closed task", issue.CreateOpts{})
+	env.Store.Close(iss.ID)
+	env.CommitIntent("close " + iss.ID)
+
+	out := bw(t, env.Dir, "reopen", iss.ID)
+	assertContains(t, out, "reopened "+iss.ID)
+
+	// Verify reopened
+	show := bw(t, env.Dir, "show", iss.ID, "--json")
+	assertContains(t, show, `"status": "open"`)
+}
+
+func TestReopenNotClosedCLI(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Open task", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	out := bwFail(t, env.Dir, "reopen", iss.ID)
+	assertContains(t, out, "not closed")
+}
+
+func TestReopenNoArgs(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bwFail(t, env.Dir, "reopen")
+	assertContains(t, out, "usage:")
+}
+
+// --- Label ---
+
+func TestLabelAddOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Label test", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	out := bw(t, env.Dir, "label", iss.ID, "+bug", "+urgent")
+	assertContains(t, out, "labeled "+iss.ID)
+	assertContains(t, out, "bug")
+	assertContains(t, out, "urgent")
+}
+
+func TestLabelRemoveOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Label remove", issue.CreateOpts{})
+	env.Store.Label(iss.ID, []string{"bug", "urgent"}, nil)
+	env.CommitIntent("setup " + iss.ID)
+
+	out := bw(t, env.Dir, "label", iss.ID, "-urgent")
+	assertContains(t, out, "labeled "+iss.ID)
+	assertContains(t, out, "bug")
+}
+
+func TestLabelBareNameAdd(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Bare label", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	// Bare label name (without +) should add the label
+	out := bw(t, env.Dir, "label", iss.ID, "feature")
+	assertContains(t, out, "feature")
+}
+
+func TestLabelNoArgs(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bwFail(t, env.Dir, "label")
+	assertContains(t, out, "usage:")
+}
+
+func TestLabelOnlyID(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bwFail(t, env.Dir, "label", "test-1234")
+	assertContains(t, out, "usage:")
+}
+
+// --- Link/Unlink ---
+
+func TestLinkOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+	env.CommitIntent("setup")
+
+	out := bw(t, env.Dir, "link", a.ID, "blocks", b.ID)
+	assertContains(t, out, "linked")
+	assertContains(t, out, a.ID)
+	assertContains(t, out, b.ID)
+
+	// Verify link via show
+	show := bw(t, env.Dir, "show", a.ID)
+	assertContains(t, show, "Blocks: "+b.ID)
+}
+
+func TestUnlinkOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.CommitIntent("setup link")
+
+	out := bw(t, env.Dir, "unlink", a.ID, "blocks", b.ID)
+	assertContains(t, out, "unlinked")
+
+	// Verify unlinked
+	show := bw(t, env.Dir, "show", a.ID)
+	assertNotContains(t, show, "Blocks:")
+}
+
+func TestLinkMissingBlocks(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bwFail(t, env.Dir, "link", "a", "b")
+	assertContains(t, out, "usage:")
+}
+
+func TestUnlinkMissingBlocks(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bwFail(t, env.Dir, "unlink", "a", "b")
+	assertContains(t, out, "usage:")
+}
+
+func TestLinkSelfBlockingCLI(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Self", issue.CreateOpts{})
+	env.CommitIntent("create " + a.ID)
+
+	out := bwFail(t, env.Dir, "link", a.ID, "blocks", a.ID)
+	assertContains(t, out, "cannot block itself")
+}
+
+// --- Update ---
+
+func TestUpdateTitleOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Original", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	out := bw(t, env.Dir, "update", iss.ID, "--title", "New title")
+	assertContains(t, out, "updated "+iss.ID)
+
+	show := bw(t, env.Dir, "show", iss.ID)
+	assertContains(t, show, "New title")
+}
+
+func TestUpdatePriorityOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Priority test", issue.CreateOpts{Priority: 3})
+	env.CommitIntent("create " + iss.ID)
+
+	bw(t, env.Dir, "update", iss.ID, "-p", "1")
+	show := bw(t, env.Dir, "show", iss.ID)
+	assertContains(t, show, "P1")
+}
+
+func TestUpdateStatusOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Status test", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	bw(t, env.Dir, "update", iss.ID, "-s", "in_progress")
+	show := bw(t, env.Dir, "show", iss.ID)
+	assertContains(t, show, "IN_PROGRESS")
+}
+
+func TestUpdateAssigneeOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Assignee test", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	bw(t, env.Dir, "update", iss.ID, "-a", "agent-1")
+	show := bw(t, env.Dir, "show", iss.ID)
+	assertContains(t, show, "Assignee: agent-1")
+}
+
+func TestUpdateDescriptionOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Desc test", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	bw(t, env.Dir, "update", iss.ID, "-d", "New description")
+	show := bw(t, env.Dir, "show", iss.ID)
+	assertContains(t, show, "New description")
+}
+
+func TestUpdateTypeOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Type test", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	bw(t, env.Dir, "update", iss.ID, "-t", "bug")
+	show := bw(t, env.Dir, "show", iss.ID)
+	assertContains(t, show, "Type: bug")
+}
+
+func TestUpdateMultipleFlags(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Multi update", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	bw(t, env.Dir, "update", iss.ID, "-p", "1", "-a", "alice", "-t", "bug")
+	show := bw(t, env.Dir, "show", iss.ID)
+	assertContains(t, show, "P1")
+	assertContains(t, show, "Assignee: alice")
+	assertContains(t, show, "Type: bug")
+}
+
+func TestUpdateJSON(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("JSON update", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	out := bw(t, env.Dir, "update", iss.ID, "--title", "Updated", "--json")
+	assertContains(t, out, `"title": "Updated"`)
+}
+
+func TestUpdateNoArgs(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bwFail(t, env.Dir, "update")
+	assertContains(t, out, "usage:")
+}
+
+func TestUpdateNonExistent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bwFail(t, env.Dir, "update", "test-zzzz", "--title", "X")
+	assertContains(t, out, "no issue found")
+}
+
+// --- Graph ---
+
+func TestGraphRootedOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Root", issue.CreateOpts{})
+	b, _ := env.Store.Create("Child", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.CommitIntent("setup graph")
+
+	out := bw(t, env.Dir, "graph", a.ID)
+	assertContains(t, out, a.ID)
+	assertContains(t, out, b.ID)
+}
+
+func TestGraphAllOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("A", issue.CreateOpts{})
+	b, _ := env.Store.Create("B", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.CommitIntent("setup")
+
+	out := bw(t, env.Dir, "graph", "--all")
+	assertContains(t, out, a.ID)
+	assertContains(t, out, b.ID)
+}
+
+func TestGraphJSONOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Graph JSON", issue.CreateOpts{})
+	b, _ := env.Store.Create("Dep", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.CommitIntent("setup")
+
+	out := bw(t, env.Dir, "graph", a.ID, "--json")
+	assertContains(t, out, `"id"`)
+	assertContains(t, out, a.ID)
+}
+
+func TestGraphNoIssues(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bw(t, env.Dir, "graph", "--all")
+	assertContains(t, out, "no issues")
+}
+
+func TestGraphNoArgs(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bwFail(t, env.Dir, "graph")
+	assertContains(t, out, "issue ID required")
+}
+
+func TestGraphAllExcludesClosedUnlinked(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Open issue", issue.CreateOpts{})
+	b, _ := env.Store.Create("Closed unlinked", issue.CreateOpts{})
+	env.Store.Close(b.ID)
+	env.CommitIntent("setup")
+
+	// --all without a root filters closed nodes that have no relationships
+	out := bw(t, env.Dir, "graph", "--all")
+	assertContains(t, out, a.ID)
+	assertNotContains(t, out, b.ID)
+}
+
+// --- Init ---
+
+func TestInitOutput(t *testing.T) {
+	dir := t.TempDir()
+	setupGitRepo(t, dir)
+
+	out := bw(t, dir, "init", "--prefix", "myapp")
+	assertContains(t, out, "initialized beadwork")
+	assertContains(t, out, "prefix: myapp")
+}
+
+func TestInitAlreadyInitialized(t *testing.T) {
+	dir := t.TempDir()
+	setupGitRepo(t, dir)
+
+	bw(t, dir, "init")
+	out := bwFail(t, dir, "init")
+	assertContains(t, out, "already initialized")
+}
+
+func TestInitForceOutput(t *testing.T) {
+	dir := t.TempDir()
+	setupGitRepo(t, dir)
+
+	bw(t, dir, "init", "--prefix", "old")
+	out := bw(t, dir, "init", "--force", "--prefix", "new")
+	assertContains(t, out, "reinitialized beadwork")
+	assertContains(t, out, "prefix: new")
+}
+
+func TestInitDerivedPrefix(t *testing.T) {
+	dir := t.TempDir()
+	setupGitRepo(t, dir)
+
+	out := bw(t, dir, "init")
+	assertContains(t, out, "initialized beadwork")
+	assertContains(t, out, "prefix:")
+}
+
+// --- Sync (no-remote case) ---
+
+func TestSyncNoRemoteOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bw(t, env.Dir, "sync")
+	assertContains(t, out, "no remote configured")
+}
+
+// --- Prime ---
+
+func TestPrimeOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("Open task", issue.CreateOpts{})
+	env.CommitIntent("create task")
+
+	out := bw(t, env.Dir, "prime")
+	assertContains(t, out, "Current State")
+	assertContains(t, out, "1 open")
+	assertContains(t, out, "Ready for work:")
+}
+
+func TestPrimeWithInProgress(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("In progress task", issue.CreateOpts{})
+	status := "in_progress"
+	env.Store.Update(iss.ID, issue.UpdateOpts{Status: &status})
+	env.CommitIntent("setup")
+
+	out := bw(t, env.Dir, "prime")
+	assertContains(t, out, "1 in progress")
+	assertContains(t, out, "In progress:")
+}
+
+// --- Onboard ---
+
+func TestOnboardOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bw(t, env.Dir, "onboard")
+	assertContains(t, out, "bw")
+}
+
+// --- Version ---
+
+func TestVersionOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bw(t, env.Dir, "--version")
+	assertContains(t, out, "bw ")
+}
+
+// --- List JSON ---
+
+func TestListJSONOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("JSON list", issue.CreateOpts{Priority: 1, Type: "bug"})
+	env.CommitIntent("create " + iss.ID)
+
+	out := bw(t, env.Dir, "list", "--json")
+	assertContains(t, out, `"title": "JSON list"`)
+	assertContains(t, out, `"priority": 1`)
+}
+
+func TestListEmptyOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bw(t, env.Dir, "list")
+	assertContains(t, out, "no issues found")
+}
+
+func TestListFilterByType(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("Bug one", issue.CreateOpts{Type: "bug"})
+	env.Store.Create("Task one", issue.CreateOpts{Type: "task"})
+	env.CommitIntent("setup")
+
+	out := bw(t, env.Dir, "list", "--type", "bug")
+	assertContains(t, out, "Bug one")
+	assertNotContains(t, out, "Task one")
+}
+
+func TestListFilterByAssignee(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("Alice task", issue.CreateOpts{Assignee: "alice"})
+	env.Store.Create("Bob task", issue.CreateOpts{Assignee: "bob"})
+	env.CommitIntent("setup")
+
+	out := bw(t, env.Dir, "list", "--assignee", "alice")
+	assertContains(t, out, "Alice task")
+	assertNotContains(t, out, "Bob task")
+}
+
+func TestListFilterByPriority(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("P1 task", issue.CreateOpts{Priority: 1})
+	env.Store.Create("P3 task", issue.CreateOpts{Priority: 3})
+	env.CommitIntent("setup")
+
+	out := bw(t, env.Dir, "list", "--priority", "1")
+	assertContains(t, out, "P1 task")
+	assertNotContains(t, out, "P3 task")
+}
+
+func TestListFilterByLabel(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Bug task", issue.CreateOpts{})
+	env.Store.Label(a.ID, []string{"bug"}, nil)
+	env.Store.Create("No label", issue.CreateOpts{})
+	env.CommitIntent("setup")
+
+	out := bw(t, env.Dir, "list", "--label", "bug")
+	assertContains(t, out, "Bug task")
+	assertNotContains(t, out, "No label")
+}
+
+// --- Ready JSON ---
+
+func TestReadyJSONOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("Ready task", issue.CreateOpts{Priority: 1})
+	env.CommitIntent("setup")
+
+	out := bw(t, env.Dir, "ready", "--json")
+	assertContains(t, out, `"title": "Ready task"`)
+}
+
+// --- Create ---
+
+func TestCreateWithAllFlags(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bw(t, env.Dir, "create", "Full issue", "-p", "1", "-t", "bug", "-a", "alice", "-d", "some description")
+	assertContains(t, out, "created test-")
+	assertContains(t, out, "Full issue")
+}
+
+func TestCreateNoTitle(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bwFail(t, env.Dir, "create")
+	assertContains(t, out, "title is required")
+}
+
+func TestCreateWithDescription(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bw(t, env.Dir, "create", "Desc test", "-d", "This is a description")
+	assertContains(t, out, "created test-")
+
+	// Extract the ID from "created test-XXXX: ..."
+	parts := strings.Fields(out)
+	id := ""
+	for _, p := range parts {
+		if strings.HasPrefix(p, "test-") {
+			id = strings.TrimSuffix(p, ":")
+			break
+		}
+	}
+	if id == "" {
+		t.Fatal("could not extract issue ID from output")
+	}
+
+	show := bw(t, env.Dir, "show", id)
+	assertContains(t, show, "This is a description")
+}
+
+// --- Show ---
+
+func TestShowNonExistent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bwFail(t, env.Dir, "show", "test-zzzz")
+	assertContains(t, out, "no issue found")
+}
+
+func TestShowNoArgs(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bwFail(t, env.Dir, "show")
+	assertContains(t, out, "usage:")
+}
+
+// --- Config ---
+
+func TestConfigNoSubcommand(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bwFail(t, env.Dir, "config")
+	assertContains(t, out, "usage:")
+}
+
+func TestConfigBadSubcommand(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bwFail(t, env.Dir, "config", "bad")
+	assertContains(t, out, "usage:")
+}
+
+func TestConfigSetMissingArgs(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bwFail(t, env.Dir, "config", "set", "key")
+	assertContains(t, out, "usage:")
+}
+
+func TestConfigGetMissingArgs(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bwFail(t, env.Dir, "config", "get")
+	assertContains(t, out, "usage:")
+}
+
+// --- helpers ---
+
+func setupGitRepo(t *testing.T, dir string) {
+	t.Helper()
+	cmds := [][]string{
+		{"git", "init"},
+		{"git", "config", "user.email", "test@test.com"},
+		{"git", "config", "user.name", "Test"},
+	}
+	for _, c := range cmds {
+		cmd := exec.Command(c[0], c[1:]...)
+		cmd.Dir = dir
+		cmd.Env = append(os.Environ(),
+			"GIT_AUTHOR_NAME=Test",
+			"GIT_AUTHOR_EMAIL=test@test.com",
+			"GIT_COMMITTER_NAME=Test",
+			"GIT_COMMITTER_EMAIL=test@test.com",
+		)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("%v: %s: %v", c, out, err)
+		}
+	}
+	os.WriteFile(filepath.Join(dir, "README"), []byte("test"), 0644)
+	cmd := exec.Command("git", "add", ".")
+	cmd.Dir = dir
+	cmd.Run()
+	cmd = exec.Command("git", "commit", "-m", "initial")
+	cmd.Dir = dir
+	cmd.Env = append(os.Environ(),
+		"GIT_AUTHOR_NAME=Test",
+		"GIT_AUTHOR_EMAIL=test@test.com",
+		"GIT_COMMITTER_NAME=Test",
+		"GIT_COMMITTER_EMAIL=test@test.com",
+	)
+	cmd.Run()
+}
+
 func init() {
 	os.Setenv("GIT_AUTHOR_NAME", "Test")
 	os.Setenv("GIT_AUTHOR_EMAIL", "test@test.com")

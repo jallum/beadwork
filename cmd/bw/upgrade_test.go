@@ -2,6 +2,7 @@ package main
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"bytes"
 	"compress/gzip"
 	"os"
@@ -221,6 +222,114 @@ func TestResolveBinarySymlink(t *testing.T) {
 	}
 	if filepath.Base(targetPath) != "bw-0.3.0" {
 		t.Errorf("targetPath base = %q, want bw-0.3.0", filepath.Base(targetPath))
+	}
+}
+
+func TestExtractFromZip(t *testing.T) {
+	// Build a zip with a "bw" binary inside
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+
+	content := []byte("#!/bin/sh\necho hello from zip")
+	f, _ := zw.Create("bw")
+	f.Write(content)
+	zw.Close()
+
+	got, err := extractFromZip(buf.Bytes())
+	if err != nil {
+		t.Fatalf("extractFromZip: %v", err)
+	}
+	if !bytes.Equal(got, content) {
+		t.Errorf("got %q, want %q", got, content)
+	}
+}
+
+func TestExtractFromZipExe(t *testing.T) {
+	// Build a zip with "bw.exe" (Windows naming)
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+
+	content := []byte("windows binary content")
+	f, _ := zw.Create("beadwork_1.0.0/bw.exe")
+	f.Write(content)
+	zw.Close()
+
+	got, err := extractFromZip(buf.Bytes())
+	if err != nil {
+		t.Fatalf("extractFromZip: %v", err)
+	}
+	if !bytes.Equal(got, content) {
+		t.Errorf("got %q, want %q", got, content)
+	}
+}
+
+func TestExtractFromZipMissing(t *testing.T) {
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+
+	f, _ := zw.Create("README.md")
+	f.Write([]byte("not a binary"))
+	zw.Close()
+
+	_, err := extractFromZip(buf.Bytes())
+	if err == nil {
+		t.Error("expected error when bw binary not in zip archive")
+	}
+}
+
+func TestExtractFromTarGzNested(t *testing.T) {
+	// Build a tar.gz with nested path like "beadwork_1.0.0/bw"
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	tw := tar.NewWriter(gw)
+
+	content := []byte("nested binary content")
+	tw.WriteHeader(&tar.Header{
+		Name: "beadwork_1.0.0/bw",
+		Size: int64(len(content)),
+		Mode: 0755,
+	})
+	tw.Write(content)
+	tw.Close()
+	gw.Close()
+
+	got, err := extractFromTarGz(buf.Bytes())
+	if err != nil {
+		t.Fatalf("extractFromTarGz: %v", err)
+	}
+	if !bytes.Equal(got, content) {
+		t.Errorf("got %q, want %q", got, content)
+	}
+}
+
+func TestExtractBinaryRoutesCorrectly(t *testing.T) {
+	// Test that extractBinary routes .zip to extractFromZip
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	content := []byte("zip binary")
+	f, _ := zw.Create("bw")
+	f.Write(content)
+	zw.Close()
+
+	got, err := extractBinary("beadwork_1.0.0_windows_amd64.zip", buf.Bytes())
+	if err != nil {
+		t.Fatalf("extractBinary(.zip): %v", err)
+	}
+	if !bytes.Equal(got, content) {
+		t.Errorf("got %q, want %q", got, content)
+	}
+}
+
+func TestCheckWritableNoPermission(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("permission test not reliable on Windows")
+	}
+	dir := t.TempDir()
+	os.Chmod(dir, 0555)
+	defer os.Chmod(dir, 0755)
+
+	if err := checkWritable(dir); err == nil {
+		t.Error("expected error for read-only directory")
 	}
 }
 
