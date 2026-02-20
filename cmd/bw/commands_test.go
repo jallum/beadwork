@@ -953,6 +953,39 @@ func TestCmdConfigGetMissing(t *testing.T) {
 	}
 }
 
+func TestCmdConfigGetNoKey(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdConfig([]string{"get"}, &buf)
+	if err == nil {
+		t.Error("expected error for get without key")
+	}
+}
+
+func TestCmdConfigSetNoArgs(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdConfig([]string{"set", "key"}, &buf)
+	if err == nil {
+		t.Error("expected error for set without value")
+	}
+}
+
+func TestCmdConfigUnknownSubcmd(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdConfig([]string{"delete"}, &buf)
+	if err == nil {
+		t.Error("expected error for unknown subcommand")
+	}
+}
+
 func TestCmdConfigMissingSubcmd(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
