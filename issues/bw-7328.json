@@ -12,7 +12,7 @@
   "id": "bw-7328",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Convert cmdShow, cmdInit, cmdGraph to ParseArgs",
   "type": "task"
 }
