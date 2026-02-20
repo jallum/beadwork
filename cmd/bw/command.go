@@ -309,6 +309,23 @@ var commands = []Command{
 		Run: cmdUndefer,
 	},
 	{
+		Name:        "history",
+		Summary:     "Show issue history",
+		Description: "Show the git commit history for a specific issue.",
+		Positionals: []Positional{
+			{Name: "<id>", Required: true, Help: "Issue ID"},
+		},
+		Flags: []Flag{
+			{Long: "--limit", Value: "N", Help: "Max entries to show"},
+			{Long: "--json", Help: "Output as JSON"},
+		},
+		Examples: []Example{
+			{Cmd: "bw history bw-a3f8"},
+			{Cmd: "bw history bw-a3f8 --limit 5"},
+		},
+		Run: cmdHistory,
+	},
+	{
 		Name:        "graph",
 		Summary:     "Dependency graph",
 		Description: "Display the dependency graph for an issue or all open issues.\nWith --all, shows all open issues grouped by connected component.",
@@ -440,7 +457,7 @@ var commandGroups = []struct {
 	name string
 	cmds []string
 }{
-	{"Working With Issues", []string{"create", "show", "list", "update", "close", "reopen", "delete", "comments", "label", "defer", "undefer"}},
+	{"Working With Issues", []string{"create", "show", "list", "update", "close", "reopen", "delete", "comments", "label", "defer", "undefer", "history"}},
 	{"Finding Work", []string{"ready", "blocked"}},
 	{"Dependencies", []string{"dep", "graph"}},
 	{"Sync & Data", []string{"sync", "export", "import"}},
