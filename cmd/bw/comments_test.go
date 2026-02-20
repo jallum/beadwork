@@ -185,7 +185,7 @@ func TestCmdCommentsListEmpty(t *testing.T) {
 
 // --- Show integration ---
 
-func TestFprintIssueWithComments(t *testing.T) {
+func TestFprintCommentsWithComments(t *testing.T) {
 	iss := &issue.Issue{
 		ID:      "test-abc",
 		Title:   "Test",
@@ -199,7 +199,7 @@ func TestFprintIssueWithComments(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	fprintIssue(PlainWriter(&buf), iss)
+	fprintComments(PlainWriter(&buf), iss)
 	output := buf.String()
 
 	if !strings.Contains(output, "COMMENTS") {
@@ -216,7 +216,7 @@ func TestFprintIssueWithComments(t *testing.T) {
 	}
 }
 
-func TestFprintIssueWithoutComments(t *testing.T) {
+func TestFprintCommentsWithoutComments(t *testing.T) {
 	iss := &issue.Issue{
 		ID:      "test-abc",
 		Title:   "Test",
@@ -226,7 +226,7 @@ func TestFprintIssueWithoutComments(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	fprintIssue(PlainWriter(&buf), iss)
+	fprintComments(PlainWriter(&buf), iss)
 	output := buf.String()
 
 	if strings.Contains(output, "COMMENTS") {

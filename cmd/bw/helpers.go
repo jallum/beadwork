@@ -241,10 +241,12 @@ func fprintIssue(w Writer, iss *issue.Issue) {
 		for _, line := range strings.Split(iss.Description, "\n") {
 			fmt.Fprintf(w, "  %s\n", line)
 		}
-		fmt.Fprintln(w)
 	}
 
-	// Comments
+}
+
+// fprintComments renders the COMMENTS section for an issue.
+func fprintComments(w Writer, iss *issue.Issue) {
 	if len(iss.Comments) > 0 {
 		fmt.Fprintln(w)
 		fmt.Fprintln(w, w.Style("COMMENTS", Bold))
