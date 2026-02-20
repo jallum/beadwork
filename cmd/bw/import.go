@@ -19,6 +19,8 @@ type importRecord struct {
 	IssueType    string     `json:"issue_type"`
 	Owner        string     `json:"owner"`
 	CreatedAt    string     `json:"created_at"`
+	Labels       []string   `json:"labels"`
+	DeferUntil   string     `json:"defer_until"`
 	Dependencies []beadsDep `json:"dependencies"`
 }
 
@@ -111,6 +113,10 @@ func cmdImport(args []string, w io.Writer) error {
 	// Phase 3: Write issues (first pass: set parent from deps, write all)
 	for i := range toImport {
 		rec := &toImport[i]
+		labels := rec.Labels
+		if labels == nil {
+			labels = []string{}
+		}
 		iss := &issue.Issue{
 			ID:          rec.ID,
 			Title:       rec.Title,
@@ -120,7 +126,8 @@ func cmdImport(args []string, w io.Writer) error {
 			Type:        rec.IssueType,
 			Assignee:    rec.Owner,
 			Created:     rec.CreatedAt,
-			Labels:      []string{},
+			DeferUntil:  fromRFC3339Date(rec.DeferUntil),
+			Labels:      labels,
 			Blocks:      []string{},
 			BlockedBy:   []string{},
 		}
@@ -178,7 +185,7 @@ func cmdImport(args []string, w io.Writer) error {
 	}
 	fmt.Fprintf(w, "imported %d issues", len(toImport))
 	parts := []string{}
-	for _, s := range []string{"open", "in_progress", "closed"} {
+	for _, s := range []string{"open", "in_progress", "deferred", "closed"} {
 		if c := counts[s]; c > 0 {
 			parts = append(parts, fmt.Sprintf("%d %s", c, s))
 		}

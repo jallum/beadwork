@@ -4,9 +4,42 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
+
+// nilIfEmpty returns nil for empty slices so omitempty works.
+func nilIfEmpty(s []string) []string {
+	if len(s) == 0 {
+		return nil
+	}
+	return s
+}
+
+// toRFC3339Date converts YYYY-MM-DD to RFC3339 for bd compat.
+// Returns empty string if input is empty.
+func toRFC3339Date(s string) string {
+	if s == "" {
+		return ""
+	}
+	// Already RFC3339? Return as-is.
+	if strings.Contains(s, "T") {
+		return s
+	}
+	return s + "T00:00:00Z"
+}
+
+// fromRFC3339Date extracts YYYY-MM-DD from an RFC3339 or bare date string.
+func fromRFC3339Date(s string) string {
+	if s == "" {
+		return ""
+	}
+	if idx := strings.IndexByte(s, 'T'); idx >= 0 {
+		return s[:idx]
+	}
+	return s
+}
 
 type beadsDep struct {
 	IssueID     string `json:"issue_id"`
@@ -26,6 +59,10 @@ type beadsRecord struct {
 	IssueType    string     `json:"issue_type"`
 	Owner        string     `json:"owner,omitempty"`
 	CreatedAt    string     `json:"created_at"`
+	Labels       []string   `json:"labels,omitempty"`
+	DeferUntil   string     `json:"defer_until,omitempty"`
+	Blocks       []string   `json:"blocks,omitempty"`
+	BlockedBy    []string   `json:"blocked_by,omitempty"`
 	Dependencies []beadsDep `json:"dependencies,omitempty"`
 }
 
@@ -70,6 +107,10 @@ func cmdExport(args []string, w io.Writer) error {
 			IssueType:   iss.Type,
 			Owner:       iss.Assignee,
 			CreatedAt:   iss.Created,
+			Labels:      nilIfEmpty(iss.Labels),
+			DeferUntil:  toRFC3339Date(iss.DeferUntil),
+			Blocks:      nilIfEmpty(iss.Blocks),
+			BlockedBy:   nilIfEmpty(iss.BlockedBy),
 		}
 
 		// Build dependencies from BlockedBy and Parent
