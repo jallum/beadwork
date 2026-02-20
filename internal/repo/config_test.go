@@ -105,7 +105,8 @@ func TestListConfigEmpty(t *testing.T) {
 	defer env.Cleanup()
 
 	// Remove the .bwconfig file to test empty case
-	os.Remove(env.Repo.WorkTree + "/.bwconfig")
+	env.Repo.TreeFS().Remove(".bwconfig")
+	env.Repo.Commit("remove config")
 
 	cfg := env.Repo.ListConfig()
 	if len(cfg) != 0 {
@@ -118,7 +119,8 @@ func TestReadPrefixFallback(t *testing.T) {
 	defer env.Cleanup()
 
 	// Remove .bwconfig to test fallback
-	os.Remove(env.Repo.WorkTree + "/.bwconfig")
+	env.Repo.TreeFS().Remove(".bwconfig")
+	env.Repo.Commit("remove config")
 
 	// Re-read prefix — should derive from directory name
 	env.Repo = nil
@@ -137,7 +139,8 @@ func TestReadPrefixNoPrefixLine(t *testing.T) {
 	defer env.Cleanup()
 
 	// Write a .bwconfig without a prefix= line
-	os.WriteFile(env.Repo.WorkTree+"/.bwconfig", []byte("default.priority=2\n"), 0644)
+	env.Repo.TreeFS().WriteFile(".bwconfig", []byte("default.priority=2\n"))
+	env.Repo.Commit("update config")
 
 	r, err := repo.FindRepo()
 	if err != nil {

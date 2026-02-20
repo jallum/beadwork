@@ -99,8 +99,43 @@ func (t *TreeFS) Repo() *git.Repository {
 	return t.repo
 }
 
+// Refresh reloads the TreeFS from the current ref, discarding any pending
+// overlay. Use this when another process may have committed to the same ref.
+func (t *TreeFS) Refresh() error {
+	t.overlay = make(map[string][]byte)
+	t.dirs = make(map[string]bool)
+
+	r, err := t.repo.Reference(t.ref, true)
+	if err != nil {
+		t.baseRef = plumbing.ZeroHash
+		t.base = nil
+		return nil
+	}
+	t.baseRef = r.Hash()
+	return t.reloadBase()
+}
+
+// maybeRefresh reloads the base tree if the ref has moved and we have no
+// pending overlay changes. This makes reads transparent when another TreeFS
+// instance (or process) has committed to the same ref.
+func (t *TreeFS) maybeRefresh() {
+	if len(t.overlay) > 0 || len(t.dirs) > 0 {
+		return
+	}
+	r, err := t.repo.Reference(t.ref, true)
+	if err != nil {
+		return
+	}
+	if r.Hash() == t.baseRef {
+		return
+	}
+	t.baseRef = r.Hash()
+	t.reloadBase()
+}
+
 // ReadFile reads the contents of a file at the given path.
 func (t *TreeFS) ReadFile(p string) ([]byte, error) {
+	t.maybeRefresh()
 	p = clean(p)
 
 	// Check overlay first
@@ -165,6 +200,7 @@ func (t *TreeFS) Remove(p string) error {
 
 // ReadDir lists entries in a directory.
 func (t *TreeFS) ReadDir(p string) ([]DirEntry, error) {
+	t.maybeRefresh()
 	p = clean(p)
 
 	entries := make(map[string]DirEntry)
@@ -278,6 +314,7 @@ func (t *TreeFS) MkdirAll(p string) error {
 
 // Stat returns file info for the given path.
 func (t *TreeFS) Stat(p string) (FileInfo, error) {
+	t.maybeRefresh()
 	p = clean(p)
 
 	// Check overlay for files
@@ -288,9 +325,11 @@ func (t *TreeFS) Stat(p string) (FileInfo, error) {
 		return FileInfo{name: path.Base(p), size: int64(len(data)), isDir: false}, nil
 	}
 
-	// Check explicit dirs
+	// Check explicit dirs — but only if there's at least one non-deleted entry
 	if t.dirs[p] {
-		return FileInfo{name: path.Base(p), isDir: true}, nil
+		if t.dirHasContent(p) {
+			return FileInfo{name: path.Base(p), isDir: true}, nil
+		}
 	}
 
 	// Check base tree
@@ -322,6 +361,34 @@ func (t *TreeFS) Stat(p string) (FileInfo, error) {
 	}
 
 	return FileInfo{}, fmt.Errorf("not found: %s", p)
+}
+
+// dirHasContent returns true if a directory in the dirs map should be reported
+// as existing. A dir is considered empty only if every entry under it has been
+// explicitly deleted in the overlay.
+func (t *TreeFS) dirHasContent(p string) bool {
+	prefix := p + "/"
+	hasOverlayEntries := false
+	for op, data := range t.overlay {
+		if strings.HasPrefix(op, prefix) {
+			hasOverlayEntries = true
+			if data != nil {
+				return true // at least one non-deleted file
+			}
+		}
+	}
+	if hasOverlayEntries {
+		// All overlay entries are deletions — check if base has surviving files
+		if t.base != nil {
+			if _, err := t.base.Tree(p); err == nil {
+				entries, _ := t.ReadDir(p)
+				return len(entries) > 0
+			}
+		}
+		return false // all entries deleted, no base content
+	}
+	// No overlay entries at all — dir was just MkdirAll'd, report as existing
+	return true
 }
 
 // Commit materializes all pending changes into a git commit and updates the
@@ -624,6 +691,58 @@ func (t *TreeFS) Push(remoteName string, refSpec config.RefSpec) error {
 	})
 }
 
+// Reset moves the ref to a new commit hash, discarding any pending overlay.
+// Used by Sync to fast-forward or reset to the remote tip.
+func (t *TreeFS) Reset(hash plumbing.Hash) error {
+	newRef := plumbing.NewHashReference(t.ref, hash)
+	if err := t.repo.Storer.SetReference(newRef); err != nil {
+		return fmt.Errorf("reset ref: %w", err)
+	}
+	t.baseRef = hash
+	t.overlay = make(map[string][]byte)
+	t.dirs = make(map[string]bool)
+	return t.reloadBase()
+}
+
+// CommitsBetween returns commits on localRef that are not ancestors of
+// remoteRef, in oldest-first order. Used by Sync to find local-only commits.
+func (t *TreeFS) CommitsBetween(localHash, remoteHash plumbing.Hash) ([]CommitInfo, error) {
+	// Collect all ancestors of remoteHash into a set
+	remoteSet := make(map[plumbing.Hash]bool)
+	if !remoteHash.IsZero() {
+		iter, err := t.repo.Log(&git.LogOptions{From: remoteHash})
+		if err == nil {
+			iter.ForEach(func(c *object.Commit) error {
+				remoteSet[c.Hash] = true
+				return nil
+			})
+		}
+	}
+
+	// Walk local commits, collecting those not in remoteSet
+	var commits []CommitInfo
+	iter, err := t.repo.Log(&git.LogOptions{From: localHash})
+	if err != nil {
+		return nil, fmt.Errorf("walk local commits: %w", err)
+	}
+	iter.ForEach(func(c *object.Commit) error {
+		if remoteSet[c.Hash] {
+			return storer.ErrStop
+		}
+		commits = append(commits, CommitInfo{
+			Hash:    c.Hash.String(),
+			Message: strings.TrimSpace(c.Message),
+		})
+		return nil
+	})
+
+	// Reverse to oldest-first
+	for i, j := 0, len(commits)-1; i < j; i, j = i+1, j-1 {
+		commits[i], commits[j] = commits[j], commits[i]
+	}
+	return commits, nil
+}
+
 // RefHash returns the current hash of the tracked ref.
 func (t *TreeFS) RefHash() plumbing.Hash {
 	return t.baseRef
@@ -632,6 +751,226 @@ func (t *TreeFS) RefHash() plumbing.Hash {
 // HasRef returns true if the tracked ref exists.
 func (t *TreeFS) HasRef() bool {
 	return !t.baseRef.IsZero()
+}
+
+// RefName returns the reference name this TreeFS tracks.
+func (t *TreeFS) RefName() plumbing.ReferenceName {
+	return t.ref
+}
+
+// LookupRef looks up a reference by name.
+func (t *TreeFS) LookupRef(name string) (plumbing.Hash, error) {
+	ref, err := t.repo.Reference(plumbing.ReferenceName(name), true)
+	if err != nil {
+		return plumbing.ZeroHash, err
+	}
+	return ref.Hash(), nil
+}
+
+// HasRemotes returns true if the repo has at least one remote configured.
+func (t *TreeFS) HasRemotes() (bool, error) {
+	remotes, err := t.repo.Remotes()
+	if err != nil {
+		return false, err
+	}
+	return len(remotes) > 0, nil
+}
+
+// SetRef directly sets a reference. Used by Init to create tracking branches.
+func (t *TreeFS) SetRef(name string, hash plumbing.Hash) error {
+	ref := plumbing.NewHashReference(plumbing.ReferenceName(name), hash)
+	return t.repo.Storer.SetReference(ref)
+}
+
+// DeleteRef removes a reference.
+func (t *TreeFS) DeleteRef(name string) error {
+	return t.repo.Storer.RemoveReference(plumbing.ReferenceName(name))
+}
+
+// CommitInfo holds a commit hash and message.
+type CommitInfo struct {
+	Hash    string
+	Message string
+}
+
+// MergeCommit attempts a 3-way merge between the local tree, remote tree,
+// and their common ancestor (base). If all changes are non-conflicting, it
+// creates a commit with the merged tree on top of remoteHash and updates
+// the local ref. Returns true if the merge succeeded, false if there were
+// conflicts.
+func (t *TreeFS) MergeCommit(localHash, remoteHash plumbing.Hash, localCommitMsgs []string) (bool, error) {
+	// Find common ancestor by walking both commit histories
+	baseHash, err := t.findMergeBase(localHash, remoteHash)
+	if err != nil {
+		return false, err
+	}
+
+	// Collect files from all three trees
+	baseFiles := make(map[string][]byte)
+	localFiles := make(map[string][]byte)
+	remoteFiles := make(map[string][]byte)
+
+	if !baseHash.IsZero() {
+		if c, err := t.repo.CommitObject(baseHash); err == nil {
+			if tree, err := c.Tree(); err == nil {
+				t.collectBaseFiles(tree, "", baseFiles)
+			}
+		}
+	}
+
+	if c, err := t.repo.CommitObject(localHash); err == nil {
+		if tree, err := c.Tree(); err == nil {
+			t.collectBaseFiles(tree, "", localFiles)
+		}
+	}
+
+	if c, err := t.repo.CommitObject(remoteHash); err == nil {
+		if tree, err := c.Tree(); err == nil {
+			t.collectBaseFiles(tree, "", remoteFiles)
+		}
+	}
+
+	// 3-way merge
+	merged := make(map[string][]byte)
+
+	// Collect all paths
+	allPaths := make(map[string]bool)
+	for p := range baseFiles {
+		allPaths[p] = true
+	}
+	for p := range localFiles {
+		allPaths[p] = true
+	}
+	for p := range remoteFiles {
+		allPaths[p] = true
+	}
+
+	for p := range allPaths {
+		baseData, inBase := baseFiles[p]
+		localData, inLocal := localFiles[p]
+		remoteData, inRemote := remoteFiles[p]
+
+		localChanged := !bytesEqual(baseData, localData) || (inBase != inLocal)
+		remoteChanged := !bytesEqual(baseData, remoteData) || (inBase != inRemote)
+
+		switch {
+		case !localChanged && !remoteChanged:
+			// No change on either side
+			if inBase {
+				merged[p] = baseData
+			}
+		case localChanged && !remoteChanged:
+			// Only local changed
+			if inLocal {
+				merged[p] = localData
+			}
+			// else: local deleted, keep it deleted
+		case !localChanged && remoteChanged:
+			// Only remote changed
+			if inRemote {
+				merged[p] = remoteData
+			}
+			// else: remote deleted
+		case localChanged && remoteChanged:
+			// Both changed
+			if bytesEqual(localData, remoteData) && inLocal == inRemote {
+				// Same change on both sides
+				if inLocal {
+					merged[p] = localData
+				}
+			} else {
+				// Conflict
+				return false, nil
+			}
+		}
+	}
+
+	// Build merged tree and commit on top of remote
+	treeHash, err := t.writeTreeFromFiles(t.repo.Storer, merged)
+	if err != nil {
+		return false, fmt.Errorf("build merged tree: %w", err)
+	}
+
+	// Create commit(s) — replay local commits on top of remote
+	// For simplicity, create one commit per local intent
+	parentHash := remoteHash
+	for _, msg := range localCommitMsgs {
+		commit := &object.Commit{
+			Author: object.Signature{
+				Name: "beadwork", Email: "beadwork@localhost", When: time.Now(),
+			},
+			Committer: object.Signature{
+				Name: "beadwork", Email: "beadwork@localhost", When: time.Now(),
+			},
+			Message:      msg,
+			TreeHash:     treeHash,
+			ParentHashes: []plumbing.Hash{parentHash},
+		}
+		obj := t.repo.Storer.NewEncodedObject()
+		if err := commit.Encode(obj); err != nil {
+			return false, err
+		}
+		hash, err := t.repo.Storer.SetEncodedObject(obj)
+		if err != nil {
+			return false, err
+		}
+		parentHash = hash
+	}
+
+	// Update ref to the final commit
+	newRef := plumbing.NewHashReference(t.ref, parentHash)
+	if err := t.repo.Storer.SetReference(newRef); err != nil {
+		return false, err
+	}
+	t.baseRef = parentHash
+	t.overlay = make(map[string][]byte)
+	t.dirs = make(map[string]bool)
+	if err := t.reloadBase(); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// findMergeBase finds the common ancestor of two commits.
+func (t *TreeFS) findMergeBase(a, b plumbing.Hash) (plumbing.Hash, error) {
+	// Collect all ancestors of b
+	bAncestors := make(map[plumbing.Hash]bool)
+	iter, err := t.repo.Log(&git.LogOptions{From: b})
+	if err != nil {
+		return plumbing.ZeroHash, err
+	}
+	iter.ForEach(func(c *object.Commit) error {
+		bAncestors[c.Hash] = true
+		return nil
+	})
+
+	// Walk a's ancestors, first one in bAncestors is the merge base
+	iter, err = t.repo.Log(&git.LogOptions{From: a})
+	if err != nil {
+		return plumbing.ZeroHash, err
+	}
+	var base plumbing.Hash
+	iter.ForEach(func(c *object.Commit) error {
+		if bAncestors[c.Hash] {
+			base = c.Hash
+			return storer.ErrStop
+		}
+		return nil
+	})
+	return base, nil
+}
+
+func bytesEqual(a, b []byte) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 // clean normalizes a path: removes leading/trailing slashes, resolves . and ..

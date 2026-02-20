@@ -5,11 +5,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/jallum/beadwork/internal/treefs"
 )
 
 // Status definitions
@@ -79,13 +79,13 @@ type Issue struct {
 }
 
 type Store struct {
-	WorkTree        string
+	FS              *treefs.TreeFS
 	Prefix          string
 	DefaultPriority int
 }
 
-func NewStore(workTree, prefix string) *Store {
-	return &Store{WorkTree: workTree, Prefix: prefix}
+func NewStore(fs *treefs.TreeFS, prefix string) *Store {
+	return &Store{FS: fs, Prefix: prefix}
 }
 
 func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
@@ -153,13 +153,10 @@ func (s *Store) List(filter Filter) ([]*Issue, error) {
 
 	var ids []string
 	for _, status := range statuses {
-		dir := filepath.Join(s.WorkTree, "status", status)
-		entries, err := os.ReadDir(dir)
+		dir := "status/" + status
+		entries, err := s.FS.ReadDir(dir)
 		if err != nil {
-			if os.IsNotExist(err) {
-				continue
-			}
-			return nil, err
+			continue
 		}
 		for _, e := range entries {
 			if e.Name() == ".gitkeep" {
@@ -302,9 +299,8 @@ func (s *Store) Link(blockerID, blockedID string) error {
 	}
 
 	// Create marker file: blocks/<blocker>/<blocked>
-	dir := filepath.Join(s.WorkTree, "blocks", blockerID)
-	os.MkdirAll(dir, 0755)
-	if err := os.WriteFile(filepath.Join(dir, blockedID), []byte{}, 0644); err != nil {
+	s.FS.MkdirAll("blocks/" + blockerID)
+	if err := s.FS.WriteFile("blocks/"+blockerID+"/"+blockedID, []byte{}); err != nil {
 		return err
 	}
 
@@ -348,14 +344,19 @@ func (s *Store) Unlink(blockerID, blockedID string) error {
 	}
 
 	// Remove marker file
-	markerPath := filepath.Join(s.WorkTree, "blocks", blockerID, blockedID)
-	os.Remove(markerPath)
+	s.FS.Remove("blocks/" + blockerID + "/" + blockedID)
 
-	// Clean up empty directory
-	dir := filepath.Join(s.WorkTree, "blocks", blockerID)
-	entries, _ := os.ReadDir(dir)
-	if len(entries) == 0 {
-		os.Remove(dir)
+	// Check if directory is now empty (no non-.gitkeep files)
+	entries, _ := s.FS.ReadDir("blocks/" + blockerID)
+	empty := true
+	for _, e := range entries {
+		if e.Name() != ".gitkeep" {
+			empty = false
+			break
+		}
+	}
+	if empty {
+		s.FS.Remove("blocks/" + blockerID + "/.gitkeep")
 	}
 
 	// Update blocker's JSON
@@ -393,9 +394,8 @@ func (s *Store) Label(id string, add, remove []string) (*Issue, error) {
 
 	// Add labels
 	for _, label := range add {
-		dir := filepath.Join(s.WorkTree, "labels", label)
-		os.MkdirAll(dir, 0755)
-		if err := os.WriteFile(filepath.Join(dir, id), []byte{}, 0644); err != nil {
+		s.FS.MkdirAll("labels/" + label)
+		if err := s.FS.WriteFile("labels/"+label+"/"+id, []byte{}); err != nil {
 			return nil, err
 		}
 		if !containsStr(issue.Labels, label) {
@@ -405,10 +405,9 @@ func (s *Store) Label(id string, add, remove []string) (*Issue, error) {
 
 	// Remove labels
 	for _, label := range remove {
-		os.Remove(filepath.Join(s.WorkTree, "labels", label, id))
+		s.FS.Remove("labels/" + label + "/" + id)
 		// Clean up empty label directory
-		dir := filepath.Join(s.WorkTree, "labels", label)
-		entries, _ := os.ReadDir(dir)
+		entries, _ := s.FS.ReadDir("labels/" + label)
 		empty := true
 		for _, e := range entries {
 			if e.Name() != ".gitkeep" {
@@ -417,7 +416,7 @@ func (s *Store) Label(id string, add, remove []string) (*Issue, error) {
 			}
 		}
 		if empty {
-			os.RemoveAll(dir)
+			s.FS.Remove("labels/" + label + "/.gitkeep")
 		}
 		issue.Labels = removeStr(issue.Labels, label)
 	}
@@ -446,11 +445,10 @@ func (s *Store) Graph(rootID string) ([]GraphNode, error) {
 		}
 	}
 
-	// Read all block relationships from the filesystem
-	blocksDir := filepath.Join(s.WorkTree, "blocks")
-	entries, err := os.ReadDir(blocksDir)
-	if err != nil && !os.IsNotExist(err) {
-		return nil, err
+	// Read all block relationships
+	entries, err := s.FS.ReadDir("blocks")
+	if err != nil {
+		entries = nil
 	}
 
 	// Collect all issue IDs involved in any relationship
@@ -462,7 +460,7 @@ func (s *Store) Graph(rootID string) ([]GraphNode, error) {
 			continue
 		}
 		blockerID := e.Name()
-		children, err := os.ReadDir(filepath.Join(blocksDir, blockerID))
+		children, err := s.FS.ReadDir("blocks/" + blockerID)
 		if err != nil {
 			continue
 		}
@@ -591,7 +589,7 @@ func (s *Store) generateID() (string, error) {
 
 func (s *Store) ExistingIDs() map[string]bool {
 	ids := make(map[string]bool)
-	entries, err := os.ReadDir(filepath.Join(s.WorkTree, "issues"))
+	entries, err := s.FS.ReadDir("issues")
 	if err != nil {
 		return ids
 	}
@@ -605,7 +603,7 @@ func (s *Store) ExistingIDs() map[string]bool {
 }
 
 func (s *Store) resolveID(partial string) (string, error) {
-	entries, err := os.ReadDir(filepath.Join(s.WorkTree, "issues"))
+	entries, err := s.FS.ReadDir("issues")
 	if err != nil {
 		return "", fmt.Errorf("cannot read issues: %w", err)
 	}
@@ -629,8 +627,7 @@ func (s *Store) resolveID(partial string) (string, error) {
 }
 
 func (s *Store) readIssue(id string) (*Issue, error) {
-	path := filepath.Join(s.WorkTree, "issues", id+".json")
-	data, err := os.ReadFile(path)
+	data, err := s.FS.ReadFile("issues/" + id + ".json")
 	if err != nil {
 		return nil, fmt.Errorf("issue %s not found", id)
 	}
@@ -647,19 +644,16 @@ func (s *Store) writeIssue(issue *Issue) error {
 		return err
 	}
 	data = append(data, '\n')
-	path := filepath.Join(s.WorkTree, "issues", issue.ID+".json")
-	return os.WriteFile(path, data, 0644)
+	return s.FS.WriteFile("issues/"+issue.ID+".json", data)
 }
 
 func (s *Store) setStatus(id, status string) error {
-	dir := filepath.Join(s.WorkTree, "status", status)
-	os.MkdirAll(dir, 0755)
-	return os.WriteFile(filepath.Join(dir, id), []byte{}, 0644)
+	s.FS.MkdirAll("status/" + status)
+	return s.FS.WriteFile("status/"+status+"/"+id, []byte{})
 }
 
 func (s *Store) moveStatus(id, from, to string) error {
-	oldPath := filepath.Join(s.WorkTree, "status", from, id)
-	os.Remove(oldPath) // best effort remove from old status
+	s.FS.Remove("status/" + from + "/" + id)
 	return s.setStatus(id, to)
 }
 

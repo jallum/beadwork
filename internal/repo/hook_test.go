@@ -76,8 +76,8 @@ func TestCommitWithPreCommitHook(t *testing.T) {
 	hook := "#!/bin/sh\nexit 1\n"
 	os.WriteFile(filepath.Join(hookDir, "pre-commit"), []byte(hook), 0755)
 
-	// Commit should still work (beadwork uses --no-verify)
-	os.WriteFile(filepath.Join(r.WorkTree, "issues", "dummy.json"), []byte("{}"), 0644)
+	// Commit should still work (beadwork bypasses git hooks via go-git)
+	r.TreeFS().WriteFile("issues/dummy.json", []byte("{}"))
 	if err := r.Commit("test commit"); err != nil {
 		t.Fatalf("Commit should succeed despite pre-commit hook: %v", err)
 	}

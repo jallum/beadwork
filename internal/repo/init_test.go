@@ -53,8 +53,9 @@ func TestForceReinit(t *testing.T) {
 		t.Error("should be initialized after force reinit")
 	}
 
-	// Worktree should exist with skeleton
-	if _, err := os.Stat(filepath.Join(r3.WorkTree, "issues")); err != nil {
+	// Skeleton should exist in TreeFS
+	_, err = r3.TreeFS().Stat("issues")
+	if err != nil {
 		t.Error("issues dir should exist after reinit")
 	}
 }

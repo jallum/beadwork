@@ -113,7 +113,7 @@ func TestCommitWithChanges(t *testing.T) {
 	r.Init("test")
 
 	// Create a file and commit
-	os.WriteFile(filepath.Join(r.WorkTree, "issues", "test.json"), []byte(`{"id":"test"}`), 0644)
+	r.TreeFS().WriteFile("issues/test.json", []byte(`{"id":"test"}`))
 	if err := r.Commit("test commit"); err != nil {
 		t.Fatalf("Commit: %v", err)
 	}
