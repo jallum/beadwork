@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T07:23:10Z",
+  "description": "",
+  "id": "bw-a458",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Rename getInitialized to getInitializedRepo",
+  "type": "task"
+}
