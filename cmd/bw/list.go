@@ -12,6 +12,7 @@ type ListArgs struct {
 	Priority *int
 	Type     string
 	Label    string
+	Grep     string
 	Limit    int
 	LimitSet bool
 	All      bool
@@ -21,7 +22,7 @@ type ListArgs struct {
 
 func parseListArgs(raw []string) (ListArgs, error) {
 	a, err := ParseArgs(raw,
-		[]string{"--status", "--assignee", "--priority", "--type", "--label", "--limit"},
+		[]string{"--status", "--assignee", "--priority", "--type", "--label", "--limit", "--grep"},
 		[]string{"--all", "--deferred", "--json"},
 	)
 	if err != nil {
@@ -32,6 +33,7 @@ func parseListArgs(raw []string) (ListArgs, error) {
 		Assignee: a.String("--assignee"),
 		Type:     a.String("--type"),
 		Label:    a.String("--label"),
+		Grep:     a.String("--grep"),
 		All:      a.Bool("--all"),
 		Deferred: a.Bool("--deferred"),
 		JSON:     a.JSON(),
@@ -68,6 +70,7 @@ func cmdList(args []string, w Writer) error {
 		Priority: la.Priority,
 		Type:     la.Type,
 		Label:    la.Label,
+		Grep:     la.Grep,
 	}
 
 	limit := la.Limit
@@ -81,7 +84,7 @@ func cmdList(args []string, w Writer) error {
 			limit = 0
 		}
 	} else if la.Status == "" {
-		filter.Status = "open"
+		filter.Statuses = []string{"open", "in_progress"}
 	}
 
 	issues, err := store.List(filter)
