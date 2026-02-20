@@ -113,12 +113,112 @@ func TestCmdShowJSON(t *testing.T) {
 		t.Fatalf("cmdShow: %v", err)
 	}
 
-	var got issue.Issue
+	// JSON output should be an array
+	var got []issue.Issue
 	if err := json.Unmarshal(buf.Bytes(), &got); err != nil {
 		t.Fatalf("JSON parse: %v", err)
 	}
-	if got.Title != "JSON show" {
-		t.Errorf("title = %q", got.Title)
+	if len(got) != 1 {
+		t.Fatalf("expected 1 issue, got %d", len(got))
+	}
+	if got[0].Title != "JSON show" {
+		t.Errorf("title = %q", got[0].Title)
+	}
+}
+
+func TestCmdShowMultiID(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("First", issue.CreateOpts{})
+	b, _ := env.Store.Create("Second", issue.CreateOpts{})
+	env.Repo.Commit("create issues")
+
+	var buf bytes.Buffer
+	err := cmdShow([]string{a.ID, b.ID}, &buf)
+	if err != nil {
+		t.Fatalf("cmdShow multi: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "First") {
+		t.Errorf("missing First: %q", out)
+	}
+	if !strings.Contains(out, "Second") {
+		t.Errorf("missing Second: %q", out)
+	}
+}
+
+func TestCmdShowMultiIDJSON(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Alpha", issue.CreateOpts{})
+	b, _ := env.Store.Create("Beta", issue.CreateOpts{})
+	env.Repo.Commit("create issues")
+
+	var buf bytes.Buffer
+	err := cmdShow([]string{a.ID, b.ID, "--json"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdShow multi --json: %v", err)
+	}
+
+	var got []issue.Issue
+	if err := json.Unmarshal(buf.Bytes(), &got); err != nil {
+		t.Fatalf("JSON parse: %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("expected 2 issues, got %d", len(got))
+	}
+}
+
+func TestCmdShowShort(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Short show", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdShow([]string{iss.ID, "--short"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdShow --short: %v", err)
+	}
+	out := buf.String()
+	// Should be a compact one-liner, not the full multi-line display
+	lines := strings.Split(strings.TrimSpace(out), "\n")
+	if len(lines) != 1 {
+		t.Errorf("expected 1 line for --short, got %d: %q", len(lines), out)
+	}
+	if !strings.Contains(out, iss.ID) {
+		t.Errorf("missing ID: %q", out)
+	}
+	if !strings.Contains(out, "Short show") {
+		t.Errorf("missing title: %q", out)
+	}
+}
+
+func TestCmdShowRichDeps(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker issue", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked issue", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Repo.Commit("create and link")
+
+	// Show b — should display rich dep info for its blocker
+	var buf bytes.Buffer
+	err := cmdShow([]string{b.ID}, &buf)
+	if err != nil {
+		t.Fatalf("cmdShow: %v", err)
+	}
+	out := buf.String()
+	// Should show the blocker's title, not just its ID
+	if !strings.Contains(out, "Blocker issue") {
+		t.Errorf("should show blocker title: %q", out)
+	}
+	if !strings.Contains(out, "DEPENDS ON") {
+		t.Errorf("should show DEPENDS ON section: %q", out)
 	}
 }
 
@@ -1506,12 +1606,7 @@ func TestFprintIssueFull(t *testing.T) {
 	if !strings.Contains(out, "[BUG]") {
 		t.Errorf("missing [BUG] type tag: %q", out)
 	}
-	if !strings.Contains(out, "Blocks: test-aaaa") {
-		t.Errorf("missing Blocks in output: %q", out)
-	}
-	if !strings.Contains(out, "Blocked by: test-bbbb") {
-		t.Errorf("missing BlockedBy in output: %q", out)
-	}
+	// Deps are now rendered by fprintDeps (not fprintIssue)
 	if !strings.Contains(out, "Parent: test-cccc") {
 		t.Errorf("missing Parent in output: %q", out)
 	}
@@ -2236,10 +2331,14 @@ func TestScenarioFullWorkflow(t *testing.T) {
 		if err := cmdShow([]string{idD, "--json"}, &buf); err != nil {
 			t.Fatalf("show D: %v", err)
 		}
-		var d issue.Issue
-		if err := json.Unmarshal(buf.Bytes(), &d); err != nil {
+		var arr []issue.Issue
+		if err := json.Unmarshal(buf.Bytes(), &arr); err != nil {
 			t.Fatalf("JSON parse: %v", err)
 		}
+		if len(arr) != 1 {
+			t.Fatalf("expected 1 issue, got %d", len(arr))
+		}
+		d := arr[0]
 		if d.Status != "deferred" {
 			t.Errorf("D status=%q, want deferred", d.Status)
 		}
@@ -2362,6 +2461,12 @@ func TestScenarioFullWorkflow(t *testing.T) {
 		if len(a.Blocks) != 1 || a.Blocks[0] != idB {
 			t.Errorf("export A blocks=%v, want [%s]", a.Blocks, idB)
 		}
+		if a.UpdatedAt == "" {
+			t.Error("export A updated_at should be set")
+		}
+		if a.ClosedAt == "" {
+			t.Error("export A closed_at should be set (issue is closed)")
+		}
 
 		// B: in_progress, blocked_by=[A], blocks=[C]
 		b := byID[idB]
@@ -2385,6 +2490,12 @@ func TestScenarioFullWorkflow(t *testing.T) {
 		}
 		if len(c.Labels) != 1 || c.Labels[0] != "frontend" {
 			t.Errorf("export C labels=%v, want [frontend]", c.Labels)
+		}
+		if c.ClosedAt != "" {
+			t.Errorf("export C closed_at should be empty for open issue, got %q", c.ClosedAt)
+		}
+		if c.UpdatedAt == "" {
+			t.Error("export C updated_at should be set")
 		}
 
 		// D: deferred, defer_until as RFC3339

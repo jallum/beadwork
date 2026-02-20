@@ -12,8 +12,8 @@ func TestParseShowArgs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if a.ID != "bw-1234" {
-		t.Errorf("ID = %q, want bw-1234", a.ID)
+	if len(a.IDs) != 1 || a.IDs[0] != "bw-1234" {
+		t.Errorf("IDs = %v, want [bw-1234]", a.IDs)
 	}
 	if a.JSON {
 		t.Error("expected JSON = false")
@@ -25,11 +25,31 @@ func TestParseShowArgsJSON(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if a.ID != "bw-1234" {
-		t.Errorf("ID = %q", a.ID)
+	if len(a.IDs) != 1 || a.IDs[0] != "bw-1234" {
+		t.Errorf("IDs = %v, want [bw-1234]", a.IDs)
 	}
 	if !a.JSON {
 		t.Error("expected JSON = true")
+	}
+}
+
+func TestParseShowArgsMultiID(t *testing.T) {
+	a, err := parseShowArgs([]string{"bw-1234", "bw-5678"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(a.IDs) != 2 || a.IDs[0] != "bw-1234" || a.IDs[1] != "bw-5678" {
+		t.Errorf("IDs = %v, want [bw-1234 bw-5678]", a.IDs)
+	}
+}
+
+func TestParseShowArgsShort(t *testing.T) {
+	a, err := parseShowArgs([]string{"bw-1234", "--short"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !a.Short {
+		t.Error("expected Short = true")
 	}
 }
 

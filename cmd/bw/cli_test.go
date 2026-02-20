@@ -186,13 +186,15 @@ func TestShowWithDependencies(t *testing.T) {
 	env.Store.Link(a.ID, b.ID)
 	env.CommitIntent("setup deps")
 
-	// Check blocker shows "Blocks:"
+	// Check blocker shows BLOCKS section with rich dep
 	outA := bw(t, env.Dir, "show", a.ID)
-	assertContains(t, outA, "Blocks: "+b.ID)
+	assertContains(t, outA, "BLOCKS")
+	assertContains(t, outA, b.ID)
 
-	// Check blocked shows "Blocked by:"
+	// Check blocked shows DEPENDS ON section with rich dep
 	outB := bw(t, env.Dir, "show", b.ID)
-	assertContains(t, outB, "Blocked by: "+a.ID)
+	assertContains(t, outB, "DEPENDS ON")
+	assertContains(t, outB, a.ID)
 }
 
 func TestShowClosedStatus(t *testing.T) {
@@ -633,12 +635,14 @@ func TestImportDependencies(t *testing.T) {
 
 	bw(t, env.Dir, "import", f)
 
-	// Check blocks relationship
+	// Check blocks relationship (rich dep format)
 	outB := bw(t, env.Dir, "show", "dep-bbb")
-	assertContains(t, outB, "Blocked by: dep-aaa")
+	assertContains(t, outB, "DEPENDS ON")
+	assertContains(t, outB, "dep-aaa")
 
 	outA := bw(t, env.Dir, "show", "dep-aaa")
-	assertContains(t, outA, "Blocks: dep-bbb")
+	assertContains(t, outA, "BLOCKS")
+	assertContains(t, outA, "dep-bbb")
 
 	// Check parent relationship
 	outC := bw(t, env.Dir, "show", "dep-ccc")
@@ -908,9 +912,10 @@ func TestDepAddOutput(t *testing.T) {
 	assertContains(t, out, a.ID)
 	assertContains(t, out, b.ID)
 
-	// Verify link via show
+	// Verify link via show (rich dep format)
 	show := bw(t, env.Dir, "show", a.ID)
-	assertContains(t, show, "Blocks: "+b.ID)
+	assertContains(t, show, "BLOCKS")
+	assertContains(t, show, b.ID)
 }
 
 func TestDepRemoveOutput(t *testing.T) {

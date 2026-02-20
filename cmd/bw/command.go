@@ -29,8 +29,9 @@ type Example struct {
 // Command describes a CLI subcommand.
 type Command struct {
 	Name        string
-	Summary     string // one-line description for top-level usage
-	Description string // multi-line, shown in per-command help (falls back to Summary)
+	Aliases     []string // alternative names (e.g., "view" for "show")
+	Summary     string   // one-line description for top-level usage
+	Description string   // multi-line, shown in per-command help (falls back to Summary)
 	Positionals []Positional
 	Flags       []Flag
 	Examples    []Example
@@ -104,16 +105,19 @@ var commands = []Command{
 	},
 	{
 		Name:        "show",
+		Aliases:     []string{"view"},
 		Summary:     "Show issue details",
 		Description: "Display full details for an issue including status, priority, labels, and dependencies.",
 		Positionals: []Positional{
-			{Name: "<id>", Required: true, Help: "Issue ID"},
+			{Name: "<id>", Required: true, Help: "Issue ID (can specify multiple)"},
 		},
 		Flags: []Flag{
 			{Long: "--json", Help: "Output as JSON"},
+			{Long: "--short", Help: "Compact one-line output"},
 		},
 		Examples: []Example{
 			{Cmd: "bw show bw-a3f8"},
+			{Cmd: "bw show bw-a3f8 bw-b2c1"},
 		},
 		Run: cmdShow,
 	},
@@ -390,6 +394,9 @@ func init() {
 	commandMap = make(map[string]*Command, len(commands))
 	for i := range commands {
 		commandMap[commands[i].Name] = &commands[i]
+		for _, alias := range commands[i].Aliases {
+			commandMap[alias] = &commands[i]
+		}
 	}
 }
 
