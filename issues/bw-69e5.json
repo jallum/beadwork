@@ -10,7 +10,7 @@
   "id": "bw-69e5",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Convert cmdClose, cmdReopen, cmdExport, cmdImport, cmdReady, cmdUpgrade to ParseArgs",
   "type": "task"
 }
