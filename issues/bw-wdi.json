@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-17q"
+  ],
   "blocks": [],
   "created": "2026-02-20T20:33:06Z",
   "description": "## Problem\n\nNo way to search issues by title/description text. The reviewer noted agents do not always think to use bw list --json | jq.\n\n## bd alignment\n\nbd has a separate bd search command with 20+ filter flags, bd query with boolean query language, and bd find-duplicates with AI search. That rabbit hole is deep. For bw, --grep on bw list covers the reviewer ask simply. Agents can still use bw list --json | jq for complex cases.\n\n## Implementation\n\n### Data model (internal/issue/issue.go)\n- Add Grep string to Filter struct\n- In Store.List, after existing filter checks: case-insensitive substring match on Title + Description. Use strings.Contains(strings.ToLower(...), strings.ToLower(filter.Grep))\n\n### CLI (cmd/bw/list.go)\n- Add Grep string to ListArgs\n- Parse --grep / -g flag, pass to filter.Grep\n\n### Command registration (cmd/bw/command.go)\n- Add {Long: '--grep', Short: '-g', Value: 'TEXT', Help: 'Search title and description'} to list flags\n\n## Acceptance criteria\n\n- [ ] bw list --grep 'login' returns only issues with 'login' in title or description\n- [ ] Search is case-insensitive ('Login' matches 'login')\n- [ ] Combines with other filters (e.g. bw list --grep 'auth' --status open)\n- [ ] bw list --grep 'nonexistent' returns 'no issues found'\n- [ ] bw list --grep 'text' --json outputs filtered JSON\n- [ ] bw list --help shows --grep / -g flag\n\n## Test requirements\n\n- Unit test for Store.List with Grep filter matching title\n- Unit test for Store.List with Grep filter matching description\n- Unit test for case-insensitive matching\n- Unit test for Grep combined with Status filter\n- Unit test for no matches\n- Existing tests pass (go test ./...)",
@@ -10,5 +12,5 @@
   "status": "open",
   "title": "Add --grep flag to bw list",
   "type": "feature",
-  "updated_at": "2026-02-20T20:33:06Z"
+  "updated_at": "2026-02-20T20:34:53Z"
 }
