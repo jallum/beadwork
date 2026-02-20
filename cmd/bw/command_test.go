@@ -53,6 +53,30 @@ func TestPrintUsageContainsAllCommands(t *testing.T) {
 	}
 }
 
+func TestPrintUsageLayout(t *testing.T) {
+	var buf bytes.Buffer
+	printUsage(&buf)
+	out := buf.String()
+
+	// Header line with app name
+	if !strings.Contains(out, "bw") {
+		t.Error("missing 'bw' in header")
+	}
+
+	// Usage: section
+	if !strings.Contains(out, "Usage:") {
+		t.Error("missing 'Usage:' section")
+	}
+	if !strings.Contains(out, "bw <command>") {
+		t.Error("missing 'bw <command>' in Usage section")
+	}
+
+	// Footer with help hint
+	if !strings.Contains(out, `bw <command> --help`) {
+		t.Error("missing help hint footer")
+	}
+}
+
 func TestPrintCommandHelp(t *testing.T) {
 	cmd := commandMap["create"]
 	if cmd == nil {

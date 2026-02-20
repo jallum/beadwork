@@ -424,7 +424,7 @@ func TestUsageOnNoArgs(t *testing.T) {
 	defer env.Cleanup()
 
 	out := bwFail(t, env.Dir)
-	assertContains(t, out, "Usage: bw <command>")
+	assertContains(t, out, "bw <command>")
 }
 
 func TestUnknownCommand(t *testing.T) {

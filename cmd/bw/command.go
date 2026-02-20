@@ -289,7 +289,10 @@ var commandGroups = []struct {
 }
 
 func printUsage(w io.Writer) {
-	fmt.Fprintln(w, "Usage: bw <command> [args]")
+	fmt.Fprintln(w, "bw — lightweight issue tracking with first-class dependency support")
+	fmt.Fprintln(w, "\nUsage:")
+	fmt.Fprintln(w, "  bw <command> [args]")
+	fmt.Fprintln(w, "  bw <command> --help")
 
 	for _, g := range commandGroups {
 		fmt.Fprintf(w, "\n%s:\n", g.name)
@@ -308,6 +311,8 @@ func printUsage(w io.Writer) {
 			fmt.Fprintf(w, "  %-28s %s\n", usage, c.Summary)
 		}
 	}
+
+	fmt.Fprintln(w, "\nUse \"bw <command> --help\" for more information about a command.")
 }
 
 func printCommandHelp(w io.Writer, c *Command) {
