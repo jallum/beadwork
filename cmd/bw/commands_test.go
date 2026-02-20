@@ -837,6 +837,60 @@ func TestCmdGraphRooted(t *testing.T) {
 	}
 }
 
+func TestCmdGraphEmpty(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdGraph([]string{"--all"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdGraph --all: %v", err)
+	}
+	if !strings.Contains(buf.String(), "no issues") {
+		t.Errorf("output = %q, want 'no issues'", buf.String())
+	}
+}
+
+func TestCmdGraphMultipleRoots(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Create a graph with two independent trees
+	a, _ := env.Store.Create("Root A", issue.CreateOpts{})
+	b, _ := env.Store.Create("Child B", issue.CreateOpts{})
+	c, _ := env.Store.Create("Root C", issue.CreateOpts{})
+	d, _ := env.Store.Create("Child D", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Link(c.ID, d.ID)
+	env.Repo.Commit("setup graph")
+
+	var buf bytes.Buffer
+	err := cmdGraph([]string{"--all"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdGraph: %v", err)
+	}
+	// Should show all 4 nodes
+	out := buf.String()
+	if !strings.Contains(out, "Root A") || !strings.Contains(out, "Child B") {
+		t.Errorf("missing tree A in output: %q", out)
+	}
+	if !strings.Contains(out, "Root C") || !strings.Contains(out, "Child D") {
+		t.Errorf("missing tree C in output: %q", out)
+	}
+}
+
+func TestCmdGraphNotFound(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdGraph([]string{"nonexistent"}, &buf)
+	// Graph with a root ID that doesn't exist — should return empty graph
+	if err != nil {
+		t.Fatalf("cmdGraph: %v", err)
+	}
+}
+
 func TestCmdGraphMissingArg(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
