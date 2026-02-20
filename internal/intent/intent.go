@@ -58,9 +58,11 @@ func replayCreate(r *repo.Repo, store *issue.Store, parts []string, raw string) 
 		return fmt.Errorf("malformed create intent")
 	}
 
-	priority := 3
+	var priority *int
 	if strings.HasPrefix(parts[1], "p") {
-		fmt.Sscanf(parts[1], "p%d", &priority)
+		var p int
+		fmt.Sscanf(parts[1], "p%d", &p)
+		priority = &p
 	}
 	issueType := parts[2]
 

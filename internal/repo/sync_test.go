@@ -9,6 +9,8 @@ import (
 	"github.com/jallum/beadwork/internal/testutil"
 )
 
+func intPtr(n int) *int { return &n }
+
 func TestSyncNoRemote(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -60,13 +62,13 @@ func TestSyncCleanRebase(t *testing.T) {
 	defer env2.Cleanup()
 
 	env2.SwitchTo()
-	iss2, _ := env2.Store.Create("Remote issue", issue.CreateOpts{Priority: 1})
+	iss2, _ := env2.Store.Create("Remote issue", issue.CreateOpts{Priority: intPtr(1)})
 	env2.CommitIntent("create " + iss2.ID)
 	env2.Repo.Sync()
 
 	// Back to original, make a non-conflicting change
 	env.SwitchTo()
-	iss1, _ := env.Store.Create("Local issue", issue.CreateOpts{Priority: 2})
+	iss1, _ := env.Store.Create("Local issue", issue.CreateOpts{Priority: intPtr(2)})
 	env.CommitIntent("create " + iss1.ID)
 
 	status, _, err := env.Repo.Sync()
@@ -164,15 +166,15 @@ func TestSyncMultipleIntentsReplay(t *testing.T) {
 	defer env2.Cleanup()
 
 	env2.SwitchTo()
-	blocker, _ := env2.Store.Create("Remote blocker", issue.CreateOpts{Priority: 1})
+	blocker, _ := env2.Store.Create("Remote blocker", issue.CreateOpts{Priority: intPtr(1)})
 	env2.CommitIntent("create " + blocker.ID + " p1 task \"Remote blocker\"")
 	env2.Repo.Sync()
 
 	// Local side: create multiple issues, link them, label one
 	env.SwitchTo()
-	a, _ := env.Store.Create("Local A", issue.CreateOpts{Priority: 1})
+	a, _ := env.Store.Create("Local A", issue.CreateOpts{Priority: intPtr(1)})
 	env.CommitIntent("create " + a.ID + " p1 task \"Local A\"")
-	b, _ := env.Store.Create("Local B", issue.CreateOpts{Priority: 2})
+	b, _ := env.Store.Create("Local B", issue.CreateOpts{Priority: intPtr(2)})
 	env.CommitIntent("create " + b.ID + " p2 task \"Local B\"")
 	env.Store.Link(a.ID, b.ID)
 	env.CommitIntent("link " + a.ID + " blocks " + b.ID)
@@ -264,7 +266,7 @@ func TestIntentReplayIdempotent(t *testing.T) {
 	defer env.Cleanup()
 
 	// Create issue, close it, record intents
-	iss, _ := env.Store.Create("Idempotent test", issue.CreateOpts{Priority: 1})
+	iss, _ := env.Store.Create("Idempotent test", issue.CreateOpts{Priority: intPtr(1)})
 	env.CommitIntent("create " + iss.ID + " p1 task \"Idempotent test\"")
 	env.Store.Close(iss.ID)
 	env.CommitIntent("close " + iss.ID)
@@ -296,7 +298,7 @@ func TestPush(t *testing.T) {
 	env.Repo.Sync()
 
 	// Create another issue and push
-	env.Store.Create("Push test", issue.CreateOpts{Priority: 1})
+	env.Store.Create("Push test", issue.CreateOpts{Priority: intPtr(1)})
 	env.CommitIntent("create push test")
 
 	if err := env.Repo.Push(); err != nil {
@@ -326,7 +328,7 @@ func TestSyncFetchOnly(t *testing.T) {
 	defer env2.Cleanup()
 
 	env2.SwitchTo()
-	remote, _ := env2.Store.Create("Remote only", issue.CreateOpts{Priority: 1})
+	remote, _ := env2.Store.Create("Remote only", issue.CreateOpts{Priority: intPtr(1)})
 	env2.CommitIntent("create " + remote.ID)
 	env2.Repo.Sync()
 

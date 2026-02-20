@@ -12,6 +12,8 @@ import (
 	"github.com/jallum/beadwork/internal/testutil"
 )
 
+func intPtr(n int) *int { return &n }
+
 // --- Create ---
 
 func TestCmdCreateBasic(t *testing.T) {
@@ -339,7 +341,7 @@ func TestCmdUpdatePriority(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	iss, _ := env.Store.Create("Update me", issue.CreateOpts{Priority: 3})
+	iss, _ := env.Store.Create("Update me", issue.CreateOpts{Priority: intPtr(3)})
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
@@ -998,6 +1000,52 @@ func TestCmdImportDryRun(t *testing.T) {
 	}
 }
 
+func TestCmdImportPriorityZero(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// P0 should be preserved, not treated as "unset"
+	jsonl := `{"id":"test-p0","title":"Critical","status":"open","priority":0,"issue_type":"bug","created_at":"2024-01-01T00:00:00Z"}`
+	tmpFile := env.Dir + "/import.jsonl"
+	os.WriteFile(tmpFile, []byte(jsonl+"\n"), 0644)
+
+	var buf bytes.Buffer
+	if err := cmdImport([]string{tmpFile}, &buf); err != nil {
+		t.Fatalf("cmdImport: %v", err)
+	}
+
+	iss, err := env.Store.Get("test-p0")
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if iss.Priority != 0 {
+		t.Errorf("priority = %d, want 0 (P0)", iss.Priority)
+	}
+}
+
+func TestCmdImportPriorityAbsent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// No priority field — should default to 2
+	jsonl := `{"id":"test-nopr","title":"No priority","status":"open","issue_type":"task","created_at":"2024-01-01T00:00:00Z"}`
+	tmpFile := env.Dir + "/import.jsonl"
+	os.WriteFile(tmpFile, []byte(jsonl+"\n"), 0644)
+
+	var buf bytes.Buffer
+	if err := cmdImport([]string{tmpFile}, &buf); err != nil {
+		t.Fatalf("cmdImport: %v", err)
+	}
+
+	iss, err := env.Store.Get("test-nopr")
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if iss.Priority != 2 {
+		t.Errorf("priority = %d, want 2 (default)", iss.Priority)
+	}
+}
+
 // --- Sync ---
 
 func TestCmdSyncNoRemote(t *testing.T) {
@@ -1488,8 +1536,8 @@ func TestGetInitializedWithDefaultPriority(t *testing.T) {
 	if err != nil {
 		t.Fatalf("getInitialized: %v", err)
 	}
-	if store.DefaultPriority != 2 {
-		t.Errorf("DefaultPriority = %d, want 2", store.DefaultPriority)
+	if store.DefaultPriority == nil || *store.DefaultPriority != 2 {
+		t.Errorf("DefaultPriority = %v, want 2", store.DefaultPriority)
 	}
 }
 
@@ -1514,8 +1562,8 @@ func TestCmdBlockedBasic(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	a, _ := env.Store.Create("Blocker", issue.CreateOpts{Priority: 1})
-	b, _ := env.Store.Create("Blocked task", issue.CreateOpts{Priority: 2})
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{Priority: intPtr(1)})
+	b, _ := env.Store.Create("Blocked task", issue.CreateOpts{Priority: intPtr(2)})
 	env.Store.Link(a.ID, b.ID)
 	env.Repo.Commit("link")
 
@@ -2375,8 +2423,8 @@ func TestCmdUpgradeRepoFromV0(t *testing.T) {
 	if !strings.Contains(out, "upgrading") {
 		t.Errorf("output should contain 'upgrading': %q", out)
 	}
-	if !strings.Contains(out, "upgraded to v1") {
-		t.Errorf("output should contain 'upgraded to v1': %q", out)
+	if !strings.Contains(out, "upgraded to v2") {
+		t.Errorf("output should contain 'upgraded to v2': %q", out)
 	}
 
 	// Commands should work now

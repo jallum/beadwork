@@ -15,7 +15,7 @@ type importRecord struct {
 	Title        string     `json:"title"`
 	Description  string     `json:"description"`
 	Status       string     `json:"status"`
-	Priority     int        `json:"priority"`
+	Priority     *int       `json:"priority"`
 	IssueType    string     `json:"issue_type"`
 	Owner        string     `json:"owner"`
 	CreatedAt    string     `json:"created_at"`
@@ -120,12 +120,16 @@ func cmdImport(args []string, w io.Writer) error {
 		if labels == nil {
 			labels = []string{}
 		}
+		priority := 2
+		if rec.Priority != nil {
+			priority = *rec.Priority
+		}
 		iss := &issue.Issue{
 			ID:          rec.ID,
 			Title:       rec.Title,
 			Description: rec.Description,
 			Status:      rec.Status,
-			Priority:    rec.Priority,
+			Priority:    priority,
 			Type:        rec.IssueType,
 			Assignee:    rec.Owner,
 			Created:     rec.CreatedAt,
@@ -139,9 +143,6 @@ func cmdImport(args []string, w io.Writer) error {
 		}
 		if iss.Type == "" {
 			iss.Type = "task"
-		}
-		if iss.Priority == 0 {
-			iss.Priority = 3
 		}
 		// Set parent from dependencies
 		for _, dep := range rec.Dependencies {

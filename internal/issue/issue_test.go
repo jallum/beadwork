@@ -10,12 +10,14 @@ import (
 	"github.com/jallum/beadwork/internal/testutil"
 )
 
+func intPtr(n int) *int { return &n }
+
 func TestCreateAndGet(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
 	iss, err := env.Store.Create("Fix auth bug", issue.CreateOpts{
-		Priority:    1,
+		Priority:    intPtr(1),
 		Type:        "bug",
 		Description: "Tokens expire too fast",
 		Assignee:    "agent-1",
@@ -72,8 +74,8 @@ func TestCreateDefaults(t *testing.T) {
 	if iss.Type != "task" {
 		t.Errorf("default type = %q, want %q", iss.Type, "task")
 	}
-	if iss.Priority != 3 {
-		t.Errorf("default priority = %d, want 3", iss.Priority)
+	if iss.Priority != 2 {
+		t.Errorf("default priority = %d, want 2", iss.Priority)
 	}
 }
 
@@ -81,23 +83,32 @@ func TestCreateDefaultPriorityFromStore(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	env.Store.DefaultPriority = 2
+	env.Store.DefaultPriority = intPtr(3)
 
 	iss, err := env.Store.Create("Custom default", issue.CreateOpts{})
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
-	if iss.Priority != 2 {
-		t.Errorf("priority = %d, want 2 (from store default)", iss.Priority)
+	if iss.Priority != 3 {
+		t.Errorf("priority = %d, want 3 (from store default)", iss.Priority)
 	}
 
 	// Explicit priority should still override
-	iss2, err := env.Store.Create("Explicit priority", issue.CreateOpts{Priority: 1})
+	iss2, err := env.Store.Create("Explicit priority", issue.CreateOpts{Priority: intPtr(1)})
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
 	if iss2.Priority != 1 {
 		t.Errorf("priority = %d, want 1 (explicit override)", iss2.Priority)
+	}
+
+	// Explicit P0 should work
+	iss3, err := env.Store.Create("P0 priority", issue.CreateOpts{Priority: intPtr(0)})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if iss3.Priority != 0 {
+		t.Errorf("priority = %d, want 0 (explicit P0)", iss3.Priority)
 	}
 }
 
@@ -126,11 +137,11 @@ func TestListFilters(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	a, _ := env.Store.Create("Bug one", issue.CreateOpts{Priority: 1, Type: "bug"})
+	a, _ := env.Store.Create("Bug one", issue.CreateOpts{Priority: intPtr(1), Type: "bug"})
 	env.CommitIntent("create " + a.ID)
-	b, _ := env.Store.Create("Task two", issue.CreateOpts{Priority: 2, Type: "task", Assignee: "agent-1"})
+	b, _ := env.Store.Create("Task two", issue.CreateOpts{Priority: intPtr(2), Type: "task", Assignee: "agent-1"})
 	env.CommitIntent("create " + b.ID)
-	c, _ := env.Store.Create("Bug three", issue.CreateOpts{Priority: 1, Type: "bug"})
+	c, _ := env.Store.Create("Bug three", issue.CreateOpts{Priority: intPtr(1), Type: "bug"})
 	env.CommitIntent("create " + c.ID)
 
 	// Filter by type
@@ -143,7 +154,7 @@ func TestListFilters(t *testing.T) {
 	}
 
 	// Filter by priority
-	p1, err := env.Store.List(issue.Filter{Priority: 1})
+	p1, err := env.Store.List(issue.Filter{Priority: intPtr(1)})
 	if err != nil {
 		t.Fatalf("List: %v", err)
 	}
@@ -555,7 +566,7 @@ func TestStatusIcon(t *testing.T) {
 
 func TestPriorityDot(t *testing.T) {
 	// Each priority should produce a colored ● with reset
-	for p := 0; p <= 5; p++ {
+	for p := 0; p <= 4; p++ {
 		dot := issue.PriorityDot(p)
 		if dot == "" {
 			t.Errorf("PriorityDot(%d) returned empty string", p)
@@ -586,9 +597,9 @@ func TestListJSON(t *testing.T) {
 	defer env.Cleanup()
 
 	// Create issues with different properties
-	bug, _ := env.Store.Create("Fix crash", issue.CreateOpts{Priority: 1, Type: "bug", Assignee: "alice"})
+	bug, _ := env.Store.Create("Fix crash", issue.CreateOpts{Priority: intPtr(1), Type: "bug", Assignee: "alice"})
 	env.CommitIntent("create " + bug.ID)
-	task, _ := env.Store.Create("Add search", issue.CreateOpts{Priority: 3, Type: "task"})
+	task, _ := env.Store.Create("Add search", issue.CreateOpts{Priority: intPtr(3), Type: "task"})
 	env.CommitIntent("create " + task.ID)
 
 	// Close the bug
@@ -624,9 +635,9 @@ func TestReadyJSON(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	a, _ := env.Store.Create("Unblocked task", issue.CreateOpts{Priority: 2, Type: "task"})
+	a, _ := env.Store.Create("Unblocked task", issue.CreateOpts{Priority: intPtr(2), Type: "task"})
 	env.CommitIntent("create " + a.ID)
-	b, _ := env.Store.Create("Blocked task", issue.CreateOpts{Priority: 3, Type: "task"})
+	b, _ := env.Store.Create("Blocked task", issue.CreateOpts{Priority: intPtr(3), Type: "task"})
 	env.CommitIntent("create " + b.ID)
 
 	// a blocks b
@@ -664,9 +675,9 @@ func TestListJSONFilterByStatus(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	a, _ := env.Store.Create("Open issue", issue.CreateOpts{Priority: 2})
+	a, _ := env.Store.Create("Open issue", issue.CreateOpts{Priority: intPtr(2)})
 	env.CommitIntent("create " + a.ID)
-	b, _ := env.Store.Create("Closed issue", issue.CreateOpts{Priority: 2})
+	b, _ := env.Store.Create("Closed issue", issue.CreateOpts{Priority: intPtr(2)})
 	env.CommitIntent("create " + b.ID)
 	env.Store.Close(b.ID)
 	env.CommitIntent("close " + b.ID)

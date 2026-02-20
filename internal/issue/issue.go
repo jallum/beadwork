@@ -51,7 +51,6 @@ var PriorityColors = map[int]string{
 	2: "\033[33m", // yellow
 	3: "\033[36m", // cyan
 	4: "\033[2m",  // dim
-	5: "\033[2m",  // dim
 }
 
 const ColorReset = "\033[0m"
@@ -83,7 +82,7 @@ type Issue struct {
 type Store struct {
 	FS              *treefs.TreeFS
 	Prefix          string
-	DefaultPriority int
+	DefaultPriority *int
 }
 
 func NewStore(fs *treefs.TreeFS, prefix string) *Store {
@@ -110,7 +109,6 @@ func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
 		Description: opts.Description,
 		ID:          id,
 		Labels:      []string{},
-		Priority:    opts.Priority,
 		Status:      status,
 		Title:       title,
 		Type:        opts.Type,
@@ -118,12 +116,12 @@ func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
 	if issue.Type == "" {
 		issue.Type = "task"
 	}
-	if issue.Priority == 0 {
-		if s.DefaultPriority > 0 {
-			issue.Priority = s.DefaultPriority
-		} else {
-			issue.Priority = 3
-		}
+	if opts.Priority != nil {
+		issue.Priority = *opts.Priority
+	} else if s.DefaultPriority != nil {
+		issue.Priority = *s.DefaultPriority
+	} else {
+		issue.Priority = 2
 	}
 
 	if err := s.writeIssue(issue); err != nil {
@@ -182,7 +180,7 @@ func (s *Store) List(filter Filter) ([]*Issue, error) {
 		if filter.Assignee != "" && issue.Assignee != filter.Assignee {
 			continue
 		}
-		if filter.Priority != 0 && issue.Priority != filter.Priority {
+		if filter.Priority != nil && issue.Priority != *filter.Priority {
 			continue
 		}
 		if filter.Type != "" && issue.Type != filter.Type {
@@ -730,7 +728,7 @@ func removeStr(slice []string, s string) []string {
 
 type CreateOpts struct {
 	Description string
-	Priority    int
+	Priority    *int
 	Type        string
 	Assignee    string
 	DeferUntil  string
@@ -749,7 +747,7 @@ type UpdateOpts struct {
 type Filter struct {
 	Status   string
 	Assignee string
-	Priority int
+	Priority *int
 	Type     string
 	Label    string
 }

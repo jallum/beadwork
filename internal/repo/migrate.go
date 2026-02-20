@@ -1,8 +1,10 @@
 package repo
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 // Migration defines a schema migration from version N to N+1.
@@ -18,6 +20,48 @@ var Migrations = []Migration{
 		Description: "add version marker",
 		Apply: func(r *Repo) error {
 			// v0 → v1: no data changes, just stamps the version key.
+			return nil
+		},
+	},
+	{
+		Description: "shift priority scale from 1-5 to 0-4",
+		Apply: func(r *Repo) error {
+			// v1 → v2: decrement all issue priorities by 1.
+			entries, err := r.tfs.ReadDir("issues")
+			if err != nil {
+				// No issues directory is fine — nothing to migrate.
+				return nil
+			}
+			for _, e := range entries {
+				name := e.Name()
+				if !strings.HasSuffix(name, ".json") || name == ".gitkeep" {
+					continue
+				}
+				data, err := r.tfs.ReadFile("issues/" + name)
+				if err != nil {
+					return fmt.Errorf("read %s: %w", name, err)
+				}
+				var raw map[string]json.RawMessage
+				if err := json.Unmarshal(data, &raw); err != nil {
+					return fmt.Errorf("parse %s: %w", name, err)
+				}
+				if pRaw, ok := raw["priority"]; ok {
+					var p int
+					if err := json.Unmarshal(pRaw, &p); err == nil && p > 0 {
+						p--
+						newP, _ := json.Marshal(p)
+						raw["priority"] = newP
+						out, err := json.MarshalIndent(raw, "", "  ")
+						if err != nil {
+							return fmt.Errorf("marshal %s: %w", name, err)
+						}
+						out = append(out, '\n')
+						if err := r.tfs.WriteFile("issues/"+name, out); err != nil {
+							return fmt.Errorf("write %s: %w", name, err)
+						}
+					}
+				}
+			}
 			return nil
 		},
 	},

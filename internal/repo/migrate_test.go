@@ -1,6 +1,8 @@
 package repo
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -132,6 +134,67 @@ func TestUpgradeDescriptions(t *testing.T) {
 		if m.Description == "" {
 			t.Errorf("migration %d has empty description", i)
 		}
+	}
+}
+
+func TestUpgradeV1ToV2PriorityMigration(t *testing.T) {
+	r := initTestRepo(t)
+	// Simulate a v1 repo with issues at old priority scale (1-5)
+	r.tfs.WriteFile(".bwconfig", []byte("prefix=test\nversion=1\n"))
+	r.tfs.WriteFile("issues/.gitkeep", []byte{})
+
+	// Write issue files with v1-era priorities (1-5)
+	cases := []struct {
+		file     string
+		oldPri   int
+		wantPri  int
+	}{
+		{"issues/test-0001.json", 1, 0},
+		{"issues/test-0002.json", 3, 2},
+		{"issues/test-0003.json", 5, 4},
+	}
+
+	for _, tc := range cases {
+		data := fmt.Sprintf(`{"id":"%s","title":"test","priority":%d,"type":"task","status":"open"}`,
+			tc.file, tc.oldPri)
+		r.tfs.WriteFile(tc.file, []byte(data))
+	}
+	r.tfs.Commit("init v1 repo with issues")
+	r.initialized = true
+	r.Prefix = "test"
+
+	from, to, err := r.Upgrade()
+	if err != nil {
+		t.Fatalf("Upgrade: %v", err)
+	}
+	if from != 1 {
+		t.Errorf("from = %d, want 1", from)
+	}
+	if to != CurrentVersion {
+		t.Errorf("to = %d, want %d", to, CurrentVersion)
+	}
+
+	// Verify priorities were decremented
+	for _, tc := range cases {
+		data, err := r.tfs.ReadFile(tc.file)
+		if err != nil {
+			t.Fatalf("ReadFile(%s): %v", tc.file, err)
+		}
+		var raw map[string]json.RawMessage
+		if err := json.Unmarshal(data, &raw); err != nil {
+			t.Fatalf("Unmarshal(%s): %v", tc.file, err)
+		}
+		var got int
+		if err := json.Unmarshal(raw["priority"], &got); err != nil {
+			t.Fatalf("Unmarshal priority(%s): %v", tc.file, err)
+		}
+		if got != tc.wantPri {
+			t.Errorf("%s: priority = %d, want %d", tc.file, got, tc.wantPri)
+		}
+	}
+
+	if v := r.Version(); v != CurrentVersion {
+		t.Errorf("Version() after upgrade = %d, want %d", v, CurrentVersion)
 	}
 }
 

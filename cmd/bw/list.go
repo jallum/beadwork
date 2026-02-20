@@ -10,7 +10,7 @@ import (
 type ListArgs struct {
 	Status   string
 	Assignee string
-	Priority int
+	Priority *int
 	Type     string
 	Label    string
 	Limit    int
@@ -31,13 +31,19 @@ func parseListArgs(raw []string) (ListArgs, error) {
 	la := ListArgs{
 		Status:   a.String("--status"),
 		Assignee: a.String("--assignee"),
-		Priority: a.Int("--priority"),
 		Type:     a.String("--type"),
 		Label:    a.String("--label"),
 		All:      a.Bool("--all"),
 		Deferred: a.Bool("--deferred"),
 		JSON:     a.JSON(),
 		Limit:    10,
+	}
+	if a.Has("--priority") {
+		p, err := parsePriority(a.String("--priority"))
+		if err != nil {
+			return la, err
+		}
+		la.Priority = &p
 	}
 	if a.Has("--limit") {
 		la.Limit = a.Int("--limit")
