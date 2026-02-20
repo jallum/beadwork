@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T02:20:09Z",
+  "description": "",
+  "id": "bw-ee5f",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Improve test coverage for cmd/bw/onboard.go",
+  "type": "task"
+}
