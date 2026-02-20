@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-const version = "0.3.0"
+const version = "0.3.1"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -55,6 +55,8 @@ func main() {
 		cmdOnboard()
 	case "prime":
 		cmdPrime()
+	case "upgrade":
+		cmdUpgrade(args)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", cmd)
 		usage()
@@ -84,5 +86,6 @@ Commands:
   sync                        Fetch, rebase/replay, push
   onboard                     Print AGENTS.md snippet
   prime                       Print workflow context for agents
+  upgrade [--check] [--yes]   Check for / install updates
 `)
 }

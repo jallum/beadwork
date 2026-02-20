@@ -4,8 +4,16 @@ Filesystem-native issue tracking for AI coding agents. Issues are JSON files, st
 
 ## Install
 
+Download a prebuilt binary from [releases](https://github.com/jallum/beadwork/releases/latest), or build from source:
+
 ```bash
 go install github.com/j5n/beadwork/cmd/bw@latest
+```
+
+To update an existing install:
+
+```bash
+bw upgrade
 ```
 
 ## Quick Start
@@ -39,6 +47,7 @@ bw import <file> [--dry-run]   Import issues from JSONL
 bw sync                        Fetch, rebase/replay, push
 bw onboard                     Print AGENTS.md snippet
 bw prime                       Print workflow context for agents
+bw upgrade [--check] [--yes]   Check for / install updates
 ```
 
 ## Design

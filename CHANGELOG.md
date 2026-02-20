@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1 — 2026-02-19
+
+- `bw upgrade` command: check for and install newer versions from GitHub releases
+- Automated release binaries via GoReleaser (linux/darwin/windows, amd64/arm64)
+
 ## 0.3.0 — 2026-02-19
 
 - Fix `bw init` in projects with pre-commit hooks (skip hooks for internal beadwork commits)
