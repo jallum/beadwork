@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T18:44:15Z",
+  "description": "Replace fixed 4-char hex IDs with adaptive-length random IDs. Start at 3 chars, try N times, bump to 4, try again, etc. Number of retries per length is a config option (id.retries) with a default of 10 — don't persist the default.",
+  "id": "bw-57f5",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Adaptive-length random IDs",
+  "type": "feature",
+  "updated_at": "2026-02-20T18:44:15Z"
+}
