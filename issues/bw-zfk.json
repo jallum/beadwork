@@ -1,0 +1,16 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T21:11:42Z",
+  "description": "",
+  "id": "bw-zfk",
+  "labels": [
+    "enhancement"
+  ],
+  "priority": 2,
+  "status": "open",
+  "title": "Support stdin via bw import -",
+  "type": "task",
+  "updated_at": "2026-02-20T21:11:42Z"
+}
