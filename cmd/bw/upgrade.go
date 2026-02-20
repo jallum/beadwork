@@ -22,6 +22,19 @@ import (
 
 const releaseURL = "https://api.github.com/repos/jallum/beadwork/releases/latest"
 
+// Injectable dependencies for testing. Production code uses the defaults.
+var (
+	upgradeFetchRelease  = fetchLatestRelease
+	upgradeDownloadAsset = downloadAsset
+	upgradeResolveBinary = resolveBinary
+	upgradeStdin         io.Reader = os.Stdin
+	upgradeCurrentVersion          = func() string { return version }
+	upgradeVerify                  = func(execPath string) (string, error) {
+		out, err := exec.Command(execPath, "--version").Output()
+		return strings.TrimSpace(string(out)), err
+	}
+)
+
 type ghRelease struct {
 	TagName string    `json:"tag_name"`
 	Assets  []ghAsset `json:"assets"`
@@ -61,13 +74,13 @@ func cmdUpgrade(args []string, w io.Writer) error {
 	yes := ua.Yes
 
 	// Resolve our binary location
-	execPath, symlink, targetPath, err := resolveBinary()
+	execPath, symlink, targetPath, err := upgradeResolveBinary()
 	if err != nil {
 		return err
 	}
 
 	// Fetch latest release info
-	release, err := fetchLatestRelease()
+	release, err := upgradeFetchRelease()
 	if err != nil {
 		return fmt.Errorf("failed to check for updates: %w", err)
 	}
@@ -77,12 +90,13 @@ func cmdUpgrade(args []string, w io.Writer) error {
 		return fmt.Errorf("invalid version from release: %s", release.TagName)
 	}
 
-	if compareVersions(version, latest) >= 0 {
-		fmt.Fprintf(w, "bw %s (up to date)\n", version)
+	cur := upgradeCurrentVersion()
+	if compareVersions(cur, latest) >= 0 {
+		fmt.Fprintf(w, "bw %s (up to date)\n", cur)
 		return nil
 	}
 
-	fmt.Fprintf(w, "bw %s → %s available\n", version, latest)
+	fmt.Fprintf(w, "bw %s → %s available\n", cur, latest)
 
 	if check {
 		return nil
@@ -110,7 +124,7 @@ func cmdUpgrade(args []string, w io.Writer) error {
 	// Prompt unless --yes
 	if !yes {
 		fmt.Fprintf(w, "download and install? [y/N] ")
-		reader := bufio.NewReader(os.Stdin)
+		reader := bufio.NewReader(upgradeStdin)
 		answer, _ := reader.ReadString('\n')
 		answer = strings.TrimSpace(strings.ToLower(answer))
 		if answer != "y" && answer != "yes" {
@@ -121,7 +135,7 @@ func cmdUpgrade(args []string, w io.Writer) error {
 
 	// Download
 	fmt.Fprintf(w, "downloading %s...\n", asset.Name)
-	archiveData, err := downloadAsset(asset.URL)
+	archiveData, err := upgradeDownloadAsset(asset.URL)
 	if err != nil {
 		return fmt.Errorf("download failed: %w", err)
 	}
@@ -143,11 +157,11 @@ func cmdUpgrade(args []string, w io.Writer) error {
 	}
 
 	// Verify
-	out, verr := exec.Command(execPath, "--version").Output()
+	verOut, verr := upgradeVerify(execPath)
 	if verr != nil {
 		return fmt.Errorf("installed binary failed verification: %w", verr)
 	}
-	fmt.Fprint(w, strings.TrimSpace(string(out))+"\n")
+	fmt.Fprintln(w, verOut)
 	return nil
 }
 
