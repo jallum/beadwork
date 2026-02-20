@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T06:07:19Z",
+  "description": "",
+  "id": "bw-fdc5",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Update integration and CLI tests for dep",
+  "type": "task"
+}
