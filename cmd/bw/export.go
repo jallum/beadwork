@@ -40,6 +40,12 @@ func fromRFC3339Date(s string) string {
 	return s
 }
 
+type exportComment struct {
+	Author    string `json:"author,omitempty"`
+	Text      string `json:"text"`
+	CreatedAt string `json:"created_at"`
+}
+
 type beadsDep struct {
 	IssueID     string `json:"issue_id"`
 	DependsOnID string `json:"depends_on_id"`
@@ -65,7 +71,8 @@ type beadsRecord struct {
 	DeferUntil   string     `json:"defer_until,omitempty"`
 	Blocks       []string   `json:"blocks,omitempty"`
 	BlockedBy    []string   `json:"blocked_by,omitempty"`
-	Dependencies []beadsDep `json:"dependencies,omitempty"`
+	Dependencies []beadsDep       `json:"dependencies,omitempty"`
+	Comments     []exportComment  `json:"comments,omitempty"`
 }
 
 type ExportArgs struct {
@@ -119,6 +126,15 @@ func cmdExport(args []string, w Writer) error {
 			DeferUntil:  toRFC3339Date(iss.DeferUntil),
 			Blocks:      nilIfEmpty(iss.Blocks),
 			BlockedBy:   nilIfEmpty(iss.BlockedBy),
+		}
+
+		// Convert comments
+		for _, c := range iss.Comments {
+			rec.Comments = append(rec.Comments, exportComment{
+				Author:    c.Author,
+				Text:      c.Text,
+				CreatedAt: c.Timestamp,
+			})
 		}
 
 		// Build dependencies from BlockedBy and Parent

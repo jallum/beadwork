@@ -241,7 +241,24 @@ func fprintIssue(w Writer, iss *issue.Issue) {
 		for _, line := range strings.Split(iss.Description, "\n") {
 			fmt.Fprintf(w, "  %s\n", line)
 		}
+	}
+
+}
+
+// fprintComments renders the COMMENTS section for an issue.
+func fprintComments(w Writer, iss *issue.Issue) {
+	if len(iss.Comments) > 0 {
 		fmt.Fprintln(w)
+		fmt.Fprintln(w, w.Style("COMMENTS", Bold))
+		for _, c := range iss.Comments {
+			ts := trimDate(c.Timestamp)
+			if c.Author != "" {
+				fmt.Fprintf(w, "  %s %s\n", w.Style(ts, Dim), w.Style(c.Author, Bold))
+			} else {
+				fmt.Fprintf(w, "  %s\n", w.Style(ts, Dim))
+			}
+			fmt.Fprintf(w, "    %s\n", c.Text)
+		}
 	}
 }
 

@@ -63,6 +63,12 @@ func PriorityDot(priority int) string {
 	return color + "●" + ColorReset
 }
 
+type Comment struct {
+	Text      string `json:"text"`
+	Author    string `json:"author,omitempty"`
+	Timestamp string `json:"timestamp"`
+}
+
 type Issue struct {
 	Assignee    string   `json:"assignee"`
 	BlockedBy   []string `json:"blocked_by"`
@@ -74,7 +80,8 @@ type Issue struct {
 	Description string   `json:"description"`
 	ID          string   `json:"id"`
 	Labels      []string `json:"labels"`
-	Parent      string   `json:"parent,omitempty"`
+	Parent      string    `json:"parent,omitempty"`
+	Comments    []Comment `json:"comments,omitempty"`
 	Priority    int      `json:"priority"`
 	Status      string   `json:"status"`
 	Title       string   `json:"title"`
@@ -460,6 +467,28 @@ func (s *Store) Label(id string, add, remove []string) (*Issue, error) {
 
 	sort.Strings(issue.Labels)
 	issue.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	if err := s.writeIssue(issue); err != nil {
+		return nil, err
+	}
+	return issue, nil
+}
+
+func (s *Store) Comment(id, text, author string) (*Issue, error) {
+	id, err := s.resolveID(id)
+	if err != nil {
+		return nil, err
+	}
+	issue, err := s.readIssue(id)
+	if err != nil {
+		return nil, err
+	}
+	now := time.Now().UTC().Format(time.RFC3339)
+	issue.Comments = append(issue.Comments, Comment{
+		Text:      text,
+		Author:    author,
+		Timestamp: now,
+	})
+	issue.UpdatedAt = now
 	if err := s.writeIssue(issue); err != nil {
 		return nil, err
 	}
