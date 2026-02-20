@@ -545,6 +545,28 @@ func TestCmdLinkBadSyntax(t *testing.T) {
 	}
 }
 
+func TestCmdLinkNotFound(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdLink([]string{"nonexistent", "blocks", "also-missing"}, &buf)
+	if err == nil {
+		t.Error("expected error for nonexistent issues")
+	}
+}
+
+func TestCmdLinkMissingArg(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdLink([]string{}, &buf)
+	if err == nil {
+		t.Error("expected error for missing args")
+	}
+}
+
 func TestCmdUnlinkBasic(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -561,6 +583,28 @@ func TestCmdUnlinkBasic(t *testing.T) {
 	}
 	if !strings.Contains(buf.String(), "unlinked") {
 		t.Errorf("output = %q", buf.String())
+	}
+}
+
+func TestCmdUnlinkBadSyntax(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdUnlink([]string{"a", "b"}, &buf)
+	if err == nil {
+		t.Error("expected error for bad syntax")
+	}
+}
+
+func TestCmdUnlinkNotFound(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdUnlink([]string{"nonexistent", "blocks", "also-missing"}, &buf)
+	if err == nil {
+		t.Error("expected error for nonexistent issues")
 	}
 }
 
