@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T18:28:55Z",
+  "description": "Add Homebrew tap support so users can install via brew install jallum/tap/bw. Requires: (1) create jallum/homebrew-tap repo on GitHub, (2) add brews section to .goreleaser.yml. GoReleaser handles formula generation and publishing automatically on release.",
+  "id": "bw-c787",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Homebrew tap distribution",
+  "type": "feature",
+  "updated_at": "2026-02-20T18:28:55Z"
+}
