@@ -649,6 +649,44 @@ func TestImportDependencies(t *testing.T) {
 	assertContains(t, outC, "Parent: dep-aaa")
 }
 
+func TestImportDottedIDInfersParent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Dotted child ID with NO dependency entry — parent should be inferred from ID.
+	jsonl := `{"id":"bd-abc","title":"Parent","status":"open","priority":1,"issue_type":"task","created_at":"2026-01-01T00:00:00Z"}
+{"id":"bd-abc.1","title":"Child One","status":"open","priority":2,"issue_type":"task","created_at":"2026-01-01T00:00:00Z"}
+{"id":"bd-abc.1.2","title":"Grandchild","status":"open","priority":2,"issue_type":"task","created_at":"2026-01-01T00:00:00Z"}`
+	f := writeTemp(t, env.Dir, jsonl)
+
+	bw(t, env.Dir, "import", f)
+
+	// Child should have parent set from dotted ID
+	outChild := bw(t, env.Dir, "show", "bd-abc.1")
+	assertContains(t, outChild, "Parent: bd-abc")
+
+	// Grandchild should have parent set from dotted ID
+	outGrand := bw(t, env.Dir, "show", "bd-abc.1.2")
+	assertContains(t, outGrand, "Parent: bd-abc.1")
+}
+
+func TestImportDottedIDWithExplicitDepPrefersDep(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Dotted ID AND explicit dependency — the dependency entry wins.
+	jsonl := `{"id":"bd-xyz","title":"Real parent","status":"open","priority":1,"issue_type":"task","created_at":"2026-01-01T00:00:00Z"}
+{"id":"bd-other","title":"ID-implied parent","status":"open","priority":1,"issue_type":"task","created_at":"2026-01-01T00:00:00Z"}
+{"id":"bd-other.1","title":"Reparented child","status":"open","priority":2,"issue_type":"task","created_at":"2026-01-01T00:00:00Z","dependencies":[{"issue_id":"bd-other.1","depends_on_id":"bd-xyz","type":"parent-child","created_at":"2026-01-01T00:00:00Z","created_by":"test","metadata":"{}"}]}`
+	f := writeTemp(t, env.Dir, jsonl)
+
+	bw(t, env.Dir, "import", f)
+
+	// Explicit dep should win over dotted ID inference
+	out := bw(t, env.Dir, "show", "bd-other.1")
+	assertContains(t, out, "Parent: bd-xyz")
+}
+
 func TestImportCollisionSkips(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()

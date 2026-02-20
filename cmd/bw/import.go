@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
@@ -154,6 +155,12 @@ func cmdImport(args []string, w io.Writer) error {
 		for _, dep := range rec.Dependencies {
 			if dep.Type == "parent-child" {
 				iss.Parent = dep.DependsOnID
+			}
+		}
+		// Infer parent from dotted ID if no explicit dependency
+		if iss.Parent == "" {
+			if idx := strings.LastIndex(rec.ID, "."); idx > 0 {
+				iss.Parent = rec.ID[:idx]
 			}
 		}
 		if err := store.Import(iss); err != nil {
