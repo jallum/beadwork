@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T02:20:07Z",
+  "description": "",
+  "id": "bw-ceb6",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Improve test coverage for cmd/bw/sync.go",
+  "type": "task"
+}
