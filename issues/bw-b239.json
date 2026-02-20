@@ -11,7 +11,7 @@
   "id": "bw-b239",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Add Description/Examples to Command struct and update printCommandHelp layout",
   "type": "task"
 }
