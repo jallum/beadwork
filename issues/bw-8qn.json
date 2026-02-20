@@ -1,0 +1,16 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T19:49:18Z",
+  "description": "",
+  "id": "bw-8qn",
+  "labels": [
+    "coverage"
+  ],
+  "priority": 3,
+  "status": "open",
+  "title": "DI for upgrade command HTTP calls",
+  "type": "task",
+  "updated_at": "2026-02-20T19:49:18Z"
+}
