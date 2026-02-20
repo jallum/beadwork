@@ -11,7 +11,7 @@
   "id": "bw-1c1a",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Add Args struct and ParseArgs to helpers.go with tests",
   "type": "task"
 }
