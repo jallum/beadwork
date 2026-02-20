@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2 — 2026-02-19
+
+- `bw init --force` to reinitialize (destroys and recreates the beadwork branch)
+- Prefix validation: alphanumeric, hyphens, underscores, max 16 chars
+- Derived prefix now preserves casing, truncates to 8 chars, strips invalid characters
+
 ## 0.3.1 — 2026-02-19
 
 - `bw upgrade` command: check for and install newer versions from GitHub releases

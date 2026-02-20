@@ -29,7 +29,7 @@ bw sync                                    # push to remote
 ## Commands
 
 ```
-bw init [--prefix <name>]      Initialize beadwork
+bw init [--prefix] [--force]   Initialize beadwork
 bw create <title> [flags]      Create an issue
 bw show <id> [--json]          Show issue details
 bw list [filters] [--json]     List issues

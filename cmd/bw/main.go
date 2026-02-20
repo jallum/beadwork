@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-const version = "0.3.1"
+const version = "0.3.2"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -68,7 +68,7 @@ func usage() {
 	fmt.Fprintf(os.Stderr, `Usage: bw <command> [args]
 
 Commands:
-  init [--prefix <name>]      Initialize beadwork
+  init [--prefix] [--force]   Initialize beadwork
   create <title> [flags]      Create an issue
   show <id> [--json]          Show issue details
   list [filters] [--json]     List issues

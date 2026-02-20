@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -42,9 +43,52 @@ func (r *Repo) IsInitialized() bool {
 	return r.initialized
 }
 
+var prefixRe = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]*$`)
+
+func ValidatePrefix(prefix string) error {
+	if prefix == "" {
+		return nil
+	}
+	if len(prefix) > 16 {
+		return fmt.Errorf("prefix too long (max 16 characters)")
+	}
+	if !prefixRe.MatchString(prefix) {
+		return fmt.Errorf("prefix must be alphanumeric (hyphens and underscores allowed)")
+	}
+	return nil
+}
+
+// ForceReinit destroys the existing beadwork branch and worktree, then
+// reinitializes from scratch.
+func (r *Repo) ForceReinit(prefix string) error {
+	if err := ValidatePrefix(prefix); err != nil {
+		return err
+	}
+
+	// Remove worktree if it exists
+	if _, err := os.Stat(r.WorkTree); err == nil {
+		if _, err := r.git("worktree", "remove", "--force", r.WorkTree); err != nil {
+			// If git worktree remove fails, clean up manually
+			os.RemoveAll(r.WorkTree)
+		}
+	}
+
+	// Delete local branch if it exists
+	if r.localBranchExists() {
+		r.git("branch", "-D", BranchName)
+	}
+
+	r.initialized = false
+	return r.Init(prefix)
+}
+
 func (r *Repo) Init(prefix string) error {
 	if r.initialized {
 		return fmt.Errorf("beadwork already initialized")
+	}
+
+	if err := ValidatePrefix(prefix); err != nil {
+		return err
 	}
 
 	// Check if remote branch exists
@@ -177,14 +221,23 @@ func (r *Repo) createOrphanBranch() error {
 }
 
 func (r *Repo) derivePrefix() string {
-	// Use the repo directory name as default prefix
 	parent := filepath.Dir(r.GitDir)
 	name := filepath.Base(parent)
-	// Shorten to max 6 chars
-	if len(name) > 6 {
-		name = name[:6]
+	// Strip invalid characters
+	var clean []byte
+	for i := range name {
+		c := name[i]
+		if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' || c == '_' {
+			clean = append(clean, c)
+		}
 	}
-	return strings.ToLower(name)
+	if len(clean) == 0 {
+		return "bw"
+	}
+	if len(clean) > 8 {
+		clean = clean[:8]
+	}
+	return string(clean)
 }
 
 // GetConfig reads a single key from .bwconfig.
