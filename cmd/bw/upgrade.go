@@ -94,18 +94,23 @@ func cmdUpgrade(args []string, w Writer) error {
 
 	cur := upgradeCurrentVersion()
 	if compareVersions(cur, latest) >= 0 {
-		fmt.Fprintf(w, "bw %s (up to date)\n", cur)
+		fmt.Fprintf(w, "bw %s (up to date)\n", w.Style(cur, Dim))
 		return nil
 	}
 
-	fmt.Fprintf(w, "bw %s → %s available\n", cur, latest)
+	fmt.Fprintf(w, "bw %s %s %s available\n",
+		w.Style(cur, Dim), w.Style("→", Dim), w.Style(latest, Bold))
 
 	// Fetch and display changelog (non-fatal on failure)
 	if changelogContent, cerr := upgradeFetchChangelog(latest); cerr == nil {
 		if parsed := parseChangelog(changelogContent, cur, latest); parsed != "" {
 			fmt.Fprintln(w)
 			for _, line := range strings.Split(parsed, "\n") {
-				fmt.Fprintf(w, "  %s\n", line)
+				if strings.HasPrefix(line, "## ") {
+					fmt.Fprintf(w, "  %s\n", w.Style(strings.TrimPrefix(line, "## "), Bold))
+				} else {
+					fmt.Fprintf(w, "  %s\n", line)
+				}
 			}
 		}
 	}
@@ -146,7 +151,7 @@ func cmdUpgrade(args []string, w Writer) error {
 	}
 
 	// Download
-	fmt.Fprintf(w, "downloading %s...\n", asset.Name)
+	fmt.Fprintf(w, "downloading %s...\n", w.Style(asset.Name, Cyan))
 	archiveData, err := upgradeDownloadAsset(asset.URL, asset.Size, w)
 	if err != nil {
 		return fmt.Errorf("download failed: %w", err)
@@ -161,10 +166,11 @@ func cmdUpgrade(args []string, w Writer) error {
 
 	// Install
 	if symlink {
-		fmt.Fprintf(w, "installing bw-%s → %s (symlink)\n", latest, execPath)
+		fmt.Fprintf(w, "installing %s → %s (symlink)\n",
+			w.Style("bw-"+latest, Bold), w.Style(execPath, Cyan))
 		err = installSymlink(execPath, targetPath, installDir, latest, binaryData)
 	} else {
-		fmt.Fprintf(w, "replacing %s...\n", execPath)
+		fmt.Fprintf(w, "replacing %s...\n", w.Style(execPath, Cyan))
 		err = installDirect(execPath, binaryData)
 	}
 	if err != nil {
@@ -177,7 +183,7 @@ func cmdUpgrade(args []string, w Writer) error {
 	if verr != nil {
 		return fmt.Errorf("installed binary failed verification: %w", verr)
 	}
-	fmt.Fprintln(w, verOut)
+	fmt.Fprintln(w, w.Style(verOut, Green))
 	return nil
 }
 
@@ -270,9 +276,10 @@ func downloadAsset(url string, size int64, w Writer) ([]byte, error) {
 			buf.Write(chunk[:n])
 			written += int64(n)
 			if isTTY && total > 0 {
-				fmt.Fprintf(w, "\r  %s/%s (%d%%)",
-					formatBytes(written), formatBytes(total),
-					written*100/total)
+				fmt.Fprintf(w, "\r  %s",
+					w.Style(fmt.Sprintf("%s/%s (%d%%)",
+						formatBytes(written), formatBytes(total),
+						written*100/total), Dim))
 			}
 		}
 		if readErr == io.EOF {
@@ -284,9 +291,9 @@ func downloadAsset(url string, size int64, w Writer) ([]byte, error) {
 	}
 
 	if isTTY && total > 0 {
-		fmt.Fprintf(w, "\r  %s done\n", formatBytes(written))
+		fmt.Fprintf(w, "\r  %s %s\n", formatBytes(written), w.Style("done", Green))
 	} else {
-		fmt.Fprintf(w, "  %s done\n", formatBytes(written))
+		fmt.Fprintf(w, "  %s %s\n", formatBytes(written), w.Style("done", Green))
 	}
 
 	return buf.Bytes(), nil
