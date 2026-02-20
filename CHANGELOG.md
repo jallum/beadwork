@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.3 — 2026-02-20
+
+- Richer per-command help: descriptions, usage examples, and improved layout
+- `--help` now writes to stdout (was stderr) and exits 0
+
 ## 0.4.2 — 2026-02-20
 
 - Per-command `--help` with flag/positional descriptions, auto-generated from command metadata
