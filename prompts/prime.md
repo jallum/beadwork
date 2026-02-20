@@ -35,7 +35,7 @@
 
 ### Creating & Updating
 - `bw create "Title" -p 2 -t task` - New issue
-  - Priority: 1-5 (1=critical, 3=default, 5=backlog). NOT "high"/"medium"/"low"
+  - Priority: 0-4 (0=critical, 2=default, 4=backlog). Also accepts P0-P4. NOT "high"/"medium"/"low"
   - Type: task, bug, epic
   - Also: `-a <assignee>`, `-d <description>`
 - `bw update <id> --status in_progress` - Claim work
@@ -82,4 +82,4 @@ bw dep add <feature-id> blocks <test-id>
 ## Notes
 - `--json` on any read command for structured output
 - IDs support prefix matching ("a1b2" matches "proj-a1b2")
-- Statuses: open, in_progress, closed
+- Statuses: open, in_progress, deferred, closed
