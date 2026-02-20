@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T04:28:46Z",
+  "description": "",
+  "id": "bw-7328",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Convert cmdShow, cmdInit, cmdGraph to ParseArgs",
+  "type": "task"
+}
