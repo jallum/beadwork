@@ -7,34 +7,45 @@ import (
 	"github.com/jallum/beadwork/internal/issue"
 )
 
+type GraphArgs struct {
+	RootID string
+	All    bool
+	JSON   bool
+}
+
+func parseGraphArgs(raw []string) (GraphArgs, error) {
+	a := ParseArgs(raw)
+	ga := GraphArgs{
+		RootID: a.PosFirst(),
+		All:    a.Bool("--all"),
+		JSON:   a.JSON(),
+	}
+	if ga.RootID == "" && !ga.All {
+		return ga, fmt.Errorf("issue ID required (or use --all for all open issues)")
+	}
+	return ga, nil
+}
+
 func cmdGraph(args []string, w io.Writer) error {
+	ga, err := parseGraphArgs(args)
+	if err != nil {
+		return err
+	}
+
 	_, store, err := getInitialized()
 	if err != nil {
 		return err
 	}
 
-	showAll := hasFlag(args, "--all")
-	jsonOut := hasFlag(args, "--json")
-
-	rootID := ""
-	for _, arg := range args {
-		if arg == "--json" || arg == "--all" {
-			continue
-		}
-		rootID = arg
-		break
-	}
-
-	if rootID == "" && !showAll {
-		return fmt.Errorf("issue ID required (or use --all for all open issues)")
-	}
+	showAll := ga.All
+	rootID := ga.RootID
 
 	nodes, err := store.Graph(rootID)
 	if err != nil {
 		return err
 	}
 
-	if jsonOut {
+	if ga.JSON {
 		fprintJSON(w, nodes)
 		return nil
 	}

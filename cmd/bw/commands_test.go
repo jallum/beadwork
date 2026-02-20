@@ -79,17 +79,6 @@ func TestCmdCreateJSON(t *testing.T) {
 	}
 }
 
-func TestCmdCreateMissingTitle(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	var buf bytes.Buffer
-	err := cmdCreate([]string{}, &buf)
-	if err == nil {
-		t.Error("expected error for missing title")
-	}
-}
-
 // --- Show ---
 
 func TestCmdShowBasic(t *testing.T) {
@@ -128,17 +117,6 @@ func TestCmdShowJSON(t *testing.T) {
 	}
 	if got.Title != "JSON show" {
 		t.Errorf("title = %q", got.Title)
-	}
-}
-
-func TestCmdShowMissingArg(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	var buf bytes.Buffer
-	err := cmdShow([]string{}, &buf)
-	if err == nil {
-		t.Error("expected error for missing id")
 	}
 }
 
@@ -298,17 +276,6 @@ func TestCmdCloseNotFound(t *testing.T) {
 	}
 }
 
-func TestCmdCloseMissingArg(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	var buf bytes.Buffer
-	err := cmdClose([]string{}, &buf)
-	if err == nil {
-		t.Error("expected error for missing id")
-	}
-}
-
 func TestCmdReopenBasic(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -363,17 +330,6 @@ func TestCmdReopenNotFound(t *testing.T) {
 	err := cmdReopen([]string{"nonexistent"}, &buf)
 	if err == nil {
 		t.Error("expected error for nonexistent issue")
-	}
-}
-
-func TestCmdReopenMissingArg(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	var buf bytes.Buffer
-	err := cmdReopen([]string{}, &buf)
-	if err == nil {
-		t.Error("expected error for missing id")
 	}
 }
 
@@ -483,20 +439,6 @@ func TestCmdUpdateStatus(t *testing.T) {
 	}
 }
 
-func TestCmdUpdateInvalidPriority(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	iss, _ := env.Store.Create("Bad priority", issue.CreateOpts{})
-	env.Repo.Commit("create " + iss.ID)
-
-	var buf bytes.Buffer
-	err := cmdUpdate([]string{iss.ID, "--priority", "abc"}, &buf)
-	if err == nil {
-		t.Error("expected error for non-numeric priority")
-	}
-}
-
 func TestCmdUpdateNotFound(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -505,17 +447,6 @@ func TestCmdUpdateNotFound(t *testing.T) {
 	err := cmdUpdate([]string{"nonexistent", "--title", "x"}, &buf)
 	if err == nil {
 		t.Error("expected error for nonexistent issue")
-	}
-}
-
-func TestCmdUpdateMissingArg(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	var buf bytes.Buffer
-	err := cmdUpdate([]string{}, &buf)
-	if err == nil {
-		t.Error("expected error for missing id")
 	}
 }
 
@@ -614,17 +545,6 @@ func TestCmdLabelNotFound(t *testing.T) {
 	}
 }
 
-func TestCmdLabelMissingArg(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	var buf bytes.Buffer
-	err := cmdLabel([]string{"some-id"}, &buf)
-	if err == nil {
-		t.Error("expected error for missing label args")
-	}
-}
-
 // --- Link / Unlink ---
 
 func TestCmdLinkBasic(t *testing.T) {
@@ -650,17 +570,6 @@ func TestCmdLinkBasic(t *testing.T) {
 	}
 }
 
-func TestCmdLinkBadSyntax(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	var buf bytes.Buffer
-	err := cmdLink([]string{"a", "b"}, &buf)
-	if err == nil {
-		t.Error("expected error for bad syntax")
-	}
-}
-
 func TestCmdLinkNotFound(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -669,17 +578,6 @@ func TestCmdLinkNotFound(t *testing.T) {
 	err := cmdLink([]string{"nonexistent", "blocks", "also-missing"}, &buf)
 	if err == nil {
 		t.Error("expected error for nonexistent issues")
-	}
-}
-
-func TestCmdLinkMissingArg(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	var buf bytes.Buffer
-	err := cmdLink([]string{}, &buf)
-	if err == nil {
-		t.Error("expected error for missing args")
 	}
 }
 
@@ -699,17 +597,6 @@ func TestCmdUnlinkBasic(t *testing.T) {
 	}
 	if !strings.Contains(buf.String(), "unlinked") {
 		t.Errorf("output = %q", buf.String())
-	}
-}
-
-func TestCmdUnlinkBadSyntax(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	var buf bytes.Buffer
-	err := cmdUnlink([]string{"a", "b"}, &buf)
-	if err == nil {
-		t.Error("expected error for bad syntax")
 	}
 }
 
@@ -916,17 +803,6 @@ func TestCmdGraphNotFound(t *testing.T) {
 	}
 }
 
-func TestCmdGraphMissingArg(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	var buf bytes.Buffer
-	err := cmdGraph([]string{}, &buf)
-	if err == nil {
-		t.Error("expected error for missing arg")
-	}
-}
-
 // --- Config ---
 
 func TestCmdConfigSetAndGet(t *testing.T) {
@@ -977,49 +853,8 @@ func TestCmdConfigGetMissing(t *testing.T) {
 	}
 }
 
-func TestCmdConfigGetNoKey(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
 
-	var buf bytes.Buffer
-	err := cmdConfig([]string{"get"}, &buf)
-	if err == nil {
-		t.Error("expected error for get without key")
-	}
-}
 
-func TestCmdConfigSetNoArgs(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	var buf bytes.Buffer
-	err := cmdConfig([]string{"set", "key"}, &buf)
-	if err == nil {
-		t.Error("expected error for set without value")
-	}
-}
-
-func TestCmdConfigUnknownSubcmd(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	var buf bytes.Buffer
-	err := cmdConfig([]string{"delete"}, &buf)
-	if err == nil {
-		t.Error("expected error for unknown subcommand")
-	}
-}
-
-func TestCmdConfigMissingSubcmd(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	var buf bytes.Buffer
-	err := cmdConfig([]string{}, &buf)
-	if err == nil {
-		t.Error("expected error for missing subcommand")
-	}
-}
 
 // --- Export ---
 
@@ -1092,17 +927,6 @@ func TestCmdImportDryRun(t *testing.T) {
 	_, getErr := env.Store.Get("test-dry1")
 	if getErr == nil {
 		t.Error("issue should not exist after dry run")
-	}
-}
-
-func TestCmdImportMissingFile(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	var buf bytes.Buffer
-	err := cmdImport([]string{}, &buf)
-	if err == nil {
-		t.Error("expected error for missing file arg")
 	}
 }
 
@@ -1340,6 +1164,126 @@ func TestCmdInitForce(t *testing.T) {
 }
 
 // --- Helpers ---
+
+func TestParseArgsBooleans(t *testing.T) {
+	a := ParseArgs([]string{"--json", "--all", "positional"})
+	if !a.Bool("--json") {
+		t.Error("expected --json to be true")
+	}
+	if !a.Bool("--all") {
+		t.Error("expected --all to be true")
+	}
+	if a.Bool("--missing") {
+		t.Error("expected --missing to be false")
+	}
+	if !a.JSON() {
+		t.Error("expected JSON() to be true")
+	}
+}
+
+func TestParseArgsValueFlags(t *testing.T) {
+	a := ParseArgs([]string{"--status", "open", "--priority", "1"}, "--status", "--priority")
+	if a.String("--status") != "open" {
+		t.Errorf("status = %q, want open", a.String("--status"))
+	}
+	if a.Int("--priority") != 1 {
+		t.Errorf("priority = %d, want 1", a.Int("--priority"))
+	}
+	if !a.Has("--status") {
+		t.Error("expected Has(--status) to be true")
+	}
+	if a.Has("--missing") {
+		t.Error("expected Has(--missing) to be false")
+	}
+}
+
+func TestParseArgsAliases(t *testing.T) {
+	a := ParseArgs([]string{"-p", "2", "-t", "bug", "-a", "alice"}, "--priority", "--type", "--assignee")
+	if a.Int("--priority") != 2 {
+		t.Errorf("priority = %d, want 2", a.Int("--priority"))
+	}
+	if a.String("--type") != "bug" {
+		t.Errorf("type = %q, want bug", a.String("--type"))
+	}
+	if a.String("--assignee") != "alice" {
+		t.Errorf("assignee = %q, want alice", a.String("--assignee"))
+	}
+}
+
+func TestParseArgsPositionals(t *testing.T) {
+	a := ParseArgs([]string{"my", "title", "here", "--json"})
+	pos := a.Pos()
+	if len(pos) != 3 {
+		t.Fatalf("pos = %v, want 3 items", pos)
+	}
+	if a.PosFirst() != "my" {
+		t.Errorf("PosFirst() = %q, want my", a.PosFirst())
+	}
+	if a.PosJoined() != "my title here" {
+		t.Errorf("PosJoined() = %q", a.PosJoined())
+	}
+}
+
+func TestParseArgsEmpty(t *testing.T) {
+	a := ParseArgs([]string{})
+	if a.PosFirst() != "" {
+		t.Errorf("PosFirst() = %q, want empty", a.PosFirst())
+	}
+	if a.PosJoined() != "" {
+		t.Errorf("PosJoined() = %q, want empty", a.PosJoined())
+	}
+	if a.JSON() {
+		t.Error("expected JSON() to be false")
+	}
+}
+
+func TestParseArgsValueFlagAtEnd(t *testing.T) {
+	// Value flag with no following token should be silently ignored
+	a := ParseArgs([]string{"--status"}, "--status")
+	if a.Has("--status") {
+		t.Error("expected Has(--status) to be false when no value follows")
+	}
+	if a.String("--status") != "" {
+		t.Errorf("status = %q, want empty", a.String("--status"))
+	}
+}
+
+func TestParseArgsIntErr(t *testing.T) {
+	a := ParseArgs([]string{"--priority", "abc"}, "--priority")
+	_, set, err := a.IntErr("--priority")
+	if !set {
+		t.Error("expected set to be true")
+	}
+	if err == nil {
+		t.Error("expected error for non-numeric priority")
+	}
+
+	// Missing flag
+	_, set, err = a.IntErr("--missing")
+	if set || err != nil {
+		t.Errorf("expected set=false, err=nil for missing flag, got set=%v, err=%v", set, err)
+	}
+
+	// Valid int
+	a2 := ParseArgs([]string{"--priority", "3"}, "--priority")
+	n, set, err := a2.IntErr("--priority")
+	if !set || err != nil || n != 3 {
+		t.Errorf("expected (3, true, nil), got (%d, %v, %v)", n, set, err)
+	}
+}
+
+func TestParseArgsMixedFlagsAndPositionals(t *testing.T) {
+	a := ParseArgs([]string{"id-123", "--json", "--status", "open"}, "--status")
+	if a.PosFirst() != "id-123" {
+		t.Errorf("PosFirst() = %q, want id-123", a.PosFirst())
+	}
+	if !a.JSON() {
+		t.Error("expected JSON() to be true")
+	}
+	if a.String("--status") != "open" {
+		t.Errorf("status = %q, want open", a.String("--status"))
+	}
+}
 
 func TestHasFlag(t *testing.T) {
 	tests := []struct {

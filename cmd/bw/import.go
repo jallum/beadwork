@@ -22,25 +22,36 @@ type importRecord struct {
 	Dependencies []beadsDep `json:"dependencies"`
 }
 
+type ImportArgs struct {
+	FilePath string
+	DryRun   bool
+}
+
+func parseImportArgs(raw []string) (ImportArgs, error) {
+	a := ParseArgs(raw)
+	filePath := a.PosFirst()
+	if filePath == "" {
+		return ImportArgs{}, fmt.Errorf("usage: bw import <file> [--dry-run]")
+	}
+	return ImportArgs{
+		FilePath: filePath,
+		DryRun:   a.Bool("--dry-run"),
+	}, nil
+}
+
 func cmdImport(args []string, w io.Writer) error {
+	ia, err := parseImportArgs(args)
+	if err != nil {
+		return err
+	}
+
 	r, store, err := getInitialized()
 	if err != nil {
 		return err
 	}
 
-	dryRun := hasFlag(args, "--dry-run")
-
-	// Find the file argument (first non-flag arg)
-	var filePath string
-	for _, a := range args {
-		if a != "--dry-run" {
-			filePath = a
-			break
-		}
-	}
-	if filePath == "" {
-		return fmt.Errorf("usage: bw import <file> [--dry-run]")
-	}
+	dryRun := ia.DryRun
+	filePath := ia.FilePath
 
 	// Phase 1: Parse
 	f, err := os.Open(filePath)

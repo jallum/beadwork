@@ -3,73 +3,106 @@ package main
 import (
 	"fmt"
 	"io"
-	"strconv"
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
 
+type UpdateArgs struct {
+	ID          string
+	Title       string
+	TitleSet    bool
+	Description string
+	DescSet     bool
+	Priority    int
+	PrioritySet bool
+	Assignee    string
+	AssigneeSet bool
+	Type        string
+	TypeSet     bool
+	Status      string
+	StatusSet   bool
+	JSON        bool
+}
+
+func parseUpdateArgs(raw []string) (UpdateArgs, error) {
+	if len(raw) == 0 {
+		return UpdateArgs{}, fmt.Errorf("usage: bw update <id> [flags]")
+	}
+	a := ParseArgs(raw[1:], "--title", "--description", "--priority", "--assignee", "--type", "--status")
+	ua := UpdateArgs{ID: raw[0], JSON: a.JSON()}
+
+	if a.Has("--title") {
+		ua.Title = a.String("--title")
+		ua.TitleSet = true
+	}
+	if a.Has("--description") {
+		ua.Description = a.String("--description")
+		ua.DescSet = true
+	}
+	if a.Has("--priority") {
+		p, _, err := a.IntErr("--priority")
+		if err != nil {
+			return ua, err
+		}
+		ua.Priority = p
+		ua.PrioritySet = true
+	}
+	if a.Has("--assignee") {
+		ua.Assignee = a.String("--assignee")
+		ua.AssigneeSet = true
+	}
+	if a.Has("--type") {
+		ua.Type = a.String("--type")
+		ua.TypeSet = true
+	}
+	if a.Has("--status") {
+		ua.Status = a.String("--status")
+		ua.StatusSet = true
+	}
+	return ua, nil
+}
+
 func cmdUpdate(args []string, w io.Writer) error {
+	ua, err := parseUpdateArgs(args)
+	if err != nil {
+		return err
+	}
+
 	r, store, err := getInitialized()
 	if err != nil {
 		return err
 	}
 
-	if len(args) == 0 {
-		return fmt.Errorf("usage: bw update <id> [flags]")
-	}
-	id := args[0]
-	rest := args[1:]
-
 	opts := issue.UpdateOpts{}
 	var changes []string
 
-	for i := 0; i < len(rest); i++ {
-		switch rest[i] {
-		case "--title":
-			if i+1 < len(rest) {
-				opts.Title = &rest[i+1]
-				changes = append(changes, "title="+rest[i+1])
-				i++
-			}
-		case "--description", "-d":
-			if i+1 < len(rest) {
-				opts.Description = &rest[i+1]
-				changes = append(changes, "description=...")
-				i++
-			}
-		case "--priority", "-p":
-			if i+1 < len(rest) {
-				p, err := strconv.Atoi(rest[i+1])
-				if err != nil {
-					return fmt.Errorf("invalid priority: %s", rest[i+1])
-				}
-				opts.Priority = &p
-				changes = append(changes, "priority="+rest[i+1])
-				i++
-			}
-		case "--assignee", "-a":
-			if i+1 < len(rest) {
-				opts.Assignee = &rest[i+1]
-				changes = append(changes, "assignee="+rest[i+1])
-				i++
-			}
-		case "--type", "-t":
-			if i+1 < len(rest) {
-				opts.Type = &rest[i+1]
-				changes = append(changes, "type="+rest[i+1])
-				i++
-			}
-		case "--status", "-s":
-			if i+1 < len(rest) {
-				opts.Status = &rest[i+1]
-				changes = append(changes, "status="+rest[i+1])
-				i++
-			}
-		}
+	if ua.TitleSet {
+		opts.Title = &ua.Title
+		changes = append(changes, "title="+ua.Title)
+	}
+	if ua.DescSet {
+		opts.Description = &ua.Description
+		changes = append(changes, "description=...")
+	}
+	if ua.PrioritySet {
+		opts.Priority = &ua.Priority
+		changes = append(changes, fmt.Sprintf("priority=%d", ua.Priority))
+	}
+	if ua.AssigneeSet {
+		opts.Assignee = &ua.Assignee
+		changes = append(changes, "assignee="+ua.Assignee)
+	}
+	if ua.TypeSet {
+		opts.Type = &ua.Type
+		changes = append(changes, "type="+ua.Type)
+	}
+	if ua.StatusSet {
+		opts.Status = &ua.Status
+		changes = append(changes, "status="+ua.Status)
 	}
 
-	iss, err := store.Update(id, opts)
+	iss, err := store.Update(ua.ID, opts)
 	if err != nil {
 		return err
 	}
@@ -79,7 +112,7 @@ func cmdUpdate(args []string, w io.Writer) error {
 		return fmt.Errorf("commit failed: %w", err)
 	}
 
-	if hasFlag(args, "--json") {
+	if ua.JSON {
 		fprintJSON(w, iss)
 	} else {
 		fmt.Fprintf(w, "updated %s\n", iss.ID)

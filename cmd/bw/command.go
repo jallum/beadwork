@@ -1,0 +1,337 @@
+package main
+
+import (
+	"fmt"
+	"io"
+)
+
+// Flag describes a single command-line flag.
+type Flag struct {
+	Long  string // e.g. "--priority"
+	Short string // e.g. "-p" (optional)
+	Value string // metavar for help, e.g. "N" — empty means boolean
+	Help  string // e.g. "Priority level (1-5)"
+}
+
+// Positional describes a positional argument.
+type Positional struct {
+	Name     string // e.g. "<id>", "<title...>"
+	Required bool
+	Help     string
+}
+
+// Command describes a CLI subcommand.
+type Command struct {
+	Name        string
+	Summary     string // one-line description for top-level usage
+	Positionals []Positional
+	Flags       []Flag
+	Run         func(args []string, w io.Writer) error
+}
+
+// valueFlags returns the long names of flags that take a value (non-boolean).
+func (c *Command) valueFlags() []string {
+	var vf []string
+	for _, f := range c.Flags {
+		if f.Value != "" {
+			vf = append(vf, f.Long)
+		}
+	}
+	return vf
+}
+
+// expandAliases replaces short flags with their long equivalents.
+func expandAliases(raw []string, flags []Flag) []string {
+	shorts := make(map[string]string, len(flags))
+	for _, f := range flags {
+		if f.Short != "" {
+			shorts[f.Short] = f.Long
+		}
+	}
+	result := make([]string, len(raw))
+	for i, tok := range raw {
+		if long, ok := shorts[tok]; ok {
+			result[i] = long
+		} else {
+			result[i] = tok
+		}
+	}
+	return result
+}
+
+// commands defines all CLI subcommands.
+var commands = []Command{
+	{
+		Name:    "create",
+		Summary: "Create an issue",
+		Positionals: []Positional{
+			{Name: "<title>", Required: true, Help: "Issue title (multiple words joined)"},
+		},
+		Flags: []Flag{
+			{Long: "--priority", Short: "-p", Value: "N", Help: "Priority level (1-5)"},
+			{Long: "--type", Short: "-t", Value: "TYPE", Help: "Issue type (task, bug, etc.)"},
+			{Long: "--assignee", Short: "-a", Value: "WHO", Help: "Assignee"},
+			{Long: "--description", Short: "-d", Value: "TEXT", Help: "Description"},
+			{Long: "--json", Help: "Output as JSON"},
+		},
+		Run: cmdCreate,
+	},
+	{
+		Name:    "show",
+		Summary: "Show issue details",
+		Positionals: []Positional{
+			{Name: "<id>", Required: true, Help: "Issue ID"},
+		},
+		Flags: []Flag{
+			{Long: "--json", Help: "Output as JSON"},
+		},
+		Run: cmdShow,
+	},
+	{
+		Name:    "list",
+		Summary: "List issues",
+		Flags: []Flag{
+			{Long: "--status", Short: "-s", Value: "STATUS", Help: "Filter by status"},
+			{Long: "--assignee", Short: "-a", Value: "WHO", Help: "Filter by assignee"},
+			{Long: "--priority", Short: "-p", Value: "N", Help: "Filter by priority"},
+			{Long: "--type", Short: "-t", Value: "TYPE", Help: "Filter by type"},
+			{Long: "--label", Value: "LABEL", Help: "Filter by label"},
+			{Long: "--limit", Value: "N", Help: "Max results (default 10)"},
+			{Long: "--all", Help: "Show all issues (no status/limit filter)"},
+			{Long: "--json", Help: "Output as JSON"},
+		},
+		Run: cmdList,
+	},
+	{
+		Name:    "update",
+		Summary: "Update an issue",
+		Positionals: []Positional{
+			{Name: "<id>", Required: true, Help: "Issue ID"},
+		},
+		Flags: []Flag{
+			{Long: "--title", Value: "TEXT", Help: "New title"},
+			{Long: "--description", Short: "-d", Value: "TEXT", Help: "New description"},
+			{Long: "--priority", Short: "-p", Value: "N", Help: "New priority"},
+			{Long: "--assignee", Short: "-a", Value: "WHO", Help: "New assignee"},
+			{Long: "--type", Short: "-t", Value: "TYPE", Help: "New type"},
+			{Long: "--status", Short: "-s", Value: "STATUS", Help: "New status"},
+			{Long: "--json", Help: "Output as JSON"},
+		},
+		Run: cmdUpdate,
+	},
+	{
+		Name:    "close",
+		Summary: "Close an issue",
+		Positionals: []Positional{
+			{Name: "<id>", Required: true, Help: "Issue ID"},
+		},
+		Flags: []Flag{
+			{Long: "--reason", Value: "REASON", Help: "Closing reason"},
+			{Long: "--json", Help: "Output as JSON"},
+		},
+		Run: cmdClose,
+	},
+	{
+		Name:    "reopen",
+		Summary: "Reopen a closed issue",
+		Positionals: []Positional{
+			{Name: "<id>", Required: true, Help: "Issue ID"},
+		},
+		Flags: []Flag{
+			{Long: "--json", Help: "Output as JSON"},
+		},
+		Run: cmdReopen,
+	},
+	{
+		Name:    "label",
+		Summary: "Add/remove labels",
+		Positionals: []Positional{
+			{Name: "<id>", Required: true, Help: "Issue ID"},
+			{Name: "+label [-label]...", Required: true, Help: "Labels to add (+) or remove (-)"},
+		},
+		Flags: []Flag{
+			{Long: "--json", Help: "Output as JSON"},
+		},
+		Run: cmdLabel,
+	},
+	{
+		Name:    "link",
+		Summary: "Create dependency link",
+		Positionals: []Positional{
+			{Name: "<id> blocks <id>", Required: true, Help: "Blocker and blocked issue IDs"},
+		},
+		Run: cmdLink,
+	},
+	{
+		Name:    "unlink",
+		Summary: "Remove dependency link",
+		Positionals: []Positional{
+			{Name: "<id> blocks <id>", Required: true, Help: "Blocker and blocked issue IDs"},
+		},
+		Run: cmdUnlink,
+	},
+	{
+		Name:    "ready",
+		Summary: "List unblocked issues",
+		Flags: []Flag{
+			{Long: "--json", Help: "Output as JSON"},
+		},
+		Run: cmdReady,
+	},
+	{
+		Name:    "graph",
+		Summary: "Dependency graph",
+		Positionals: []Positional{
+			{Name: "<id>", Help: "Root issue ID (or use --all)"},
+		},
+		Flags: []Flag{
+			{Long: "--all", Help: "Show all open issues"},
+			{Long: "--json", Help: "Output as JSON"},
+		},
+		Run: cmdGraph,
+	},
+	{
+		Name:    "sync",
+		Summary: "Fetch, rebase/replay, push",
+		Run:     cmdSync,
+	},
+	{
+		Name:    "export",
+		Summary: "Export issues as JSONL",
+		Flags: []Flag{
+			{Long: "--status", Short: "-s", Value: "STATUS", Help: "Filter by status"},
+		},
+		Run: cmdExport,
+	},
+	{
+		Name:    "import",
+		Summary: "Import issues from JSONL",
+		Positionals: []Positional{
+			{Name: "<file>", Required: true, Help: "JSONL file path"},
+		},
+		Flags: []Flag{
+			{Long: "--dry-run", Help: "Preview without importing"},
+		},
+		Run: cmdImport,
+	},
+	{
+		Name:    "init",
+		Summary: "Initialize beadwork",
+		Flags: []Flag{
+			{Long: "--prefix", Value: "PREFIX", Help: "Issue ID prefix"},
+			{Long: "--force", Help: "Force reinitialize"},
+		},
+		Run: cmdInit,
+	},
+	{
+		Name:    "config",
+		Summary: "View/set config options",
+		Positionals: []Positional{
+			{Name: "get|set|list", Required: true, Help: "Subcommand"},
+		},
+		Run: cmdConfig,
+	},
+	{
+		Name:    "upgrade",
+		Summary: "Check for / install updates",
+		Flags: []Flag{
+			{Long: "--check", Help: "Check only, don't install"},
+			{Long: "--yes", Help: "Skip confirmation prompt"},
+		},
+		Run: cmdUpgrade,
+	},
+	{
+		Name:    "onboard",
+		Summary: "Print AGENTS.md snippet",
+		Run:     wrapNoArgs(cmdOnboard),
+	},
+	{
+		Name:    "prime",
+		Summary: "Print workflow context for agents",
+		Run:     wrapNoArgs(cmdPrime),
+	},
+}
+
+// wrapNoArgs adapts a func(io.Writer) error to the standard command signature.
+func wrapNoArgs(fn func(w io.Writer) error) func([]string, io.Writer) error {
+	return func(_ []string, w io.Writer) error {
+		return fn(w)
+	}
+}
+
+// commandMap provides O(1) lookup by name.
+var commandMap map[string]*Command
+
+func init() {
+	commandMap = make(map[string]*Command, len(commands))
+	for i := range commands {
+		commandMap[commands[i].Name] = &commands[i]
+	}
+}
+
+// commandGroups defines the display order for usage output.
+var commandGroups = []struct {
+	name string
+	cmds []string
+}{
+	{"Issues", []string{"create", "show", "list", "update", "close", "reopen", "label"}},
+	{"Dependencies", []string{"link", "unlink", "ready", "graph"}},
+	{"Collaboration", []string{"sync", "export", "import"}},
+	{"Setup & Config", []string{"init", "config", "upgrade", "onboard", "prime"}},
+}
+
+func printUsage(w io.Writer) {
+	fmt.Fprintln(w, "Usage: bw <command> [args]")
+
+	for _, g := range commandGroups {
+		fmt.Fprintf(w, "\n%s:\n", g.name)
+		for _, name := range g.cmds {
+			c := commandMap[name]
+			if c == nil {
+				continue
+			}
+			usage := name
+			for _, p := range c.Positionals {
+				usage += " " + p.Name
+			}
+			if len(c.Flags) > 0 {
+				usage += " [flags]"
+			}
+			fmt.Fprintf(w, "  %-28s %s\n", usage, c.Summary)
+		}
+	}
+}
+
+func printCommandHelp(w io.Writer, c *Command) {
+	// Usage line
+	usage := "bw " + c.Name
+	for _, p := range c.Positionals {
+		usage += " " + p.Name
+	}
+	if len(c.Flags) > 0 {
+		usage += " [flags]"
+	}
+	fmt.Fprintf(w, "Usage: %s\n\n", usage)
+	fmt.Fprintf(w, "%s\n", c.Summary)
+
+	if len(c.Positionals) > 0 {
+		fmt.Fprintln(w, "\nArguments:")
+		for _, p := range c.Positionals {
+			fmt.Fprintf(w, "  %-24s %s\n", p.Name, p.Help)
+		}
+	}
+
+	if len(c.Flags) > 0 {
+		fmt.Fprintln(w, "\nFlags:")
+		for _, f := range c.Flags {
+			flag := f.Long
+			if f.Short != "" {
+				flag = f.Short + ", " + f.Long
+			}
+			if f.Value != "" {
+				flag += " " + f.Value
+			}
+			fmt.Fprintf(w, "  %-28s %s\n", flag, f.Help)
+		}
+	}
+}

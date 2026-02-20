@@ -8,7 +8,21 @@ import (
 	"github.com/jallum/beadwork/internal/issue"
 )
 
+type ReadyArgs struct {
+	JSON bool
+}
+
+func parseReadyArgs(raw []string) (ReadyArgs, error) {
+	a := ParseArgs(raw)
+	return ReadyArgs{JSON: a.JSON()}, nil
+}
+
 func cmdReady(args []string, w io.Writer) error {
+	ra, err := parseReadyArgs(args)
+	if err != nil {
+		return err
+	}
+
 	_, store, err := getInitialized()
 	if err != nil {
 		return err
@@ -19,7 +33,7 @@ func cmdReady(args []string, w io.Writer) error {
 		return err
 	}
 
-	if hasFlag(args, "--json") {
+	if ra.JSON {
 		fprintJSON(w, issues)
 		return nil
 	}

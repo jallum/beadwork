@@ -3,61 +3,61 @@ package main
 import (
 	"fmt"
 	"io"
-	"strconv"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
 
+type CreateArgs struct {
+	Title       string
+	Priority    int
+	PrioritySet bool
+	Type        string
+	Assignee    string
+	Description string
+	JSON        bool
+}
+
+func parseCreateArgs(raw []string) (CreateArgs, error) {
+	a := ParseArgs(raw, "--priority", "--type", "--assignee", "--description")
+	var ca CreateArgs
+	ca.Title = a.PosJoined()
+	if ca.Title == "" {
+		return ca, fmt.Errorf("title is required")
+	}
+	ca.Type = a.String("--type")
+	ca.Assignee = a.String("--assignee")
+	ca.Description = a.String("--description")
+	ca.JSON = a.JSON()
+	if p, set, err := a.IntErr("--priority"); err != nil {
+		return ca, err
+	} else if set {
+		ca.Priority = p
+		ca.PrioritySet = true
+	}
+	return ca, nil
+}
+
 func cmdCreate(args []string, w io.Writer) error {
+	ca, err := parseCreateArgs(args)
+	if err != nil {
+		return err
+	}
+
 	r, store, err := getInitialized()
 	if err != nil {
 		return err
 	}
-	opts := issue.CreateOpts{}
-	var title string
 
-	for i := 0; i < len(args); i++ {
-		switch args[i] {
-		case "--priority", "-p":
-			if i+1 < len(args) {
-				p, err := strconv.Atoi(args[i+1])
-				if err != nil {
-					return fmt.Errorf("invalid priority: %s", args[i+1])
-				}
-				opts.Priority = p
-				i++
-			}
-		case "--type", "-t":
-			if i+1 < len(args) {
-				opts.Type = args[i+1]
-				i++
-			}
-		case "--assignee", "-a":
-			if i+1 < len(args) {
-				opts.Assignee = args[i+1]
-				i++
-			}
-		case "--description", "-d":
-			if i+1 < len(args) {
-				opts.Description = args[i+1]
-				i++
-			}
-		case "--json":
-			// handled after creation
-		default:
-			if title == "" {
-				title = args[i]
-			} else {
-				title += " " + args[i]
-			}
-		}
+	opts := issue.CreateOpts{
+		Type:        ca.Type,
+		Assignee:    ca.Assignee,
+		Description: ca.Description,
+	}
+	if ca.PrioritySet {
+		opts.Priority = ca.Priority
 	}
 
-	if title == "" {
-		return fmt.Errorf("title is required")
-	}
-
-	iss, err := store.Create(title, opts)
+	iss, err := store.Create(ca.Title, opts)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func cmdCreate(args []string, w io.Writer) error {
 		return fmt.Errorf("commit failed: %w", err)
 	}
 
-	if hasFlag(args, "--json") {
+	if ca.JSON {
 		fprintJSON(w, iss)
 	} else {
 		fmt.Fprintf(w, "created %s: %s\n", iss.ID, iss.Title)
