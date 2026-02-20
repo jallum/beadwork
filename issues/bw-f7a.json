@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T23:44:54Z",
+  "description": "Use the line wrapping utility to wrap description, comment text, and other long-form fields in bw show output. Match bd's wrapping behavior.",
+  "id": "bw-f7a",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Wrap long text in show output",
+  "type": "task",
+  "updated_at": "2026-02-20T23:44:54Z"
+}
