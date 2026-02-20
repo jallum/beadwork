@@ -7,7 +7,7 @@
   "id": "bw-2c74",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Repo schema versioning and migration system",
   "type": "task"
 }
