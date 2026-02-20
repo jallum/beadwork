@@ -10,20 +10,20 @@ import (
 const version = "0.5.3"
 
 func main() {
-	if len(os.Args) < 2 {
-		printUsage(PlainWriter(os.Stderr))
-		os.Exit(1)
-	}
-
-	cmd := os.Args[1]
-	args := os.Args[2:]
-
 	var w Writer
 	if term.IsTerminal(int(os.Stdout.Fd())) && os.Getenv("NO_COLOR") == "" {
 		w = ColorWriter(os.Stdout)
 	} else {
 		w = PlainWriter(os.Stdout)
 	}
+
+	if len(os.Args) < 2 {
+		printUsage(w)
+		os.Exit(1)
+	}
+
+	cmd := os.Args[1]
+	args := os.Args[2:]
 
 	switch cmd {
 	case "--version", "-v":
@@ -37,7 +37,7 @@ func main() {
 	c, ok := commandMap[cmd]
 	if !ok {
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", cmd)
-		printUsage(PlainWriter(os.Stderr))
+		printUsage(w)
 		os.Exit(1)
 	}
 
