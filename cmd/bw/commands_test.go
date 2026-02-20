@@ -444,6 +444,69 @@ func TestCmdUpdateJSON(t *testing.T) {
 	}
 }
 
+func TestCmdUpdateDescription(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Desc update", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdUpdate([]string{iss.ID, "--description", "new description"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdUpdate: %v", err)
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.Description != "new description" {
+		t.Errorf("description = %q, want %q", got.Description, "new description")
+	}
+}
+
+func TestCmdUpdateStatus(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Status update", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdUpdate([]string{iss.ID, "--status", "in_progress"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdUpdate: %v", err)
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.Status != "in_progress" {
+		t.Errorf("status = %q, want in_progress", got.Status)
+	}
+}
+
+func TestCmdUpdateInvalidPriority(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Bad priority", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdUpdate([]string{iss.ID, "--priority", "abc"}, &buf)
+	if err == nil {
+		t.Error("expected error for non-numeric priority")
+	}
+}
+
+func TestCmdUpdateNotFound(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdUpdate([]string{"nonexistent", "--title", "x"}, &buf)
+	if err == nil {
+		t.Error("expected error for nonexistent issue")
+	}
+}
+
 func TestCmdUpdateMissingArg(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
