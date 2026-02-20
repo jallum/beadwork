@@ -3,7 +3,9 @@
   "blocked_by": [
     "bw-b9aa"
   ],
-  "blocks": [],
+  "blocks": [
+    "bw-45d2"
+  ],
   "created": "2026-02-20T04:50:49Z",
   "description": "",
   "id": "bw-c60e",
