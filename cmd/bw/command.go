@@ -197,6 +197,23 @@ var commands = []Command{
 		Run: cmdReopen,
 	},
 	{
+		Name:        "delete",
+		Summary:     "Delete an issue",
+		Description: "Permanently delete an issue and clean up references.\nWithout --force, shows a preview of what would be affected.",
+		Positionals: []Positional{
+			{Name: "<id>", Required: true, Help: "Issue ID"},
+		},
+		Flags: []Flag{
+			{Long: "--force", Help: "Actually delete (default: preview only)"},
+			{Long: "--json", Help: "Output as JSON"},
+		},
+		Examples: []Example{
+			{Cmd: "bw delete bw-a3f8", Help: "Preview deletion"},
+			{Cmd: "bw delete bw-a3f8 --force", Help: "Delete permanently"},
+		},
+		Run: cmdDelete,
+	},
+	{
 		Name:        "label",
 		Summary:     "Add/remove labels",
 		Description: "Add or remove labels on an issue. Prefix with + to add, - to remove.\nBare names (without prefix) are added.",
@@ -406,7 +423,7 @@ var commandGroups = []struct {
 	name string
 	cmds []string
 }{
-	{"Working With Issues", []string{"create", "show", "list", "update", "close", "reopen", "label", "defer", "undefer"}},
+	{"Working With Issues", []string{"create", "show", "list", "update", "close", "reopen", "delete", "label", "defer", "undefer"}},
 	{"Finding Work", []string{"ready", "blocked"}},
 	{"Dependencies", []string{"dep", "graph"}},
 	{"Sync & Data", []string{"sync", "export", "import"}},

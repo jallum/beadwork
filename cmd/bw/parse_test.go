@@ -936,3 +936,57 @@ func TestParseInitArgsUnknownFlag(t *testing.T) {
 		t.Error("expected error for unknown flag --verbose")
 	}
 }
+
+// --- parseDeleteArgs ---
+
+func TestParseDeleteArgs(t *testing.T) {
+	a, err := parseDeleteArgs([]string{"bw-1234"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.ID != "bw-1234" {
+		t.Errorf("ID = %q, want bw-1234", a.ID)
+	}
+	if a.Force {
+		t.Error("expected Force = false")
+	}
+	if a.JSON {
+		t.Error("expected JSON = false")
+	}
+}
+
+func TestParseDeleteArgsForce(t *testing.T) {
+	a, err := parseDeleteArgs([]string{"bw-1234", "--force"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.ID != "bw-1234" {
+		t.Errorf("ID = %q, want bw-1234", a.ID)
+	}
+	if !a.Force {
+		t.Error("expected Force = true")
+	}
+}
+
+func TestParseDeleteArgsJSON(t *testing.T) {
+	a, err := parseDeleteArgs([]string{"bw-1234", "--force", "--json"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !a.Force {
+		t.Error("expected Force = true")
+	}
+	if !a.JSON {
+		t.Error("expected JSON = true")
+	}
+}
+
+func TestParseDeleteArgsMissingID(t *testing.T) {
+	_, err := parseDeleteArgs([]string{})
+	if err == nil {
+		t.Error("expected error for missing id")
+	}
+	if err != nil && !strings.Contains(err.Error(), "usage") {
+		t.Errorf("error = %q, want usage message", err.Error())
+	}
+}

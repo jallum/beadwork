@@ -43,6 +43,8 @@ func replayOne(r *repo.Repo, store *issue.Store, raw string) error {
 		return replayUnlink(r, store, parts[1:], raw)
 	case "label":
 		return replayLabel(r, store, parts[1:], raw)
+	case "delete":
+		return replayDelete(r, store, parts[1:], raw)
 	case "config":
 		return replayConfig(r, parts[1:], raw)
 	case "init":
@@ -181,6 +183,17 @@ func replayLabel(r *repo.Repo, store *issue.Store, parts []string, raw string) e
 		}
 	}
 	_, err := store.Label(id, add, remove)
+	if err != nil {
+		return err
+	}
+	return r.Commit(raw)
+}
+
+func replayDelete(r *repo.Repo, store *issue.Store, parts []string, raw string) error {
+	if len(parts) < 1 {
+		return fmt.Errorf("malformed delete intent")
+	}
+	_, err := store.Delete(parts[0])
 	if err != nil {
 		return err
 	}
