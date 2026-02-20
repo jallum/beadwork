@@ -11,7 +11,7 @@
   "id": "bw-45d2",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Refactor Repo to use go-git instead of exec.Command",
   "type": "task"
 }
