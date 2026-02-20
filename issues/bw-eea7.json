@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T07:02:43Z",
+  "description": "bw silently accepts out-of-range priorities (-1, 0, 6, etc.). Priority 0 is treated as unset (becomes default 3). Should reject values outside 1-5 with a clear error.",
+  "id": "bw-eea7",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Validate priority range",
+  "type": "bug"
+}
