@@ -988,6 +988,19 @@ func TestReadCorruptJSON(t *testing.T) {
 	}
 }
 
+func TestGraphNonexistentRootReturnsError(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("Exists", issue.CreateOpts{})
+	env.CommitIntent("create")
+
+	_, err := env.Store.Graph("nonexistent")
+	if err == nil {
+		t.Error("expected error for nonexistent root ID")
+	}
+}
+
 func TestGraphNoRelationshipsShowsOpen(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()

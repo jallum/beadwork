@@ -880,15 +880,39 @@ func TestCmdGraphMultipleRoots(t *testing.T) {
 	}
 }
 
+func TestCmdGraphAllShowsClosedIssues(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Closed A", issue.CreateOpts{})
+	b, _ := env.Store.Create("Closed B", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Close(a.ID)
+	env.Store.Close(b.ID)
+	env.Repo.Commit("create, link, and close")
+
+	var buf bytes.Buffer
+	err := cmdGraph([]string{"--all"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdGraph --all: %v", err)
+	}
+	out := buf.String()
+	if strings.Contains(out, "no issues") {
+		t.Error("--all should show closed issues, got 'no issues'")
+	}
+	if !strings.Contains(out, "Closed A") || !strings.Contains(out, "Closed B") {
+		t.Errorf("output missing closed issues: %q", out)
+	}
+}
+
 func TestCmdGraphNotFound(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
 	err := cmdGraph([]string{"nonexistent"}, &buf)
-	// Graph with a root ID that doesn't exist — should return empty graph
-	if err != nil {
-		t.Fatalf("cmdGraph: %v", err)
+	if err == nil {
+		t.Error("expected error for nonexistent root ID")
 	}
 }
 

@@ -34,17 +34,6 @@ func cmdGraph(args []string, w io.Writer) error {
 		return err
 	}
 
-	// For --all without a root, filter to non-closed only
-	if showAll && rootID == "" {
-		var filtered []issue.GraphNode
-		for _, n := range nodes {
-			if n.Status != "closed" {
-				filtered = append(filtered, n)
-			}
-		}
-		nodes = filtered
-	}
-
 	if jsonOut {
 		fprintJSON(w, nodes)
 		return nil

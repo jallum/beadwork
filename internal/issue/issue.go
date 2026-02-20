@@ -439,7 +439,11 @@ type GraphNode struct {
 
 func (s *Store) Graph(rootID string) ([]GraphNode, error) {
 	if rootID != "" {
-		rootID, _ = s.resolveID(rootID)
+		var err error
+		rootID, err = s.resolveID(rootID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Read all block relationships from the filesystem
