@@ -12,7 +12,7 @@
   "id": "bw-fdc5",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Update integration and CLI tests for dep",
   "type": "task"
 }
