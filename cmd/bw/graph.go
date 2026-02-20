@@ -13,17 +13,10 @@ func cmdGraph(args []string, w io.Writer) error {
 		return err
 	}
 
-	showAll := hasFlag(args, "--all")
-	jsonOut := hasFlag(args, "--json")
+	a := ParseArgs(args)
 
-	rootID := ""
-	for _, arg := range args {
-		if arg == "--json" || arg == "--all" {
-			continue
-		}
-		rootID = arg
-		break
-	}
+	showAll := a.Bool("--all")
+	rootID := a.PosFirst()
 
 	if rootID == "" && !showAll {
 		return fmt.Errorf("issue ID required (or use --all for all open issues)")
@@ -34,7 +27,7 @@ func cmdGraph(args []string, w io.Writer) error {
 		return err
 	}
 
-	if jsonOut {
+	if a.JSON() {
 		fprintJSON(w, nodes)
 		return nil
 	}
