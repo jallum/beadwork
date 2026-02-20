@@ -70,8 +70,9 @@ func expandAliases(raw []string, flags []Flag) []string {
 // commands defines all CLI subcommands.
 var commands = []Command{
 	{
-		Name:    "create",
-		Summary: "Create an issue",
+		Name:        "create",
+		Summary:     "Create an issue",
+		Description: "Create a new issue. Multiple words are joined into the title.",
 		Positionals: []Positional{
 			{Name: "<title>", Required: true, Help: "Issue title (multiple words joined)"},
 		},
@@ -82,22 +83,31 @@ var commands = []Command{
 			{Long: "--description", Short: "-d", Value: "TEXT", Help: "Description"},
 			{Long: "--json", Help: "Output as JSON"},
 		},
+		Examples: []Example{
+			{Cmd: `bw create "Fix login bug" --priority 1 --type bug`},
+			{Cmd: `bw create "New feature" -a alice`},
+		},
 		Run: cmdCreate,
 	},
 	{
-		Name:    "show",
-		Summary: "Show issue details",
+		Name:        "show",
+		Summary:     "Show issue details",
+		Description: "Display full details for an issue including status, priority, labels, and dependencies.",
 		Positionals: []Positional{
 			{Name: "<id>", Required: true, Help: "Issue ID"},
 		},
 		Flags: []Flag{
 			{Long: "--json", Help: "Output as JSON"},
 		},
+		Examples: []Example{
+			{Cmd: "bw show bw-a3f8"},
+		},
 		Run: cmdShow,
 	},
 	{
-		Name:    "list",
-		Summary: "List issues",
+		Name:        "list",
+		Summary:     "List issues",
+		Description: "List issues matching filters. Defaults to open issues, limit 10.",
 		Flags: []Flag{
 			{Long: "--status", Short: "-s", Value: "STATUS", Help: "Filter by status"},
 			{Long: "--assignee", Short: "-a", Value: "WHO", Help: "Filter by assignee"},
@@ -108,11 +118,17 @@ var commands = []Command{
 			{Long: "--all", Help: "Show all issues (no status/limit filter)"},
 			{Long: "--json", Help: "Output as JSON"},
 		},
+		Examples: []Example{
+			{Cmd: "bw list --assignee alice"},
+			{Cmd: "bw list --all --type bug"},
+			{Cmd: "bw list --status closed --limit 5"},
+		},
 		Run: cmdList,
 	},
 	{
-		Name:    "update",
-		Summary: "Update an issue",
+		Name:        "update",
+		Summary:     "Update an issue",
+		Description: "Update fields on an existing issue. Only specified fields change.",
 		Positionals: []Positional{
 			{Name: "<id>", Required: true, Help: "Issue ID"},
 		},
@@ -125,17 +141,26 @@ var commands = []Command{
 			{Long: "--status", Short: "-s", Value: "STATUS", Help: "New status"},
 			{Long: "--json", Help: "Output as JSON"},
 		},
+		Examples: []Example{
+			{Cmd: "bw update bw-a3f8 --priority 1 --assignee bob"},
+			{Cmd: "bw update bw-a3f8 --status in_progress"},
+		},
 		Run: cmdUpdate,
 	},
 	{
-		Name:    "close",
-		Summary: "Close an issue",
+		Name:        "close",
+		Summary:     "Close an issue",
+		Description: "Close an issue. Optionally provide a reason.",
 		Positionals: []Positional{
 			{Name: "<id>", Required: true, Help: "Issue ID"},
 		},
 		Flags: []Flag{
 			{Long: "--reason", Value: "REASON", Help: "Closing reason"},
 			{Long: "--json", Help: "Output as JSON"},
+		},
+		Examples: []Example{
+			{Cmd: "bw close bw-a3f8"},
+			{Cmd: "bw close bw-a3f8 --reason duplicate"},
 		},
 		Run: cmdClose,
 	},
@@ -151,8 +176,9 @@ var commands = []Command{
 		Run: cmdReopen,
 	},
 	{
-		Name:    "label",
-		Summary: "Add/remove labels",
+		Name:        "label",
+		Summary:     "Add/remove labels",
+		Description: "Add or remove labels on an issue. Prefix with + to add, - to remove.\nBare names (without prefix) are added.",
 		Positionals: []Positional{
 			{Name: "<id>", Required: true, Help: "Issue ID"},
 			{Name: "+label [-label]...", Required: true, Help: "Labels to add (+) or remove (-)"},
@@ -160,21 +186,33 @@ var commands = []Command{
 		Flags: []Flag{
 			{Long: "--json", Help: "Output as JSON"},
 		},
+		Examples: []Example{
+			{Cmd: "bw label bw-a3f8 +bug +urgent"},
+			{Cmd: "bw label bw-a3f8 -wontfix"},
+		},
 		Run: cmdLabel,
 	},
 	{
-		Name:    "link",
-		Summary: "Create dependency link",
+		Name:        "link",
+		Summary:     "Create dependency link",
+		Description: "Create a dependency: the first issue blocks the second.",
 		Positionals: []Positional{
 			{Name: "<id> blocks <id>", Required: true, Help: "Blocker and blocked issue IDs"},
+		},
+		Examples: []Example{
+			{Cmd: "bw link bw-1234 blocks bw-5678"},
 		},
 		Run: cmdLink,
 	},
 	{
-		Name:    "unlink",
-		Summary: "Remove dependency link",
+		Name:        "unlink",
+		Summary:     "Remove dependency link",
+		Description: "Remove a previously created dependency link.",
 		Positionals: []Positional{
 			{Name: "<id> blocks <id>", Required: true, Help: "Blocker and blocked issue IDs"},
+		},
+		Examples: []Example{
+			{Cmd: "bw unlink bw-1234 blocks bw-5678"},
 		},
 		Run: cmdUnlink,
 	},
@@ -187,8 +225,9 @@ var commands = []Command{
 		Run: cmdReady,
 	},
 	{
-		Name:    "graph",
-		Summary: "Dependency graph",
+		Name:        "graph",
+		Summary:     "Dependency graph",
+		Description: "Display the dependency graph for an issue or all open issues.\nWith --all, shows all open issues grouped by connected component.",
 		Positionals: []Positional{
 			{Name: "<id>", Help: "Root issue ID (or use --all)"},
 		},
@@ -196,55 +235,85 @@ var commands = []Command{
 			{Long: "--all", Help: "Show all open issues"},
 			{Long: "--json", Help: "Output as JSON"},
 		},
+		Examples: []Example{
+			{Cmd: "bw graph bw-a3f8"},
+			{Cmd: "bw graph --all"},
+		},
 		Run: cmdGraph,
 	},
 	{
-		Name:    "sync",
-		Summary: "Fetch, rebase/replay, push",
-		Run:     cmdSync,
+		Name:        "sync",
+		Summary:     "Fetch, rebase/replay, push",
+		Description: "Fetch from remote, rebase local commits, and push.\nUses intent replay to resolve conflicts automatically.",
+		Run:         cmdSync,
 	},
 	{
-		Name:    "export",
-		Summary: "Export issues as JSONL",
+		Name:        "export",
+		Summary:     "Export issues as JSONL",
+		Description: "Export issues as JSONL (one JSON object per line).",
 		Flags: []Flag{
 			{Long: "--status", Short: "-s", Value: "STATUS", Help: "Filter by status"},
+		},
+		Examples: []Example{
+			{Cmd: "bw export --status open"},
 		},
 		Run: cmdExport,
 	},
 	{
-		Name:    "import",
-		Summary: "Import issues from JSONL",
+		Name:        "import",
+		Summary:     "Import issues from JSONL",
+		Description: "Import issues from a JSONL file. Detects ID collisions and wires dependencies.",
 		Positionals: []Positional{
 			{Name: "<file>", Required: true, Help: "JSONL file path"},
 		},
 		Flags: []Flag{
 			{Long: "--dry-run", Help: "Preview without importing"},
 		},
+		Examples: []Example{
+			{Cmd: "bw import issues.jsonl"},
+			{Cmd: "bw import issues.jsonl --dry-run"},
+		},
 		Run: cmdImport,
 	},
 	{
-		Name:    "init",
-		Summary: "Initialize beadwork",
+		Name:        "init",
+		Summary:     "Initialize beadwork",
+		Description: "Initialize beadwork in the current git repository.\nCreates an orphan branch for issue storage.",
 		Flags: []Flag{
 			{Long: "--prefix", Value: "PREFIX", Help: "Issue ID prefix"},
 			{Long: "--force", Help: "Force reinitialize"},
 		},
+		Examples: []Example{
+			{Cmd: "bw init --prefix myproj"},
+			{Cmd: "bw init --force"},
+		},
 		Run: cmdInit,
 	},
 	{
-		Name:    "config",
-		Summary: "View/set config options",
+		Name:        "config",
+		Summary:     "View/set config options",
+		Description: "View or modify configuration. Subcommands: get, set, list.",
 		Positionals: []Positional{
 			{Name: "get|set|list", Required: true, Help: "Subcommand"},
+		},
+		Examples: []Example{
+			{Cmd: "bw config set default.priority 2"},
+			{Cmd: "bw config get default.priority"},
+			{Cmd: "bw config list"},
 		},
 		Run: cmdConfig,
 	},
 	{
-		Name:    "upgrade",
-		Summary: "Check for / install updates",
+		Name:        "upgrade",
+		Summary:     "Check for / install updates",
+		Description: "Check for and install newer versions from GitHub releases.",
 		Flags: []Flag{
 			{Long: "--check", Help: "Check only, don't install"},
 			{Long: "--yes", Help: "Skip confirmation prompt"},
+		},
+		Examples: []Example{
+			{Cmd: "bw upgrade"},
+			{Cmd: "bw upgrade --check"},
 		},
 		Run: cmdUpgrade,
 	},

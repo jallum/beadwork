@@ -215,6 +215,24 @@ func TestPrintCommandHelpNoExamples(t *testing.T) {
 	}
 }
 
+func TestCommandsWithExamplesHaveDescriptions(t *testing.T) {
+	for _, cmd := range commands {
+		if len(cmd.Examples) > 0 && cmd.Description == "" {
+			t.Errorf("command %q has examples but no description", cmd.Name)
+		}
+	}
+}
+
+func TestExamplesStartWithBw(t *testing.T) {
+	for _, cmd := range commands {
+		for _, ex := range cmd.Examples {
+			if !strings.HasPrefix(ex.Cmd, "bw ") {
+				t.Errorf("command %q example %q does not start with 'bw '", cmd.Name, ex.Cmd)
+			}
+		}
+	}
+}
+
 func TestExpandAliases(t *testing.T) {
 	flags := []Flag{
 		{Long: "--priority", Short: "-p", Value: "N"},
