@@ -7,7 +7,7 @@
   "id": "bw-e6f3",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Improve test coverage for cmd/bw/label.go",
   "type": "task"
 }
