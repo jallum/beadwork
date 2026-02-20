@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.2 — 2026-02-20
+
+- Issue IDs now use base36 (`0-9a-z`) with adaptive length starting at 3 characters, growing as needed to avoid collisions
+- `id.retries` config option to tune retries per length (default 10)
+- Increased test coverage for defer, undefer, upgrade, and sync commands
+
 ## 0.5.1 — 2026-02-20
 
 - `bw show` parity: multi-ID support, `--short` flag, `view` alias, rich dependency display with titles and priority
