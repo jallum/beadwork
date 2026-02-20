@@ -397,6 +397,7 @@ func mockUpgrade(t *testing.T) {
 	origFetch := upgradeFetchRelease
 	origDownload := upgradeDownloadAsset
 	origResolve := upgradeResolveBinary
+	origChangelog := upgradeFetchChangelog
 	origStdin := upgradeStdin
 	origVersion := upgradeCurrentVersion
 	origVerify := upgradeVerify
@@ -404,10 +405,15 @@ func mockUpgrade(t *testing.T) {
 		upgradeFetchRelease = origFetch
 		upgradeDownloadAsset = origDownload
 		upgradeResolveBinary = origResolve
+		upgradeFetchChangelog = origChangelog
 		upgradeStdin = origStdin
 		upgradeCurrentVersion = origVersion
 		upgradeVerify = origVerify
 	})
+	// Default: changelog fetch fails silently (most tests don't care)
+	upgradeFetchChangelog = func(version string) (string, error) {
+		return "", fmt.Errorf("mock: no changelog")
+	}
 }
 
 // makeTarGz builds a tar.gz archive containing a "bw" binary with the given content.
@@ -522,7 +528,7 @@ func TestCmdUpgradeYesFlag(t *testing.T) {
 	upgradeResolveBinary = func() (string, bool, string, error) {
 		return bin, false, "", nil
 	}
-	upgradeDownloadAsset = func(url string) ([]byte, error) {
+	upgradeDownloadAsset = func(url string, size int64, w Writer) ([]byte, error) {
 		return makeTarGz(t, []byte("new-binary")), nil
 	}
 	upgradeVerify = func(execPath string) (string, error) {
@@ -559,7 +565,7 @@ func TestCmdUpgradeFullFlowConfirmYes(t *testing.T) {
 	upgradeResolveBinary = func() (string, bool, string, error) {
 		return bin, false, "", nil
 	}
-	upgradeDownloadAsset = func(url string) ([]byte, error) {
+	upgradeDownloadAsset = func(url string, size int64, w Writer) ([]byte, error) {
 		return makeTarGz(t, []byte("new-binary")), nil
 	}
 	upgradeVerify = func(execPath string) (string, error) {
@@ -634,7 +640,7 @@ func TestCmdUpgradeDownloadError(t *testing.T) {
 	upgradeResolveBinary = func() (string, bool, string, error) {
 		return bin, false, "", nil
 	}
-	upgradeDownloadAsset = func(url string) ([]byte, error) {
+	upgradeDownloadAsset = func(url string, size int64, w Writer) ([]byte, error) {
 		return nil, fmt.Errorf("download timeout")
 	}
 	upgradeStdin = strings.NewReader("y\n")
@@ -679,5 +685,256 @@ func TestFindAssetNaming(t *testing.T) {
 	}
 	if asset.URL != "https://x" {
 		t.Errorf("wrong asset URL: %s", asset.URL)
+	}
+}
+
+// --- formatBytes tests ---
+
+func TestFormatBytes(t *testing.T) {
+	tests := []struct {
+		n    int64
+		want string
+	}{
+		{0, "0 B"},
+		{512, "512 B"},
+		{1023, "1023 B"},
+		{1024, "1.0 KB"},
+		{1536, "1.5 KB"},
+		{10240, "10.0 KB"},
+		{1048576, "1.0 MB"},
+		{8388608, "8.0 MB"},
+		{1572864, "1.5 MB"},
+	}
+	for _, tt := range tests {
+		got := formatBytes(tt.n)
+		if got != tt.want {
+			t.Errorf("formatBytes(%d) = %q, want %q", tt.n, got, tt.want)
+		}
+	}
+}
+
+// --- parseChangelog tests ---
+
+func TestParseChangelog(t *testing.T) {
+	content := `# Changelog
+
+## 0.6.0 — 2026-02-21
+
+- Feature A
+- Feature B
+
+## 0.5.3 — 2026-02-20
+
+- Feature C
+
+## 0.5.2 — 2026-02-20
+
+- Feature D
+
+## 0.5.0 — 2026-02-20
+
+- Feature E
+`
+
+	tests := []struct {
+		name     string
+		from, to string
+		want     []string // substrings that must appear
+		dontWant []string // substrings that must not appear
+	}{
+		{
+			name: "single version jump",
+			from: "0.5.3", to: "0.6.0",
+			want:     []string{"0.6.0", "Feature A", "Feature B"},
+			dontWant: []string{"0.5.3", "Feature C", "Feature D"},
+		},
+		{
+			name: "multi-version span",
+			from: "0.5.0", to: "0.6.0",
+			want:     []string{"0.6.0", "0.5.3", "0.5.2", "Feature A", "Feature C", "Feature D"},
+			dontWant: []string{"Feature E"},
+		},
+		{
+			name: "no matching versions",
+			from: "0.6.0", to: "0.7.0",
+			want:     nil,
+			dontWant: []string{"0.6.0", "Feature A"},
+		},
+		{
+			name: "same version returns nothing",
+			from: "0.5.3", to: "0.5.3",
+			want:     nil,
+			dontWant: []string{"Feature"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := parseChangelog(content, tt.from, tt.to)
+			for _, s := range tt.want {
+				if !strings.Contains(got, s) {
+					t.Errorf("parseChangelog(%q, %q) missing %q in:\n%s", tt.from, tt.to, s, got)
+				}
+			}
+			for _, s := range tt.dontWant {
+				if strings.Contains(got, s) {
+					t.Errorf("parseChangelog(%q, %q) should not contain %q in:\n%s", tt.from, tt.to, s, got)
+				}
+			}
+		})
+	}
+}
+
+func TestParseChangelogEmpty(t *testing.T) {
+	got := parseChangelog("", "0.1.0", "0.2.0")
+	if got != "" {
+		t.Errorf("expected empty string for empty content, got %q", got)
+	}
+}
+
+// --- changelog integration tests ---
+
+func TestCmdUpgradeCheckShowsChangelog(t *testing.T) {
+	mockUpgrade(t)
+	upgradeCurrentVersion = func() string { return "0.5.0" }
+	upgradeFetchRelease = func() (*ghRelease, error) {
+		return mockRelease("0.6.0"), nil
+	}
+	upgradeResolveBinary = func() (string, bool, string, error) {
+		return "/usr/local/bin/bw", false, "", nil
+	}
+	upgradeFetchChangelog = func(version string) (string, error) {
+		return "## 0.6.0 — 2026-02-21\n\n- New feature\n\n## 0.5.0 — 2026-02-20\n\n- Old\n", nil
+	}
+
+	var buf bytes.Buffer
+	err := cmdUpgrade([]string{"--check"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdUpgrade --check: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "New feature") {
+		t.Errorf("expected changelog entry in output, got: %q", out)
+	}
+	if strings.Contains(out, "Old") {
+		t.Errorf("should not include entries at/before current version, got: %q", out)
+	}
+}
+
+func TestCmdUpgradeChangelogFailureNonFatal(t *testing.T) {
+	mockUpgrade(t)
+	dir := t.TempDir()
+	bin := filepath.Join(dir, "bw")
+	os.WriteFile(bin, []byte("old"), 0755)
+
+	upgradeCurrentVersion = func() string { return "1.0.0" }
+	upgradeFetchRelease = func() (*ghRelease, error) {
+		return mockRelease("2.0.0"), nil
+	}
+	upgradeResolveBinary = func() (string, bool, string, error) {
+		return bin, false, "", nil
+	}
+	upgradeFetchChangelog = func(version string) (string, error) {
+		return "", fmt.Errorf("404 not found")
+	}
+	upgradeDownloadAsset = func(url string, size int64, w Writer) ([]byte, error) {
+		return makeTarGz(t, []byte("new-binary")), nil
+	}
+	upgradeVerify = func(execPath string) (string, error) {
+		return "bw 2.0.0", nil
+	}
+	upgradeStdin = strings.NewReader("y\n")
+
+	var buf bytes.Buffer
+	err := cmdUpgrade([]string{}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("upgrade should succeed despite changelog failure: %v", err)
+	}
+	if !strings.Contains(buf.String(), "bw 2.0.0") {
+		t.Errorf("expected verification output, got: %q", buf.String())
+	}
+}
+
+// --- narration tests ---
+
+func TestCmdUpgradeNarratesSteps(t *testing.T) {
+	mockUpgrade(t)
+	dir := t.TempDir()
+	bin := filepath.Join(dir, "bw")
+	os.WriteFile(bin, []byte("old"), 0755)
+
+	upgradeCurrentVersion = func() string { return "1.0.0" }
+	upgradeFetchRelease = func() (*ghRelease, error) {
+		return mockRelease("2.0.0"), nil
+	}
+	upgradeResolveBinary = func() (string, bool, string, error) {
+		return bin, false, "", nil
+	}
+	upgradeFetchChangelog = func(version string) (string, error) {
+		return "", fmt.Errorf("skip")
+	}
+	upgradeDownloadAsset = func(url string, size int64, w Writer) ([]byte, error) {
+		return makeTarGz(t, []byte("new-binary")), nil
+	}
+	upgradeVerify = func(execPath string) (string, error) {
+		return "bw 2.0.0", nil
+	}
+	upgradeStdin = strings.NewReader("y\n")
+
+	var buf bytes.Buffer
+	err := cmdUpgrade([]string{}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdUpgrade: %v", err)
+	}
+	out := buf.String()
+
+	// Should narrate extraction and installation steps
+	if !strings.Contains(out, "extracting") {
+		t.Errorf("expected extraction narration, got: %q", out)
+	}
+	if !strings.Contains(out, "installing") && !strings.Contains(out, "replacing") {
+		t.Errorf("expected install narration, got: %q", out)
+	}
+	if !strings.Contains(out, "verifying") {
+		t.Errorf("expected verify narration, got: %q", out)
+	}
+}
+
+func TestCmdUpgradeSymlinkNarration(t *testing.T) {
+	mockUpgrade(t)
+	dir := t.TempDir()
+
+	oldBin := filepath.Join(dir, "bw-1.0.0")
+	os.WriteFile(oldBin, []byte("old"), 0755)
+	link := filepath.Join(dir, "bw")
+	os.Symlink(oldBin, link)
+
+	upgradeCurrentVersion = func() string { return "1.0.0" }
+	upgradeFetchRelease = func() (*ghRelease, error) {
+		return mockRelease("2.0.0"), nil
+	}
+	upgradeResolveBinary = func() (string, bool, string, error) {
+		return link, true, oldBin, nil
+	}
+	upgradeFetchChangelog = func(version string) (string, error) {
+		return "", fmt.Errorf("skip")
+	}
+	upgradeDownloadAsset = func(url string, size int64, w Writer) ([]byte, error) {
+		return makeTarGz(t, []byte("new-binary")), nil
+	}
+	upgradeVerify = func(execPath string) (string, error) {
+		return "bw 2.0.0", nil
+	}
+	upgradeStdin = strings.NewReader("y\n")
+
+	var buf bytes.Buffer
+	err := cmdUpgrade([]string{}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdUpgrade: %v", err)
+	}
+	out := buf.String()
+
+	// Symlink install should mention "symlink"
+	if !strings.Contains(out, "symlink") {
+		t.Errorf("expected symlink narration, got: %q", out)
 	}
 }
