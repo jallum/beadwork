@@ -195,7 +195,7 @@ func fprintIssue(w Writer, iss *issue.Issue) {
 	ps := PriorityStyle(iss.Priority)
 	fmt.Fprintf(w, "%s %s%s · %s   [%s %s · %s]\n",
 		issue.StatusIcon(iss.Status),
-		iss.ID,
+		w.Style(iss.ID, Cyan),
 		typeTag,
 		iss.Title,
 		w.Style("●", ps),

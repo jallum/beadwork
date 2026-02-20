@@ -57,7 +57,7 @@ func cmdShow(args []string, w Writer) error {
 			ps := PriorityStyle(iss.Priority)
 			fmt.Fprintf(w, "%s %s [%s %s] [%s] %s\n",
 				issue.StatusIcon(iss.Status),
-				iss.ID,
+				w.Style(iss.ID, Cyan),
 				w.Style("●", ps),
 				w.Style(fmt.Sprintf("P%d", iss.Priority), ps),
 				iss.Type,
