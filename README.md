@@ -70,7 +70,7 @@ bw prime                       Print workflow context for agents
 
 ### Storage
 
-All data lives on a git orphan branch, checked out as a worktree inside `.git/beadwork/`. Nothing is visible in your working tree.
+All data lives on a git orphan branch (`beadwork`), manipulated directly in the git object database via [go-git](https://github.com/go-git/go-git). Nothing touches your working tree or index.
 
 Each issue is a JSON file. Structural relationships (status, labels, dependencies) are encoded as zero-byte marker files in a directory hierarchy:
 
@@ -144,7 +144,7 @@ Use `--status open` on export to migrate only open issues, or `--dry-run` on imp
 ## Requirements
 
 - Go 1.24+
-- Git 2.5+ (worktree support)
+- Git
 
 ## License
 
