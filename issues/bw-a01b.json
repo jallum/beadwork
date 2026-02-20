@@ -7,7 +7,7 @@
   "id": "bw-a01b",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Improve test coverage for cmd/bw/helpers.go",
   "type": "task"
 }
