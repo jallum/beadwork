@@ -38,7 +38,10 @@ type UpgradeArgs struct {
 }
 
 func parseUpgradeArgs(raw []string) (UpgradeArgs, error) {
-	a := ParseArgs(raw)
+	a, err := ParseArgs(raw, nil, []string{"--check", "--yes"})
+	if err != nil {
+		return UpgradeArgs{}, err
+	}
 	return UpgradeArgs{
 		Check: a.Bool("--check"),
 		Yes:   a.Bool("--yes"),

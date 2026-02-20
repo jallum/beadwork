@@ -13,7 +13,10 @@ type ReadyArgs struct {
 }
 
 func parseReadyArgs(raw []string) (ReadyArgs, error) {
-	a := ParseArgs(raw)
+	a, err := ParseArgs(raw, nil, []string{"--json"})
+	if err != nil {
+		return ReadyArgs{}, err
+	}
 	return ReadyArgs{JSON: a.JSON()}, nil
 }
 

@@ -11,7 +11,10 @@ type ShowArgs struct {
 }
 
 func parseShowArgs(raw []string) (ShowArgs, error) {
-	a := ParseArgs(raw)
+	a, err := ParseArgs(raw, nil, []string{"--json"})
+	if err != nil {
+		return ShowArgs{}, err
+	}
 	id := a.PosFirst()
 	if id == "" {
 		return ShowArgs{}, fmt.Errorf("usage: bw show <id>")

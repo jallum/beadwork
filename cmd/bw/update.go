@@ -31,7 +31,13 @@ func parseUpdateArgs(raw []string) (UpdateArgs, error) {
 	if len(raw) == 0 {
 		return UpdateArgs{}, fmt.Errorf("usage: bw update <id> [flags]")
 	}
-	a := ParseArgs(raw[1:], "--title", "--description", "--priority", "--assignee", "--type", "--status", "--defer")
+	a, err := ParseArgs(raw[1:],
+		[]string{"--title", "--description", "--priority", "--assignee", "--type", "--status", "--defer"},
+		[]string{"--json"},
+	)
+	if err != nil {
+		return UpdateArgs{}, err
+	}
 	ua := UpdateArgs{ID: raw[0], JSON: a.JSON()}
 
 	if a.Has("--title") {

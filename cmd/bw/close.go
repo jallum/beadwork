@@ -15,7 +15,10 @@ func parseCloseArgs(raw []string) (CloseArgs, error) {
 	if len(raw) == 0 {
 		return CloseArgs{}, fmt.Errorf("usage: bw close <id> [--reason <reason>]")
 	}
-	a := ParseArgs(raw[1:], "--reason")
+	a, err := ParseArgs(raw[1:], []string{"--reason"}, []string{"--json"})
+	if err != nil {
+		return CloseArgs{}, err
+	}
 	return CloseArgs{
 		ID:     raw[0],
 		Reason: a.String("--reason"),
@@ -61,7 +64,10 @@ type ReopenArgs struct {
 }
 
 func parseReopenArgs(raw []string) (ReopenArgs, error) {
-	a := ParseArgs(raw)
+	a, err := ParseArgs(raw, nil, []string{"--json"})
+	if err != nil {
+		return ReopenArgs{}, err
+	}
 	id := a.PosFirst()
 	if id == "" {
 		return ReopenArgs{}, fmt.Errorf("usage: bw reopen <id>")

@@ -1234,7 +1234,10 @@ func TestCmdInitForce(t *testing.T) {
 // --- Helpers ---
 
 func TestParseArgsBooleans(t *testing.T) {
-	a := ParseArgs([]string{"--json", "--all", "positional"})
+	a, err := ParseArgs([]string{"--json", "--all", "positional"}, nil, []string{"--json", "--all"})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !a.Bool("--json") {
 		t.Error("expected --json to be true")
 	}
@@ -1250,7 +1253,10 @@ func TestParseArgsBooleans(t *testing.T) {
 }
 
 func TestParseArgsValueFlags(t *testing.T) {
-	a := ParseArgs([]string{"--status", "open", "--priority", "1"}, "--status", "--priority")
+	a, err := ParseArgs([]string{"--status", "open", "--priority", "1"}, []string{"--status", "--priority"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if a.String("--status") != "open" {
 		t.Errorf("status = %q, want open", a.String("--status"))
 	}
@@ -1266,7 +1272,10 @@ func TestParseArgsValueFlags(t *testing.T) {
 }
 
 func TestParseArgsAliases(t *testing.T) {
-	a := ParseArgs([]string{"-p", "2", "-t", "bug", "-a", "alice"}, "--priority", "--type", "--assignee")
+	a, err := ParseArgs([]string{"-p", "2", "-t", "bug", "-a", "alice"}, []string{"--priority", "--type", "--assignee"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if a.Int("--priority") != 2 {
 		t.Errorf("priority = %d, want 2", a.Int("--priority"))
 	}
@@ -1279,7 +1288,10 @@ func TestParseArgsAliases(t *testing.T) {
 }
 
 func TestParseArgsPositionals(t *testing.T) {
-	a := ParseArgs([]string{"my", "title", "here", "--json"})
+	a, err := ParseArgs([]string{"my", "title", "here", "--json"}, nil, []string{"--json"})
+	if err != nil {
+		t.Fatal(err)
+	}
 	pos := a.Pos()
 	if len(pos) != 3 {
 		t.Fatalf("pos = %v, want 3 items", pos)
@@ -1293,7 +1305,10 @@ func TestParseArgsPositionals(t *testing.T) {
 }
 
 func TestParseArgsEmpty(t *testing.T) {
-	a := ParseArgs([]string{})
+	a, err := ParseArgs([]string{}, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if a.PosFirst() != "" {
 		t.Errorf("PosFirst() = %q, want empty", a.PosFirst())
 	}
@@ -1307,7 +1322,10 @@ func TestParseArgsEmpty(t *testing.T) {
 
 func TestParseArgsValueFlagAtEnd(t *testing.T) {
 	// Value flag with no following token should be silently ignored
-	a := ParseArgs([]string{"--status"}, "--status")
+	a, err := ParseArgs([]string{"--status"}, []string{"--status"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if a.Has("--status") {
 		t.Error("expected Has(--status) to be false when no value follows")
 	}
@@ -1317,7 +1335,10 @@ func TestParseArgsValueFlagAtEnd(t *testing.T) {
 }
 
 func TestParseArgsIntErr(t *testing.T) {
-	a := ParseArgs([]string{"--priority", "abc"}, "--priority")
+	a, parseErr := ParseArgs([]string{"--priority", "abc"}, []string{"--priority"}, nil)
+	if parseErr != nil {
+		t.Fatal(parseErr)
+	}
 	_, set, err := a.IntErr("--priority")
 	if !set {
 		t.Error("expected set to be true")
@@ -1333,7 +1354,10 @@ func TestParseArgsIntErr(t *testing.T) {
 	}
 
 	// Valid int
-	a2 := ParseArgs([]string{"--priority", "3"}, "--priority")
+	a2, parseErr := ParseArgs([]string{"--priority", "3"}, []string{"--priority"}, nil)
+	if parseErr != nil {
+		t.Fatal(parseErr)
+	}
 	n, set, err := a2.IntErr("--priority")
 	if !set || err != nil || n != 3 {
 		t.Errorf("expected (3, true, nil), got (%d, %v, %v)", n, set, err)
@@ -1341,7 +1365,10 @@ func TestParseArgsIntErr(t *testing.T) {
 }
 
 func TestParseArgsMixedFlagsAndPositionals(t *testing.T) {
-	a := ParseArgs([]string{"id-123", "--json", "--status", "open"}, "--status")
+	a, err := ParseArgs([]string{"id-123", "--json", "--status", "open"}, []string{"--status"}, []string{"--json"})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if a.PosFirst() != "id-123" {
 		t.Errorf("PosFirst() = %q, want id-123", a.PosFirst())
 	}

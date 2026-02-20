@@ -13,7 +13,10 @@ type BlockedArgs struct {
 }
 
 func parseBlockedArgs(raw []string) (BlockedArgs, error) {
-	a := ParseArgs(raw)
+	a, err := ParseArgs(raw, nil, []string{"--json"})
+	if err != nil {
+		return BlockedArgs{}, err
+	}
 	return BlockedArgs{JSON: a.JSON()}, nil
 }
 

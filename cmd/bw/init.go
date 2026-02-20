@@ -11,7 +11,10 @@ type InitArgs struct {
 }
 
 func parseInitArgs(raw []string) (InitArgs, error) {
-	a := ParseArgs(raw, "--prefix")
+	a, err := ParseArgs(raw, []string{"--prefix"}, []string{"--force"})
+	if err != nil {
+		return InitArgs{}, err
+	}
 	return InitArgs{
 		Prefix: a.String("--prefix"),
 		Force:  a.Bool("--force"),

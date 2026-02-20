@@ -30,7 +30,10 @@ type ImportArgs struct {
 }
 
 func parseImportArgs(raw []string) (ImportArgs, error) {
-	a := ParseArgs(raw)
+	a, err := ParseArgs(raw, nil, []string{"--dry-run"})
+	if err != nil {
+		return ImportArgs{}, err
+	}
 	filePath := a.PosFirst()
 	if filePath == "" {
 		return ImportArgs{}, fmt.Errorf("usage: bw import <file> [--dry-run]")

@@ -18,7 +18,10 @@ func parseDeferArgs(raw []string) (DeferArgs, error) {
 	if len(raw) < 2 {
 		return DeferArgs{}, fmt.Errorf("usage: bw defer <id> <date>")
 	}
-	a := ParseArgs(raw[2:])
+	a, err := ParseArgs(raw[2:], nil, []string{"--json"})
+	if err != nil {
+		return DeferArgs{}, err
+	}
 	return DeferArgs{ID: raw[0], Date: raw[1], JSON: a.JSON()}, nil
 }
 
