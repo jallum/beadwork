@@ -1341,6 +1341,126 @@ func TestCmdInitForce(t *testing.T) {
 
 // --- Helpers ---
 
+func TestParseArgsBooleans(t *testing.T) {
+	a := ParseArgs([]string{"--json", "--all", "positional"})
+	if !a.Bool("--json") {
+		t.Error("expected --json to be true")
+	}
+	if !a.Bool("--all") {
+		t.Error("expected --all to be true")
+	}
+	if a.Bool("--missing") {
+		t.Error("expected --missing to be false")
+	}
+	if !a.JSON() {
+		t.Error("expected JSON() to be true")
+	}
+}
+
+func TestParseArgsValueFlags(t *testing.T) {
+	a := ParseArgs([]string{"--status", "open", "--priority", "1"}, "--status", "--priority")
+	if a.String("--status") != "open" {
+		t.Errorf("status = %q, want open", a.String("--status"))
+	}
+	if a.Int("--priority") != 1 {
+		t.Errorf("priority = %d, want 1", a.Int("--priority"))
+	}
+	if !a.Has("--status") {
+		t.Error("expected Has(--status) to be true")
+	}
+	if a.Has("--missing") {
+		t.Error("expected Has(--missing) to be false")
+	}
+}
+
+func TestParseArgsAliases(t *testing.T) {
+	a := ParseArgs([]string{"-p", "2", "-t", "bug", "-a", "alice"}, "--priority", "--type", "--assignee")
+	if a.Int("--priority") != 2 {
+		t.Errorf("priority = %d, want 2", a.Int("--priority"))
+	}
+	if a.String("--type") != "bug" {
+		t.Errorf("type = %q, want bug", a.String("--type"))
+	}
+	if a.String("--assignee") != "alice" {
+		t.Errorf("assignee = %q, want alice", a.String("--assignee"))
+	}
+}
+
+func TestParseArgsPositionals(t *testing.T) {
+	a := ParseArgs([]string{"my", "title", "here", "--json"})
+	pos := a.Pos()
+	if len(pos) != 3 {
+		t.Fatalf("pos = %v, want 3 items", pos)
+	}
+	if a.PosFirst() != "my" {
+		t.Errorf("PosFirst() = %q, want my", a.PosFirst())
+	}
+	if a.PosJoined() != "my title here" {
+		t.Errorf("PosJoined() = %q", a.PosJoined())
+	}
+}
+
+func TestParseArgsEmpty(t *testing.T) {
+	a := ParseArgs([]string{})
+	if a.PosFirst() != "" {
+		t.Errorf("PosFirst() = %q, want empty", a.PosFirst())
+	}
+	if a.PosJoined() != "" {
+		t.Errorf("PosJoined() = %q, want empty", a.PosJoined())
+	}
+	if a.JSON() {
+		t.Error("expected JSON() to be false")
+	}
+}
+
+func TestParseArgsValueFlagAtEnd(t *testing.T) {
+	// Value flag with no following token should be silently ignored
+	a := ParseArgs([]string{"--status"}, "--status")
+	if a.Has("--status") {
+		t.Error("expected Has(--status) to be false when no value follows")
+	}
+	if a.String("--status") != "" {
+		t.Errorf("status = %q, want empty", a.String("--status"))
+	}
+}
+
+func TestParseArgsIntErr(t *testing.T) {
+	a := ParseArgs([]string{"--priority", "abc"}, "--priority")
+	_, set, err := a.IntErr("--priority")
+	if !set {
+		t.Error("expected set to be true")
+	}
+	if err == nil {
+		t.Error("expected error for non-numeric priority")
+	}
+
+	// Missing flag
+	_, set, err = a.IntErr("--missing")
+	if set || err != nil {
+		t.Errorf("expected set=false, err=nil for missing flag, got set=%v, err=%v", set, err)
+	}
+
+	// Valid int
+	a2 := ParseArgs([]string{"--priority", "3"}, "--priority")
+	n, set, err := a2.IntErr("--priority")
+	if !set || err != nil || n != 3 {
+		t.Errorf("expected (3, true, nil), got (%d, %v, %v)", n, set, err)
+	}
+}
+
+func TestParseArgsMixedFlagsAndPositionals(t *testing.T) {
+	a := ParseArgs([]string{"id-123", "--json", "--status", "open"}, "--status")
+	if a.PosFirst() != "id-123" {
+		t.Errorf("PosFirst() = %q, want id-123", a.PosFirst())
+	}
+	if !a.JSON() {
+		t.Error("expected JSON() to be true")
+	}
+	if a.String("--status") != "open" {
+		t.Errorf("status = %q, want open", a.String("--status"))
+	}
+}
+
 func TestHasFlag(t *testing.T) {
 	tests := []struct {
 		args []string
