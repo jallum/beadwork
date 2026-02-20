@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T02:20:07Z",
+  "description": "",
+  "id": "bw-556b",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Improve test coverage for cmd/bw/prime.go",
+  "type": "task"
+}
