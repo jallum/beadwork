@@ -3017,6 +3017,118 @@ func TestCmdInitInvalidPrefix(t *testing.T) {
 	}
 }
 
+// --- Blocked (additional coverage) ---
+
+func TestCmdBlockedMultipleBlockers(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker A", issue.CreateOpts{Priority: intPtr(1)})
+	b, _ := env.Store.Create("Blocker B", issue.CreateOpts{Priority: intPtr(1)})
+	c, _ := env.Store.Create("Blocked by two", issue.CreateOpts{Priority: intPtr(2)})
+	env.Store.Link(a.ID, c.ID)
+	env.Store.Link(b.ID, c.ID)
+	env.Repo.Commit("link")
+
+	var buf bytes.Buffer
+	err := cmdBlocked([]string{}, &buf)
+	if err != nil {
+		t.Fatalf("cmdBlocked: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, c.ID) {
+		t.Errorf("output should contain blocked issue %s: %q", c.ID, out)
+	}
+	if !strings.Contains(out, a.ID) {
+		t.Errorf("output should list blocker %s: %q", a.ID, out)
+	}
+	if !strings.Contains(out, b.ID) {
+		t.Errorf("output should list blocker %s: %q", b.ID, out)
+	}
+}
+
+func TestCmdBlockedUnknownFlag(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdBlocked([]string{"--verbose"}, &buf)
+	if err == nil {
+		t.Error("expected error for unknown flag")
+	}
+}
+
+func TestCmdBlockedJSONEmpty(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("No deps", issue.CreateOpts{})
+	env.Repo.Commit("create")
+
+	var buf bytes.Buffer
+	err := cmdBlocked([]string{"--json"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdBlocked --json: %v", err)
+	}
+
+	var result []struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("JSON parse: %v", err)
+	}
+	if len(result) != 0 {
+		t.Errorf("expected 0 results, got %d", len(result))
+	}
+}
+
+func TestCmdBlockedPartiallyResolved(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker A", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocker B", issue.CreateOpts{})
+	c, _ := env.Store.Create("Blocked by two", issue.CreateOpts{})
+	env.Store.Link(a.ID, c.ID)
+	env.Store.Link(b.ID, c.ID)
+	// Close one blocker — issue should still be blocked by the other
+	env.Store.Close(a.ID, "done")
+	env.Repo.Commit("setup")
+
+	var buf bytes.Buffer
+	err := cmdBlocked([]string{}, &buf)
+	if err != nil {
+		t.Fatalf("cmdBlocked: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, c.ID) {
+		t.Errorf("issue %s should still be blocked: %q", c.ID, out)
+	}
+	if !strings.Contains(out, b.ID) {
+		t.Errorf("should list remaining blocker %s: %q", b.ID, out)
+	}
+}
+
+func TestParseBlockedArgs(t *testing.T) {
+	ba, err := parseBlockedArgs([]string{})
+	if err != nil {
+		t.Fatalf("parseBlockedArgs: %v", err)
+	}
+	if ba.JSON {
+		t.Error("expected JSON=false")
+	}
+}
+
+func TestParseBlockedArgsJSON(t *testing.T) {
+	ba, err := parseBlockedArgs([]string{"--json"})
+	if err != nil {
+		t.Fatalf("parseBlockedArgs: %v", err)
+	}
+	if !ba.JSON {
+		t.Error("expected JSON=true")
+	}
+}
+
 func init() {
 	os.Setenv("GIT_AUTHOR_NAME", "Test")
 	os.Setenv("GIT_AUTHOR_EMAIL", "test@test.com")
