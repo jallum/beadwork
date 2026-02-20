@@ -2,13 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-20T22:51:36Z",
+  "close_reason": "done",
   "created": "2026-02-20T22:47:55Z",
   "description": "Add download progress indicator, step narration during upgrade, and changelog display for version span",
   "id": "bw-mnq",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Improve upgrade command: progress, narration, changelog",
   "type": "task",
-  "updated_at": "2026-02-20T22:47:59Z"
+  "updated_at": "2026-02-20T22:51:36Z"
 }
