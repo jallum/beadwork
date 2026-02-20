@@ -7,7 +7,7 @@
   "id": "bw-ceb6",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Improve test coverage for cmd/bw/sync.go",
   "type": "task"
 }
