@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T05:45:08Z",
+  "description": "",
+  "id": "bw-b239",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Add Description/Examples to Command struct and update printCommandHelp layout",
+  "type": "task"
+}
