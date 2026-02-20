@@ -268,7 +268,7 @@ func TestIntentReplayIdempotent(t *testing.T) {
 	// Create issue, close it, record intents
 	iss, _ := env.Store.Create("Idempotent test", issue.CreateOpts{Priority: intPtr(1)})
 	env.CommitIntent("create " + iss.ID + " p1 task \"Idempotent test\"")
-	env.Store.Close(iss.ID)
+	env.Store.Close(iss.ID, "")
 	env.CommitIntent("close " + iss.ID)
 
 	// Now try to replay the close intent again — it should fail gracefully

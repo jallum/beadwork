@@ -194,7 +194,7 @@ func TestCmdListFilterByStatus(t *testing.T) {
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("To close", issue.CreateOpts{})
-	env.Store.Close(iss.ID)
+	env.Store.Close(iss.ID, "")
 	env.Repo.Commit("create and close")
 
 	var buf bytes.Buffer
@@ -283,7 +283,7 @@ func TestCmdReopenBasic(t *testing.T) {
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("Reopen me", issue.CreateOpts{})
-	env.Store.Close(iss.ID)
+	env.Store.Close(iss.ID, "")
 	env.Repo.Commit("create and close " + iss.ID)
 
 	var buf bytes.Buffer
@@ -306,7 +306,7 @@ func TestCmdReopenJSON(t *testing.T) {
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("Reopen JSON", issue.CreateOpts{})
-	env.Store.Close(iss.ID)
+	env.Store.Close(iss.ID, "")
 	env.Repo.Commit("create and close " + iss.ID)
 
 	var buf bytes.Buffer
@@ -776,8 +776,8 @@ func TestCmdGraphAllShowsClosedIssues(t *testing.T) {
 	a, _ := env.Store.Create("Closed A", issue.CreateOpts{})
 	b, _ := env.Store.Create("Closed B", issue.CreateOpts{})
 	env.Store.Link(a.ID, b.ID)
-	env.Store.Close(a.ID)
-	env.Store.Close(b.ID)
+	env.Store.Close(a.ID, "")
+	env.Store.Close(b.ID, "")
 	env.Repo.Commit("create, link, and close")
 
 	var buf bytes.Buffer
@@ -1591,7 +1591,7 @@ func TestCmdBlockedResolves(t *testing.T) {
 	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
 	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
 	env.Store.Link(a.ID, b.ID)
-	env.Store.Close(a.ID)
+	env.Store.Close(a.ID, "")
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer

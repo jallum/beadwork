@@ -200,7 +200,7 @@ func TestShowClosedStatus(t *testing.T) {
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("Done task", issue.CreateOpts{})
-	env.Store.Close(iss.ID)
+	env.Store.Close(iss.ID, "")
 	env.CommitIntent("create and close " + iss.ID)
 
 	out := bw(t, env.Dir, "show", iss.ID)
@@ -251,7 +251,7 @@ func TestListDefaultsToOpen(t *testing.T) {
 
 	open, _ := env.Store.Create("Open one", issue.CreateOpts{})
 	closed, _ := env.Store.Create("Closed one", issue.CreateOpts{})
-	env.Store.Close(closed.ID)
+	env.Store.Close(closed.ID, "")
 	env.CommitIntent("setup")
 
 	out := bw(t, env.Dir, "list")
@@ -540,7 +540,7 @@ func TestExportFilterByStatus(t *testing.T) {
 	a, _ := env.Store.Create("Open issue", issue.CreateOpts{})
 	env.CommitIntent("create " + a.ID)
 	b, _ := env.Store.Create("Closed issue", issue.CreateOpts{})
-	env.Store.Close(b.ID)
+	env.Store.Close(b.ID, "")
 	env.CommitIntent("create and close " + b.ID)
 
 	out := bw(t, env.Dir, "export", "--status", "open")
@@ -693,7 +693,7 @@ func TestImportRoundtrip(t *testing.T) {
 	a, _ := env.Store.Create("Roundtrip A", issue.CreateOpts{Priority: intPtr(1), Type: "bug", Assignee: "alice", Description: "desc A"})
 	b, _ := env.Store.Create("Roundtrip B", issue.CreateOpts{Priority: intPtr(2), Type: "task"})
 	env.Store.Link(a.ID, b.ID)
-	env.Store.Close(b.ID)
+	env.Store.Close(b.ID, "")
 	env.CommitIntent("setup roundtrip")
 
 	// Export
@@ -795,7 +795,7 @@ func TestCloseAlreadyClosedCLI(t *testing.T) {
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("Already closed", issue.CreateOpts{})
-	env.Store.Close(iss.ID)
+	env.Store.Close(iss.ID, "")
 	env.CommitIntent("close " + iss.ID)
 
 	out := bwFail(t, env.Dir, "close", iss.ID)
@@ -807,7 +807,7 @@ func TestReopenOutput(t *testing.T) {
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("Closed task", issue.CreateOpts{})
-	env.Store.Close(iss.ID)
+	env.Store.Close(iss.ID, "")
 	env.CommitIntent("close " + iss.ID)
 
 	out := bw(t, env.Dir, "reopen", iss.ID)
@@ -1140,7 +1140,7 @@ func TestGraphAllExcludesClosedUnlinked(t *testing.T) {
 
 	a, _ := env.Store.Create("Open issue", issue.CreateOpts{})
 	b, _ := env.Store.Create("Closed unlinked", issue.CreateOpts{})
-	env.Store.Close(b.ID)
+	env.Store.Close(b.ID, "")
 	env.CommitIntent("setup")
 
 	// --all without a root filters closed nodes that have no relationships

@@ -87,7 +87,7 @@ func replayClose(r *repo.Repo, store *issue.Store, parts []string, raw string) e
 	if len(parts) < 1 {
 		return fmt.Errorf("malformed close intent")
 	}
-	_, err := store.Close(parts[0])
+	_, err := store.Close(parts[0], "")
 	if err != nil {
 		return err
 	}
