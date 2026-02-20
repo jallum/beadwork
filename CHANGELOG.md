@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0 — 2026-02-19
+
+- Config system: `.bwconfig` with `bw config get|set|list` and `default.priority` support
+- Import/export: `bw export` and `bw import` for beads JSONL interop (collision detection, `--dry-run`, dependency wiring)
+- Restyled `show`, `list`, and `ready` output with status icons and priority dots
+- CLI integration test suite (27 tests covering command output)
+- Intent replay test suite (20 tests covering all replay verbs and edge cases)
+
 ## 0.1.0 — 2026-02-19
 
 Initial release.
