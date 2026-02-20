@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "bw-4ebc"
+  ],
   "created": "2026-02-20T04:56:24Z",
   "description": "",
   "id": "bw-38ae",
