@@ -16,6 +16,7 @@ type ListArgs struct {
 	Limit    int
 	LimitSet bool
 	All      bool
+	Deferred bool
 	JSON     bool
 }
 
@@ -28,6 +29,7 @@ func parseListArgs(raw []string) (ListArgs, error) {
 		Type:     a.String("--type"),
 		Label:    a.String("--label"),
 		All:      a.Bool("--all"),
+		Deferred: a.Bool("--deferred"),
 		JSON:     a.JSON(),
 		Limit:    10,
 	}
@@ -60,7 +62,10 @@ func cmdList(args []string, w io.Writer) error {
 	limit := la.Limit
 
 	// Defaults: open status, limit 10. --all overrides both.
-	if la.All {
+	// --deferred overrides status to "deferred".
+	if la.Deferred {
+		filter.Status = "deferred"
+	} else if la.All {
 		if !la.LimitSet {
 			limit = 0
 		}

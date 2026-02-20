@@ -1511,6 +1511,262 @@ func TestCmdBlockedEmpty(t *testing.T) {
 	}
 }
 
+// --- Defer / Undefer ---
+
+func TestCmdDefer(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Defer me", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdDefer([]string{iss.ID, "2027-06-01"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdDefer: %v", err)
+	}
+	if !strings.Contains(buf.String(), "deferred") {
+		t.Errorf("output = %q, want 'deferred'", buf.String())
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.Status != "deferred" {
+		t.Errorf("status = %q, want deferred", got.Status)
+	}
+	if got.DeferUntil != "2027-06-01" {
+		t.Errorf("defer_until = %q, want 2027-06-01", got.DeferUntil)
+	}
+}
+
+func TestCmdDeferJSON(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Defer JSON", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdDefer([]string{iss.ID, "2027-06-01", "--json"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdDefer --json: %v", err)
+	}
+
+	var got issue.Issue
+	if err := json.Unmarshal(buf.Bytes(), &got); err != nil {
+		t.Fatalf("JSON parse: %v", err)
+	}
+	if got.Status != "deferred" {
+		t.Errorf("status = %q, want deferred", got.Status)
+	}
+	if got.DeferUntil != "2027-06-01" {
+		t.Errorf("defer_until = %q, want 2027-06-01", got.DeferUntil)
+	}
+}
+
+func TestCmdDeferInvalidDate(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Bad date", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdDefer([]string{iss.ID, "not-a-date"}, &buf)
+	if err == nil {
+		t.Error("expected error for invalid date")
+	}
+}
+
+func TestCmdUndefer(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Undefer me", issue.CreateOpts{DeferUntil: "2027-06-01"})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdUndefer([]string{iss.ID}, &buf)
+	if err != nil {
+		t.Fatalf("cmdUndefer: %v", err)
+	}
+	if !strings.Contains(buf.String(), "undeferred") {
+		t.Errorf("output = %q, want 'undeferred'", buf.String())
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.Status != "open" {
+		t.Errorf("status = %q, want open", got.Status)
+	}
+	if got.DeferUntil != "" {
+		t.Errorf("defer_until = %q, want empty", got.DeferUntil)
+	}
+}
+
+func TestCmdUndeferJSON(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Undefer JSON", issue.CreateOpts{DeferUntil: "2027-06-01"})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdUndefer([]string{iss.ID, "--json"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdUndefer --json: %v", err)
+	}
+
+	var got issue.Issue
+	if err := json.Unmarshal(buf.Bytes(), &got); err != nil {
+		t.Fatalf("JSON parse: %v", err)
+	}
+	if got.Status != "open" {
+		t.Errorf("status = %q, want open", got.Status)
+	}
+}
+
+func TestCmdCreateWithDefer(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdCreate([]string{"Deferred task", "--defer", "2027-03-15"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdCreate --defer: %v", err)
+	}
+
+	issues, _ := env.Store.List(issue.Filter{Status: "deferred"})
+	if len(issues) != 1 {
+		t.Fatalf("expected 1 deferred issue, got %d", len(issues))
+	}
+	if issues[0].DeferUntil != "2027-03-15" {
+		t.Errorf("defer_until = %q, want 2027-03-15", issues[0].DeferUntil)
+	}
+}
+
+func TestCmdUpdateWithDefer(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Update defer", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdUpdate([]string{iss.ID, "--defer", "2027-09-01"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdUpdate --defer: %v", err)
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.Status != "deferred" {
+		t.Errorf("status = %q, want deferred", got.Status)
+	}
+	if got.DeferUntil != "2027-09-01" {
+		t.Errorf("defer_until = %q, want 2027-09-01", got.DeferUntil)
+	}
+}
+
+func TestCmdListDeferred(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("Open task", issue.CreateOpts{})
+	env.Store.Create("Deferred task", issue.CreateOpts{DeferUntil: "2027-01-01"})
+	env.Repo.Commit("create issues")
+
+	// Default list should show only open
+	var buf bytes.Buffer
+	err := cmdList([]string{}, &buf)
+	if err != nil {
+		t.Fatalf("cmdList: %v", err)
+	}
+	if !strings.Contains(buf.String(), "Open task") {
+		t.Errorf("default list should show open task: %q", buf.String())
+	}
+	if strings.Contains(buf.String(), "Deferred task") {
+		t.Error("default list should NOT show deferred task")
+	}
+
+	// --deferred should show only deferred
+	buf.Reset()
+	err = cmdList([]string{"--deferred"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdList --deferred: %v", err)
+	}
+	if !strings.Contains(buf.String(), "Deferred task") {
+		t.Errorf("--deferred should show deferred task: %q", buf.String())
+	}
+	if strings.Contains(buf.String(), "Open task") {
+		t.Error("--deferred should NOT show open task")
+	}
+}
+
+func TestCmdReadyExcludesInProgress(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Open task", issue.CreateOpts{})
+	b, _ := env.Store.Create("WIP task", issue.CreateOpts{})
+	statusIP := "in_progress"
+	env.Store.Update(b.ID, issue.UpdateOpts{Status: &statusIP})
+	env.Repo.Commit("create issues")
+
+	var buf bytes.Buffer
+	err := cmdReady([]string{}, &buf)
+	if err != nil {
+		t.Fatalf("cmdReady: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, a.ID) {
+		t.Errorf("output should contain open task %s: %q", a.ID, out)
+	}
+	if strings.Contains(out, b.ID) {
+		t.Errorf("output should NOT contain in_progress task %s: %q", b.ID, out)
+	}
+}
+
+func TestCmdReadyExcludesDeferred(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Open task", issue.CreateOpts{})
+	env.Store.Create("Deferred task", issue.CreateOpts{DeferUntil: "2027-06-01"})
+	env.Repo.Commit("create issues")
+
+	var buf bytes.Buffer
+	err := cmdReady([]string{}, &buf)
+	if err != nil {
+		t.Fatalf("cmdReady: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, a.ID) {
+		t.Errorf("output should contain open task %s: %q", a.ID, out)
+	}
+	if strings.Contains(out, "Deferred task") {
+		t.Error("output should NOT contain deferred task")
+	}
+}
+
+func TestCmdShowDeferred(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Deferred show", issue.CreateOpts{DeferUntil: "2027-04-15"})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdShow([]string{iss.ID}, &buf)
+	if err != nil {
+		t.Fatalf("cmdShow: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "Deferred: 2027-04-15") {
+		t.Errorf("output should contain 'Deferred: 2027-04-15': %q", out)
+	}
+	if !strings.Contains(out, "DEFERRED") {
+		t.Errorf("output should contain DEFERRED status: %q", out)
+	}
+}
+
 func init() {
 	os.Setenv("GIT_AUTHOR_NAME", "Test")
 	os.Setenv("GIT_AUTHOR_EMAIL", "test@test.com")

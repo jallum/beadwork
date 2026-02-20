@@ -22,6 +22,8 @@ type UpdateArgs struct {
 	TypeSet     bool
 	Status      string
 	StatusSet   bool
+	DeferUntil  string
+	DeferSet    bool
 	JSON        bool
 }
 
@@ -29,7 +31,7 @@ func parseUpdateArgs(raw []string) (UpdateArgs, error) {
 	if len(raw) == 0 {
 		return UpdateArgs{}, fmt.Errorf("usage: bw update <id> [flags]")
 	}
-	a := ParseArgs(raw[1:], "--title", "--description", "--priority", "--assignee", "--type", "--status")
+	a := ParseArgs(raw[1:], "--title", "--description", "--priority", "--assignee", "--type", "--status", "--defer")
 	ua := UpdateArgs{ID: raw[0], JSON: a.JSON()}
 
 	if a.Has("--title") {
@@ -59,6 +61,13 @@ func parseUpdateArgs(raw []string) (UpdateArgs, error) {
 	if a.Has("--status") {
 		ua.Status = a.String("--status")
 		ua.StatusSet = true
+	}
+	if a.Has("--defer") {
+		ua.DeferUntil = a.String("--defer")
+		ua.DeferSet = true
+		if err := validateDate(ua.DeferUntil); err != nil {
+			return ua, err
+		}
 	}
 	return ua, nil
 }
@@ -100,6 +109,12 @@ func cmdUpdate(args []string, w io.Writer) error {
 	if ua.StatusSet {
 		opts.Status = &ua.Status
 		changes = append(changes, "status="+ua.Status)
+	}
+	if ua.DeferSet {
+		opts.DeferUntil = &ua.DeferUntil
+		status := "deferred"
+		opts.Status = &status
+		changes = append(changes, "defer="+ua.DeferUntil)
 	}
 
 	iss, err := store.Update(ua.ID, opts)
