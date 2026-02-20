@@ -15,13 +15,7 @@ func cmdClose(args []string, w io.Writer) error {
 		return fmt.Errorf("usage: bw close <id> [--reason <reason>]")
 	}
 	id := args[0]
-	reason := ""
-	for i := 1; i < len(args); i++ {
-		if args[i] == "--reason" && i+1 < len(args) {
-			reason = args[i+1]
-			i++
-		}
-	}
+	a := ParseArgs(args[1:], "--reason")
 
 	iss, err := store.Close(id)
 	if err != nil {
@@ -29,14 +23,14 @@ func cmdClose(args []string, w io.Writer) error {
 	}
 
 	intent := fmt.Sprintf("close %s", iss.ID)
-	if reason != "" {
+	if reason := a.String("--reason"); reason != "" {
 		intent += fmt.Sprintf(" reason=%q", reason)
 	}
 	if err := r.Commit(intent); err != nil {
 		return fmt.Errorf("commit failed: %w", err)
 	}
 
-	if hasFlag(args, "--json") {
+	if a.JSON() {
 		fprintJSON(w, iss)
 	} else {
 		fmt.Fprintf(w, "closed %s: %s\n", iss.ID, iss.Title)
@@ -50,10 +44,12 @@ func cmdReopen(args []string, w io.Writer) error {
 		return err
 	}
 
-	if len(args) == 0 {
+	a := ParseArgs(args)
+
+	id := a.PosFirst()
+	if id == "" {
 		return fmt.Errorf("usage: bw reopen <id>")
 	}
-	id := args[0]
 
 	iss, err := store.Reopen(id)
 	if err != nil {
@@ -65,7 +61,7 @@ func cmdReopen(args []string, w io.Writer) error {
 		return fmt.Errorf("commit failed: %w", err)
 	}
 
-	if hasFlag(args, "--json") {
+	if a.JSON() {
 		fprintJSON(w, iss)
 	} else {
 		fmt.Fprintf(w, "reopened %s: %s\n", iss.ID, iss.Title)

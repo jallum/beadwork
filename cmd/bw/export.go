@@ -35,13 +35,8 @@ func cmdExport(args []string, w io.Writer) error {
 		return err
 	}
 
-	filter := issue.Filter{}
-	for i := 0; i < len(args); i++ {
-		if args[i] == "--status" && i+1 < len(args) {
-			filter.Status = args[i+1]
-			i++
-		}
-	}
+	a := ParseArgs(args, "--status")
+	filter := issue.Filter{Status: a.String("--status")}
 
 	issues, err := store.List(filter)
 	if err != nil {

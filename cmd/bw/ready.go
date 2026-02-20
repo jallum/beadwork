@@ -19,7 +19,8 @@ func cmdReady(args []string, w io.Writer) error {
 		return err
 	}
 
-	if hasFlag(args, "--json") {
+	a := ParseArgs(args)
+	if a.JSON() {
 		fprintJSON(w, issues)
 		return nil
 	}

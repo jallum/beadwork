@@ -28,16 +28,10 @@ func cmdImport(args []string, w io.Writer) error {
 		return err
 	}
 
-	dryRun := hasFlag(args, "--dry-run")
+	a := ParseArgs(args)
+	dryRun := a.Bool("--dry-run")
 
-	// Find the file argument (first non-flag arg)
-	var filePath string
-	for _, a := range args {
-		if a != "--dry-run" {
-			filePath = a
-			break
-		}
-	}
+	filePath := a.PosFirst()
 	if filePath == "" {
 		return fmt.Errorf("usage: bw import <file> [--dry-run]")
 	}

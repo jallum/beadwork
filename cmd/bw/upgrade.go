@@ -31,8 +31,9 @@ type ghAsset struct {
 }
 
 func cmdUpgrade(args []string, w io.Writer) error {
-	check := hasFlag(args, "--check")
-	yes := hasFlag(args, "--yes")
+	a := ParseArgs(args)
+	check := a.Bool("--check")
+	yes := a.Bool("--yes")
 
 	// Resolve our binary location
 	execPath, symlink, targetPath, err := resolveBinary()
