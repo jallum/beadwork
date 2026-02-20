@@ -3176,7 +3176,7 @@ func TestCmdListDefaultShowsOpenAndInProgress(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdList([]string{}, &buf)
+	err := cmdList([]string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList: %v", err)
 	}
@@ -3204,7 +3204,7 @@ func TestCmdListGrep(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdList([]string{"--grep", "login"}, &buf)
+	err := cmdList([]string{"--grep", "login"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList --grep: %v", err)
 	}
@@ -3226,7 +3226,7 @@ func TestCmdListGrepShortFlag(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdList([]string{"-g", "login"}, &buf)
+	err := cmdList([]string{"-g", "login"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList -g: %v", err)
 	}
