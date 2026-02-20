@@ -970,6 +970,140 @@ func TestLinkNonExistentBlocked(t *testing.T) {
 	}
 }
 
+func TestReadCorruptJSON(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Create a valid issue, then corrupt it
+	iss, _ := env.Store.Create("Valid", issue.CreateOpts{})
+	path := filepath.Join(env.Repo.WorkTree, "issues", iss.ID+".json")
+	os.WriteFile(path, []byte("{invalid json"), 0644)
+
+	_, err := env.Store.Get(iss.ID)
+	if err == nil {
+		t.Error("expected error for corrupt JSON")
+	}
+	if !strings.Contains(err.Error(), "corrupt") {
+		t.Errorf("error = %q, want 'corrupt'", err.Error())
+	}
+}
+
+func TestGraphNoRelationshipsShowsOpen(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Create issues without any links
+	env.Store.Create("Standalone A", issue.CreateOpts{})
+	env.Store.Create("Standalone B", issue.CreateOpts{})
+	iss3, _ := env.Store.Create("Closed one", issue.CreateOpts{})
+	env.Store.Close(iss3.ID)
+	env.CommitIntent("setup")
+
+	// Graph with no root and no edges: should show all open issues
+	nodes, err := env.Store.Graph("")
+	if err != nil {
+		t.Fatalf("Graph: %v", err)
+	}
+	if len(nodes) != 2 {
+		t.Errorf("got %d nodes, want 2 (only open issues)", len(nodes))
+	}
+	for _, n := range nodes {
+		if n.Status == "closed" {
+			t.Error("closed issue should not appear in graph without edges")
+		}
+	}
+}
+
+func TestUpdateStatusChange(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Status test", issue.CreateOpts{})
+
+	// Update status via UpdateOpts
+	newStatus := "in_progress"
+	updated, err := env.Store.Update(iss.ID, issue.UpdateOpts{Status: &newStatus})
+	if err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+	if updated.Status != "in_progress" {
+		t.Errorf("status = %q, want in_progress", updated.Status)
+	}
+
+	// Update to same status (noop)
+	sameStatus := "in_progress"
+	updated2, err := env.Store.Update(iss.ID, issue.UpdateOpts{Status: &sameStatus})
+	if err != nil {
+		t.Fatalf("Update same status: %v", err)
+	}
+	if updated2.Status != "in_progress" {
+		t.Errorf("status = %q", updated2.Status)
+	}
+}
+
+func TestUnlinkNonExistentBlocker(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+	err := env.Store.Unlink("test-zzzz", b.ID)
+	if err == nil {
+		t.Error("expected error for non-existent blocker")
+	}
+}
+
+func TestUnlinkNonExistentBlocked(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	err := env.Store.Unlink(a.ID, "test-zzzz")
+	if err == nil {
+		t.Error("expected error for non-existent blocked")
+	}
+}
+
+func TestLabelNonExistent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	_, err := env.Store.Label("test-zzzz", []string{"bug"}, nil)
+	if err == nil {
+		t.Error("expected error for non-existent issue")
+	}
+}
+
+func TestCloseNonExistent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	_, err := env.Store.Close("test-zzzz")
+	if err == nil {
+		t.Error("expected error for non-existent issue")
+	}
+}
+
+func TestReopenNonExistent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	_, err := env.Store.Reopen("test-zzzz")
+	if err == nil {
+		t.Error("expected error for non-existent issue")
+	}
+}
+
+func TestUpdateNonExistent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	title := "x"
+	_, err := env.Store.Update("test-zzzz", issue.UpdateOpts{Title: &title})
+	if err == nil {
+		t.Error("expected error for non-existent issue")
+	}
+}
+
 func TestMultipleIDsNeverCollide(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
