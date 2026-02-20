@@ -24,6 +24,11 @@ func getInitialized() (*repo.Repo, *issue.Store, error) {
 	if !r.IsInitialized() {
 		return nil, nil, fmt.Errorf("beadwork not initialized. Run: bw init")
 	}
+	if v := r.Version(); v > repo.CurrentVersion {
+		return nil, nil, fmt.Errorf("repo version %d is newer than this binary supports (max %d); run: bw upgrade", v, repo.CurrentVersion)
+	} else if v < repo.CurrentVersion {
+		return nil, nil, fmt.Errorf("repo version %d needs upgrade (current %d); run: bw upgrade repo", v, repo.CurrentVersion)
+	}
 	store := issue.NewStore(r.TreeFS(), r.Prefix)
 	if val, ok := r.GetConfig("default.priority"); ok {
 		if p, err := strconv.Atoi(val); err == nil && p > 0 {

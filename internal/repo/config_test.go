@@ -86,8 +86,8 @@ func TestListConfig(t *testing.T) {
 	env.Repo.SetConfig("default.type", "bug")
 
 	cfg := env.Repo.ListConfig()
-	if len(cfg) != 3 {
-		t.Errorf("got %d config entries, want 3 (prefix + 2 new)", len(cfg))
+	if len(cfg) != 4 {
+		t.Errorf("got %d config entries, want 4 (prefix + version + 2 new)", len(cfg))
 	}
 	if cfg["prefix"] != "test" {
 		t.Errorf("prefix = %q", cfg["prefix"])

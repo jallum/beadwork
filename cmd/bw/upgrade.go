@@ -16,6 +16,8 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 const releaseURL = "https://api.github.com/repos/jallum/beadwork/releases/latest"
@@ -44,6 +46,10 @@ func parseUpgradeArgs(raw []string) (UpgradeArgs, error) {
 }
 
 func cmdUpgrade(args []string, w io.Writer) error {
+	if len(args) > 0 && args[0] == "repo" {
+		return cmdUpgradeRepo(args[1:], w)
+	}
+
 	ua, err := parseUpgradeArgs(args)
 	if err != nil {
 		return err
@@ -356,6 +362,35 @@ func validVersion(v string) bool {
 		}
 	}
 	return true
+}
+
+func cmdUpgradeRepo(args []string, w io.Writer) error {
+	r, err := getRepo()
+	if err != nil {
+		return err
+	}
+	if !r.IsInitialized() {
+		return fmt.Errorf("beadwork not initialized. Run: bw init")
+	}
+
+	from := r.Version()
+	if from >= repo.CurrentVersion {
+		fmt.Fprintf(w, "repo at version %d (up to date)\n", from)
+		return nil
+	}
+
+	fmt.Fprintf(w, "upgrading repo v%d -> v%d...\n", from, repo.CurrentVersion)
+	for v := from; v < repo.CurrentVersion; v++ {
+		fmt.Fprintf(w, "  v%d -> v%d: %s\n", v, v+1, repo.Migrations[v].Description)
+	}
+
+	_, to, err := r.Upgrade()
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintf(w, "repo upgraded to v%d\n", to)
+	return nil
 }
 
 func compareVersions(a, b string) int {
