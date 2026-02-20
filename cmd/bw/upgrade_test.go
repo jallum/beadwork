@@ -202,7 +202,10 @@ func TestResolveBinaryRegularFile(t *testing.T) {
 	bin := filepath.Join(dir, "bw")
 	os.WriteFile(bin, []byte("binary"), 0755)
 
-	_, symlink, _ := resolveBinaryPath(bin)
+	_, symlink, _, err := resolveBinaryPath(bin)
+	if err != nil {
+		t.Fatalf("resolveBinaryPath: %v", err)
+	}
 	if symlink {
 		t.Error("regular file should not be detected as symlink")
 	}
@@ -216,7 +219,10 @@ func TestResolveBinarySymlink(t *testing.T) {
 	link := filepath.Join(dir, "bw")
 	os.Symlink(real, link)
 
-	_, symlink, targetPath := resolveBinaryPath(link)
+	_, symlink, targetPath, err := resolveBinaryPath(link)
+	if err != nil {
+		t.Fatalf("resolveBinaryPath: %v", err)
+	}
 	if !symlink {
 		t.Error("symlink should be detected")
 	}

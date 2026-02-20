@@ -15,52 +15,57 @@ func main() {
 
 	cmd := os.Args[1]
 	args := os.Args[2:]
+	w := os.Stdout
 
+	var err error
 	switch cmd {
 	case "--version", "-v":
-		fmt.Println("bw " + version)
+		fmt.Fprintln(w, "bw "+version)
 	case "init":
-		cmdInit(args)
+		err = cmdInit(args, w)
 	case "create":
-		cmdCreate(args)
+		err = cmdCreate(args, w)
 	case "show":
-		cmdShow(args)
+		err = cmdShow(args, w)
 	case "list":
-		cmdList(args)
+		err = cmdList(args, w)
 	case "update":
-		cmdUpdate(args)
+		err = cmdUpdate(args, w)
 	case "close":
-		cmdClose(args)
+		err = cmdClose(args, w)
 	case "reopen":
-		cmdReopen(args)
+		err = cmdReopen(args, w)
 	case "ready":
-		cmdReady(args)
+		err = cmdReady(args, w)
 	case "graph":
-		cmdGraph(args)
+		err = cmdGraph(args, w)
 	case "label":
-		cmdLabel(args)
+		err = cmdLabel(args, w)
 	case "link":
-		cmdLink(args)
+		err = cmdLink(args, w)
 	case "unlink":
-		cmdUnlink(args)
+		err = cmdUnlink(args, w)
 	case "config":
-		cmdConfig(args)
+		err = cmdConfig(args, w)
 	case "export":
-		cmdExport(args)
+		err = cmdExport(args, w)
 	case "import":
-		cmdImport(args)
+		err = cmdImport(args, w)
 	case "sync":
-		cmdSync(args)
+		err = cmdSync(args, w)
 	case "onboard":
-		cmdOnboard()
+		err = cmdOnboard(w)
 	case "prime":
-		cmdPrime()
+		err = cmdPrime(w)
 	case "upgrade":
-		cmdUpgrade(args)
+		err = cmdUpgrade(args, w)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", cmd)
 		usage()
 		os.Exit(1)
+	}
+	if err != nil {
+		fatal(err.Error())
 	}
 }
 

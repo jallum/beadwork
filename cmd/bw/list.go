@@ -2,13 +2,17 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"strconv"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
 
-func cmdList(args []string) {
-	_, store := mustInitialized()
+func cmdList(args []string, w io.Writer) error {
+	_, store, err := getInitialized()
+	if err != nil {
+		return err
+	}
 
 	filter := issue.Filter{}
 	limit := 10
@@ -67,25 +71,25 @@ func cmdList(args []string) {
 
 	issues, err := store.List(filter)
 	if err != nil {
-		fatal(err.Error())
+		return err
 	}
 
 	if hasFlag(args, "--json") {
 		if limit > 0 && len(issues) > limit {
 			issues = issues[:limit]
 		}
-		printJSON(issues)
+		fprintJSON(w, issues)
 	} else {
 		if len(issues) == 0 {
-			fmt.Println("no issues found")
-			return
+			fmt.Fprintln(w, "no issues found")
+			return nil
 		}
 		displayed := issues
 		if limit > 0 && len(displayed) > limit {
 			displayed = displayed[:limit]
 		}
 		for _, iss := range displayed {
-			fmt.Printf("%s %s [%s P%d] [%s] - %s\n",
+			fmt.Fprintf(w, "%s %s [%s P%d] [%s] - %s\n",
 				issue.StatusIcon(iss.Status),
 				iss.ID,
 				issue.PriorityDot(iss.Priority),
@@ -95,7 +99,8 @@ func cmdList(args []string) {
 			)
 		}
 		if limit > 0 && len(issues) > limit {
-			fmt.Printf("... and %d more (use --limit or --all)\n", len(issues)-limit)
+			fmt.Fprintf(w, "... and %d more (use --limit or --all)\n", len(issues)-limit)
 		}
 	}
+	return nil
 }

@@ -2,14 +2,17 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"io"
 )
 
-func cmdClose(args []string) {
-	r, store := mustInitialized()
+func cmdClose(args []string, w io.Writer) error {
+	r, store, err := getInitialized()
+	if err != nil {
+		return err
+	}
 
 	if len(args) == 0 {
-		fatal("usage: bw close <id> [--reason <reason>]")
+		return fmt.Errorf("usage: bw close <id> [--reason <reason>]")
 	}
 	id := args[0]
 	reason := ""
@@ -22,7 +25,7 @@ func cmdClose(args []string) {
 
 	iss, err := store.Close(id)
 	if err != nil {
-		fatal(err.Error())
+		return err
 	}
 
 	intent := fmt.Sprintf("close %s", iss.ID)
@@ -30,37 +33,42 @@ func cmdClose(args []string) {
 		intent += fmt.Sprintf(" reason=%q", reason)
 	}
 	if err := r.Commit(intent); err != nil {
-		fatal("commit failed: " + err.Error())
+		return fmt.Errorf("commit failed: %w", err)
 	}
 
-	if hasFlag(os.Args, "--json") {
-		printJSON(iss)
+	if hasFlag(args, "--json") {
+		fprintJSON(w, iss)
 	} else {
-		fmt.Printf("closed %s: %s\n", iss.ID, iss.Title)
+		fmt.Fprintf(w, "closed %s: %s\n", iss.ID, iss.Title)
 	}
+	return nil
 }
 
-func cmdReopen(args []string) {
-	r, store := mustInitialized()
+func cmdReopen(args []string, w io.Writer) error {
+	r, store, err := getInitialized()
+	if err != nil {
+		return err
+	}
 
 	if len(args) == 0 {
-		fatal("usage: bw reopen <id>")
+		return fmt.Errorf("usage: bw reopen <id>")
 	}
 	id := args[0]
 
 	iss, err := store.Reopen(id)
 	if err != nil {
-		fatal(err.Error())
+		return err
 	}
 
 	intent := fmt.Sprintf("reopen %s", iss.ID)
 	if err := r.Commit(intent); err != nil {
-		fatal("commit failed: " + err.Error())
+		return fmt.Errorf("commit failed: %w", err)
 	}
 
-	if hasFlag(os.Args, "--json") {
-		printJSON(iss)
+	if hasFlag(args, "--json") {
+		fprintJSON(w, iss)
 	} else {
-		fmt.Printf("reopened %s: %s\n", iss.ID, iss.Title)
+		fmt.Fprintf(w, "reopened %s: %s\n", iss.ID, iss.Title)
 	}
+	return nil
 }

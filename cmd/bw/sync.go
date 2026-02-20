@@ -2,33 +2,37 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"io"
 
 	"github.com/jallum/beadwork/internal/intent"
 )
 
-func cmdSync(args []string) {
-	r, store := mustInitialized()
+func cmdSync(args []string, w io.Writer) error {
+	r, store, err := getInitialized()
+	if err != nil {
+		return err
+	}
 	_ = args
 
 	status, intents, err := r.Sync()
 	if err != nil {
-		fatal(err.Error())
+		return err
 	}
 
 	if status == "needs replay" {
-		fmt.Printf("rebase conflict — replaying %d intent(s)...\n", len(intents))
+		fmt.Fprintf(w, "rebase conflict — replaying %d intent(s)...\n", len(intents))
 		errs := intent.Replay(r, store, intents)
 		if len(errs) > 0 {
 			for _, e := range errs {
-				fmt.Fprintf(os.Stderr, "  warning: %s\n", e)
+				fmt.Fprintf(w, "  warning: %s\n", e)
 			}
 		}
 		if err := r.Push(); err != nil {
-			fatal("push after replay failed: " + err.Error())
+			return fmt.Errorf("push after replay failed: %w", err)
 		}
-		fmt.Println("replayed and pushed")
+		fmt.Fprintln(w, "replayed and pushed")
 	} else {
-		fmt.Println(status)
+		fmt.Fprintln(w, status)
 	}
+	return nil
 }

@@ -1,21 +1,30 @@
 package main
 
-func cmdShow(args []string) {
-	_, store := mustInitialized()
+import (
+	"fmt"
+	"io"
+)
+
+func cmdShow(args []string, w io.Writer) error {
+	_, store, err := getInitialized()
+	if err != nil {
+		return err
+	}
 
 	if len(args) == 0 {
-		fatal("usage: bw show <id>")
+		return fmt.Errorf("usage: bw show <id>")
 	}
 	id := args[0]
 
 	iss, err := store.Get(id)
 	if err != nil {
-		fatal(err.Error())
+		return err
 	}
 
 	if hasFlag(args, "--json") {
-		printJSON(iss)
+		fprintJSON(w, iss)
 	} else {
-		printIssue(iss)
+		fprintIssue(w, iss)
 	}
+	return nil
 }

@@ -2,12 +2,16 @@ package main
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
 
-func cmdGraph(args []string) {
-	_, store := mustInitialized()
+func cmdGraph(args []string, w io.Writer) error {
+	_, store, err := getInitialized()
+	if err != nil {
+		return err
+	}
 
 	showAll := hasFlag(args, "--all")
 	jsonOut := hasFlag(args, "--json")
@@ -22,12 +26,12 @@ func cmdGraph(args []string) {
 	}
 
 	if rootID == "" && !showAll {
-		fatal("issue ID required (or use --all for all open issues)")
+		return fmt.Errorf("issue ID required (or use --all for all open issues)")
 	}
 
 	nodes, err := store.Graph(rootID)
 	if err != nil {
-		fatal(err.Error())
+		return err
 	}
 
 	// For --all without a root, filter to non-closed only
@@ -42,13 +46,13 @@ func cmdGraph(args []string) {
 	}
 
 	if jsonOut {
-		printJSON(nodes)
-		return
+		fprintJSON(w, nodes)
+		return nil
 	}
 
 	if len(nodes) == 0 {
-		fmt.Println("no issues in graph")
-		return
+		fmt.Fprintln(w, "no issues in graph")
+		return nil
 	}
 
 	// Build adjacency for tree rendering
@@ -87,11 +91,12 @@ func cmdGraph(args []string) {
 	visited := make(map[string]bool)
 	for i, root := range roots {
 		last := i == len(roots)-1
-		printTree(root, "", last, true, blocked, nodeMap, visited)
+		fprintTree(w, root, "", last, true, blocked, nodeMap, visited)
 	}
+	return nil
 }
 
-func printTree(id, prefix string, last bool, isRoot bool, children map[string][]string, nodes map[string]issue.GraphNode, visited map[string]bool) {
+func fprintTree(w io.Writer, id, prefix string, last bool, isRoot bool, children map[string][]string, nodes map[string]issue.GraphNode, visited map[string]bool) {
 	if visited[id] {
 		return
 	}
@@ -114,7 +119,7 @@ func printTree(id, prefix string, last bool, isRoot bool, children map[string][]
 	if ok {
 		title = n.Title
 	}
-	fmt.Printf("%s%s%s%s %s\n", prefix, connector, id, status, title)
+	fmt.Fprintf(w, "%s%s%s%s %s\n", prefix, connector, id, status, title)
 
 	childPrefix := prefix
 	if !isRoot {
@@ -127,6 +132,6 @@ func printTree(id, prefix string, last bool, isRoot bool, children map[string][]
 
 	kids := children[id]
 	for i, kid := range kids {
-		printTree(kid, childPrefix, i == len(kids)-1, false, children, nodes, visited)
+		fprintTree(w, kid, childPrefix, i == len(kids)-1, false, children, nodes, visited)
 	}
 }

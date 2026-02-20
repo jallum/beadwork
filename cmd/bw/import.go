@@ -4,25 +4,29 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
 
 type importRecord struct {
-	ID           string      `json:"id"`
-	Title        string      `json:"title"`
-	Description  string      `json:"description"`
-	Status       string      `json:"status"`
-	Priority     int         `json:"priority"`
-	IssueType    string      `json:"issue_type"`
-	Owner        string      `json:"owner"`
-	CreatedAt    string      `json:"created_at"`
-	Dependencies []beadsDep  `json:"dependencies"`
+	ID           string     `json:"id"`
+	Title        string     `json:"title"`
+	Description  string     `json:"description"`
+	Status       string     `json:"status"`
+	Priority     int        `json:"priority"`
+	IssueType    string     `json:"issue_type"`
+	Owner        string     `json:"owner"`
+	CreatedAt    string     `json:"created_at"`
+	Dependencies []beadsDep `json:"dependencies"`
 }
 
-func cmdImport(args []string) {
-	r, store := mustInitialized()
+func cmdImport(args []string, w io.Writer) error {
+	r, store, err := getInitialized()
+	if err != nil {
+		return err
+	}
 
 	dryRun := hasFlag(args, "--dry-run")
 
@@ -35,13 +39,13 @@ func cmdImport(args []string) {
 		}
 	}
 	if filePath == "" {
-		fatal("usage: bw import <file> [--dry-run]")
+		return fmt.Errorf("usage: bw import <file> [--dry-run]")
 	}
 
 	// Phase 1: Parse
 	f, err := os.Open(filePath)
 	if err != nil {
-		fatal(err.Error())
+		return err
 	}
 	defer f.Close()
 
@@ -57,12 +61,12 @@ func cmdImport(args []string) {
 		}
 		var rec importRecord
 		if err := json.Unmarshal([]byte(line), &rec); err != nil {
-			fatal(fmt.Sprintf("line %d: %v", lineNum, err))
+			return fmt.Errorf("line %d: %v", lineNum, err)
 		}
 		records = append(records, rec)
 	}
 	if err := scanner.Err(); err != nil {
-		fatal(err.Error())
+		return err
 	}
 
 	// Phase 2: Collision check
@@ -71,26 +75,26 @@ func cmdImport(args []string) {
 	skipped := 0
 	for _, rec := range records {
 		if existing[rec.ID] {
-			fmt.Fprintf(os.Stderr, "skipping: %s already exists\n", rec.ID)
+			fmt.Fprintf(w, "skipping: %s already exists\n", rec.ID)
 			skipped++
 		} else {
 			toImport = append(toImport, rec)
 		}
 	}
 
-	fmt.Printf("importing %d of %d issues", len(toImport), len(records))
+	fmt.Fprintf(w, "importing %d of %d issues", len(toImport), len(records))
 	if skipped > 0 {
-		fmt.Printf(" (%d skipped)", skipped)
+		fmt.Fprintf(w, " (%d skipped)", skipped)
 	}
-	fmt.Println()
+	fmt.Fprintln(w)
 
 	if dryRun {
-		fmt.Println("dry run: no changes made")
-		return
+		fmt.Fprintln(w, "dry run: no changes made")
+		return nil
 	}
 
 	if len(toImport) == 0 {
-		return
+		return nil
 	}
 
 	// Phase 3: Write issues (first pass: set parent from deps, write all)
@@ -125,7 +129,7 @@ func cmdImport(args []string) {
 			}
 		}
 		if err := store.Import(iss); err != nil {
-			fatal(fmt.Sprintf("import %s: %v", rec.ID, err))
+			return fmt.Errorf("import %s: %v", rec.ID, err)
 		}
 	}
 
@@ -149,7 +153,7 @@ func cmdImport(args []string) {
 
 	intent := fmt.Sprintf("import %d issues", len(toImport))
 	if err := r.Commit(intent); err != nil {
-		fatal("commit failed: " + err.Error())
+		return fmt.Errorf("commit failed: %w", err)
 	}
 
 	// Count by status
@@ -161,7 +165,7 @@ func cmdImport(args []string) {
 		}
 		counts[s]++
 	}
-	fmt.Printf("imported %d issues", len(toImport))
+	fmt.Fprintf(w, "imported %d issues", len(toImport))
 	parts := []string{}
 	for _, s := range []string{"open", "in_progress", "closed"} {
 		if c := counts[s]; c > 0 {
@@ -169,9 +173,10 @@ func cmdImport(args []string) {
 		}
 	}
 	if len(parts) > 0 {
-		fmt.Printf(" (%s)", joinParts(parts))
+		fmt.Fprintf(w, " (%s)", joinParts(parts))
 	}
-	fmt.Println()
+	fmt.Fprintln(w)
+	return nil
 }
 
 func joinParts(parts []string) string {
