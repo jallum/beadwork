@@ -35,6 +35,11 @@ func getInitializedRepo() (*repo.Repo, *issue.Store, error) {
 			store.DefaultPriority = &p
 		}
 	}
+	if val, ok := r.GetConfig("id.retries"); ok {
+		if n, err := strconv.Atoi(val); err == nil && n > 0 {
+			store.IDRetries = n
+		}
+	}
 	return r, store, nil
 }
 

@@ -2,9 +2,9 @@ package issue
 
 import (
 	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"sort"
 	"strings"
 	"time"
@@ -86,6 +86,8 @@ type Store struct {
 	FS              *treefs.TreeFS
 	Prefix          string
 	DefaultPriority *int
+	IDRetries       int    // retries per length before bumping; 0 means 10
+	RandReader      io.Reader // random source; nil means crypto/rand.Reader
 }
 
 func NewStore(fs *treefs.TreeFS, prefix string) *Store {
@@ -637,20 +639,35 @@ func (s *Store) Blocked() ([]BlockedIssue, error) {
 
 // --- Internal helpers ---
 
+const base36 = "0123456789abcdefghijklmnopqrstuvwxyz"
+
 func (s *Store) generateID() (string, error) {
 	existing := s.ExistingIDs()
-	for attempts := 0; attempts < 100; attempts++ {
-		b := make([]byte, 3)
-		if _, err := rand.Read(b); err != nil {
-			return "", err
-		}
-		suffix := hex.EncodeToString(b)[:4]
-		id := s.Prefix + "-" + suffix
-		if !existing[id] {
-			return id, nil
+	retries := s.IDRetries
+	if retries <= 0 {
+		retries = 10
+	}
+	rr := s.RandReader
+	if rr == nil {
+		rr = rand.Reader
+	}
+	for length := 3; length <= 8; length++ {
+		for attempt := 0; attempt < retries; attempt++ {
+			b := make([]byte, length)
+			if _, err := io.ReadFull(rr, b); err != nil {
+				return "", err
+			}
+			var suffix strings.Builder
+			for _, v := range b {
+				suffix.WriteByte(base36[int(v)%36])
+			}
+			id := s.Prefix + "-" + suffix.String()
+			if !existing[id] {
+				return id, nil
+			}
 		}
 	}
-	return "", fmt.Errorf("failed to generate unique ID after 100 attempts")
+	return "", fmt.Errorf("failed to generate unique ID after trying lengths 3-8")
 }
 
 func (s *Store) ExistingIDs() map[string]bool {
