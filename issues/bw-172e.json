@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "bw-fba5"
+  ],
   "created": "2026-02-20T06:07:12Z",
   "description": "",
   "id": "bw-172e",
