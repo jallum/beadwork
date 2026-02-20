@@ -1352,6 +1352,15 @@ func TestCreateNoTitle(t *testing.T) {
 	assertContains(t, out, "title is required")
 }
 
+func TestCreateUnquotedMultiWordTitle(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bwFail(t, env.Dir, "create", "Fix", "the", "bug")
+	assertContains(t, out, "unexpected arguments")
+	assertContains(t, out, "quotes")
+}
+
 func TestCreateWithDescription(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
