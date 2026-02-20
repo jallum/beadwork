@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.1 — 2026-02-20
+
+- `bw show` parity: multi-ID support, `--short` flag, `view` alias, rich dependency display with titles and priority
+- New `updated_at`, `closed_at`, and `close_reason` fields tracked across all issue mutations
+- `bw create --labels/-l frontend,urgent` to set labels at creation time
+- Export/import now round-trips `updated_at`, `closed_at`, and `close_reason`
+
 ## 0.5.0 — 2026-02-20
 
 - **Breaking:** Priority scale shifted from 1-5 to 0-4 (P0=highest, default P2); existing repos require `bw upgrade repo`

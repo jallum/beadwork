@@ -33,8 +33,8 @@ bw sync                                    # push to remote
 
 **Working With Issues**
 ```
-bw create <title> [flags]      Create an issue
-bw show <id> [--json]          Show issue details
+bw create <title> [flags]      Create an issue (supports --labels/-l)
+bw show <id>... [--json]       Show issue details (aliases: view)
 bw list [filters] [--json]     List issues
 bw update <id> [flags]         Update an issue
 bw close <id> [--reason <r>]   Close an issue
