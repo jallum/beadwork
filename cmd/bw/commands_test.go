@@ -2314,7 +2314,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	})
 
 	// ════════════════════════════════════════════════════════
-	// Verify: list (default = open) — only C
+	// Verify: list (default = open + in_progress) — B and C
 	// ════════════════════════════════════════════════════════
 	t.Run("list_default", func(t *testing.T) {
 		var buf bytes.Buffer
@@ -2322,11 +2322,14 @@ func TestScenarioFullWorkflow(t *testing.T) {
 			t.Fatalf("list: %v", err)
 		}
 		out := buf.String()
-		if !strings.Contains(out, idC) {
-			t.Errorf("default list should contain C (%s): %q", idC, out)
+		if !strings.Contains(out, idB) {
+			t.Errorf("default list should contain B (%s, in_progress): %q", idB, out)
 		}
-		// A (closed), B (in_progress), D (deferred), E (deferred) should not appear
-		for _, id := range []string{idA, idB, idD, idE} {
+		if !strings.Contains(out, idC) {
+			t.Errorf("default list should contain C (%s, open): %q", idC, out)
+		}
+		// A (closed), D (deferred), E (deferred) should not appear
+		for _, id := range []string{idA, idD, idE} {
 			if strings.Contains(out, id) {
 				t.Errorf("default list should NOT contain %s: %q", id, out)
 			}
@@ -3129,6 +3132,80 @@ func TestParseBlockedArgsJSON(t *testing.T) {
 	}
 }
 
+
+// --- bw-17q: Default list shows open + in_progress ---
+
+func TestCmdListDefaultShowsOpenAndInProgress(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("Open task", issue.CreateOpts{})
+	b, _ := env.Store.Create("WIP task", issue.CreateOpts{})
+	statusIP := "in_progress"
+	env.Store.Update(b.ID, issue.UpdateOpts{Status: &statusIP})
+	c, _ := env.Store.Create("Closed task", issue.CreateOpts{})
+	env.Store.Close(c.ID, "")
+	env.Repo.Commit("create issues")
+
+	var buf bytes.Buffer
+	err := cmdList([]string{}, &buf)
+	if err != nil {
+		t.Fatalf("cmdList: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "Open task") {
+		t.Errorf("default list should show open task: %q", out)
+	}
+	if !strings.Contains(out, "WIP task") {
+		t.Errorf("default list should show in_progress task: %q", out)
+	}
+	if strings.Contains(out, "Closed task") {
+		t.Error("default list should NOT show closed task")
+	}
+}
+
+// --- bw-wdi: --grep flag ---
+
+func TestCmdListGrep(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("Login page broken", issue.CreateOpts{Description: "The form is blank"})
+	env.Store.Create("Update readme", issue.CreateOpts{Description: "Add auth instructions"})
+	env.Store.Create("Fix sidebar", issue.CreateOpts{})
+	env.Repo.Commit("create issues")
+
+	var buf bytes.Buffer
+	err := cmdList([]string{"--grep", "login"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdList --grep: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "Login page broken") {
+		t.Errorf("--grep login should match: %q", out)
+	}
+	if strings.Contains(out, "Update readme") {
+		t.Error("--grep login should NOT match 'Update readme'")
+	}
+}
+
+func TestCmdListGrepShortFlag(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("Login page broken", issue.CreateOpts{})
+	env.Store.Create("Fix sidebar", issue.CreateOpts{})
+	env.Repo.Commit("create issues")
+
+	var buf bytes.Buffer
+	err := cmdList([]string{"-g", "login"}, &buf)
+	if err != nil {
+		t.Fatalf("cmdList -g: %v", err)
+	}
+	if !strings.Contains(buf.String(), "Login page broken") {
+		t.Errorf("-g login should match: %q", buf.String())
+	}
+}
 func init() {
 	os.Setenv("GIT_AUTHOR_NAME", "Test")
 	os.Setenv("GIT_AUTHOR_EMAIL", "test@test.com")

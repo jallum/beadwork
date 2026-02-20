@@ -158,7 +158,9 @@ func (s *Store) Get(id string) (*Issue, error) {
 
 func (s *Store) List(filter Filter) ([]*Issue, error) {
 	statuses := StatusNames()
-	if filter.Status != "" {
+	if len(filter.Statuses) > 0 {
+		statuses = filter.Statuses
+	} else if filter.Status != "" {
 		statuses = []string{filter.Status}
 	}
 
@@ -194,6 +196,13 @@ func (s *Store) List(filter Filter) ([]*Issue, error) {
 		}
 		if filter.Label != "" && !containsStr(issue.Labels, filter.Label) {
 			continue
+		}
+		if filter.Grep != "" {
+			needle := strings.ToLower(filter.Grep)
+			if !strings.Contains(strings.ToLower(issue.Title), needle) &&
+				!strings.Contains(strings.ToLower(issue.Description), needle) {
+				continue
+			}
 		}
 		issues = append(issues, issue)
 	}
@@ -782,8 +791,10 @@ type UpdateOpts struct {
 
 type Filter struct {
 	Status   string
+	Statuses []string
 	Assignee string
 	Priority *int
 	Type     string
 	Label    string
+	Grep     string
 }

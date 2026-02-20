@@ -1672,3 +1672,116 @@ func TestUpdatedAtOnLink(t *testing.T) {
 		t.Error("blocked updated_at should be set after link")
 	}
 }
+
+// --- Statuses filter (bw-17q) ---
+
+func TestListStatuses(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Open task", issue.CreateOpts{})
+	env.CommitIntent("create " + a.ID)
+
+	b, _ := env.Store.Create("WIP task", issue.CreateOpts{})
+	statusIP := "in_progress"
+	env.Store.Update(b.ID, issue.UpdateOpts{Status: &statusIP})
+	env.CommitIntent("create " + b.ID)
+
+	c, _ := env.Store.Create("Closed task", issue.CreateOpts{})
+	env.Store.Close(c.ID, "")
+	env.CommitIntent("close " + c.ID)
+
+	// Statuses=["open","in_progress"] should return both open and in_progress
+	both, err := env.Store.List(issue.Filter{Statuses: []string{"open", "in_progress"}})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(both) != 2 {
+		t.Errorf("got %d issues, want 2 (open + in_progress)", len(both))
+	}
+
+	// Single Status="open" still works (backward compat)
+	open, err := env.Store.List(issue.Filter{Status: "open"})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(open) != 1 {
+		t.Errorf("got %d open, want 1", len(open))
+	}
+
+	// Statuses takes precedence over Status
+	precedence, err := env.Store.List(issue.Filter{
+		Status:   "closed",
+		Statuses: []string{"open"},
+	})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(precedence) != 1 {
+		t.Errorf("got %d issues, want 1 (Statuses should override Status)", len(precedence))
+	}
+	if len(precedence) > 0 && precedence[0].Status != "open" {
+		t.Errorf("got status %q, want open", precedence[0].Status)
+	}
+}
+
+// --- Grep filter (bw-wdi) ---
+
+func TestListGrep(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Login page broken", issue.CreateOpts{Description: "The form is blank"})
+	env.CommitIntent("create " + a.ID)
+	b, _ := env.Store.Create("Update readme", issue.CreateOpts{Description: "Add auth instructions"})
+	env.CommitIntent("create " + b.ID)
+	c, _ := env.Store.Create("Fix sidebar", issue.CreateOpts{})
+	env.CommitIntent("create " + c.ID)
+
+	// Grep matches title
+	login, err := env.Store.List(issue.Filter{Grep: "login"})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(login) != 1 {
+		t.Errorf("grep 'login': got %d, want 1", len(login))
+	}
+
+	// Grep matches description
+	auth, err := env.Store.List(issue.Filter{Grep: "auth"})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(auth) != 1 {
+		t.Errorf("grep 'auth': got %d, want 1", len(auth))
+	}
+
+	// Grep is case-insensitive
+	upper, err := env.Store.List(issue.Filter{Grep: "LOGIN"})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(upper) != 1 {
+		t.Errorf("grep 'LOGIN' (case-insensitive): got %d, want 1", len(upper))
+	}
+
+	// Grep combined with Status filter
+	closedStatus := "closed"
+	env.Store.Update(a.ID, issue.UpdateOpts{Status: &closedStatus})
+	openLogin, err := env.Store.List(issue.Filter{Grep: "login", Status: "open"})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(openLogin) != 0 {
+		t.Errorf("grep 'login' + status 'open': got %d, want 0", len(openLogin))
+	}
+
+	// Grep with no matches
+	none, err := env.Store.List(issue.Filter{Grep: "nonexistent"})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(none) != 0 {
+		t.Errorf("grep 'nonexistent': got %d, want 0", len(none))
+	}
+}
