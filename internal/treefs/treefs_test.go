@@ -10,33 +10,38 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 )
 
-// initTestRepo creates a bare git repo with one commit on the "beadwork" branch.
-func initTestRepo(t *testing.T) string {
+// initGitRepo creates a git repo with one commit on the default branch.
+// Used as the base for both initTestRepo and initEmptyRepo.
+func initGitRepo(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-
-	// Create a normal repo, commit, then we'll use it.
-	run(t, dir, "git", "init", "-b", "main")
+	run(t, dir, "git", "init")
 	run(t, dir, "git", "config", "user.email", "test@test.com")
 	run(t, dir, "git", "config", "user.name", "Test")
 	os.WriteFile(filepath.Join(dir, "README"), []byte("test"), 0644)
 	run(t, dir, "git", "add", ".")
 	run(t, dir, "git", "commit", "-m", "initial")
+	return dir
+}
 
-	// Create orphan beadwork branch with a file
-	run(t, dir, "git", "checkout", "--orphan", "beadwork")
-	run(t, dir, "git", "rm", "-rf", ".")
-	os.MkdirAll(filepath.Join(dir, "issues"), 0755)
-	os.WriteFile(filepath.Join(dir, "issues", "test-1234.json"), []byte(`{"id":"test-1234"}`), 0644)
-	os.WriteFile(filepath.Join(dir, ".bwconfig"), []byte("prefix=test\n"), 0644)
-	os.MkdirAll(filepath.Join(dir, "status", "open"), 0755)
-	os.WriteFile(filepath.Join(dir, "status", "open", "test-1234"), []byte{}, 0644)
-	os.WriteFile(filepath.Join(dir, "status", "open", ".gitkeep"), []byte{}, 0644)
-	run(t, dir, "git", "add", "-A")
-	run(t, dir, "git", "commit", "-m", "init beadwork")
+// initTestRepo creates a git repo with one commit on the "beadwork" orphan
+// branch, populated via TreeFS (no worktree checkout needed).
+func initTestRepo(t *testing.T) string {
+	t.Helper()
+	dir := initGitRepo(t)
 
-	// Switch back to main
-	run(t, dir, "git", "checkout", "main")
+	// Use TreeFS to create the orphan beadwork branch
+	tfs, err := Open(dir, "refs/heads/beadwork")
+	if err != nil {
+		t.Fatalf("Open for init: %v", err)
+	}
+	tfs.WriteFile("issues/test-1234.json", []byte(`{"id":"test-1234"}`))
+	tfs.WriteFile(".bwconfig", []byte("prefix=test\n"))
+	tfs.WriteFile("status/open/test-1234", []byte{})
+	tfs.WriteFile("status/open/.gitkeep", []byte{})
+	if err := tfs.Commit("init beadwork"); err != nil {
+		t.Fatalf("Commit beadwork branch: %v", err)
+	}
 
 	return dir
 }
@@ -44,14 +49,7 @@ func initTestRepo(t *testing.T) string {
 // initEmptyRepo creates a git repo with no beadwork branch.
 func initEmptyRepo(t *testing.T) string {
 	t.Helper()
-	dir := t.TempDir()
-	run(t, dir, "git", "init", "-b", "main")
-	run(t, dir, "git", "config", "user.email", "test@test.com")
-	run(t, dir, "git", "config", "user.name", "Test")
-	os.WriteFile(filepath.Join(dir, "README"), []byte("test"), 0644)
-	run(t, dir, "git", "add", ".")
-	run(t, dir, "git", "commit", "-m", "initial")
-	return dir
+	return initGitRepo(t)
 }
 
 func run(t *testing.T, dir string, name string, args ...string) {
