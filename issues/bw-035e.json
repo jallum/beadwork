@@ -7,7 +7,7 @@
   "id": "bw-035e",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Improve test coverage for cmd/bw/link.go",
   "type": "task"
 }
