@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"strconv"
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
@@ -19,54 +18,44 @@ func cmdUpdate(args []string, w io.Writer) error {
 		return fmt.Errorf("usage: bw update <id> [flags]")
 	}
 	id := args[0]
-	rest := args[1:]
+
+	a := ParseArgs(args[1:], "--title", "--description", "--priority", "--assignee", "--type", "--status")
 
 	opts := issue.UpdateOpts{}
 	var changes []string
 
-	for i := 0; i < len(rest); i++ {
-		switch rest[i] {
-		case "--title":
-			if i+1 < len(rest) {
-				opts.Title = &rest[i+1]
-				changes = append(changes, "title="+rest[i+1])
-				i++
-			}
-		case "--description", "-d":
-			if i+1 < len(rest) {
-				opts.Description = &rest[i+1]
-				changes = append(changes, "description=...")
-				i++
-			}
-		case "--priority", "-p":
-			if i+1 < len(rest) {
-				p, err := strconv.Atoi(rest[i+1])
-				if err != nil {
-					return fmt.Errorf("invalid priority: %s", rest[i+1])
-				}
-				opts.Priority = &p
-				changes = append(changes, "priority="+rest[i+1])
-				i++
-			}
-		case "--assignee", "-a":
-			if i+1 < len(rest) {
-				opts.Assignee = &rest[i+1]
-				changes = append(changes, "assignee="+rest[i+1])
-				i++
-			}
-		case "--type", "-t":
-			if i+1 < len(rest) {
-				opts.Type = &rest[i+1]
-				changes = append(changes, "type="+rest[i+1])
-				i++
-			}
-		case "--status", "-s":
-			if i+1 < len(rest) {
-				opts.Status = &rest[i+1]
-				changes = append(changes, "status="+rest[i+1])
-				i++
-			}
+	if a.Has("--title") {
+		v := a.String("--title")
+		opts.Title = &v
+		changes = append(changes, "title="+v)
+	}
+	if a.Has("--description") {
+		v := a.String("--description")
+		opts.Description = &v
+		changes = append(changes, "description=...")
+	}
+	if a.Has("--priority") {
+		p, _, err := a.IntErr("--priority")
+		if err != nil {
+			return err
 		}
+		opts.Priority = &p
+		changes = append(changes, "priority="+a.String("--priority"))
+	}
+	if a.Has("--assignee") {
+		v := a.String("--assignee")
+		opts.Assignee = &v
+		changes = append(changes, "assignee="+v)
+	}
+	if a.Has("--type") {
+		v := a.String("--type")
+		opts.Type = &v
+		changes = append(changes, "type="+v)
+	}
+	if a.Has("--status") {
+		v := a.String("--status")
+		opts.Status = &v
+		changes = append(changes, "status="+v)
 	}
 
 	iss, err := store.Update(id, opts)
@@ -79,7 +68,7 @@ func cmdUpdate(args []string, w io.Writer) error {
 		return fmt.Errorf("commit failed: %w", err)
 	}
 
-	if hasFlag(args, "--json") {
+	if a.JSON() {
 		fprintJSON(w, iss)
 	} else {
 		fmt.Fprintf(w, "updated %s\n", iss.ID)

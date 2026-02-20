@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"strconv"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
@@ -13,48 +12,23 @@ func cmdCreate(args []string, w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	opts := issue.CreateOpts{}
-	var title string
 
-	for i := 0; i < len(args); i++ {
-		switch args[i] {
-		case "--priority", "-p":
-			if i+1 < len(args) {
-				p, err := strconv.Atoi(args[i+1])
-				if err != nil {
-					return fmt.Errorf("invalid priority: %s", args[i+1])
-				}
-				opts.Priority = p
-				i++
-			}
-		case "--type", "-t":
-			if i+1 < len(args) {
-				opts.Type = args[i+1]
-				i++
-			}
-		case "--assignee", "-a":
-			if i+1 < len(args) {
-				opts.Assignee = args[i+1]
-				i++
-			}
-		case "--description", "-d":
-			if i+1 < len(args) {
-				opts.Description = args[i+1]
-				i++
-			}
-		case "--json":
-			// handled after creation
-		default:
-			if title == "" {
-				title = args[i]
-			} else {
-				title += " " + args[i]
-			}
-		}
-	}
+	a := ParseArgs(args, "--priority", "--type", "--assignee", "--description")
 
+	title := a.PosJoined()
 	if title == "" {
 		return fmt.Errorf("title is required")
+	}
+
+	opts := issue.CreateOpts{
+		Type:        a.String("--type"),
+		Assignee:    a.String("--assignee"),
+		Description: a.String("--description"),
+	}
+	if p, set, err := a.IntErr("--priority"); err != nil {
+		return err
+	} else if set {
+		opts.Priority = p
 	}
 
 	iss, err := store.Create(title, opts)
@@ -67,7 +41,7 @@ func cmdCreate(args []string, w io.Writer) error {
 		return fmt.Errorf("commit failed: %w", err)
 	}
 
-	if hasFlag(args, "--json") {
+	if a.JSON() {
 		fprintJSON(w, iss)
 	} else {
 		fmt.Fprintf(w, "created %s: %s\n", iss.ID, iss.Title)

@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"strconv"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
@@ -14,58 +13,29 @@ func cmdList(args []string, w io.Writer) error {
 		return err
 	}
 
-	filter := issue.Filter{}
-	limit := 10
-	statusSet := false
-	limitSet := false
-	showAll := false
+	a := ParseArgs(args, "--status", "--assignee", "--priority", "--type", "--label", "--limit")
 
-	for i := 0; i < len(args); i++ {
-		switch args[i] {
-		case "--status":
-			if i+1 < len(args) {
-				filter.Status = args[i+1]
-				statusSet = true
-				i++
-			}
-		case "--assignee":
-			if i+1 < len(args) {
-				filter.Assignee = args[i+1]
-				i++
-			}
-		case "--priority":
-			if i+1 < len(args) {
-				p, _ := strconv.Atoi(args[i+1])
-				filter.Priority = p
-				i++
-			}
-		case "--type":
-			if i+1 < len(args) {
-				filter.Type = args[i+1]
-				i++
-			}
-		case "--label":
-			if i+1 < len(args) {
-				filter.Label = args[i+1]
-				i++
-			}
-		case "--limit":
-			if i+1 < len(args) {
-				limit, _ = strconv.Atoi(args[i+1])
-				limitSet = true
-				i++
-			}
-		case "--all":
-			showAll = true
-		}
+	filter := issue.Filter{
+		Status:   a.String("--status"),
+		Assignee: a.String("--assignee"),
+		Priority: a.Int("--priority"),
+		Type:     a.String("--type"),
+		Label:    a.String("--label"),
 	}
+
+	limit := 10
+	if a.Has("--limit") {
+		limit = a.Int("--limit")
+	}
+
+	showAll := a.Bool("--all")
 
 	// Defaults: open status, limit 10. --all overrides both.
 	if showAll {
-		if !limitSet {
+		if !a.Has("--limit") {
 			limit = 0
 		}
-	} else if !statusSet {
+	} else if !a.Has("--status") {
 		filter.Status = "open"
 	}
 
@@ -74,7 +44,7 @@ func cmdList(args []string, w io.Writer) error {
 		return err
 	}
 
-	if hasFlag(args, "--json") {
+	if a.JSON() {
 		if limit > 0 && len(issues) > limit {
 			issues = issues[:limit]
 		}
