@@ -16,7 +16,7 @@ func initTestRepo(t *testing.T) string {
 	dir := t.TempDir()
 
 	// Create a normal repo, commit, then we'll use it.
-	run(t, dir, "git", "init")
+	run(t, dir, "git", "init", "-b", "main")
 	run(t, dir, "git", "config", "user.email", "test@test.com")
 	run(t, dir, "git", "config", "user.name", "Test")
 	os.WriteFile(filepath.Join(dir, "README"), []byte("test"), 0644)
@@ -45,7 +45,7 @@ func initTestRepo(t *testing.T) string {
 func initEmptyRepo(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	run(t, dir, "git", "init")
+	run(t, dir, "git", "init", "-b", "main")
 	run(t, dir, "git", "config", "user.email", "test@test.com")
 	run(t, dir, "git", "config", "user.name", "Test")
 	os.WriteFile(filepath.Join(dir, "README"), []byte("test"), 0644)
