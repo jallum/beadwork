@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T02:20:09Z",
+  "description": "",
+  "id": "bw-a01b",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Improve test coverage for cmd/bw/helpers.go",
+  "type": "task"
+}
