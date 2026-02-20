@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0 — 2026-02-19
+
+- Fix `bw init` in projects with pre-commit hooks (skip hooks for internal beadwork commits)
+- Fix noop updates erroring when no file changes result (e.g., setting an already-set status)
+- Default `bw list` to open issues with limit of 10
+
 ## 0.2.0 — 2026-02-19
 
 - Config system: `.bwconfig` with `bw config get|set|list` and `default.priority` support
