@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
@@ -21,10 +22,14 @@ type CreateArgs struct {
 func parseCreateArgs(raw []string) (CreateArgs, error) {
 	a := ParseArgs(raw, "--priority", "--type", "--assignee", "--description", "--defer")
 	var ca CreateArgs
-	ca.Title = a.PosJoined()
-	if ca.Title == "" {
+	pos := a.Pos()
+	if len(pos) == 0 {
 		return ca, fmt.Errorf("title is required")
 	}
+	if len(pos) > 1 {
+		return ca, fmt.Errorf("unexpected arguments after title: %s\nhint: use quotes for multi-word titles, e.g. bw create \"Fix the bug\"", strings.Join(pos[1:], ", "))
+	}
+	ca.Title = pos[0]
 	ca.Type = a.String("--type")
 	ca.Assignee = a.String("--assignee")
 	ca.Description = a.String("--description")

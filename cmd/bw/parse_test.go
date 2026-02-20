@@ -147,16 +147,39 @@ func TestParseCloseArgsMissingID(t *testing.T) {
 
 // --- parseCreateArgs ---
 
-func TestParseCreateArgs(t *testing.T) {
-	a, err := parseCreateArgs([]string{"My", "title"})
+func TestParseCreateArgsSingleWord(t *testing.T) {
+	a, err := parseCreateArgs([]string{"Fix"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if a.Title != "My title" {
-		t.Errorf("Title = %q, want %q", a.Title, "My title")
+	if a.Title != "Fix" {
+		t.Errorf("Title = %q, want %q", a.Title, "Fix")
 	}
 	if a.JSON {
 		t.Error("expected JSON = false")
+	}
+}
+
+func TestParseCreateArgsQuotedMultiWord(t *testing.T) {
+	a, err := parseCreateArgs([]string{"Fix the bug"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.Title != "Fix the bug" {
+		t.Errorf("Title = %q, want %q", a.Title, "Fix the bug")
+	}
+}
+
+func TestParseCreateArgsExtraPositionalsError(t *testing.T) {
+	_, err := parseCreateArgs([]string{"Fix", "the", "bug"})
+	if err == nil {
+		t.Fatal("expected error for extra positional args")
+	}
+	if !strings.Contains(err.Error(), "unexpected arguments") {
+		t.Errorf("error = %q, want mention of unexpected arguments", err.Error())
+	}
+	if !strings.Contains(err.Error(), "the") || !strings.Contains(err.Error(), "bug") {
+		t.Errorf("error = %q, want mention of extra args", err.Error())
 	}
 }
 
