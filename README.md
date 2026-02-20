@@ -45,6 +45,7 @@ bw label <id> +lab [-lab] ...  Add/remove labels
 **Finding Work**
 ```
 bw ready [--json]              List unblocked issues
+bw blocked [--json]            List issues waiting on dependencies
 ```
 
 **Dependencies**
@@ -65,7 +66,8 @@ bw import <file> [--dry-run]   Import issues from JSONL
 ```
 bw init [--prefix] [--force]   Initialize beadwork
 bw config get|set|list         View/set config options
-bw upgrade [--check] [--yes]   Check for / install updates
+bw upgrade [--check] [--yes]   Check for / install binary updates
+bw upgrade repo                Upgrade repo schema to latest version
 bw onboard                     Print AGENTS.md snippet
 bw prime                       Print workflow context for agents
 ```

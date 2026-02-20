@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0 — 2026-02-20
+
+- **Breaking:** Priority scale shifted from 1-5 to 0-4 (P0=highest, default P2); existing repos require `bw upgrade repo`
+- **Breaking:** `bw create` now requires quoted multi-word titles (no more implicit joining of bare words)
+- Repo schema versioning and migration system; `bw upgrade repo` to apply format upgrades
+- Unknown CLI flags are now rejected instead of silently ignored
+- New `bw blocked` command to list issues waiting on dependencies
+- `bw ready` excludes in-progress issues and supports deferred issues
+- Lossless export/import round-trip with full integration test coverage
+
 ## 0.4.3 — 2026-02-20
 
 - Richer per-command help: descriptions, usage examples, and improved layout
