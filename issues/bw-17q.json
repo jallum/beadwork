@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T20:32:55Z",
+  "description": "## Problem\n\nbw list defaults to filter.Status='open' (list.go:84-85), which hides in_progress work. An agent resuming a session sees 'here is what is ready' but not 'here is what you were already working on'. The Store.List method reads from status/\u003cstatus\u003e/ directories so 'open' only matches status/open/, completely excluding status/in_progress/.\n\n## bd alignment\n\nbd list defaults to showing everything except closed. Our equivalent: default to open + in_progress.\n\n## Implementation\n\n### Data model (internal/issue/issue.go)\n- Add Statuses []string to Filter struct (takes precedence over Status when set)\n- In Store.List: if len(filter.Statuses) \u003e 0 use those; else if filter.Status != '' use that; else all StatusNames()\n\n### CLI (cmd/bw/list.go)\n- Change default (line 84-85) from filter.Status = 'open' to filter.Statuses = []string{'open', 'in_progress'}\n\n### Docs (cmd/bw/command.go)\n- Update list command description to 'Defaults to open and in-progress issues, limit 10.'\n\n## Acceptance criteria\n\n- [ ] bw list with no flags returns both open and in_progress issues\n- [ ] bw list --status open returns only open issues (backward compat)\n- [ ] bw list --status in_progress returns only in_progress issues\n- [ ] bw list --all still works (all statuses, no limit)\n- [ ] bw list --deferred still works\n- [ ] bw list --json includes both statuses by default\n- [ ] bw list --help description mentions 'open and in-progress'\n\n## Test requirements\n\n- Unit test for Store.List with Statuses filter (multiple statuses)\n- Unit test for Store.List with single Status filter (backward compat)\n- Unit test for list command default behavior returning both statuses\n- Existing tests pass (go test ./...)",
+  "id": "bw-17q",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Default bw list to show open and in_progress issues",
+  "type": "feature",
+  "updated_at": "2026-02-20T20:32:55Z"
+}
