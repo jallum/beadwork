@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T04:28:38Z",
+  "description": "",
+  "id": "bw-96c4",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "DRY up CLI argument parsing with Args helper",
+  "type": "task"
+}
