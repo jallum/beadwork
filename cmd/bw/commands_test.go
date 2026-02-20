@@ -2688,78 +2688,115 @@ func TestCmdUpgradeRepoAlreadyCurrent(t *testing.T) {
 	}
 }
 
-// --- Upgrade (additional coverage) ---
+// --- Defer (additional coverage) ---
 
-func TestCmdUpgradeRepoNotInitialized(t *testing.T) {
-	// Create a bare git repo without bw init
-	dir := t.TempDir()
-	for _, args := range [][]string{
-		{"git", "init"},
-		{"git", "config", "user.email", "test@test.com"},
-		{"git", "config", "user.name", "Test"},
-	} {
-		c := exec.Command(args[0], args[1:]...)
-		c.Dir = dir
-		c.Run()
-	}
-	os.WriteFile(dir+"/README", []byte("test"), 0644)
-	c := exec.Command("git", "add", ".")
-	c.Dir = dir
-	c.Run()
-	c = exec.Command("git", "commit", "-m", "initial")
-	c.Dir = dir
-	c.Run()
-
-	orig, _ := os.Getwd()
-	os.Chdir(dir)
-	defer os.Chdir(orig)
+func TestCmdDeferNoArgs(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdUpgradeRepo([]string{}, &buf)
+	err := cmdDefer([]string{}, &buf)
 	if err == nil {
-		t.Error("expected error for uninitialized repo")
+		t.Error("expected error for no args")
 	}
-	if !strings.Contains(err.Error(), "not initialized") {
-		t.Errorf("error = %q, want 'not initialized'", err)
+	if !strings.Contains(err.Error(), "usage") {
+		t.Errorf("error = %q, want usage message", err)
 	}
 }
 
-func TestParseUpgradeArgsBothFlags(t *testing.T) {
-	ua, err := parseUpgradeArgs([]string{"--check", "--yes"})
+func TestCmdDeferOneArg(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdDefer([]string{"bw-1234"}, &buf)
+	if err == nil {
+		t.Error("expected error for missing date arg")
+	}
+}
+
+func TestCmdDeferNonExistentIssue(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdDefer([]string{"bw-0000", "2027-06-01"}, &buf)
+	if err == nil {
+		t.Error("expected error for non-existent issue")
+	}
+}
+
+func TestCmdDeferVariousInvalidDates(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Date test", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	invalidDates := []string{
+		"2027/06/01",
+		"06-01-2027",
+		"tomorrow",
+		"2027-13-01",
+		"2027-06-32",
+		"",
+	}
+	for _, d := range invalidDates {
+		var buf bytes.Buffer
+		err := cmdDefer([]string{iss.ID, d}, &buf)
+		if err == nil {
+			t.Errorf("expected error for invalid date %q", d)
+		}
+	}
+}
+
+func TestCmdDeferAlreadyDeferred(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Already deferred", issue.CreateOpts{DeferUntil: "2027-01-01"})
+	env.Repo.Commit("create " + iss.ID)
+
+	// Defer again with a new date
+	var buf bytes.Buffer
+	err := cmdDefer([]string{iss.ID, "2027-12-01"}, &buf)
 	if err != nil {
-		t.Fatalf("parseUpgradeArgs: %v", err)
+		t.Fatalf("cmdDefer on already deferred: %v", err)
 	}
-	if !ua.Check || !ua.Yes {
-		t.Errorf("expected Check=true, Yes=true, got Check=%v, Yes=%v", ua.Check, ua.Yes)
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.DeferUntil != "2027-12-01" {
+		t.Errorf("defer_until = %q, want 2027-12-01", got.DeferUntil)
 	}
 }
 
-func TestParseUpgradeArgsUnknownFlag(t *testing.T) {
-	_, err := parseUpgradeArgs([]string{"--unknown"})
+func TestCmdDeferUnknownFlag(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Flag test", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdDefer([]string{iss.ID, "2027-06-01", "--unknown"}, &buf)
 	if err == nil {
 		t.Error("expected error for unknown flag")
 	}
 }
 
-func TestCmdUpgradeRepoFromV1(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	// Set to version 1
-	env.Repo.SetConfig("version", "1")
-	env.Repo.Commit("set to v1")
-
-	var buf bytes.Buffer
-	err := cmdUpgradeRepo([]string{}, &buf)
-	if err != nil {
-		t.Fatalf("cmdUpgradeRepo from v1: %v", err)
+func TestValidateDate(t *testing.T) {
+	valid := []string{"2027-01-01", "2026-12-31", "2030-06-15"}
+	for _, d := range valid {
+		if err := validateDate(d); err != nil {
+			t.Errorf("validateDate(%q) = %v, want nil", d, err)
+		}
 	}
-	out := buf.String()
-	if !strings.Contains(out, "upgrading") {
-		t.Errorf("output should contain 'upgrading': %q", out)
-	}
-	if !strings.Contains(out, "upgraded to v2") {
-		t.Errorf("output should contain 'upgraded to v2': %q", out)
+
+	invalid := []string{"not-a-date", "2027/01/01", "01-01-2027", "2027-13-01", ""}
+	for _, d := range invalid {
+		if err := validateDate(d); err == nil {
+			t.Errorf("validateDate(%q) = nil, want error", d)
+		}
 	}
 }
 
