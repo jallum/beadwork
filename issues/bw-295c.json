@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T05:45:08Z",
+  "description": "",
+  "id": "bw-295c",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Fix help output to stdout with exit 0",
+  "type": "task"
+}
