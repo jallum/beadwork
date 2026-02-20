@@ -7,7 +7,7 @@
   "id": "bw-bc8f",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Fix bw graph --all filtering out closed issues",
   "type": "bug"
 }
