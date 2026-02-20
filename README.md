@@ -109,6 +109,38 @@ bw onboard   # prints an AGENTS.md snippet for your project
 bw prime     # prints full workflow context + live project state
 ```
 
+## Migrating Between Beads and Beadwork
+
+Both tools use a shared JSONL interchange format, so migrating is an export/import round-trip. Issue IDs, dependencies, and parent-child relationships are preserved.
+
+### Beads → Beadwork
+
+```bash
+bd export -o issues.jsonl         # export from beads
+bw init                           # initialize beadwork in the same repo
+bw import issues.jsonl            # import into beadwork
+bw sync                           # push the beadwork branch
+```
+
+### Beadwork → Beads
+
+```bash
+bw export > issues.jsonl          # export from beadwork
+bd import -i issues.jsonl         # import into beads
+```
+
+Use `--status open` on export to migrate only open issues, or `--dry-run` on import to preview before committing. Duplicate IDs are skipped automatically.
+
+### Field Mapping
+
+| Beads | Beadwork | Notes |
+|-------|----------|-------|
+| `owner` | `assignee` | |
+| `issue_type` | `type` | |
+| `created_at` | `created` | |
+| `dependencies` | `blocks` / `blocked_by` / `parent` | Flattened into separate fields |
+| — | `labels` | Beadwork-only; not present in beads |
+
 ## Requirements
 
 - Go 1.24+
