@@ -362,6 +362,76 @@ func TestForceReinitInvalidPrefix(t *testing.T) {
 	}
 }
 
+func TestSyncLocalAheadNoDiverge(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	bare := env.NewBareRemote()
+	_ = bare
+
+	// Push initial
+	env.Store.Create("Initial", issue.CreateOpts{})
+	env.CommitIntent("create initial")
+	env.Repo.Sync()
+
+	// Create another issue locally (remote hasn't changed)
+	env.Store.Create("Local only", issue.CreateOpts{Priority: intPtr(2)})
+	env.CommitIntent("create local only")
+
+	status, _, err := env.Repo.Sync()
+	if err != nil {
+		t.Fatalf("Sync: %v", err)
+	}
+	if status != "pushed" {
+		t.Errorf("status = %q, want 'pushed'", status)
+	}
+}
+
+func TestSyncMultipleLocalCommits(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	bare := env.NewBareRemote()
+	_ = bare
+
+	// Push initial
+	env.Store.Create("Initial", issue.CreateOpts{})
+	env.CommitIntent("create initial")
+	env.Repo.Sync()
+
+	// Create several local issues
+	for i := 0; i < 3; i++ {
+		iss, _ := env.Store.Create("Batch issue", issue.CreateOpts{Priority: intPtr(2)})
+		env.CommitIntent("create " + iss.ID)
+	}
+
+	status, _, err := env.Repo.Sync()
+	if err != nil {
+		t.Fatalf("Sync: %v", err)
+	}
+	if status != "pushed" {
+		t.Errorf("status = %q, want 'pushed'", status)
+	}
+
+	all, _ := env.Store.List(issue.Filter{})
+	if len(all) < 4 {
+		t.Errorf("expected at least 4 issues, got %d", len(all))
+	}
+}
+
+func TestPushNoRemote(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("No remote", issue.CreateOpts{})
+	env.CommitIntent("create no remote")
+
+	err := env.Repo.Push()
+	if err == nil {
+		t.Error("expected error when pushing with no remote")
+	}
+}
+
 func init() {
 	// Ensure we don't accidentally run tests against the real repo
 	os.Setenv("GIT_AUTHOR_NAME", "Test")
