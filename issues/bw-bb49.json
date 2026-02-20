@@ -1,0 +1,13 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T02:20:04Z",
+  "description": "",
+  "id": "bw-bb49",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Improve test coverage for cmd/bw/graph.go",
+  "type": "task"
+}
