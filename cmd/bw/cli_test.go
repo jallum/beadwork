@@ -1465,6 +1465,49 @@ func setupGitRepo(t *testing.T, dir string) {
 	cmd.Run()
 }
 
+// --- Upgrade Repo ---
+
+func TestUpgradeRepoCLI(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Downgrade to v0
+	env.Repo.SetConfig("version", "0")
+	env.Repo.Commit("downgrade to v0")
+
+	// Commands should be blocked
+	out := bwFail(t, env.Dir, "list")
+	assertContains(t, out, "upgrade repo")
+
+	// Upgrade the repo
+	out = bw(t, env.Dir, "upgrade", "repo")
+	assertContains(t, out, "upgrading")
+	assertContains(t, out, "upgraded to v1")
+
+	// Commands should work now
+	out = bw(t, env.Dir, "list")
+	assertContains(t, out, "no issues")
+}
+
+func TestUpgradeRepoAlreadyCurrentCLI(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bw(t, env.Dir, "upgrade", "repo")
+	assertContains(t, out, "up to date")
+}
+
+func TestVersionGateNewerRepoCLI(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Repo.SetConfig("version", "99")
+	env.Repo.Commit("future version")
+
+	out := bwFail(t, env.Dir, "list")
+	assertContains(t, out, "newer than this binary")
+}
+
 func init() {
 	os.Setenv("GIT_AUTHOR_NAME", "Test")
 	os.Setenv("GIT_AUTHOR_EMAIL", "test@test.com")

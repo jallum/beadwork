@@ -2290,6 +2290,90 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	})
 }
 
+// --- Version Gate ---
+
+func TestVersionGateBlocksOlderRepo(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Downgrade to v0 by removing version key
+	env.Repo.SetConfig("version", "0")
+	env.Repo.Commit("downgrade to v0")
+
+	var buf bytes.Buffer
+	err := cmdList([]string{}, &buf)
+	if err == nil {
+		t.Fatal("expected error for v0 repo")
+	}
+	if !strings.Contains(err.Error(), "upgrade repo") {
+		t.Errorf("error should mention 'upgrade repo': %v", err)
+	}
+}
+
+func TestVersionGateBlocksNewerRepo(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Set to a future version
+	env.Repo.SetConfig("version", "99")
+	env.Repo.Commit("future version")
+
+	var buf bytes.Buffer
+	err := cmdList([]string{}, &buf)
+	if err == nil {
+		t.Fatal("expected error for v99 repo")
+	}
+	if !strings.Contains(err.Error(), "bw upgrade") {
+		t.Errorf("error should mention 'bw upgrade': %v", err)
+	}
+	if strings.Contains(err.Error(), "upgrade repo") {
+		t.Errorf("error for newer repo should NOT suggest 'upgrade repo': %v", err)
+	}
+}
+
+func TestCmdUpgradeRepoFromV0(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Downgrade to v0
+	env.Repo.SetConfig("version", "0")
+	env.Repo.Commit("downgrade to v0")
+
+	var buf bytes.Buffer
+	err := cmdUpgradeRepo([]string{}, &buf)
+	if err != nil {
+		t.Fatalf("cmdUpgradeRepo: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "upgrading") {
+		t.Errorf("output should contain 'upgrading': %q", out)
+	}
+	if !strings.Contains(out, "upgraded to v1") {
+		t.Errorf("output should contain 'upgraded to v1': %q", out)
+	}
+
+	// Commands should work now
+	buf.Reset()
+	err = cmdList([]string{}, &buf)
+	if err != nil {
+		t.Fatalf("cmdList after upgrade: %v", err)
+	}
+}
+
+func TestCmdUpgradeRepoAlreadyCurrent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdUpgradeRepo([]string{}, &buf)
+	if err != nil {
+		t.Fatalf("cmdUpgradeRepo: %v", err)
+	}
+	if !strings.Contains(buf.String(), "up to date") {
+		t.Errorf("output should contain 'up to date': %q", buf.String())
+	}
+}
+
 func init() {
 	os.Setenv("GIT_AUTHOR_NAME", "Test")
 	os.Setenv("GIT_AUTHOR_EMAIL", "test@test.com")
