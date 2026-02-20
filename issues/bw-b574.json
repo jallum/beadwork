@@ -7,7 +7,7 @@
   "id": "bw-b574",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Ready parity: exclude in_progress + defer support",
   "type": "task"
 }
