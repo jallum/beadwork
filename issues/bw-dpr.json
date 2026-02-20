@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-20T20:49:08Z",
   "created": "2026-02-20T20:32:32Z",
   "description": "## Problem\n\nprime.md line 38 says 'Priority: 1-5 (1=critical, 3=default, 5=backlog)' but code uses 0-4 (P0-P4) with default 2. command.go line 92 help text also says '1-5'. prime.md line 85 lists statuses as 'open, in_progress, closed' but omits 'deferred'.\n\nAgents are getting wrong instructions from bw prime output.\n\n## bd alignment\n\nbd create --help says 'Priority (0-4 or P0-P4, 0=highest)'. Match this wording.\n\n## Files to modify\n\n- prompts/prime.md line 38: change to '0-4 (0=critical, 2=default, 4=backlog). Also accepts P0-P4'\n- prompts/prime.md line 85: change to 'Statuses: open, in_progress, deferred, closed'\n- cmd/bw/command.go lines 92, 131, 157: change --priority help text to 'Priority (0-4 or P0-P4, 0=highest)'\n\n## Acceptance criteria\n\n- [ ] bw prime output shows correct priority range 0-4 with correct default 2\n- [ ] bw prime output lists all four statuses: open, in_progress, deferred, closed\n- [ ] bw create --help shows 'Priority (0-4 or P0-P4, 0=highest)'\n- [ ] bw list --help shows 'Priority (0-4 or P0-P4, 0=highest)'\n- [ ] bw update --help shows 'Priority (0-4 or P0-P4, 0=highest)'\n- [ ] No references to '1-5' priority range remain in docs or help text\n\n## Test requirements\n\n- Existing tests pass (go test ./...)\n- Verify help output strings in prime_test.go and commands_test.go if applicable",
   "id": "bw-dpr",
   "labels": [],
   "priority": 0,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Fix priority/status documentation",
   "type": "bug",
-  "updated_at": "2026-02-20T20:37:45Z"
+  "updated_at": "2026-02-20T20:49:08Z"
 }
