@@ -1335,6 +1335,63 @@ func TestFprintIssue(t *testing.T) {
 	}
 }
 
+func TestFprintIssueFull(t *testing.T) {
+	iss := &issue.Issue{
+		ID:          "test-5678",
+		Title:       "Full issue",
+		Status:      "in_progress",
+		Priority:    1,
+		Type:        "bug",
+		Assignee:    "",
+		Created:     "2024-06-15T12:00:00Z",
+		Labels:      []string{},
+		Blocks:      []string{"test-aaaa"},
+		BlockedBy:   []string{"test-bbbb"},
+		Parent:      "test-cccc",
+		Description: "Line one\nLine two",
+	}
+
+	var buf bytes.Buffer
+	fprintIssue(&buf, iss)
+	out := buf.String()
+	if !strings.Contains(out, "Blocks: test-aaaa") {
+		t.Errorf("missing Blocks in output: %q", out)
+	}
+	if !strings.Contains(out, "Blocked by: test-bbbb") {
+		t.Errorf("missing BlockedBy in output: %q", out)
+	}
+	if !strings.Contains(out, "Parent: test-cccc") {
+		t.Errorf("missing Parent in output: %q", out)
+	}
+	if !strings.Contains(out, "DESCRIPTION") {
+		t.Errorf("missing DESCRIPTION in output: %q", out)
+	}
+	if !strings.Contains(out, "Line one") || !strings.Contains(out, "Line two") {
+		t.Errorf("missing description lines in output: %q", out)
+	}
+	// No assignee → should show "—"
+	if !strings.Contains(out, "—") {
+		t.Errorf("missing dash for empty assignee: %q", out)
+	}
+}
+
+func TestGetInitializedWithDefaultPriority(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Set a default priority config
+	env.Repo.SetConfig("default.priority", "2")
+	env.Repo.Commit("config default.priority=2")
+
+	_, store, err := getInitialized()
+	if err != nil {
+		t.Fatalf("getInitialized: %v", err)
+	}
+	if store.DefaultPriority != 2 {
+		t.Errorf("DefaultPriority = %d, want 2", store.DefaultPriority)
+	}
+}
+
 func TestGetInitializedReturnsError(t *testing.T) {
 	// getRepo / getInitialized should return errors, not crash
 	env := testutil.NewEnv(t)
