@@ -12,7 +12,7 @@
   "id": "bw-4537",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Migrate arg-validation tests from commands_test.go to parse_test.go",
   "type": "task"
 }
