@@ -179,6 +179,10 @@ func fprintIssue(w io.Writer, iss *issue.Issue) {
 	}
 	fmt.Fprintf(w, "Created: %s\n", created)
 
+	if iss.DeferUntil != "" {
+		fmt.Fprintf(w, "Deferred: %s\n", iss.DeferUntil)
+	}
+
 	// Optional metadata
 	if len(iss.Labels) > 0 {
 		fmt.Fprintf(w, "Labels: %s\n", strings.Join(iss.Labels, ", "))

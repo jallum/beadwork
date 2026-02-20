@@ -545,6 +545,12 @@ func TestStatusIcon(t *testing.T) {
 			t.Errorf("StatusIcon(%q) = %q, want %q", tt.status, got, tt.want)
 		}
 	}
+
+	// Deferred status should have snowflake icon
+	got := issue.StatusIcon("deferred")
+	if got != "❄" {
+		t.Errorf("StatusIcon(deferred) = %q, want ❄", got)
+	}
 }
 
 func TestPriorityDot(t *testing.T) {
@@ -1238,5 +1244,170 @@ func TestBlockedClosedIssueExcluded(t *testing.T) {
 		if bi.ID == b.ID {
 			t.Error("closed issue should not appear in blocked list")
 		}
+	}
+}
+
+func TestReadyExcludesInProgress(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Open task", issue.CreateOpts{})
+	env.CommitIntent("create " + a.ID)
+	b, _ := env.Store.Create("In-progress task", issue.CreateOpts{})
+	env.CommitIntent("create " + b.ID)
+
+	// Move B to in_progress
+	status := "in_progress"
+	env.Store.Update(b.ID, issue.UpdateOpts{Status: &status})
+	env.CommitIntent("update " + b.ID)
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[a.ID] {
+		t.Error("open task should be ready")
+	}
+	if ids[b.ID] {
+		t.Error("in_progress task should NOT be ready")
+	}
+}
+
+func TestReadyExcludesDeferred(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Open task", issue.CreateOpts{})
+	env.CommitIntent("create " + a.ID)
+	b, _ := env.Store.Create("Deferred task", issue.CreateOpts{})
+	env.CommitIntent("create " + b.ID)
+
+	// Move B to deferred
+	status := "deferred"
+	deferDate := "2027-06-01"
+	env.Store.Update(b.ID, issue.UpdateOpts{Status: &status, DeferUntil: &deferDate})
+	env.CommitIntent("defer " + b.ID)
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[a.ID] {
+		t.Error("open task should be ready")
+	}
+	if ids[b.ID] {
+		t.Error("deferred task should NOT be ready")
+	}
+}
+
+func TestDeferUntilPersistence(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Deferred at create", issue.CreateOpts{
+		DeferUntil: "2027-03-15",
+	})
+	env.CommitIntent("create " + iss.ID)
+
+	if iss.Status != "deferred" {
+		t.Errorf("status = %q, want deferred", iss.Status)
+	}
+	if iss.DeferUntil != "2027-03-15" {
+		t.Errorf("defer_until = %q, want 2027-03-15", iss.DeferUntil)
+	}
+
+	// Read back to verify persistence
+	got, err := env.Store.Get(iss.ID)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.DeferUntil != "2027-03-15" {
+		t.Errorf("persisted defer_until = %q, want 2027-03-15", got.DeferUntil)
+	}
+	if got.Status != "deferred" {
+		t.Errorf("persisted status = %q, want deferred", got.Status)
+	}
+}
+
+func TestUpdateDeferUntil(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Task", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	// Defer the issue
+	status := "deferred"
+	deferDate := "2027-06-01"
+	updated, err := env.Store.Update(iss.ID, issue.UpdateOpts{
+		Status:     &status,
+		DeferUntil: &deferDate,
+	})
+	if err != nil {
+		t.Fatalf("Update defer: %v", err)
+	}
+	if updated.Status != "deferred" {
+		t.Errorf("status = %q, want deferred", updated.Status)
+	}
+	if updated.DeferUntil != "2027-06-01" {
+		t.Errorf("defer_until = %q, want 2027-06-01", updated.DeferUntil)
+	}
+
+	// Undefer: clear DeferUntil and restore to open
+	openStatus := "open"
+	emptyDefer := ""
+	undeferred, err := env.Store.Update(iss.ID, issue.UpdateOpts{
+		Status:     &openStatus,
+		DeferUntil: &emptyDefer,
+	})
+	if err != nil {
+		t.Fatalf("Update undefer: %v", err)
+	}
+	if undeferred.Status != "open" {
+		t.Errorf("status = %q, want open", undeferred.Status)
+	}
+	if undeferred.DeferUntil != "" {
+		t.Errorf("defer_until = %q, want empty", undeferred.DeferUntil)
+	}
+}
+
+func TestListByDeferredStatus(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Open task", issue.CreateOpts{})
+	env.CommitIntent("create " + a.ID)
+	b, _ := env.Store.Create("Deferred task", issue.CreateOpts{DeferUntil: "2027-01-01"})
+	env.CommitIntent("create " + b.ID)
+
+	// List all — should include both
+	all, _ := env.Store.List(issue.Filter{})
+	if len(all) != 2 {
+		t.Errorf("all = %d, want 2", len(all))
+	}
+
+	// Filter by deferred status
+	deferred, _ := env.Store.List(issue.Filter{Status: "deferred"})
+	if len(deferred) != 1 {
+		t.Errorf("deferred = %d, want 1", len(deferred))
+	}
+	if len(deferred) > 0 && deferred[0].ID != b.ID {
+		t.Errorf("deferred ID = %q, want %q", deferred[0].ID, b.ID)
+	}
+
+	// Filter by open — should not include deferred
+	open, _ := env.Store.List(issue.Filter{Status: "open"})
+	if len(open) != 1 {
+		t.Errorf("open = %d, want 1", len(open))
 	}
 }

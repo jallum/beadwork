@@ -22,6 +22,7 @@ type StatusInfo struct {
 var Statuses = []StatusInfo{
 	{"open", "○"},
 	{"in_progress", "◐"},
+	{"deferred", "❄"},
 	{"closed", "✓"},
 }
 
@@ -68,6 +69,7 @@ type Issue struct {
 	BlockedBy   []string `json:"blocked_by"`
 	Blocks      []string `json:"blocks"`
 	Created     string   `json:"created"`
+	DeferUntil  string   `json:"defer_until,omitempty"`
 	Description string   `json:"description"`
 	ID          string   `json:"id"`
 	Labels      []string `json:"labels"`
@@ -95,16 +97,21 @@ func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
 	}
 
 	now := time.Now().UTC().Format(time.RFC3339)
+	status := "open"
+	if opts.DeferUntil != "" {
+		status = "deferred"
+	}
 	issue := &Issue{
 		Assignee:    opts.Assignee,
 		BlockedBy:   []string{},
 		Blocks:      []string{},
 		Created:     now,
+		DeferUntil:  opts.DeferUntil,
 		Description: opts.Description,
 		ID:          id,
 		Labels:      []string{},
 		Priority:    opts.Priority,
-		Status:      "open",
+		Status:      status,
 		Title:       title,
 		Type:        opts.Type,
 	}
@@ -122,7 +129,7 @@ func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
 	if err := s.writeIssue(issue); err != nil {
 		return nil, err
 	}
-	if err := s.setStatus(id, "open"); err != nil {
+	if err := s.setStatus(id, status); err != nil {
 		return nil, err
 	}
 	return issue, nil
@@ -221,6 +228,9 @@ func (s *Store) Update(id string, opts UpdateOpts) (*Issue, error) {
 	}
 	if opts.Type != nil {
 		issue.Type = *opts.Type
+	}
+	if opts.DeferUntil != nil {
+		issue.DeferUntil = *opts.DeferUntil
 	}
 	if opts.Status != nil {
 		oldStatus := issue.Status
@@ -543,7 +553,7 @@ func (s *Store) Ready() ([]*Issue, error) {
 
 	var ready []*Issue
 	for _, issue := range issues {
-		if issue.Status == "closed" {
+		if issue.Status != "open" {
 			continue
 		}
 		if len(issue.BlockedBy) == 0 {
@@ -723,6 +733,7 @@ type CreateOpts struct {
 	Priority    int
 	Type        string
 	Assignee    string
+	DeferUntil  string
 }
 
 type UpdateOpts struct {
@@ -732,6 +743,7 @@ type UpdateOpts struct {
 	Assignee    *string
 	Type        *string
 	Status      *string
+	DeferUntil  *string
 }
 
 type Filter struct {
