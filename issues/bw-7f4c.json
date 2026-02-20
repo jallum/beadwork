@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T19:09:42Z",
+  "description": "",
+  "id": "bw-7f4c",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Split commands_test.go into per-command test files",
+  "type": "task",
+  "updated_at": "2026-02-20T19:09:42Z"
+}
