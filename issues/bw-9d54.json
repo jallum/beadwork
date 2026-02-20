@@ -7,7 +7,7 @@
   "id": "bw-9d54",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Move AGENTS.md into prompts and remove go:generate",
   "type": "task"
 }
