@@ -1,0 +1,16 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-20T18:55:07Z",
+  "description": "",
+  "id": "bw-4386",
+  "labels": [
+    "coverage"
+  ],
+  "priority": 3,
+  "status": "open",
+  "title": "Increase code coverage for undefer",
+  "type": "task",
+  "updated_at": "2026-02-20T18:55:07Z"
+}
