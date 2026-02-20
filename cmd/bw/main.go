@@ -67,25 +67,31 @@ func main() {
 func usage() {
 	fmt.Fprintf(os.Stderr, `Usage: bw <command> [args]
 
-Commands:
-  init [--prefix] [--force]   Initialize beadwork
+Issues:
   create <title> [flags]      Create an issue
   show <id> [--json]          Show issue details
   list [filters] [--json]     List issues
   update <id> [flags]         Update an issue
   close <id> [--reason <r>]   Close an issue
   reopen <id>                 Reopen a closed issue
-  ready [--json]              List issues with no open blockers
   label <id> +lab [-lab] ...  Add/remove labels
+
+Dependencies:
   link <id> blocks <id>       Create dependency link
   unlink <id> blocks <id>     Remove dependency link
+  ready [--json]              List unblocked issues
   graph <id>|--all [--json]   Dependency graph
-  config get|set|list         View/set config options
+
+Collaboration:
+  sync                        Fetch, rebase/replay, push
   export [--status <s>]       Export issues as JSONL
   import <file> [--dry-run]   Import issues from JSONL
-  sync                        Fetch, rebase/replay, push
+
+Setup & Config:
+  init [--prefix] [--force]   Initialize beadwork
+  config get|set|list         View/set config options
+  upgrade [--check] [--yes]   Check for / install updates
   onboard                     Print AGENTS.md snippet
   prime                       Print workflow context for agents
-  upgrade [--check] [--yes]   Check for / install updates
 `)
 }
