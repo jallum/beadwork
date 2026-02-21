@@ -9,7 +9,6 @@ import (
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/repo"
 	"github.com/jallum/beadwork/internal/template"
-
 	"github.com/jallum/beadwork/prompts"
 )
 
@@ -48,28 +47,16 @@ func cmdPrime(store *issue.Store, _ []string, w Writer) error {
 }
 
 func primeState(store *issue.Store, w Writer, md func(string)) {
-	snap, err := issue.NewSnapshot(store)
-	if err != nil {
-		return
-	}
+	openCount := store.StatusCount("open")
+	ipCount := store.StatusCount("in_progress")
+	closedCount := store.StatusCount("closed")
 
-	ready := snap.Ready()
+	ready, _ := store.Ready()
 
-	// Derive counts and in-progress list from the single snapshot.
-	openCount := 0
-	ipCount := 0
-	closedCount := 0
+	// Load in-progress issues only if there are any.
 	var inProgress []*issue.Issue
-	for _, iss := range snap.Issues {
-		switch iss.Status {
-		case "open":
-			openCount++
-		case "in_progress":
-			ipCount++
-			inProgress = append(inProgress, iss)
-		case "closed":
-			closedCount++
-		}
+	if ipCount > 0 {
+		inProgress, _ = store.List(issue.Filter{Status: "in_progress"})
 	}
 
 	// Find max ID length for column alignment.

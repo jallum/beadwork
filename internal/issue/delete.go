@@ -20,14 +20,11 @@ func (s *Store) DeletePreview(id string) (*DeletePlan, error) {
 		return nil, err
 	}
 
-	// Find children using snapshot instead of a second List call.
-	snap, err := NewSnapshot(s)
-	if err != nil {
-		return nil, err
-	}
 	var children []string
-	for _, child := range snap.Children(id) {
-		children = append(children, child.ID)
+	if ch, err := s.Children(id); err == nil {
+		for _, child := range ch {
+			children = append(children, child.ID)
+		}
 	}
 
 	return &DeletePlan{
@@ -81,14 +78,11 @@ func (s *Store) Delete(id string) (*Issue, error) {
 	}
 
 	// Orphan children: clear Parent field on child issues.
-	// Use snapshot for the child lookup to avoid a second List call.
-	snap, err := NewSnapshot(s)
-	if err != nil {
-		return nil, err
-	}
-	for _, child := range snap.Children(id) {
-		child.Parent = ""
-		s.writeIssue(child)
+	if ch, err := s.Children(id); err == nil {
+		for _, child := range ch {
+			child.Parent = ""
+			s.writeIssue(child)
+		}
 	}
 
 	// Remove status marker

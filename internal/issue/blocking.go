@@ -186,11 +186,25 @@ func (s *Store) Tips(roots []string, edges map[string][]string) ([]*Issue, error
 }
 
 func (s *Store) Ready() ([]*Issue, error) {
-	snap, err := NewSnapshot(s)
-	if err != nil {
-		return nil, err
+	openIDs := s.IDsWithStatus("open")
+	var ready []*Issue
+	for _, id := range openIDs {
+		iss, err := s.readIssue(id)
+		if err != nil {
+			continue
+		}
+		allResolved := true
+		for _, blockerID := range iss.BlockedBy {
+			if !s.IsClosed(blockerID) {
+				allResolved = false
+				break
+			}
+		}
+		if allResolved {
+			ready = append(ready, iss)
+		}
 	}
-	return snap.Ready(), nil
+	return ready, nil
 }
 
 // BlockedIssue pairs an issue with the IDs of its open (unresolved) blockers.
@@ -205,13 +219,32 @@ type CloseResult struct {
 	Unblocked []*Issue `json:"unblocked"`
 }
 
-// Blocked returns open issues that have at least one open blocker.
+// Blocked returns non-closed issues that have at least one open blocker.
 func (s *Store) Blocked() ([]BlockedIssue, error) {
-	snap, err := NewSnapshot(s)
-	if err != nil {
-		return nil, err
+	var ids []string
+	ids = append(ids, s.IDsWithStatus("open")...)
+	ids = append(ids, s.IDsWithStatus("in_progress")...)
+
+	var blocked []BlockedIssue
+	for _, id := range ids {
+		iss, err := s.readIssue(id)
+		if err != nil {
+			continue
+		}
+		if len(iss.BlockedBy) == 0 {
+			continue
+		}
+		var open []string
+		for _, blockerID := range iss.BlockedBy {
+			if !s.IsClosed(blockerID) {
+				open = append(open, blockerID)
+			}
+		}
+		if len(open) > 0 {
+			blocked = append(blocked, BlockedIssue{Issue: iss, OpenBlockers: open})
+		}
 	}
-	return snap.Blocked(), nil
+	return blocked, nil
 }
 
 // NewlyUnblocked returns open issues from the given issue's Blocks list
