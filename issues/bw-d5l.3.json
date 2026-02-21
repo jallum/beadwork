@@ -3,7 +3,7 @@
   "blocked_by": [],
   "blocks": [],
   "created": "2026-02-21T15:31:46Z",
-  "description": "",
+  "description": "Ref: parent epic bw-d5l, Phase 3.\n\nDepends on Phase 2 (bw-d5l.2) — store injection must be in place so there's one store per invocation.\n\n1. Add `cache map[string]*Issue` field to Store struct.\n2. readIssue: check cache first, return cached copy on hit. On miss, read from FS, populate cache, return.\n3. writeIssue: write to FS first (preserving error semantics), then update cache on success.\n4. Delete: after FS removal, evict from cache via delete(s.cache, id).\n5. Add ClearCache() method that sets cache to nil. Call it after sync/rebase in the sync command.\n6. All existing tests must pass unchanged — the cache is an internal optimization invisible to callers.\n7. Add a targeted test: create an issue, read it twice, confirm only one FS read (or confirm cache hit via a second read returning the same pointer).",
   "id": "bw-d5l.3",
   "labels": [],
   "parent": "bw-d5l",
