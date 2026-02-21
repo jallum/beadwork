@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-21T03:10:53Z",
+  "description": "delete.go lines 54-70: the delete preview indents detail lines (issue info, dependency links, children) with literal '  ' in format strings. Use w.Push(2)/w.Pop() instead. Four fmt.Fprintf calls to convert.",
+  "id": "bw-jho.1",
+  "labels": [],
+  "parent": "bw-jho",
+  "priority": 2,
+  "status": "open",
+  "title": "delete.go: replace hardcoded indentation with Writer Push/Pop",
+  "type": "task",
+  "updated_at": "2026-02-21T03:10:53Z"
+}
