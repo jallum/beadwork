@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-21T16:03:24Z",
+  "description": "",
+  "id": "bw-m1m",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Store gains Committer: eliminate two-value return pattern",
+  "type": "task",
+  "updated_at": "2026-02-21T16:03:24Z"
+}
