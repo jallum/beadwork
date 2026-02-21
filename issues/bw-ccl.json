@@ -2,6 +2,7 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T22:04:08Z",
   "created": "2026-02-21T21:16:26Z",
   "description": "",
   "id": "bw-ccl",
@@ -13,8 +14,8 @@
     }
   ],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Introduce Snapshot for single-load graph queries",
   "type": "epic",
-  "updated_at": "2026-02-21T21:16:42Z"
+  "updated_at": "2026-02-21T22:04:08Z"
 }
