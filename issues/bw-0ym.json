@@ -7,8 +7,8 @@
   "id": "bw-0ym",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Refactor issue.go into smaller, idiomatic Go files",
   "type": "task",
-  "updated_at": "2026-02-21T19:33:40Z"
+  "updated_at": "2026-02-21T19:34:06Z"
 }
