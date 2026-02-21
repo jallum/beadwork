@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-21T16:50:59Z",
+  "description": "",
+  "id": "bw-gtj",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Template processor: strip plain HTML comments",
+  "type": "task",
+  "updated_at": "2026-02-21T16:50:59Z"
+}
