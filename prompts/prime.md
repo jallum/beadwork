@@ -11,7 +11,7 @@ Issues have **status** (open → in_progress → closed, or deferred), **priorit
 ## Working
 
 - Claim work with `bw update <id> --status in_progress` before starting.
-- When you learn something a future session needs to know, `bw comments add <id> "what happened"`.
+- Record progress as you go — `bw comments add <id> "what happened"`. Context in your working memory can disappear without warning. Comments persist.
 - If you discover new work mid-task, create an issue. Don't create issues for things you'll finish in the same breath.
 - `bw close <id>` when done. Use `--reason` if the resolution isn't obvious.
 - Before ending your session: commit code, `bw sync`, `git push`. Nothing should exist only in your context window.
