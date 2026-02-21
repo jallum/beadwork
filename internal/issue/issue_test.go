@@ -2332,3 +2332,101 @@ func TestUpdateParentNonexistentRejected(t *testing.T) {
 		t.Fatal("expected error for nonexistent parent")
 	}
 }
+
+func TestNewlyUnblockedSingle(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Close(a.ID, "")
+	env.CommitIntent("close")
+
+	unblocked, err := env.Store.NewlyUnblocked(a.ID)
+	if err != nil {
+		t.Fatalf("NewlyUnblocked: %v", err)
+	}
+	if len(unblocked) != 1 || unblocked[0].ID != b.ID {
+		t.Errorf("got %d unblocked, want [%s]", len(unblocked), b.ID)
+	}
+}
+
+func TestNewlyUnblockedMultipleBlockers(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker A", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+	c, _ := env.Store.Create("Blocker C", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Link(c.ID, b.ID)
+	env.Store.Close(a.ID, "")
+	env.CommitIntent("close")
+
+	unblocked, err := env.Store.NewlyUnblocked(a.ID)
+	if err != nil {
+		t.Fatalf("NewlyUnblocked: %v", err)
+	}
+	if len(unblocked) != 0 {
+		t.Errorf("got %d unblocked, want 0 (C still open)", len(unblocked))
+	}
+}
+
+func TestNewlyUnblockedNoBlocks(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("No deps", issue.CreateOpts{})
+	env.Store.Close(a.ID, "")
+	env.CommitIntent("close")
+
+	unblocked, err := env.Store.NewlyUnblocked(a.ID)
+	if err != nil {
+		t.Fatalf("NewlyUnblocked: %v", err)
+	}
+	if len(unblocked) != 0 {
+		t.Errorf("got %d unblocked, want 0", len(unblocked))
+	}
+}
+
+func TestNewlyUnblockedSkipsClosed(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Already closed", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Close(b.ID, "")
+	env.Store.Close(a.ID, "")
+	env.CommitIntent("close")
+
+	unblocked, err := env.Store.NewlyUnblocked(a.ID)
+	if err != nil {
+		t.Fatalf("NewlyUnblocked: %v", err)
+	}
+	if len(unblocked) != 0 {
+		t.Errorf("got %d unblocked, want 0 (B is closed)", len(unblocked))
+	}
+}
+
+func TestNewlyUnblockedMultiple(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked B", issue.CreateOpts{})
+	c, _ := env.Store.Create("Blocked C", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Link(a.ID, c.ID)
+	env.Store.Close(a.ID, "")
+	env.CommitIntent("close")
+
+	unblocked, err := env.Store.NewlyUnblocked(a.ID)
+	if err != nil {
+		t.Fatalf("NewlyUnblocked: %v", err)
+	}
+	if len(unblocked) != 2 {
+		t.Errorf("got %d unblocked, want 2", len(unblocked))
+	}
+}

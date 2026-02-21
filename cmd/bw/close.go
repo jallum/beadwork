@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/jallum/beadwork/internal/issue"
 )
 
 type CloseArgs struct {
@@ -41,6 +43,11 @@ func cmdClose(args []string, w Writer) error {
 		return err
 	}
 
+	unblocked, err := store.NewlyUnblocked(iss.ID)
+	if err != nil {
+		return err
+	}
+
 	intent := fmt.Sprintf("close %s", iss.ID)
 	if ca.Reason != "" {
 		intent += fmt.Sprintf(" reason=%q", ca.Reason)
@@ -50,9 +57,19 @@ func cmdClose(args []string, w Writer) error {
 	}
 
 	if ca.JSON {
-		fprintJSON(w, iss)
+		result := issue.CloseResult{
+			Issue:     iss,
+			Unblocked: unblocked,
+		}
+		if result.Unblocked == nil {
+			result.Unblocked = []*issue.Issue{}
+		}
+		fprintJSON(w, result)
 	} else {
 		fmt.Fprintf(w, "closed %s: %s\n", iss.ID, iss.Title)
+		for _, u := range unblocked {
+			fmt.Fprintf(w, "  unblocked %s: %s\n", u.ID, u.Title)
+		}
 	}
 	return nil
 }

@@ -783,6 +783,12 @@ type BlockedIssue struct {
 	OpenBlockers []string `json:"open_blockers"`
 }
 
+// CloseResult pairs a closed issue with any issues that became unblocked.
+type CloseResult struct {
+	Issue     *Issue   `json:"issue"`
+	Unblocked []*Issue `json:"unblocked"`
+}
+
 // Blocked returns open issues that have at least one open blocker.
 func (s *Store) Blocked() ([]BlockedIssue, error) {
 	issues, err := s.List(Filter{})
@@ -814,6 +820,50 @@ func (s *Store) Blocked() ([]BlockedIssue, error) {
 		}
 	}
 	return blocked, nil
+}
+
+// NewlyUnblocked returns open issues from the given issue's Blocks list
+// whose blockers are now all closed. Call after closing an issue to discover
+// which downstream issues became actionable.
+func (s *Store) NewlyUnblocked(id string) ([]*Issue, error) {
+	id, err := s.resolveID(id)
+	if err != nil {
+		return nil, err
+	}
+	blocker, err := s.readIssue(id)
+	if err != nil {
+		return nil, err
+	}
+	if len(blocker.Blocks) == 0 {
+		return nil, nil
+	}
+
+	var unblocked []*Issue
+	for _, blockedID := range blocker.Blocks {
+		iss, err := s.readIssue(blockedID)
+		if err != nil {
+			continue
+		}
+		if iss.Status == "closed" {
+			continue
+		}
+		allResolved := true
+		for _, depID := range iss.BlockedBy {
+			dep, err := s.readIssue(depID)
+			if err != nil {
+				allResolved = false
+				break
+			}
+			if dep.Status != "closed" {
+				allResolved = false
+				break
+			}
+		}
+		if allResolved {
+			unblocked = append(unblocked, iss)
+		}
+	}
+	return unblocked, nil
 }
 
 // --- Internal helpers ---
