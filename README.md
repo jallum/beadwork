@@ -7,39 +7,40 @@ Filesystem-native issue tracking for AI coding agents. Issues are JSON files, st
 
 ## Install
 
-Download a prebuilt binary from [releases](https://github.com/jallum/beadwork/releases/latest), or build from source:
-
 ```bash
-go install github.com/jallum/beadwork/cmd/bw@latest
+curl -fsSL https://raw.githubusercontent.com/jallum/beadwork/main/install.sh | sh
 ```
 
-To update an existing install:
-
-```bash
-bw upgrade
-```
+Or download a binary from [releases](https://github.com/jallum/beadwork/releases/latest). To update an existing install: `bw upgrade`.
 
 ## Quick Start
 
 ```bash
-bw init                                    # initialize in any git repo
-bw create "Fix auth bug" --type task -p 1  # create an issue
-bw ready                                   # list unblocked work
-bw close bw-a1b2                           # close it
-bw sync                                    # push to remote
+bw init                                         # initialize in any git repo
+bw create "Fix auth bug" --type bug -p 1        # create an issue
+bw ready                                        # list unblocked work
+bw comments add bw-a1b2 "Fixed in latest deploy"  # add a comment
+bw close bw-a1b2                                # close it
+bw sync                                         # push to remote
 ```
 
 ## Commands
 
 **Working With Issues**
 ```
-bw create <title> [flags]      Create an issue (supports --labels/-l)
-bw show <id>... [--json]       Show issue details (aliases: view)
-bw list [filters] [--json]     List issues
-bw update <id> [flags]         Update an issue
-bw close <id> [--reason <r>]   Close an issue
-bw reopen <id>                 Reopen a closed issue
-bw label <id> +lab [-lab] ...  Add/remove labels
+bw create <title> [flags]           Create an issue (--parent, --type, -p)
+bw show <id>... [--short] [--json]  Show issue details (aliases: view)
+bw list [filters] [--json]          List issues (--grep, --all, --deferred)
+bw update <id> [flags]              Update an issue (--parent to set/clear)
+bw close <id> [--reason <r>]        Close an issue
+bw reopen <id>                      Reopen a closed issue
+bw delete <id> [--force]            Delete an issue (preview by default)
+bw comments <id>                    List comments on an issue
+bw comments add <id> <text>         Add a comment (--author)
+bw label <id> +lab [-lab] ...       Add/remove labels
+bw defer <id> <date>                Defer until a date
+bw undefer <id>                     Restore a deferred issue
+bw history <id> [--limit N]         Show commit history for an issue
 ```
 
 **Finding Work**
@@ -92,9 +93,12 @@ labels/
 blocks/
   bw-a1b2/
     bw-c3d4          (0 bytes)
+parent/
+  bw-a1b2/
+    bw-c3d4          (0 bytes)
 ```
 
-Every listing query is a directory read. Two agents working on different issues never touch the same file.
+Every listing query is a directory read. Parent-child relationships use the same marker pattern, with cycle detection preventing circular hierarchies. Two agents working on different issues never touch the same file.
 
 ### Sync
 
@@ -104,6 +108,8 @@ Every CLI operation commits with a structured message that doubles as a replayab
 create bw-a1b2 p1 task "Fix auth bug"
 close bw-a1b2 reason="completed"
 link bw-a1b2 blocks bw-c3d4
+delete bw-a1b2
+comment bw-a1b2 "Fixed in latest deploy"
 ```
 
 `bw sync` fetches, rebases, and pushes. If rebase conflicts, it replays intents from commit messages against the current remote state. No merge drivers, no lock files, no custom conflict resolution.
@@ -144,11 +150,11 @@ Use `--status open` on export to migrate only open issues, or `--dry-run` on imp
 | `issue_type` | `type` | |
 | `created_at` | `created` | |
 | `dependencies` | `blocks` / `blocked_by` / `parent` | Flattened into separate fields |
+| `comments` | `comments` | Text, author, timestamp preserved |
 | — | `labels` | Beadwork-only; not present in beads |
 
 ## Requirements
 
-- Go 1.24+
 - Git
 
 ## License
