@@ -8,9 +8,15 @@
   "description": "Use the line wrapping utility to wrap description, comment text, and other long-form fields in bw show output. Match bd's wrapping behavior.",
   "id": "bw-f7a",
   "labels": [],
+  "comments": [
+    {
+      "text": "Added Width() to Writer interface (colorWriter returns term.GetSize, plainWriter returns 0). fprintIssue wraps description at width-2, fprintComments wraps comment text at width-4. Two new tests verify wrapping with a fixedWidthWriter test helper.",
+      "timestamp": "2026-02-21T02:32:58Z"
+    }
+  ],
   "priority": 2,
   "status": "in_progress",
   "title": "Wrap long text in show output",
   "type": "task",
-  "updated_at": "2026-02-21T02:28:28Z"
+  "updated_at": "2026-02-21T02:32:58Z"
 }
