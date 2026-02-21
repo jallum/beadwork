@@ -39,7 +39,7 @@ bw sync                                # Fetch, merge, push
 
 ## Parallel Agents
 
-Multiple agents need separate git worktrees to avoid file conflicts. `bw` itself is concurrent-safe — issue state is shared across all worktrees. Claim work (`--status in_progress` with `--assignee`) before starting so other agents skip it.
+Multiple agents need separate git worktrees to avoid file conflicts. `bw` itself is concurrent-safe — issue state is shared across all worktrees. Claim work (`--status in_progress` with `--assignee <agent-id>`) before starting so other agents skip it.
 
 <!-- END -->
 <!-- IF workflow.review == pr -->
