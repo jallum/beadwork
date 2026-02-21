@@ -94,7 +94,7 @@ Every task gets a ticket — even small ones. Tickets are cheap (`bw create "Tit
 
 ## Working in Parallel
 
-Beadwork's issue state is concurrency-safe — multiple workers can update issues simultaneously. The working tree is not. Working on two tasks in the same worktree is like cooking two meals with the same unwashed pans. Each logical block of work (a single issue, or an epic with its children) gets its own worktree, named after the ticket or epic it serves. The name signals purpose and lifecycle — a worktree has a beginning, a middle, and an end.
+Beadwork's issue state is concurrency-safe — multiple workers can update issues simultaneously. The working tree is not. Working on two tasks in the same worktree is like cooking two meals with the same unwashed pans. Each logical block of work (a single issue, or an epic with its children) gets its own worktree, named after the ticket or epic it serves. The worktree's branch is where the work lives — perform analysis and commit **there**. The name signals purpose and lifecycle — a worktree has a beginning, a middle, and an end.
 
 `bw start --assign <agent-id>` claims work with a specific identity so others skip it. Comments and issues are the shared communication layer — leave implementation notes, flag constraints, record decisions other workers need.
 
