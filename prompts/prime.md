@@ -84,7 +84,7 @@ Comments (`bw comments add <id> "..."`) are durable context — breadcrumbs for 
 
 `bw ready` refreshes this view between sessions. `bw blocked` shows what's waiting. `bw show <id>` for detail. `bw history <id>` for previous sessions.
 
-`bw show <id>` is the natural first step when picking up work — the issue may already have a description, comments, or plans from a previous session. `bw start <id>` claims it (sets status, assigns you, refuses blocked work). `--assign <agent-id>` claims on behalf of a specific agent. `bw close <id>` marks it done. `bw sync` pushes to the remote.
+`bw show <id>` is the natural first step when picking up work — the issue may already have a description, comments, or plans from a previous session. `bw start <id>` claims it (sets status, assigns you, refuses blocked work). `--assignee <agent-id>` claims on behalf of a specific agent. `bw close <id>` marks it done. `bw sync` pushes to the remote.
 
 Land the work: code that isn't committed, issues that aren't closed, and state that isn't synced don't exist to the next session or to other workers. Committing and closing are part of completing a task in this project — not a separate action that requires additional permission. Reference the issue ID in commit messages to connect the code change to its context.
 
