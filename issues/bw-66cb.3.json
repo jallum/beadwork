@@ -2,14 +2,16 @@
   "assignee": "claude",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T13:54:28Z",
+  "close_reason": "Added --only flag, removed --short",
   "created": "2026-02-21T13:29:27Z",
   "description": "Add --only flag to bw show that accepts a comma-separated list of section names to display. Sections: summary (header line), description, comments, blockedby, blocks, labels, parent. \n\nExample: bw show bw-abc --only summary,blockedby\n\nWhen --only is specified, show only the requested sections. When omitted, show all sections (current default behavior).\n\nThis lets agents and scripts get targeted output without parsing the full show output. Particularly useful for getting just the dependency context (--only blockedby,blocks) or just the description (--only description).",
   "id": "bw-66cb.3",
   "labels": [],
   "parent": "bw-66cb",
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add --only flag to show for section filtering",
   "type": "task",
-  "updated_at": "2026-02-21T13:50:27Z"
+  "updated_at": "2026-02-21T13:54:28Z"
 }
