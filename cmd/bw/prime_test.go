@@ -21,9 +21,6 @@ func TestCmdPrimeBasic(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}
-	if !strings.Contains(buf.String(), "Current State") {
-		t.Errorf("output missing 'Current State': %q", buf.String())
-	}
 	if !strings.Contains(buf.String(), "1 open") {
 		t.Errorf("output missing '1 open': %q", buf.String())
 	}

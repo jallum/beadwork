@@ -1154,7 +1154,6 @@ func TestPrimeOutput(t *testing.T) {
 	env.CommitIntent("create task")
 
 	out := bw(t, env.Dir, "prime")
-	assertContains(t, out, "Current State")
 	assertContains(t, out, "1 open")
 	assertContains(t, out, "Ready for work:")
 }

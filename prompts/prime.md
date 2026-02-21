@@ -59,21 +59,19 @@ Issues have **status** (open → in_progress → closed, or deferred), **priorit
 
 Issues can form hierarchies: an epic with child tasks (`--parent <epic>`), wired together with dependencies (`bw dep add <blocker> blocks <blocked>`). Blocked issues can't be started. When a dependency closes, newly unblocked work surfaces automatically via `bw ready`.
 
-`bw show <id>` is more than a detail view — its BLOCKED BY section walks the full dependency tree down to the leaves, then surfaces only the issues that are actionable *right now*. If A depends on B which depends on C which depends on D, and D is the only open leaf, BLOCKED BY shows D — not the whole chain. As issues close, the next layer surfaces. It's like `bw ready` scoped to a specific issue.
+`bw show <id>` is more than a detail view — its BLOCKED BY section walks the full dependency tree down to the leaves, then surfaces only the issues that are actionable _right now_. If A depends on B which depends on C which depends on D, and D is the only open leaf, BLOCKED BY shows D — not the whole chain. As issues close, the next layer surfaces. It's like `bw ready` scoped to a specific issue.
 
 Comments serve double duty. They're breadcrumbs for your future self — context that survives compaction — and they're messages to anyone else working in the same project. An implementation note you leave on an issue can inform a collaborator's approach, flag a deviation from the original plan, or express a constraint that downstream work needs to account for.
 
 ## Finding and Doing Work
 
-`bw ready` shows open issues with no unresolved blockers, sorted by priority. `bw blocked` shows what's waiting. `bw show <id>` for full detail on any issue. `bw history <id>` to see what happened in previous sessions.
+<!-- STATE -->
+
+`bw ready` refreshes this view between sessions — open issues with no unresolved blockers, sorted by priority. `bw blocked` shows what's waiting on dependencies. `bw show <id>` for full detail. `bw history <id>` for what happened in previous sessions.
 
 `bw start <id>` claims an issue — it sets status, assigns you, and won't let you start something that's still blocked. Use `--assign <agent-id>` to claim work on behalf of a specific agent. `bw close <id>` marks it done. `bw sync` pushes state to the remote so nothing exists only in your local copy.
 
 When you discover new work mid-task, `bw create "Title" -p 2 -t task` captures it. For larger efforts, structuring work as an epic with children and dependencies means `bw ready` becomes your plan — it feeds you the next step automatically, and that plan survives across sessions.
-
-## Commands
-
-Every command supports `--help`. Read commands accept `--json`. `bw --help` lists everything, but common operations: `bw list --grep "auth"` or filter by `--status`, `--label`, `--assignee`. `bw label <id> +bug -wontfix`. `bw defer <id> 2026-03-01`. `bw dep remove <id> blocks <id>`. `bw delete <id>` (previews first; `--force` to confirm).
 
 <!-- IF workflow.agents == multi -->
 
@@ -91,3 +89,7 @@ Beadwork's issue state is concurrency-safe — multiple workers can read and upd
 This project uses pull requests for review. Work on a feature branch, push when ready, and open a PR. Referencing the beadwork issue ID in the PR description connects the code change to its context.
 
 <!-- END -->
+
+## Commands
+
+Every command supports `--help`. Read commands accept `--json`. `bw --help` lists everything, but common operations: `bw list --grep "auth"` or filter by `--status`, `--label`, `--assignee`. `bw label <id> +bug -wontfix`. `bw defer <id> 2026-03-01`. `bw dep remove <id> blocks <id>`. `bw delete <id>` (previews first; `--force` to confirm).
