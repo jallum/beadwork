@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/jallum/beadwork/internal/wrap"
 )
 
 type CommentsArgs struct {
@@ -112,14 +114,22 @@ func cmdComments(args []string, w Writer) error {
 	}
 
 	fmt.Fprintf(w, "Comments on %s:\n", w.Style(iss.ID, Cyan))
+	w.Push(2)
 	for _, c := range iss.Comments {
 		ts := trimDate(c.Timestamp)
 		if c.Author != "" {
-			fmt.Fprintf(w, "\n  %s %s\n", w.Style(ts, Dim), w.Style(c.Author, Bold))
+			fmt.Fprintf(w, "\n%s %s\n", w.Style(ts, Dim), w.Style(c.Author, Bold))
 		} else {
-			fmt.Fprintf(w, "\n  %s\n", w.Style(ts, Dim))
+			fmt.Fprintf(w, "\n%s\n", w.Style(ts, Dim))
 		}
-		fmt.Fprintf(w, "    %s\n", c.Text)
+		w.Push(2)
+		text := c.Text
+		if ww := w.Width(); ww > 0 {
+			text = wrap.Text(text, ww)
+		}
+		fmt.Fprintln(w, text)
+		w.Pop()
 	}
+	w.Pop()
 	return nil
 }

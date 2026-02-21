@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"io"
 	"strings"
 )
@@ -46,21 +47,60 @@ func PriorityStyle(priority int) Style {
 	return Dim
 }
 
-// Writer extends io.Writer with terminal styling.
-// plainWriter returns strings unchanged; colorWriter wraps with ANSI codes.
+// Writer extends io.Writer with terminal styling, width awareness,
+// and an indent stack. Push/Pop control indentation; Write automatically
+// prefixes each new line with the current indent.
 type Writer interface {
 	io.Writer
 	Style(s string, styles ...Style) string
+	// Width returns the available width (terminal width minus current indent),
+	// or 0 if unavailable (disables wrapping).
+	Width() int
+	// Push adds n spaces to the current indent level.
+	Push(n int)
+	// Pop removes the most recent indent level.
+	Pop()
 }
 
-type plainWriter struct{ io.Writer }
+// writer is the single concrete implementation of Writer.
+type writer struct {
+	out   io.Writer
+	color bool
+	width int    // terminal width, 0 = no wrapping
+	stack []int  // indent stack
+	pfx   string // cached prefix (sum of stack as spaces)
+	bol   bool   // at beginning of line
+}
 
-func (w *plainWriter) Style(s string, _ ...Style) string { return s }
+func (w *writer) Write(p []byte) (int, error) {
+	written := 0
+	for len(p) > 0 {
+		if w.bol && w.pfx != "" {
+			if _, err := io.WriteString(w.out, w.pfx); err != nil {
+				return written, err
+			}
+			w.bol = false
+		}
+		idx := bytes.IndexByte(p, '\n')
+		if idx < 0 {
+			n, err := w.out.Write(p)
+			written += n
+			w.bol = false
+			return written, err
+		}
+		n, err := w.out.Write(p[:idx+1])
+		written += n
+		if err != nil {
+			return written, err
+		}
+		p = p[idx+1:]
+		w.bol = true
+	}
+	return written, nil
+}
 
-type colorWriter struct{ io.Writer }
-
-func (w *colorWriter) Style(s string, styles ...Style) string {
-	if len(styles) == 0 {
+func (w *writer) Style(s string, styles ...Style) string {
+	if !w.color || len(styles) == 0 {
 		return s
 	}
 	var b strings.Builder
@@ -74,8 +114,43 @@ func (w *colorWriter) Style(s string, styles ...Style) string {
 	return b.String()
 }
 
-// PlainWriter returns a Writer that ignores all styling.
-func PlainWriter(w io.Writer) Writer { return &plainWriter{w} }
+func (w *writer) Width() int {
+	if w.width == 0 {
+		return 0
+	}
+	avail := w.width - len(w.pfx)
+	if avail < 1 {
+		return 1
+	}
+	return avail
+}
 
-// ColorWriter returns a Writer that applies ANSI styling.
-func ColorWriter(w io.Writer) Writer { return &colorWriter{w} }
+func (w *writer) Push(n int) {
+	w.stack = append(w.stack, n)
+	w.rebuildPrefix()
+}
+
+func (w *writer) Pop() {
+	if len(w.stack) > 0 {
+		w.stack = w.stack[:len(w.stack)-1]
+		w.rebuildPrefix()
+	}
+}
+
+func (w *writer) rebuildPrefix() {
+	total := 0
+	for _, n := range w.stack {
+		total += n
+	}
+	w.pfx = strings.Repeat(" ", total)
+}
+
+// PlainWriter returns a Writer that ignores all styling and has no width (no wrapping).
+func PlainWriter(out io.Writer) Writer {
+	return &writer{out: out, bol: true}
+}
+
+// ColorWriter returns a Writer that applies ANSI styling with the given terminal width.
+func ColorWriter(out io.Writer, width int) Writer {
+	return &writer{out: out, color: true, width: width, bol: true}
+}

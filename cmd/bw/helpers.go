@@ -10,6 +10,7 @@ import (
 
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/repo"
+	"github.com/jallum/beadwork/internal/wrap"
 )
 
 func getRepo() (*repo.Repo, error) {
@@ -265,9 +266,13 @@ func fprintIssue(w Writer, iss *issue.Issue) {
 	// Description
 	if iss.Description != "" {
 		fmt.Fprintf(w, "\n%s\n\n", w.Style("DESCRIPTION", Bold))
-		for _, line := range strings.Split(iss.Description, "\n") {
-			fmt.Fprintf(w, "  %s\n", line)
+		w.Push(2)
+		desc := iss.Description
+		if ww := w.Width(); ww > 0 {
+			desc = wrap.Text(desc, ww)
 		}
+		fmt.Fprintln(w, desc)
+		w.Pop()
 	}
 
 }
@@ -277,15 +282,23 @@ func fprintComments(w Writer, iss *issue.Issue) {
 	if len(iss.Comments) > 0 {
 		fmt.Fprintln(w)
 		fmt.Fprintln(w, w.Style("COMMENTS", Bold))
+		w.Push(2)
 		for _, c := range iss.Comments {
 			ts := trimDate(c.Timestamp)
 			if c.Author != "" {
-				fmt.Fprintf(w, "  %s %s\n", w.Style(ts, Dim), w.Style(c.Author, Bold))
+				fmt.Fprintf(w, "%s %s\n", w.Style(ts, Dim), w.Style(c.Author, Bold))
 			} else {
-				fmt.Fprintf(w, "  %s\n", w.Style(ts, Dim))
+				fmt.Fprintf(w, "%s\n", w.Style(ts, Dim))
 			}
-			fmt.Fprintf(w, "    %s\n", c.Text)
+			w.Push(2)
+			text := c.Text
+			if ww := w.Width(); ww > 0 {
+				text = wrap.Text(text, ww)
+			}
+			fmt.Fprintln(w, text)
+			w.Pop()
 		}
+		w.Pop()
 	}
 }
 
@@ -294,32 +307,36 @@ func fprintDeps(w Writer, iss *issue.Issue, store *issue.Store) {
 	if len(iss.Blocks) > 0 {
 		fmt.Fprintln(w)
 		fmt.Fprintln(w, w.Style("BLOCKS", Bold))
+		w.Push(2)
 		for _, id := range iss.Blocks {
 			dep, err := store.Get(id)
 			if err != nil {
-				fmt.Fprintf(w, "  ← %s\n", id)
+				fmt.Fprintf(w, "← %s\n", id)
 				continue
 			}
 			ps := PriorityStyle(dep.Priority)
-			fmt.Fprintf(w, "  ← %s %s: %s  [%s %s]\n",
+			fmt.Fprintf(w, "← %s %s: %s  [%s %s]\n",
 				issue.StatusIcon(dep.Status), dep.ID, dep.Title,
 				w.Style("●", ps), w.Style(fmt.Sprintf("P%d", dep.Priority), ps))
 		}
+		w.Pop()
 	}
 	if len(iss.BlockedBy) > 0 {
 		fmt.Fprintln(w)
 		fmt.Fprintln(w, w.Style("DEPENDS ON", Bold))
+		w.Push(2)
 		for _, id := range iss.BlockedBy {
 			dep, err := store.Get(id)
 			if err != nil {
-				fmt.Fprintf(w, "  → %s\n", id)
+				fmt.Fprintf(w, "→ %s\n", id)
 				continue
 			}
 			ps := PriorityStyle(dep.Priority)
-			fmt.Fprintf(w, "  → %s %s: %s  [%s %s]\n",
+			fmt.Fprintf(w, "→ %s %s: %s  [%s %s]\n",
 				issue.StatusIcon(dep.Status), dep.ID, dep.Title,
 				w.Style("●", ps), w.Style(fmt.Sprintf("P%d", dep.Priority), ps))
 		}
+		w.Pop()
 	}
 }
 

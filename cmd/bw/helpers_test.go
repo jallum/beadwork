@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -9,6 +10,10 @@ import (
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/testutil"
 )
+
+var ansiRe = regexp.MustCompile(`\x1b\[[0-9;]*m`)
+
+func stripANSI(s string) string { return ansiRe.ReplaceAllString(s, "") }
 
 func TestParseArgsBooleans(t *testing.T) {
 	a, err := ParseArgs([]string{"--json", "--all", "positional"}, nil, []string{"--json", "--all"})
@@ -210,6 +215,76 @@ func TestFprintIssue(t *testing.T) {
 	}
 	if !strings.Contains(out, "Labels: bug") {
 		t.Errorf("missing labels in output: %q", out)
+	}
+}
+
+func TestFprintIssueWrapsDescription(t *testing.T) {
+	iss := &issue.Issue{
+		ID:          "test-wrap",
+		Title:       "Wrap test",
+		Status:      "open",
+		Priority:    2,
+		Type:        "task",
+		Created:     "2024-01-15T12:00:00Z",
+		Description: "This is a long description that should be wrapped when the terminal width is narrow enough to trigger wrapping behavior",
+	}
+
+	var buf bytes.Buffer
+	w := ColorWriter(&buf, 40)
+	fprintIssue(w, iss)
+
+	// Strip ANSI codes for line-length checking.
+	out := stripANSI(buf.String())
+
+	// With width=40 and 2-char indent, lines wrap at 38 chars.
+	inDesc := false
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "DESCRIPTION") {
+			inDesc = true
+			continue
+		}
+		if !inDesc || line == "" {
+			continue
+		}
+		content := strings.TrimPrefix(line, "  ")
+		if len(content) > 38 {
+			t.Errorf("description line exceeds width: %d chars: %q", len(content), content)
+		}
+	}
+}
+
+func TestFprintCommentsWrapsText(t *testing.T) {
+	iss := &issue.Issue{
+		ID:       "test-cwrap",
+		Title:    "Comment wrap test",
+		Status:   "open",
+		Priority: 2,
+		Type:     "task",
+		Created:  "2024-01-15T12:00:00Z",
+		Comments: []issue.Comment{
+			{
+				Timestamp: "2024-01-16T10:00:00Z",
+				Text:      "This is a long comment that should be wrapped when the terminal width is narrow enough to trigger wrapping",
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	w := ColorWriter(&buf, 40)
+	fprintComments(w, iss)
+
+	// Strip ANSI codes for line-length checking.
+	out := stripANSI(buf.String())
+
+	// With width=40 and 4-char indent, content lines wrap at 36 chars.
+	for _, line := range strings.Split(out, "\n") {
+		if !strings.HasPrefix(line, "    ") {
+			continue
+		}
+		content := strings.TrimPrefix(line, "    ")
+		if len(content) > 36 {
+			t.Errorf("comment line exceeds width: %d chars: %q", len(content), content)
+		}
 	}
 }
 
