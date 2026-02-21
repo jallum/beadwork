@@ -2,13 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T16:23:05Z",
+  "close_reason": "PR #52 merged CI green",
   "created": "2026-02-21T16:03:24Z",
   "description": "",
   "id": "bw-m1m",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Store gains Committer: eliminate two-value return pattern",
   "type": "task",
-  "updated_at": "2026-02-21T16:03:27Z"
+  "updated_at": "2026-02-21T16:23:05Z"
 }
