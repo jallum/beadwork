@@ -11,6 +11,26 @@ import (
 	"github.com/jallum/beadwork/internal/testutil"
 )
 
+// hasListedIssue checks if the given issue ID appears as a primary listed
+// issue in the output (i.e., " <id> " near the start of a line, not just
+// mentioned in a [blocks: ...] or [blocked by: ...] suffix).
+func hasListedIssue(output, id string) bool {
+	for _, line := range strings.Split(output, "\n") {
+		// List output lines start with: <icon> <id> ...
+		// The icon is a single character followed by a space.
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+		// Skip the status icon (single rune + space)
+		fields := strings.Fields(trimmed)
+		if len(fields) >= 2 && fields[1] == id {
+			return true
+		}
+	}
+	return false
+}
+
 func TestScenarioFullWorkflow(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -202,9 +222,10 @@ func TestScenarioFullWorkflow(t *testing.T) {
 		if !strings.Contains(out, idC) {
 			t.Errorf("default list should contain C (%s, open): %q", idC, out)
 		}
-		// A (closed), D (deferred), E (deferred) should not appear
+		// A (closed), D (deferred), E (deferred) should not appear as listed issues
+		// (they may appear in [blocks: ...] or [blocked by: ...] suffixes)
 		for _, id := range []string{idA, idD, idE} {
-			if strings.Contains(out, id) {
+			if hasListedIssue(out, id) {
 				t.Errorf("default list should NOT contain %s: %q", id, out)
 			}
 		}
@@ -222,8 +243,8 @@ func TestScenarioFullWorkflow(t *testing.T) {
 		if !strings.Contains(out, idB) {
 			t.Errorf("should contain B (%s): %q", idB, out)
 		}
-		if strings.Contains(out, idA) || strings.Contains(out, idC) {
-			t.Errorf("should not contain A or C: %q", out)
+		if hasListedIssue(out, idA) || hasListedIssue(out, idC) {
+			t.Errorf("should not contain A or C as listed issues: %q", out)
 		}
 	})
 

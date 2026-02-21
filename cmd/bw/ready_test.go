@@ -108,3 +108,44 @@ func TestCmdReadyExcludesDeferred(t *testing.T) {
 		t.Error("output should NOT contain deferred task")
 	}
 }
+
+func TestCmdReadyShowsBlocksDeps(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Ready blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked task", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Repo.Commit("create and link")
+
+	var buf bytes.Buffer
+	err := cmdReady([]string{}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdReady: %v", err)
+	}
+	out := buf.String()
+
+	// The ready issue (a) blocks b, so it should show [blocks: b.ID]
+	if !strings.Contains(out, "[blocks: "+b.ID+"]") {
+		t.Errorf("ready output should show blocks dep: %q", out)
+	}
+}
+
+func TestCmdReadyNoDepsNoBrackets(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("Standalone ready", issue.CreateOpts{})
+	env.Repo.Commit("create issue")
+
+	var buf bytes.Buffer
+	err := cmdReady([]string{}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdReady: %v", err)
+	}
+	out := buf.String()
+
+	if strings.Contains(out, "[blocks:") || strings.Contains(out, "[blocked by:") {
+		t.Errorf("standalone ready issue should not show dep brackets: %q", out)
+	}
+}

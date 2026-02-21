@@ -329,6 +329,64 @@ func TestFprintIssueCloseReason(t *testing.T) {
 	}
 }
 
+func TestFormatDepsEmpty(t *testing.T) {
+	w := PlainWriter(&bytes.Buffer{})
+	iss := &issue.Issue{
+		Blocks:    []string{},
+		BlockedBy: []string{},
+	}
+	if got := formatDeps(w, iss); got != "" {
+		t.Errorf("formatDeps(empty) = %q, want empty", got)
+	}
+}
+
+func TestFormatDepsBlocksOnly(t *testing.T) {
+	w := PlainWriter(&bytes.Buffer{})
+	iss := &issue.Issue{
+		Blocks:    []string{"bw-abc", "bw-def"},
+		BlockedBy: []string{},
+	}
+	got := formatDeps(w, iss)
+	want := " [blocks: bw-abc, bw-def]"
+	if got != want {
+		t.Errorf("formatDeps = %q, want %q", got, want)
+	}
+}
+
+func TestFormatDepsBlockedByOnly(t *testing.T) {
+	w := PlainWriter(&bytes.Buffer{})
+	iss := &issue.Issue{
+		Blocks:    []string{},
+		BlockedBy: []string{"bw-xyz"},
+	}
+	got := formatDeps(w, iss)
+	want := " [blocked by: bw-xyz]"
+	if got != want {
+		t.Errorf("formatDeps = %q, want %q", got, want)
+	}
+}
+
+func TestFormatDepsBoth(t *testing.T) {
+	w := PlainWriter(&bytes.Buffer{})
+	iss := &issue.Issue{
+		Blocks:    []string{"bw-abc"},
+		BlockedBy: []string{"bw-xyz"},
+	}
+	got := formatDeps(w, iss)
+	want := " [blocks: bw-abc] [blocked by: bw-xyz]"
+	if got != want {
+		t.Errorf("formatDeps = %q, want %q", got, want)
+	}
+}
+
+func TestFormatDepsNilSlices(t *testing.T) {
+	w := PlainWriter(&bytes.Buffer{})
+	iss := &issue.Issue{}
+	if got := formatDeps(w, iss); got != "" {
+		t.Errorf("formatDeps(nil slices) = %q, want empty", got)
+	}
+}
+
 func TestGetInitializedWithDefaultPriority(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
