@@ -186,34 +186,16 @@ func (s *Store) Tips(roots []string, edges map[string][]string) ([]*Issue, error
 }
 
 func (s *Store) Ready() ([]*Issue, error) {
-	issues, err := s.List(Filter{})
-	if err != nil {
-		return nil, err
-	}
-
-	_, rev := s.LoadEdges()
-
-	// Build a set of closed issue IDs for fast lookup.
-	closed := make(map[string]bool)
-	for _, iss := range issues {
-		if iss.Status == "closed" {
-			closed[iss.ID] = true
-		}
-	}
-
+	openIDs := s.IDsWithStatus("open")
 	var ready []*Issue
-	for _, iss := range issues {
-		if iss.Status != "open" {
-			continue
-		}
-		blockers := rev[iss.ID]
-		if len(blockers) == 0 {
-			ready = append(ready, iss)
+	for _, id := range openIDs {
+		iss, err := s.readIssue(id)
+		if err != nil {
 			continue
 		}
 		allResolved := true
-		for _, blockerID := range blockers {
-			if !closed[blockerID] {
+		for _, blockerID := range iss.BlockedBy {
+			if !s.IsClosed(blockerID) {
 				allResolved = false
 				break
 			}
@@ -237,16 +219,16 @@ type CloseResult struct {
 	Unblocked []*Issue `json:"unblocked"`
 }
 
-// Blocked returns open issues that have at least one open blocker.
+// Blocked returns non-closed issues that have at least one open blocker.
 func (s *Store) Blocked() ([]BlockedIssue, error) {
-	issues, err := s.List(Filter{})
-	if err != nil {
-		return nil, err
-	}
+	var ids []string
+	ids = append(ids, s.IDsWithStatus("open")...)
+	ids = append(ids, s.IDsWithStatus("in_progress")...)
 
 	var blocked []BlockedIssue
-	for _, iss := range issues {
-		if iss.Status == "closed" {
+	for _, id := range ids {
+		iss, err := s.readIssue(id)
+		if err != nil {
 			continue
 		}
 		if len(iss.BlockedBy) == 0 {
@@ -254,12 +236,7 @@ func (s *Store) Blocked() ([]BlockedIssue, error) {
 		}
 		var open []string
 		for _, blockerID := range iss.BlockedBy {
-			blocker, err := s.readIssue(blockerID)
-			if err != nil {
-				open = append(open, blockerID)
-				continue
-			}
-			if blocker.Status != "closed" {
+			if !s.IsClosed(blockerID) {
 				open = append(open, blockerID)
 			}
 		}

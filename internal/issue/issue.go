@@ -46,6 +46,7 @@ type Store struct {
 	IDRetries       int       // retries per length before bumping; 0 means 10
 	RandReader      io.Reader // random source; nil means crypto/rand.Reader
 	cache           map[string]*Issue
+	idSet           map[string]bool // lazily populated on first resolveID/ExistingIDs call
 }
 
 // Commit persists pending mutations with the given intent message.
@@ -56,10 +57,12 @@ func (s *Store) Commit(intent string) error {
 	return s.Committer.Commit(intent)
 }
 
-// ClearCache discards all cached issues. Call after operations that
-// change the underlying TreeFS externally (e.g. sync/rebase).
+// ClearCache discards all cached issues and the lazy ID set.
+// Call after operations that change the underlying TreeFS externally
+// (e.g. sync/rebase).
 func (s *Store) ClearCache() {
 	s.cache = nil
+	s.idSet = nil
 }
 
 type CreateOpts struct {

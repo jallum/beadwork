@@ -20,12 +20,10 @@ func (s *Store) DeletePreview(id string) (*DeletePlan, error) {
 		return nil, err
 	}
 
-	// Find children by scanning all issues
 	var children []string
-	all, _ := s.List(Filter{})
-	for _, other := range all {
-		if other.Parent == id {
-			children = append(children, other.ID)
+	if ch, err := s.Children(id); err == nil {
+		for _, child := range ch {
+			children = append(children, child.ID)
 		}
 	}
 
@@ -79,12 +77,11 @@ func (s *Store) Delete(id string) (*Issue, error) {
 		}
 	}
 
-	// Orphan children: clear Parent field on child issues
-	all, _ := s.List(Filter{})
-	for _, other := range all {
-		if other.Parent == id {
-			other.Parent = ""
-			s.writeIssue(other)
+	// Orphan children: clear Parent field on child issues.
+	if ch, err := s.Children(id); err == nil {
+		for _, child := range ch {
+			child.Parent = ""
+			s.writeIssue(child)
 		}
 	}
 
@@ -94,8 +91,9 @@ func (s *Store) Delete(id string) (*Issue, error) {
 	// Remove issue JSON file
 	s.FS.Remove("issues/" + id + ".json")
 
-	// Evict from cache
+	// Evict from cache and ID set
 	delete(s.cache, id)
+	s.untrackID(id)
 
 	return iss, nil
 }

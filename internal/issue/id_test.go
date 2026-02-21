@@ -182,6 +182,141 @@ func TestIDAdaptiveLength(t *testing.T) {
 	}
 }
 
+// --- Lazy ID set tests (bw-ccl.4) ---
+
+func TestExistingIDsCached(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Issue A", issue.CreateOpts{})
+	b, _ := env.Store.Create("Issue B", issue.CreateOpts{})
+	env.CommitIntent("create issues")
+
+	ids1 := env.Store.ExistingIDs()
+	if !ids1[a.ID] || !ids1[b.ID] {
+		t.Errorf("first call missing IDs: %v", ids1)
+	}
+
+	// Second call should return the same data (from cache)
+	ids2 := env.Store.ExistingIDs()
+	if !ids2[a.ID] || !ids2[b.ID] {
+		t.Errorf("second call missing IDs: %v", ids2)
+	}
+}
+
+func TestIDSetUpdatedOnCreate(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Prime the ID set
+	a, _ := env.Store.Create("Issue A", issue.CreateOpts{})
+	_ = env.Store.ExistingIDs()
+
+	// Create another issue — should appear in the set without re-reading disk
+	b, _ := env.Store.Create("Issue B", issue.CreateOpts{})
+	env.CommitIntent("create issues")
+
+	ids := env.Store.ExistingIDs()
+	if !ids[a.ID] {
+		t.Error("A should be in ID set")
+	}
+	if !ids[b.ID] {
+		t.Error("B should be in ID set after create")
+	}
+}
+
+func TestIDSetUpdatedOnDelete(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Issue A", issue.CreateOpts{})
+	env.CommitIntent("create issue")
+
+	// Prime the ID set
+	ids := env.Store.ExistingIDs()
+	if !ids[a.ID] {
+		t.Fatal("A should be in ID set")
+	}
+
+	// Delete the issue
+	env.Store.Delete(a.ID)
+	env.CommitIntent("delete issue")
+
+	ids = env.Store.ExistingIDs()
+	if ids[a.ID] {
+		t.Error("A should be gone from ID set after delete")
+	}
+}
+
+func TestIDSetUpdatedOnImport(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Prime the ID set
+	_ = env.Store.ExistingIDs()
+
+	env.Store.Import(&issue.Issue{
+		ID:        "test-import1",
+		Title:     "Imported",
+		Status:    "open",
+		Priority:  2,
+		Type:      "task",
+		Created:   "2026-01-01T00:00:00Z",
+		Labels:    []string{},
+		Blocks:    []string{},
+		BlockedBy: []string{},
+	})
+	env.CommitIntent("import issue")
+
+	ids := env.Store.ExistingIDs()
+	if !ids["test-import1"] {
+		t.Error("imported ID should be in ID set")
+	}
+}
+
+func TestClearCacheClearsIDSet(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Issue A", issue.CreateOpts{})
+	env.CommitIntent("create issue")
+
+	// Prime the ID set
+	ids := env.Store.ExistingIDs()
+	if !ids[a.ID] {
+		t.Fatal("A should be in ID set")
+	}
+
+	// Clear cache should force a re-read on next call
+	env.Store.ClearCache()
+
+	ids = env.Store.ExistingIDs()
+	if !ids[a.ID] {
+		t.Error("A should still be found after ClearCache + re-read")
+	}
+}
+
+func TestExistingIDsReturnsCopy(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Issue A", issue.CreateOpts{})
+	env.CommitIntent("create issue")
+
+	ids := env.Store.ExistingIDs()
+	// Mutate the returned map
+	ids["fake-id"] = true
+
+	// The internal set should not be affected
+	ids2 := env.Store.ExistingIDs()
+	if ids2["fake-id"] {
+		t.Error("mutation of returned map should not affect internal ID set")
+	}
+	if !ids2[a.ID] {
+		t.Error("A should still be in ID set")
+	}
+}
+
 // readerFunc adapts a function to io.Reader.
 type readerFunc func([]byte) (int, error)
 

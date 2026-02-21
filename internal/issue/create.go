@@ -70,6 +70,7 @@ func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
 	if err := s.setStatus(id, status); err != nil {
 		return nil, err
 	}
+	s.trackID(id)
 	return issue, nil
 }
 
@@ -79,7 +80,11 @@ func (s *Store) Import(iss *Issue) error {
 	if err := s.writeIssue(iss); err != nil {
 		return err
 	}
-	return s.setStatus(iss.ID, iss.Status)
+	if err := s.setStatus(iss.ID, iss.Status); err != nil {
+		return err
+	}
+	s.trackID(iss.ID)
+	return nil
 }
 
 func (s *Store) Get(id string) (*Issue, error) {

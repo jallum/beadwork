@@ -5,6 +5,43 @@ import (
 	"strings"
 )
 
+// StatusCount returns the number of issues with the given status by counting
+// entries in the status index directory. No deserialization.
+func (s *Store) StatusCount(status string) int {
+	entries, err := s.FS.ReadDir("status/" + status)
+	if err != nil {
+		return 0
+	}
+	n := 0
+	for _, e := range entries {
+		if e.Name() != ".gitkeep" {
+			n++
+		}
+	}
+	return n
+}
+
+// IDsWithStatus returns issue IDs from a status index directory.
+func (s *Store) IDsWithStatus(status string) []string {
+	entries, err := s.FS.ReadDir("status/" + status)
+	if err != nil {
+		return nil
+	}
+	var ids []string
+	for _, e := range entries {
+		if e.Name() != ".gitkeep" {
+			ids = append(ids, e.Name())
+		}
+	}
+	return ids
+}
+
+// IsClosed checks whether a single issue ID appears in the closed index.
+func (s *Store) IsClosed(id string) bool {
+	_, err := s.FS.Stat("status/closed/" + id)
+	return err == nil
+}
+
 func (s *Store) List(filter Filter) ([]*Issue, error) {
 	statuses := StatusNames()
 	if len(filter.Statuses) > 0 {
