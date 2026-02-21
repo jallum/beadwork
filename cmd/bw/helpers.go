@@ -185,13 +185,22 @@ func parsePriority(s string) (int, error) {
 // formatDeps returns a compact inline dependency string for list output.
 // Example: " [blocks: bw-abc, bw-def] [blocked by: bw-xyz]"
 // Returns "" when there are no dependencies.
-func formatDeps(iss *issue.Issue) string {
+// Ticket IDs are styled Red; labels and brackets are styled Dim.
+func formatDeps(w Writer, iss *issue.Issue) string {
 	var parts []string
 	if len(iss.Blocks) > 0 {
-		parts = append(parts, "[blocks: "+strings.Join(iss.Blocks, ", ")+"]")
+		ids := make([]string, len(iss.Blocks))
+		for i, id := range iss.Blocks {
+			ids[i] = w.Style(id, Red)
+		}
+		parts = append(parts, w.Style("[blocks: ", Dim)+strings.Join(ids, w.Style(", ", Dim))+w.Style("]", Dim))
 	}
 	if len(iss.BlockedBy) > 0 {
-		parts = append(parts, "[blocked by: "+strings.Join(iss.BlockedBy, ", ")+"]")
+		ids := make([]string, len(iss.BlockedBy))
+		for i, id := range iss.BlockedBy {
+			ids[i] = w.Style(id, Red)
+		}
+		parts = append(parts, w.Style("[blocked by: ", Dim)+strings.Join(ids, w.Style(", ", Dim))+w.Style("]", Dim))
 	}
 	if len(parts) == 0 {
 		return ""

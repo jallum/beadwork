@@ -53,7 +53,7 @@ func cmdReady(args []string, w Writer) error {
 			w.Style("●", ps),
 			w.Style(fmt.Sprintf("P%d", iss.Priority), ps),
 			iss.Title,
-			formatDeps(iss),
+			formatDeps(w, iss),
 		)
 	}
 

@@ -115,7 +115,7 @@ func cmdList(args []string, w Writer) error {
 				w.Style(fmt.Sprintf("P%d", iss.Priority), ps),
 				iss.Type,
 				iss.Title,
-				formatDeps(iss),
+				formatDeps(w, iss),
 			)
 		}
 		if limit > 0 && len(issues) > limit {
