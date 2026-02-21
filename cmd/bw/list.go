@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 type ListArgs struct {
@@ -53,13 +54,8 @@ func parseListArgs(raw []string) (ListArgs, error) {
 	return la, nil
 }
 
-func cmdList(args []string, w Writer) error {
+func cmdList(_ *repo.Repo, store *issue.Store, args []string, w Writer) error {
 	la, err := parseListArgs(args)
-	if err != nil {
-		return err
-	}
-
-	_, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}

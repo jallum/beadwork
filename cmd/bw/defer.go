@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 type DeferArgs struct {
@@ -32,18 +33,13 @@ func validateDate(s string) error {
 	return nil
 }
 
-func cmdDefer(args []string, w Writer) error {
+func cmdDefer(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
 	da, err := parseDeferArgs(args)
 	if err != nil {
 		return err
 	}
 
 	if err := validateDate(da.Date); err != nil {
-		return err
-	}
-
-	r, store, err := getInitializedRepo()
-	if err != nil {
 		return err
 	}
 

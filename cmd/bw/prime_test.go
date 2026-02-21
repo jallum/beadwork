@@ -17,7 +17,7 @@ func TestCmdPrimeBasic(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdPrime(PlainWriter(&buf))
+	err := cmdPrime(env.Repo, env.Store, nil, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}
@@ -39,7 +39,7 @@ func TestCmdPrimeInProgress(t *testing.T) {
 	env.Repo.Commit("create and update " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdPrime(PlainWriter(&buf))
+	err := cmdPrime(env.Repo, env.Store, nil, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}
@@ -57,7 +57,7 @@ func TestCmdPrimeEmpty(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdPrime(PlainWriter(&buf))
+	err := cmdPrime(env.Repo, env.Store, nil, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}
@@ -78,7 +78,7 @@ func TestCmdPrimeInProgressWithComment(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdPrime(PlainWriter(&buf))
+	err := cmdPrime(env.Repo, env.Store, nil, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}
@@ -103,7 +103,7 @@ func TestCmdPrimeCommentTruncation(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdPrime(PlainWriter(&buf))
+	err := cmdPrime(env.Repo, env.Store, nil, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}
@@ -119,7 +119,7 @@ func TestCmdPrimeTemplateProcessing(t *testing.T) {
 
 	// Without config: no conditional section
 	var buf bytes.Buffer
-	err := cmdPrime(PlainWriter(&buf))
+	err := cmdPrime(env.Repo, env.Store, nil, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}
@@ -132,7 +132,7 @@ func TestCmdPrimeTemplateProcessing(t *testing.T) {
 	env.Repo.Commit("set config")
 
 	buf.Reset()
-	err = cmdPrime(PlainWriter(&buf))
+	err = cmdPrime(env.Repo, env.Store, nil, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}

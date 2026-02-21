@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 type GraphArgs struct {
@@ -28,13 +29,8 @@ func parseGraphArgs(raw []string) (GraphArgs, error) {
 	return ga, nil
 }
 
-func cmdGraph(args []string, w Writer) error {
+func cmdGraph(_ *repo.Repo, store *issue.Store, args []string, w Writer) error {
 	ga, err := parseGraphArgs(args)
-	if err != nil {
-		return err
-	}
-
-	_, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 type ShowArgs struct {
@@ -24,13 +25,8 @@ func parseShowArgs(raw []string) (ShowArgs, error) {
 	return ShowArgs{IDs: ids, JSON: a.JSON(), Short: a.Bool("--short")}, nil
 }
 
-func cmdShow(args []string, w Writer) error {
+func cmdShow(_ *repo.Repo, store *issue.Store, args []string, w Writer) error {
 	sa, err := parseShowArgs(args)
-	if err != nil {
-		return err
-	}
-
-	_, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}

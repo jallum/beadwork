@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 	"github.com/jallum/beadwork/internal/wrap"
 )
 
@@ -67,13 +69,8 @@ func parseCommentsArgs(raw []string) (CommentsArgs, error) {
 	return ca, nil
 }
 
-func cmdComments(args []string, w Writer) error {
+func cmdComments(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
 	ca, err := parseCommentsArgs(args)
-	if err != nil {
-		return err
-	}
-
-	r, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 	"golang.org/x/term"
 )
 
@@ -47,7 +49,17 @@ func main() {
 		return
 	}
 
-	if err := c.Run(args, w); err != nil {
+	var r *repo.Repo
+	var store *issue.Store
+	if c.NeedsStore {
+		var err error
+		r, store, err = getInitializedRepo()
+		if err != nil {
+			fatal(err.Error())
+		}
+	}
+
+	if err := c.Run(r, store, args, w); err != nil {
 		fatal(err.Error())
 	}
 }

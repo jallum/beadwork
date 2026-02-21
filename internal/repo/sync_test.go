@@ -80,6 +80,7 @@ func TestSyncCleanRebase(t *testing.T) {
 	}
 
 	// Both issues should exist
+	env.Store.ClearCache()
 	all, _ := env.Store.List(issue.Filter{})
 	if len(all) < 3 {
 		t.Errorf("expected at least 3 issues, got %d", len(all))
@@ -119,6 +120,8 @@ func TestSyncDirtyRebaseIntentReplay(t *testing.T) {
 	}
 
 	if status == "needs replay" {
+		// Sync rebased the tree on disk; clear cache so replay reads fresh data
+		env.Store.ClearCache()
 		// Replay the intents
 		errs := intent.Replay(env.Repo, env.Store, intents)
 		if len(errs) > 0 {
@@ -143,6 +146,7 @@ func TestSyncDirtyRebaseIntentReplay(t *testing.T) {
 		}
 	} else if status == "rebased and pushed" {
 		// Git managed to cleanly rebase (possible if changes don't overlap in file)
+		env.Store.ClearCache()
 		got, _ := env.Store.Get(shared.ID)
 		if got.Assignee != "local-agent" {
 			t.Errorf("assignee = %q after clean rebase", got.Assignee)
@@ -187,6 +191,7 @@ func TestSyncMultipleIntentsReplay(t *testing.T) {
 	}
 
 	if status == "needs replay" {
+		env.Store.ClearCache()
 		errs := intent.Replay(env.Repo, env.Store, intents)
 		for _, e := range errs {
 			t.Logf("replay error: %v", e)
@@ -195,6 +200,7 @@ func TestSyncMultipleIntentsReplay(t *testing.T) {
 	}
 
 	// Verify everything landed: remote blocker + local A + local B + link + label
+	env.Store.ClearCache()
 	all, _ := env.Store.List(issue.Filter{})
 	if len(all) < 3 {
 		t.Errorf("expected at least 3 issues after sync, got %d", len(all))

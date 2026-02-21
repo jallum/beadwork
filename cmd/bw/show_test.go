@@ -18,7 +18,7 @@ func TestCmdShowBasic(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{iss.ID}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{iss.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow: %v", err)
 	}
@@ -35,7 +35,7 @@ func TestCmdShowJSON(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{iss.ID, "--json"}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{iss.ID, "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow: %v", err)
 	}
@@ -62,7 +62,7 @@ func TestCmdShowMultiID(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{a.ID, b.ID}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{a.ID, b.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow multi: %v", err)
 	}
@@ -84,7 +84,7 @@ func TestCmdShowMultiIDJSON(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{a.ID, b.ID, "--json"}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{a.ID, b.ID, "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow multi --json: %v", err)
 	}
@@ -106,7 +106,7 @@ func TestCmdShowShort(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{iss.ID, "--short"}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{iss.ID, "--short"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow --short: %v", err)
 	}
@@ -135,7 +135,7 @@ func TestCmdShowRichDeps(t *testing.T) {
 
 	// Show b — should display rich dep info for its blocker
 	var buf bytes.Buffer
-	err := cmdShow([]string{b.ID}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{b.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow: %v", err)
 	}
@@ -154,7 +154,7 @@ func TestCmdShowNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{"nonexistent"}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{"nonexistent"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for nonexistent issue")
 	}

@@ -18,7 +18,7 @@ func TestCmdReadyBasic(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdReady([]string{}, PlainWriter(&buf))
+	err := cmdReady(env.Repo, env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -35,7 +35,7 @@ func TestCmdReadyJSON(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdReady([]string{"--json"}, PlainWriter(&buf))
+	err := cmdReady(env.Repo, env.Store, []string{"--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -54,7 +54,7 @@ func TestCmdReadyEmpty(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdReady([]string{}, PlainWriter(&buf))
+	err := cmdReady(env.Repo, env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -74,7 +74,7 @@ func TestCmdReadyExcludesInProgress(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdReady([]string{}, PlainWriter(&buf))
+	err := cmdReady(env.Repo, env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -96,7 +96,7 @@ func TestCmdReadyExcludesDeferred(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdReady([]string{}, PlainWriter(&buf))
+	err := cmdReady(env.Repo, env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -119,7 +119,7 @@ func TestCmdReadyShowsBlocksDeps(t *testing.T) {
 	env.Repo.Commit("create and link")
 
 	var buf bytes.Buffer
-	err := cmdReady([]string{}, PlainWriter(&buf))
+	err := cmdReady(env.Repo, env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -139,7 +139,7 @@ func TestCmdReadyNoDepsNoBrackets(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdReady([]string{}, PlainWriter(&buf))
+	err := cmdReady(env.Repo, env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}

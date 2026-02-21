@@ -21,7 +21,7 @@ func TestCmdCommentsAddBasic(t *testing.T) {
 	env.CommitIntent("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdComments([]string{"add", iss.ID, "This is a comment"}, PlainWriter(&buf))
+	err := cmdComments(env.Repo, env.Store, []string{"add", iss.ID, "This is a comment"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdComments add: %v", err)
 	}
@@ -49,7 +49,7 @@ func TestCmdCommentsAddNoText(t *testing.T) {
 	env.CommitIntent("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdComments([]string{"add", iss.ID}, PlainWriter(&buf))
+	err := cmdComments(env.Repo, env.Store, []string{"add", iss.ID}, PlainWriter(&buf))
 	if err == nil {
 		t.Fatal("expected error when no text provided")
 	}
@@ -63,7 +63,7 @@ func TestCmdCommentsAddWithAuthor(t *testing.T) {
 	env.CommitIntent("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdComments([]string{"add", iss.ID, "Authored comment", "--author", "alice"}, PlainWriter(&buf))
+	err := cmdComments(env.Repo, env.Store, []string{"add", iss.ID, "Authored comment", "--author", "alice"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdComments add: %v", err)
 	}
@@ -82,7 +82,7 @@ func TestCmdCommentsAddWithShortAuthor(t *testing.T) {
 	env.CommitIntent("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdComments([]string{"add", iss.ID, "Short flag", "-a", "bob"}, PlainWriter(&buf))
+	err := cmdComments(env.Repo, env.Store, []string{"add", iss.ID, "Short flag", "-a", "bob"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdComments add: %v", err)
 	}
@@ -108,7 +108,7 @@ func TestCmdCommentsListPlain(t *testing.T) {
 	env.CommitIntent("comment 2")
 
 	var buf bytes.Buffer
-	err := cmdComments([]string{iss.ID}, PlainWriter(&buf))
+	err := cmdComments(env.Repo, env.Store, []string{iss.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdComments list: %v", err)
 	}
@@ -136,7 +136,7 @@ func TestCmdCommentsListJSON(t *testing.T) {
 	env.CommitIntent("comment")
 
 	var buf bytes.Buffer
-	err := cmdComments([]string{iss.ID, "--json"}, PlainWriter(&buf))
+	err := cmdComments(env.Repo, env.Store, []string{iss.ID, "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdComments list --json: %v", err)
 	}
@@ -158,7 +158,7 @@ func TestCmdCommentsListNonexistent(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdComments([]string{"test-nonexistent"}, PlainWriter(&buf))
+	err := cmdComments(env.Repo, env.Store, []string{"test-nonexistent"}, PlainWriter(&buf))
 	if err == nil {
 		t.Fatal("expected error for nonexistent issue")
 	}
@@ -172,7 +172,7 @@ func TestCmdCommentsListEmpty(t *testing.T) {
 	env.CommitIntent("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdComments([]string{iss.ID}, PlainWriter(&buf))
+	err := cmdComments(env.Repo, env.Store, []string{iss.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdComments list: %v", err)
 	}
@@ -245,7 +245,7 @@ func TestCmdShowJSONIncludesComments(t *testing.T) {
 	env.CommitIntent("comment")
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{iss.ID, "--json"}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{iss.ID, "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow --json: %v", err)
 	}
@@ -277,7 +277,7 @@ func TestExportIncludesComments(t *testing.T) {
 	env.Repo.Commit("create and comment")
 
 	var buf bytes.Buffer
-	if err := cmdExport([]string{}, PlainWriter(&buf)); err != nil {
+	if err := cmdExport(env.Repo, env.Store, []string{}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("cmdExport: %v", err)
 	}
 
@@ -310,7 +310,7 @@ func TestImportWithComments(t *testing.T) {
 	os.WriteFile(tmpFile, []byte(jsonl+"\n"), 0644)
 
 	var buf bytes.Buffer
-	if err := cmdImport([]string{tmpFile}, PlainWriter(&buf)); err != nil {
+	if err := cmdImport(env.Repo, env.Store, []string{tmpFile}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("cmdImport: %v", err)
 	}
 
@@ -339,7 +339,7 @@ func TestExportImportRoundtrip(t *testing.T) {
 
 	// Export
 	var exportBuf bytes.Buffer
-	if err := cmdExport([]string{}, PlainWriter(&exportBuf)); err != nil {
+	if err := cmdExport(env.Repo, env.Store, []string{}, PlainWriter(&exportBuf)); err != nil {
 		t.Fatalf("cmdExport: %v", err)
 	}
 
@@ -351,7 +351,7 @@ func TestExportImportRoundtrip(t *testing.T) {
 	os.WriteFile(tmpFile, exportBuf.Bytes(), 0644)
 
 	var importBuf bytes.Buffer
-	if err := cmdImport([]string{tmpFile}, PlainWriter(&importBuf)); err != nil {
+	if err := cmdImport(env2.Repo, env2.Store, []string{tmpFile}, PlainWriter(&importBuf)); err != nil {
 		t.Fatalf("cmdImport: %v", err)
 	}
 

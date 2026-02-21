@@ -94,12 +94,19 @@ type Store struct {
 	FS              *treefs.TreeFS
 	Prefix          string
 	DefaultPriority *int
-	IDRetries       int    // retries per length before bumping; 0 means 10
+	IDRetries       int       // retries per length before bumping; 0 means 10
 	RandReader      io.Reader // random source; nil means crypto/rand.Reader
+	cache           map[string]*Issue
 }
 
 func NewStore(fs *treefs.TreeFS, prefix string) *Store {
 	return &Store{FS: fs, Prefix: prefix}
+}
+
+// ClearCache discards all cached issues, forcing subsequent reads from disk.
+// Call this after external operations (e.g. git rebase) modify the tree.
+func (s *Store) ClearCache() {
+	s.cache = nil
 }
 
 func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
@@ -740,6 +747,9 @@ func (s *Store) Delete(id string) (*Issue, error) {
 	// Remove issue JSON file
 	s.FS.Remove("issues/" + id + ".json")
 
+	// Evict from cache
+	delete(s.cache, id)
+
 	return iss, nil
 }
 
@@ -911,6 +921,11 @@ func (s *Store) resolveID(partial string) (string, error) {
 }
 
 func (s *Store) readIssue(id string) (*Issue, error) {
+	if s.cache != nil {
+		if iss, ok := s.cache[id]; ok {
+			return iss, nil
+		}
+	}
 	data, err := s.FS.ReadFile("issues/" + id + ".json")
 	if err != nil {
 		return nil, fmt.Errorf("issue %s not found", id)
@@ -919,6 +934,10 @@ func (s *Store) readIssue(id string) (*Issue, error) {
 	if err := json.Unmarshal(data, &issue); err != nil {
 		return nil, fmt.Errorf("corrupt issue %s: %w", id, err)
 	}
+	if s.cache == nil {
+		s.cache = make(map[string]*Issue)
+	}
+	s.cache[id] = &issue
 	return &issue, nil
 }
 
@@ -928,7 +947,14 @@ func (s *Store) writeIssue(issue *Issue) error {
 		return err
 	}
 	data = append(data, '\n')
-	return s.FS.WriteFile("issues/"+issue.ID+".json", data)
+	if err := s.FS.WriteFile("issues/"+issue.ID+".json", data); err != nil {
+		return err
+	}
+	if s.cache == nil {
+		s.cache = make(map[string]*Issue)
+	}
+	s.cache[issue.ID] = issue
+	return nil
 }
 
 func (s *Store) setStatus(id, status string) error {

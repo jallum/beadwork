@@ -20,7 +20,7 @@ func TestCmdGraphAll(t *testing.T) {
 	env.Repo.Commit("create and link")
 
 	var buf bytes.Buffer
-	err := cmdGraph([]string{"--all"}, PlainWriter(&buf))
+	err := cmdGraph(env.Repo, env.Store, []string{"--all"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdGraph: %v", err)
 	}
@@ -37,7 +37,7 @@ func TestCmdGraphJSON(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdGraph([]string{"--all", "--json"}, PlainWriter(&buf))
+	err := cmdGraph(env.Repo, env.Store, []string{"--all", "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdGraph: %v", err)
 	}
@@ -58,7 +58,7 @@ func TestCmdGraphRooted(t *testing.T) {
 	env.Repo.Commit("create and link")
 
 	var buf bytes.Buffer
-	err := cmdGraph([]string{a.ID}, PlainWriter(&buf))
+	err := cmdGraph(env.Repo, env.Store, []string{a.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdGraph: %v", err)
 	}
@@ -72,7 +72,7 @@ func TestCmdGraphEmpty(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdGraph([]string{"--all"}, PlainWriter(&buf))
+	err := cmdGraph(env.Repo, env.Store, []string{"--all"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdGraph --all: %v", err)
 	}
@@ -95,7 +95,7 @@ func TestCmdGraphMultipleRoots(t *testing.T) {
 	env.Repo.Commit("setup graph")
 
 	var buf bytes.Buffer
-	err := cmdGraph([]string{"--all"}, PlainWriter(&buf))
+	err := cmdGraph(env.Repo, env.Store, []string{"--all"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdGraph: %v", err)
 	}
@@ -121,7 +121,7 @@ func TestCmdGraphAllShowsClosedIssues(t *testing.T) {
 	env.Repo.Commit("create, link, and close")
 
 	var buf bytes.Buffer
-	err := cmdGraph([]string{"--all"}, PlainWriter(&buf))
+	err := cmdGraph(env.Repo, env.Store, []string{"--all"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdGraph --all: %v", err)
 	}
@@ -139,7 +139,7 @@ func TestCmdGraphNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdGraph([]string{"nonexistent"}, PlainWriter(&buf))
+	err := cmdGraph(env.Repo, env.Store, []string{"nonexistent"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for nonexistent root ID")
 	}

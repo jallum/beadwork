@@ -994,12 +994,69 @@ func TestReadCorruptJSON(t *testing.T) {
 	iss, _ := env.Store.Create("Valid", issue.CreateOpts{})
 	env.Repo.TreeFS().WriteFile("issues/"+iss.ID+".json", []byte("{invalid json"))
 
-	_, err := env.Store.Get(iss.ID)
+	// Use a fresh store so the cache doesn't mask the corruption
+	store := issue.NewStore(env.Repo.TreeFS(), env.Repo.Prefix)
+	_, err := store.Get(iss.ID)
 	if err == nil {
 		t.Error("expected error for corrupt JSON")
 	}
 	if !strings.Contains(err.Error(), "corrupt") {
 		t.Errorf("error = %q, want 'corrupt'", err.Error())
+	}
+}
+
+func TestCacheHitReturnsSamePointer(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Cached", issue.CreateOpts{})
+
+	got1, _ := env.Store.Get(iss.ID)
+	got2, _ := env.Store.Get(iss.ID)
+
+	if got1 != got2 {
+		t.Error("consecutive Get calls should return the same pointer")
+	}
+}
+
+func TestCacheWriteThrough(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Original", issue.CreateOpts{})
+
+	title := "Updated"
+	env.Store.Update(iss.ID, issue.UpdateOpts{Title: &title})
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.Title != "Updated" {
+		t.Errorf("title = %q, want %q", got.Title, "Updated")
+	}
+
+	// Verify a fresh store also reads the updated value from disk
+	store2 := issue.NewStore(env.Repo.TreeFS(), env.Repo.Prefix)
+	got2, _ := store2.Get(iss.ID)
+	if got2.Title != "Updated" {
+		t.Errorf("fresh store title = %q, want %q", got2.Title, "Updated")
+	}
+}
+
+func TestCacheEvictOnDelete(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Doomed", issue.CreateOpts{})
+
+	// Prime the cache
+	env.Store.Get(iss.ID)
+
+	// Delete
+	env.Store.Delete(iss.ID)
+
+	// Get should fail (not return stale cache)
+	_, err := env.Store.Get(iss.ID)
+	if err == nil {
+		t.Error("Get after Delete should fail")
 	}
 }
 
