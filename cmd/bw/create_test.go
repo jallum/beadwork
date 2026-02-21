@@ -29,7 +29,7 @@ func TestCmdCreateWithFlags(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdCreate(env.Store, []string{"Bug report", "--priority", "1", "--type", "bug", "--assignee", "alice"}, PlainWriter(&buf))
+	err := cmdCreate(env.Store, []string{"Bug report", "--priority", "1", "--type", "bug"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdCreate: %v", err)
 	}
@@ -45,9 +45,6 @@ func TestCmdCreateWithFlags(t *testing.T) {
 			}
 			if iss.Type != "bug" {
 				t.Errorf("type = %q, want bug", iss.Type)
-			}
-			if iss.Assignee != "alice" {
-				t.Errorf("assignee = %q, want alice", iss.Assignee)
 			}
 		}
 	}

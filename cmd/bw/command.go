@@ -83,7 +83,6 @@ var commands = []Command{
 		Flags: []Flag{
 			{Long: "--priority", Short: "-p", Value: "N", Help: "Priority (0-4 or P0-P4, 0=highest)"},
 			{Long: "--type", Short: "-t", Value: "TYPE", Help: "Issue type (task, bug, etc.)"},
-			{Long: "--assignee", Short: "-a", Value: "WHO", Help: "Assignee"},
 			{Long: "--description", Short: "-d", Value: "TEXT", Help: "Description"},
 			{Long: "--defer", Value: "DATE", Help: "Defer until date (YYYY-MM-DD)"},
 			{Long: "--parent", Value: "ID", Help: "Parent issue ID"},
@@ -92,7 +91,6 @@ var commands = []Command{
 		},
 		Examples: []Example{
 			{Cmd: `bw create "Fix login bug" --priority 1 --type bug`},
-			{Cmd: `bw create "New feature" -a alice`},
 			{Cmd: `bw create "Q3 planning" --defer 2027-07-01`},
 			{Cmd: `bw create "Fix bug" --silent`, Help: "Output bare ID for scripting"},
 		},
@@ -188,6 +186,23 @@ var commands = []Command{
 		},
 		NeedsStore: true,
 		Run:        cmdClose,
+	},
+	{
+		Name:        "start",
+		Summary:     "Start working on an issue",
+		Description: "Move an issue to in_progress and assign it. Refuses to start blocked issues.\nDefaults assignee to git user.name if not provided.",
+		Positionals: []Positional{
+			{Name: "<id>", Required: true, Help: "Issue ID"},
+		},
+		Flags: []Flag{
+			{Long: "--assignee", Short: "-a", Value: "WHO", Help: "Assignee (default: git user.name)"},
+			{Long: "--json", Help: "Output as JSON"},
+		},
+		Examples: []Example{
+			{Cmd: "bw start bw-a3f8"},
+			{Cmd: "bw start bw-a3f8 --assignee alice"},
+		},
+		Run: cmdStart,
 	},
 	{
 		Name:    "comments",
@@ -459,7 +474,7 @@ var commandGroups = []struct {
 	name string
 	cmds []string
 }{
-	{"Working With Issues", []string{"create", "show", "list", "update", "close", "reopen", "delete", "comments", "label", "defer", "undefer", "history"}},
+	{"Working With Issues", []string{"create", "show", "list", "update", "start", "close", "reopen", "delete", "comments", "label", "defer", "undefer", "history"}},
 	{"Finding Work", []string{"ready", "blocked"}},
 	{"Dependencies", []string{"dep"}},
 	{"Sync & Data", []string{"sync", "export", "import"}},

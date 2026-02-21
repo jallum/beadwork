@@ -12,7 +12,6 @@ type CreateArgs struct {
 	Parent      string
 	Priority    *int
 	Type        string
-	Assignee    string
 	Description string
 	DeferUntil  string
 	Labels      []string
@@ -22,7 +21,7 @@ type CreateArgs struct {
 
 func parseCreateArgs(raw []string) (CreateArgs, error) {
 	a, err := ParseArgs(raw,
-		[]string{"--priority", "--type", "--assignee", "--description", "--defer", "--labels", "--parent"},
+		[]string{"--priority", "--type", "--description", "--defer", "--labels", "--parent"},
 		[]string{"--json", "--silent"},
 	)
 	if err != nil {
@@ -38,7 +37,6 @@ func parseCreateArgs(raw []string) (CreateArgs, error) {
 	}
 	ca.Title = pos[0]
 	ca.Type = a.String("--type")
-	ca.Assignee = a.String("--assignee")
 	ca.Description = a.String("--description")
 	ca.DeferUntil = a.String("--defer")
 	ca.Parent = a.String("--parent")
@@ -76,7 +74,6 @@ func cmdCreate(store *issue.Store, args []string, w Writer) error {
 	opts := issue.CreateOpts{
 		Priority:    ca.Priority,
 		Type:        ca.Type,
-		Assignee:    ca.Assignee,
 		Description: ca.Description,
 		DeferUntil:  ca.DeferUntil,
 		Parent:      ca.Parent,

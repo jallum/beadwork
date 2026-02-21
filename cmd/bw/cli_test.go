@@ -1287,7 +1287,7 @@ func TestCreateWithAllFlags(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	out := bw(t, env.Dir, "create", "Full issue", "-p", "1", "-t", "bug", "-a", "alice", "-d", "some description")
+	out := bw(t, env.Dir, "create", "Full issue", "-p", "1", "-t", "bug", "-d", "some description")
 	assertContains(t, out, "created test-")
 	assertContains(t, out, "Full issue")
 }

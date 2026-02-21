@@ -268,8 +268,8 @@ func TestCommandValueFlags(t *testing.T) {
 		t.Fatal("create command not found")
 	}
 	vf := cmd.valueFlags()
-	// --priority, --type, --assignee, --description should be value flags
-	for _, name := range []string{"--priority", "--type", "--assignee", "--description"} {
+	// --priority, --type, --description should be value flags
+	for _, name := range []string{"--priority", "--type", "--description"} {
 		found := false
 		for _, f := range vf {
 			if f == name {
