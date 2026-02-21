@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-d5l.3"
+  ],
   "blocks": [],
   "created": "2026-02-21T15:31:52Z",
   "description": "Ref: parent epic bw-d5l, Phase 4.\n\nDepends on Phase 3 (bw-d5l.3). This is the final gate before the epic can be closed.\n\nVerify all of the following:\n- [ ] All existing tests pass (go test ./...)\n- [ ] No command calls getInitializedRepo() directly — only main.go does\n- [ ] Commands that don't need store have NeedsStore: false and receive nil\n- [ ] Tests inject env.Store directly — no redundant commits to sync stores\n- [ ] Cache is exercised: a command that reads an issue twice only deserializes once (dedicated test exists)\n- [ ] ClearCache exists and is called after sync/rebase operations\n- [ ] go vet clean\n- [ ] staticcheck clean (if available)\n\nOnce all checks pass, close this ticket and the parent epic.",
