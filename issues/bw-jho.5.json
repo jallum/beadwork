@@ -2,14 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T03:34:40Z",
   "created": "2026-02-21T03:11:00Z",
   "description": "sync.go line 26: replay warning messages use '  warning: ...' with a literal two-space prefix. Use w.Push(2)/w.Pop() around the warning loop.",
   "id": "bw-jho.5",
   "labels": [],
   "parent": "bw-jho",
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "sync.go: replace hardcoded indentation with Writer Push/Pop",
   "type": "task",
-  "updated_at": "2026-02-21T03:32:23Z"
+  "updated_at": "2026-02-21T03:34:40Z"
 }
