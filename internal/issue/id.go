@@ -61,34 +61,58 @@ func (s *Store) generateChildID(parentID string) (string, error) {
 	return fmt.Sprintf("%s.%d", parentID, maxN+1), nil
 }
 
-func (s *Store) ExistingIDs() map[string]bool {
-	ids := make(map[string]bool)
+// ensureIDSet lazily populates the ID set from disk on first access.
+func (s *Store) ensureIDSet() {
+	if s.idSet != nil {
+		return
+	}
+	s.idSet = make(map[string]bool)
 	entries, err := s.FS.ReadDir("issues")
 	if err != nil {
-		return ids
+		return
 	}
 	for _, e := range entries {
 		name := e.Name()
 		if strings.HasSuffix(name, ".json") {
-			ids[strings.TrimSuffix(name, ".json")] = true
+			s.idSet[strings.TrimSuffix(name, ".json")] = true
 		}
+	}
+}
+
+// trackID adds an ID to the lazy set (called after create/import).
+func (s *Store) trackID(id string) {
+	if s.idSet != nil {
+		s.idSet[id] = true
+	}
+}
+
+// untrackID removes an ID from the lazy set (called after delete).
+func (s *Store) untrackID(id string) {
+	if s.idSet != nil {
+		delete(s.idSet, id)
+	}
+}
+
+func (s *Store) ExistingIDs() map[string]bool {
+	s.ensureIDSet()
+	// Return a copy so callers can't mutate the internal set.
+	ids := make(map[string]bool, len(s.idSet))
+	for k := range s.idSet {
+		ids[k] = true
 	}
 	return ids
 }
 
 func (s *Store) resolveID(partial string) (string, error) {
-	entries, err := s.FS.ReadDir("issues")
-	if err != nil {
-		return "", fmt.Errorf("cannot read issues: %w", err)
+	s.ensureIDSet()
+	// Exact match is the fast path.
+	if s.idSet[partial] {
+		return partial, nil
 	}
 	var matches []string
-	for _, e := range entries {
-		name := strings.TrimSuffix(e.Name(), ".json")
-		if name == partial {
-			return name, nil
-		}
-		if strings.HasPrefix(name, partial) || strings.HasSuffix(name, partial) {
-			matches = append(matches, name)
+	for id := range s.idSet {
+		if strings.HasPrefix(id, partial) || strings.HasSuffix(id, partial) {
+			matches = append(matches, id)
 		}
 	}
 	if len(matches) == 1 {

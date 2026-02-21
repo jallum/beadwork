@@ -94,8 +94,9 @@ func (s *Store) Delete(id string) (*Issue, error) {
 	// Remove issue JSON file
 	s.FS.Remove("issues/" + id + ".json")
 
-	// Evict from cache
+	// Evict from cache and ID set
 	delete(s.cache, id)
+	s.untrackID(id)
 
 	return iss, nil
 }
