@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T03:34:41Z",
   "created": "2026-02-21T03:10:47Z",
   "description": "",
   "id": "bw-jho",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Replace manual space-indentation with Writer Push/Pop",
   "type": "epic",
-  "updated_at": "2026-02-21T03:32:05Z"
+  "updated_at": "2026-02-21T03:34:41Z"
 }
