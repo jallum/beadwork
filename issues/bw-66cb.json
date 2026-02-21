@@ -14,11 +14,15 @@
     {
       "text": "second test comment",
       "timestamp": "2026-02-21T03:51:31Z"
+    },
+    {
+      "text": "## Evaluation: bd dep tree equivalent\n\n### What bd dep tree does\nIssue-centric dependency tree with direction control (up/down/both), max-depth limit, and status filtering. Walks edges recursively from a root issue.\n\n### What bw graph does today\n- `bw graph \u003cid\u003e` — walks downward (blocks edges) from root, renders text tree with box-drawing chars\n- `bw graph --all` — all open issues grouped by connected component\n- `--json` — GraphNode array output\n- No direction control, no depth limit, no status filtering\n- walkGraph in Store.Graph() is a simple downward-only DFS\n\n### Recommendation: extend bw graph, don't add bw dep tree\n\nAdding a separate `bw dep tree` subcommand duplicates graph's purpose. Better to extend `bw graph \u003cid\u003e` with three new flags:\n\n1. `--direction up|down|both` (default: down) — controls edge traversal direction. \"up\" walks blocked_by edges (who blocks this?). \"both\" walks both directions from root.\n2. `--depth N` — max recursion depth (0 = unlimited, default)\n3. `--status open|closed|in_progress|all` — filter displayed nodes by status (default: all)\n\n### Implementation plan\n\n**Store layer** (internal/issue/issue.go):\n- Extend walkGraph to accept direction enum and depth limit\n- Add status filter parameter to Graph() — filter nodes after walking\n- Build reverse adjacency (blocked_by → blocks) for upward walking\n- \"both\" direction: walk both edge sets from each node\n\n**Command layer** (cmd/bw/graph.go):\n- Add --direction, --depth, --status flags to graph command definition\n- Parse and validate new flags in parseGraphArgs\n- Pass through to Store.Graph()\n- fprintTree already handles arbitrary tree shapes, no changes needed there\n\n**Tests** (cmd/bw/graph_test.go):\n- Upward walk from leaf shows ancestors\n- Depth limit truncates at N levels\n- Status filter excludes non-matching nodes\n- Bidirectional walk from middle node\n- Combine depth + direction + status\n\n### Effort estimate\nSmall-medium. The graph walking logic is simple (~10 lines today). Main work is the bidirectional adjacency map and plumbing flags through. No architectural changes needed.\n\n### Interaction with bw-01c3\nOutput format evaluation (bw-01c3) is independent — it's about rendering, this is about traversal. They can proceed in parallel and won't conflict.",
+      "timestamp": "2026-02-21T04:47:13Z"
     }
   ],
   "priority": 2,
   "status": "in_progress",
   "title": "Evaluate bd dep tree equivalent",
   "type": "task",
-  "updated_at": "2026-02-21T04:44:40Z"
+  "updated_at": "2026-02-21T04:47:13Z"
 }
