@@ -2,6 +2,7 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T15:32:01Z",
   "created": "2026-02-21T15:11:17Z",
   "description": "",
   "id": "bw-x4q",
@@ -13,7 +14,7 @@
     }
   ],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Inject store into commands and add write-through cache",
   "type": "task",
   "updated_at": "2026-02-21T15:32:01Z"
