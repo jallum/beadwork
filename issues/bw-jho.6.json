@@ -2,14 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T03:34:40Z",
   "created": "2026-02-21T03:11:04Z",
   "description": "command.go help/usage formatting uses literal '  ' prefixes throughout: printUsage (lines 464-465, 481) and printCommandHelp (lines 504, 509, 523, 530, 532). The columnar alignment (%-28s) can stay, but the base 2-space indent before each entry should use w.Push(2)/w.Pop(). The 6-space indent for example help text (line 532) should use a nested Push(4) inside the existing Push(2).",
   "id": "bw-jho.6",
   "labels": [],
   "parent": "bw-jho",
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "command.go: replace hardcoded indentation with Writer Push/Pop",
   "type": "task",
-  "updated_at": "2026-02-21T03:32:23Z"
+  "updated_at": "2026-02-21T03:34:40Z"
 }
