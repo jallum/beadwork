@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 // Flag describes a single command-line flag.
@@ -34,7 +37,8 @@ type Command struct {
 	Positionals []Positional
 	Flags       []Flag
 	Examples    []Example
-	Run         func(args []string, w Writer) error
+	NeedsStore  bool // when true, main injects an initialized repo+store
+	Run         func(r *repo.Repo, store *issue.Store, args []string, w Writer) error
 }
 
 // valueFlags returns the long names of flags that take a value (non-boolean).
@@ -93,7 +97,8 @@ var commands = []Command{
 			{Cmd: `bw create "Q3 planning" --defer 2027-07-01`},
 			{Cmd: `bw create "Fix bug" --silent`, Help: "Output bare ID for scripting"},
 		},
-		Run: cmdCreate,
+		NeedsStore: true,
+		Run:        cmdCreate,
 	},
 	{
 		Name:        "show",
@@ -113,7 +118,8 @@ var commands = []Command{
 			{Cmd: "bw show bw-a3f8 --only summary", Help: "Compact one-line summary"},
 			{Cmd: "bw show bw-a3f8 --only blockedby,unblocks", Help: "Dependency context only"},
 		},
-		Run: cmdShow,
+		NeedsStore: true,
+		Run:        cmdShow,
 	},
 	{
 		Name:        "list",
@@ -137,7 +143,8 @@ var commands = []Command{
 			{Cmd: "bw list --status closed --limit 5"},
 			{Cmd: "bw list --deferred"},
 		},
-		Run: cmdList,
+		NeedsStore: true,
+		Run:        cmdList,
 	},
 	{
 		Name:        "update",
@@ -162,7 +169,8 @@ var commands = []Command{
 			{Cmd: "bw update bw-a3f8 --status in_progress"},
 			{Cmd: "bw update bw-a3f8 --defer 2027-06-01"},
 		},
-		Run: cmdUpdate,
+		NeedsStore: true,
+		Run:        cmdUpdate,
 	},
 	{
 		Name:        "close",
@@ -179,7 +187,8 @@ var commands = []Command{
 			{Cmd: "bw close bw-a3f8"},
 			{Cmd: "bw close bw-a3f8 --reason duplicate"},
 		},
-		Run: cmdClose,
+		NeedsStore: true,
+		Run:        cmdClose,
 	},
 	{
 		Name:    "comments",
@@ -196,7 +205,8 @@ var commands = []Command{
 			{Cmd: `bw comments bw-a3f8`, Help: "List comments"},
 			{Cmd: `bw comments add bw-a3f8 "Fixed in latest deploy"`, Help: "Add a comment"},
 		},
-		Run: cmdComments,
+		NeedsStore: true,
+		Run:        cmdComments,
 	},
 	{
 		Name:    "reopen",
@@ -207,7 +217,8 @@ var commands = []Command{
 		Flags: []Flag{
 			{Long: "--json", Help: "Output as JSON"},
 		},
-		Run: cmdReopen,
+		NeedsStore: true,
+		Run:        cmdReopen,
 	},
 	{
 		Name:        "delete",
@@ -224,7 +235,8 @@ var commands = []Command{
 			{Cmd: "bw delete bw-a3f8", Help: "Preview deletion"},
 			{Cmd: "bw delete bw-a3f8 --force", Help: "Delete permanently"},
 		},
-		Run: cmdDelete,
+		NeedsStore: true,
+		Run:        cmdDelete,
 	},
 	{
 		Name:        "label",
@@ -241,7 +253,8 @@ var commands = []Command{
 			{Cmd: "bw label bw-a3f8 +bug +urgent"},
 			{Cmd: "bw label bw-a3f8 -wontfix"},
 		},
-		Run: cmdLabel,
+		NeedsStore: true,
+		Run:        cmdLabel,
 	},
 	{
 		Name:        "dep",
@@ -255,7 +268,8 @@ var commands = []Command{
 			{Cmd: "bw dep add bw-1234 blocks bw-5678"},
 			{Cmd: "bw dep remove bw-1234 blocks bw-5678"},
 		},
-		Run: cmdDep,
+		NeedsStore: true,
+		Run:        cmdDep,
 	},
 	{
 		Name:    "ready",
@@ -263,7 +277,8 @@ var commands = []Command{
 		Flags: []Flag{
 			{Long: "--json", Help: "Output as JSON"},
 		},
-		Run: cmdReady,
+		NeedsStore: true,
+		Run:        cmdReady,
 	},
 	{
 		Name:    "blocked",
@@ -271,7 +286,8 @@ var commands = []Command{
 		Flags: []Flag{
 			{Long: "--json", Help: "Output as JSON"},
 		},
-		Run: cmdBlocked,
+		NeedsStore: true,
+		Run:        cmdBlocked,
 	},
 	{
 		Name:        "defer",
@@ -287,7 +303,8 @@ var commands = []Command{
 		Examples: []Example{
 			{Cmd: "bw defer bw-a3f8 2027-06-01"},
 		},
-		Run: cmdDefer,
+		NeedsStore: true,
+		Run:        cmdDefer,
 	},
 	{
 		Name:        "undefer",
@@ -302,7 +319,8 @@ var commands = []Command{
 		Examples: []Example{
 			{Cmd: "bw undefer bw-a3f8"},
 		},
-		Run: cmdUndefer,
+		NeedsStore: true,
+		Run:        cmdUndefer,
 	},
 	{
 		Name:        "history",
@@ -319,12 +337,14 @@ var commands = []Command{
 			{Cmd: "bw history bw-a3f8"},
 			{Cmd: "bw history bw-a3f8 --limit 5"},
 		},
-		Run: cmdHistory,
+		NeedsStore: true,
+		Run:        cmdHistory,
 	},
 	{
 		Name:        "sync",
 		Summary:     "Fetch, rebase/replay, push",
 		Description: "Fetch from remote, rebase local commits, and push.\nUses intent replay to resolve conflicts automatically.",
+		NeedsStore:  true,
 		Run:         cmdSync,
 	},
 	{
@@ -337,7 +357,8 @@ var commands = []Command{
 		Examples: []Example{
 			{Cmd: "bw export --status open"},
 		},
-		Run: cmdExport,
+		NeedsStore: true,
+		Run:        cmdExport,
 	},
 	{
 		Name:        "import",
@@ -354,7 +375,8 @@ var commands = []Command{
 			{Cmd: "bw import issues.jsonl --dry-run"},
 			{Cmd: "bw import - < issues.jsonl"},
 		},
-		Run: cmdImport,
+		NeedsStore: true,
+		Run:        cmdImport,
 	},
 	{
 		Name:        "init",
@@ -382,7 +404,8 @@ var commands = []Command{
 			{Cmd: "bw config get default.priority"},
 			{Cmd: "bw config list"},
 		},
-		Run: cmdConfig,
+		NeedsStore: true,
+		Run:        cmdConfig,
 	},
 	{
 		Name:        "upgrade",
@@ -405,15 +428,16 @@ var commands = []Command{
 		Run:     wrapNoArgs(cmdOnboard),
 	},
 	{
-		Name:    "prime",
-		Summary: "Print workflow context for agents",
-		Run:     wrapNoArgs(cmdPrime),
+		Name:       "prime",
+		Summary:    "Print workflow context for agents",
+		NeedsStore: true,
+		Run:        cmdPrime,
 	},
 }
 
 // wrapNoArgs adapts a func(Writer) error to the standard command signature.
-func wrapNoArgs(fn func(w Writer) error) func([]string, Writer) error {
-	return func(_ []string, w Writer) error {
+func wrapNoArgs(fn func(w Writer) error) func(*repo.Repo, *issue.Store, []string, Writer) error {
+	return func(_ *repo.Repo, _ *issue.Store, _ []string, w Writer) error {
 		return fn(w)
 	}
 }

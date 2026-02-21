@@ -13,7 +13,7 @@ func TestCmdConfigSetAndGet(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdConfig([]string{"set", "default.priority", "2"}, PlainWriter(&buf))
+	err := cmdConfig(env.Repo, env.Store, []string{"set", "default.priority", "2"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("config set: %v", err)
 	}
@@ -22,7 +22,7 @@ func TestCmdConfigSetAndGet(t *testing.T) {
 	}
 
 	buf.Reset()
-	err = cmdConfig([]string{"get", "default.priority"}, PlainWriter(&buf))
+	err = cmdConfig(env.Repo, env.Store, []string{"get", "default.priority"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("config get: %v", err)
 	}
@@ -36,7 +36,7 @@ func TestCmdConfigList(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdConfig([]string{"list"}, PlainWriter(&buf))
+	err := cmdConfig(env.Repo, env.Store, []string{"list"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("config list: %v", err)
 	}
@@ -50,7 +50,7 @@ func TestCmdConfigGetMissing(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdConfig([]string{"get", "nonexistent"}, PlainWriter(&buf))
+	err := cmdConfig(env.Repo, env.Store, []string{"get", "nonexistent"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for missing key")
 	}

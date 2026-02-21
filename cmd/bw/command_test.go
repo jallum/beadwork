@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 func TestCommandMapContainsAllCommands(t *testing.T) {
@@ -125,7 +128,7 @@ func TestPrintCommandHelpLayout(t *testing.T) {
 			{Cmd: "bw test abc123", Help: "Show test for abc123"},
 			{Cmd: "bw test abc123 --verbose", Help: "Verbose output"},
 		},
-		Run: func([]string, Writer) error { return nil },
+		Run: func(*repo.Repo, *issue.Store, []string, Writer) error { return nil },
 	}
 
 	var buf bytes.Buffer
@@ -185,7 +188,7 @@ func TestPrintCommandHelpNoDescription(t *testing.T) {
 		Flags: []Flag{
 			{Long: "--json", Help: "Output as JSON"},
 		},
-		Run: func([]string, Writer) error { return nil },
+		Run: func(*repo.Repo, *issue.Store, []string, Writer) error { return nil },
 	}
 
 	var buf bytes.Buffer
@@ -202,7 +205,7 @@ func TestPrintCommandHelpNoExamples(t *testing.T) {
 	cmd := &Command{
 		Name:    "bare",
 		Summary: "Bare command",
-		Run:     func([]string, Writer) error { return nil },
+		Run:     func(*repo.Repo, *issue.Store, []string, Writer) error { return nil },
 	}
 
 	var buf bytes.Buffer

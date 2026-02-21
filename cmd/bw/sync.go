@@ -4,13 +4,11 @@ import (
 	"fmt"
 
 	"github.com/jallum/beadwork/internal/intent"
+	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
-func cmdSync(args []string, w Writer) error {
-	r, store, err := getInitializedRepo()
-	if err != nil {
-		return err
-	}
+func cmdSync(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
 	_ = args
 
 	status, intents, err := r.Sync()

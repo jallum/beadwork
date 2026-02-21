@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 type CreateArgs struct {
@@ -67,13 +68,8 @@ func parseCreateArgs(raw []string) (CreateArgs, error) {
 	return ca, nil
 }
 
-func cmdCreate(args []string, w Writer) error {
+func cmdCreate(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
 	ca, err := parseCreateArgs(args)
-	if err != nil {
-		return err
-	}
-
-	r, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}

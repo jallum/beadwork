@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 // DepArgs holds the parsed subcommand and IDs for "bw dep add|remove".
@@ -37,16 +40,16 @@ func parseDepArgs(raw []string) (DepArgs, error) {
 	return da, nil
 }
 
-func cmdDep(args []string, w Writer) error {
+func cmdDep(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
 	da, err := parseDepArgs(args)
 	if err != nil {
 		return err
 	}
 	switch da.Subcmd {
 	case "add":
-		return cmdDepAdd([]string{da.BlockerID, "blocks", da.BlockedID}, w)
+		return cmdDepAdd(r, store, []string{da.BlockerID, "blocks", da.BlockedID}, w)
 	case "remove":
-		return cmdDepRemove([]string{da.BlockerID, "blocks", da.BlockedID}, w)
+		return cmdDepRemove(r, store, []string{da.BlockerID, "blocks", da.BlockedID}, w)
 	}
 	return nil
 }
@@ -63,13 +66,8 @@ func parseDepAddArgs(raw []string) (DepAddArgs, error) {
 	return DepAddArgs{BlockerID: raw[0], BlockedID: raw[2]}, nil
 }
 
-func cmdDepAdd(args []string, w Writer) error {
+func cmdDepAdd(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
 	la, err := parseDepAddArgs(args)
-	if err != nil {
-		return err
-	}
-
-	r, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}
@@ -103,13 +101,8 @@ func parseDepRemoveArgs(raw []string) (DepRemoveArgs, error) {
 	return DepRemoveArgs{BlockerID: raw[0], BlockedID: raw[2]}, nil
 }
 
-func cmdDepRemove(args []string, w Writer) error {
+func cmdDepRemove(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
 	ua, err := parseDepRemoveArgs(args)
-	if err != nil {
-		return err
-	}
-
-	r, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}

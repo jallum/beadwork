@@ -18,7 +18,7 @@ func TestCmdDepAddBasic(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdDepAdd([]string{a.ID, "blocks", b.ID}, PlainWriter(&buf))
+	err := cmdDepAdd(env.Repo, env.Store, []string{a.ID, "blocks", b.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdDepAdd: %v", err)
 	}
@@ -37,7 +37,7 @@ func TestCmdDepAddNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdDepAdd([]string{"nonexistent", "blocks", "also-missing"}, PlainWriter(&buf))
+	err := cmdDepAdd(env.Repo, env.Store, []string{"nonexistent", "blocks", "also-missing"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for nonexistent issues")
 	}
@@ -53,7 +53,7 @@ func TestCmdDepRemoveBasic(t *testing.T) {
 	env.Repo.Commit("create and link")
 
 	var buf bytes.Buffer
-	err := cmdDepRemove([]string{a.ID, "blocks", b.ID}, PlainWriter(&buf))
+	err := cmdDepRemove(env.Repo, env.Store, []string{a.ID, "blocks", b.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdDepRemove: %v", err)
 	}
@@ -67,7 +67,7 @@ func TestCmdDepRemoveNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdDepRemove([]string{"nonexistent", "blocks", "also-missing"}, PlainWriter(&buf))
+	err := cmdDepRemove(env.Repo, env.Store, []string{"nonexistent", "blocks", "also-missing"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for nonexistent issues")
 	}

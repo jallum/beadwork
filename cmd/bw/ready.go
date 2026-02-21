@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 type ReadyArgs struct {
@@ -19,13 +20,8 @@ func parseReadyArgs(raw []string) (ReadyArgs, error) {
 	return ReadyArgs{JSON: a.JSON()}, nil
 }
 
-func cmdReady(args []string, w Writer) error {
+func cmdReady(_ *repo.Repo, store *issue.Store, args []string, w Writer) error {
 	ra, err := parseReadyArgs(args)
-	if err != nil {
-		return err
-	}
-
-	_, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}

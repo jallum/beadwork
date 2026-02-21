@@ -14,7 +14,7 @@ func TestCmdSyncNoRemote(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdSync([]string{}, PlainWriter(&buf))
+	err := cmdSync(env.Repo, env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdSync: %v", err)
 	}
@@ -33,7 +33,7 @@ func TestCmdSyncPush(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdSync([]string{}, PlainWriter(&buf))
+	err := cmdSync(env.Repo, env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdSync: %v", err)
 	}
@@ -53,7 +53,7 @@ func TestCmdSyncUpToDate(t *testing.T) {
 	env.Repo.Sync() // initial push
 
 	var buf bytes.Buffer
-	err := cmdSync([]string{}, PlainWriter(&buf))
+	err := cmdSync(env.Repo, env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdSync: %v", err)
 	}
@@ -90,7 +90,7 @@ func TestCmdSyncReplay(t *testing.T) {
 	env.Repo.Commit("update " + shared.ID + " assignee=agent")
 
 	var buf bytes.Buffer
-	err := cmdSync([]string{}, PlainWriter(&buf))
+	err := cmdSync(env.Repo, env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdSync: %v", err)
 	}

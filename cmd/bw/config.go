@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"sort"
+
+	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 type ConfigArgs struct {
@@ -36,13 +39,8 @@ func parseConfigArgs(raw []string) (ConfigArgs, error) {
 	return ca, nil
 }
 
-func cmdConfig(args []string, w Writer) error {
+func cmdConfig(r *repo.Repo, _ *issue.Store, args []string, w Writer) error {
 	ca, err := parseConfigArgs(args)
-	if err != nil {
-		return err
-	}
-
-	r, _, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}

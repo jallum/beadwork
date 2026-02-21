@@ -20,7 +20,7 @@ func TestCmdBlockedBasic(t *testing.T) {
 	env.Repo.Commit("link")
 
 	var buf bytes.Buffer
-	err := cmdBlocked([]string{}, PlainWriter(&buf))
+	err := cmdBlocked(env.Repo, env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdBlocked: %v", err)
 	}
@@ -47,7 +47,7 @@ func TestCmdBlockedResolves(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdBlocked([]string{}, PlainWriter(&buf))
+	err := cmdBlocked(env.Repo, env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdBlocked: %v", err)
 	}
@@ -66,7 +66,7 @@ func TestCmdBlockedJSON(t *testing.T) {
 	env.Repo.Commit("link")
 
 	var buf bytes.Buffer
-	err := cmdBlocked([]string{"--json"}, PlainWriter(&buf))
+	err := cmdBlocked(env.Repo, env.Store, []string{"--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdBlocked --json: %v", err)
 	}
@@ -97,7 +97,7 @@ func TestCmdBlockedEmpty(t *testing.T) {
 	env.Repo.Commit("create")
 
 	var buf bytes.Buffer
-	err := cmdBlocked([]string{}, PlainWriter(&buf))
+	err := cmdBlocked(env.Repo, env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdBlocked: %v", err)
 	}
@@ -118,7 +118,7 @@ func TestCmdBlockedMultipleBlockers(t *testing.T) {
 	env.Repo.Commit("link")
 
 	var buf bytes.Buffer
-	err := cmdBlocked([]string{}, PlainWriter(&buf))
+	err := cmdBlocked(env.Repo, env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdBlocked: %v", err)
 	}
@@ -139,7 +139,7 @@ func TestCmdBlockedUnknownFlag(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdBlocked([]string{"--verbose"}, PlainWriter(&buf))
+	err := cmdBlocked(env.Repo, env.Store, []string{"--verbose"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for unknown flag")
 	}
@@ -153,7 +153,7 @@ func TestCmdBlockedJSONEmpty(t *testing.T) {
 	env.Repo.Commit("create")
 
 	var buf bytes.Buffer
-	err := cmdBlocked([]string{"--json"}, PlainWriter(&buf))
+	err := cmdBlocked(env.Repo, env.Store, []string{"--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdBlocked --json: %v", err)
 	}
@@ -183,7 +183,7 @@ func TestCmdBlockedPartiallyResolved(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdBlocked([]string{}, PlainWriter(&buf))
+	err := cmdBlocked(env.Repo, env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdBlocked: %v", err)
 	}
@@ -209,7 +209,7 @@ func TestCmdBlockedShowsBlocksLine(t *testing.T) {
 	env.Repo.Commit("chain")
 
 	var buf bytes.Buffer
-	err := cmdBlocked([]string{}, PlainWriter(&buf))
+	err := cmdBlocked(env.Repo, env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdBlocked: %v", err)
 	}
@@ -240,7 +240,7 @@ func TestCmdBlockedNoBlocksLineWhenNotBlocking(t *testing.T) {
 	env.Repo.Commit("link")
 
 	var buf bytes.Buffer
-	err := cmdBlocked([]string{}, PlainWriter(&buf))
+	err := cmdBlocked(env.Repo, env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdBlocked: %v", err)
 	}

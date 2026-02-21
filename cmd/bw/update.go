@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 type UpdateArgs struct {
@@ -81,13 +82,8 @@ func parseUpdateArgs(raw []string) (UpdateArgs, error) {
 	return ua, nil
 }
 
-func cmdUpdate(args []string, w Writer) error {
+func cmdUpdate(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
 	ua, err := parseUpdateArgs(args)
-	if err != nil {
-		return err
-	}
-
-	r, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}

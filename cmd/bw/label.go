@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"strings"
+
+	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 type LabelArgs struct {
@@ -36,13 +39,8 @@ func parseLabelArgs(raw []string) (LabelArgs, error) {
 	return la, nil
 }
 
-func cmdLabel(args []string, w Writer) error {
+func cmdLabel(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
 	la, err := parseLabelArgs(args)
-	if err != nil {
-		return err
-	}
-
-	r, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}

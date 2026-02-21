@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 type UndeferArgs struct {
@@ -22,13 +23,8 @@ func parseUndeferArgs(raw []string) (UndeferArgs, error) {
 	return UndeferArgs{ID: raw[0], JSON: a.JSON()}, nil
 }
 
-func cmdUndefer(args []string, w Writer) error {
+func cmdUndefer(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
 	ua, err := parseUndeferArgs(args)
-	if err != nil {
-		return err
-	}
-
-	r, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}

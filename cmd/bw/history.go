@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"strings"
+
+	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 // HistoryArgs holds parsed arguments for the history command.
@@ -40,13 +43,8 @@ type commitEntry struct {
 	Intent    string `json:"intent"`
 }
 
-func cmdHistory(args []string, w Writer) error {
+func cmdHistory(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
 	ha, err := parseHistoryArgs(args)
-	if err != nil {
-		return err
-	}
-
-	r, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}
