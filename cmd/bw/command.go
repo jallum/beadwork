@@ -461,11 +461,14 @@ var commandGroups = []struct {
 func printUsage(w Writer) {
 	fmt.Fprintln(w, "bw — lightweight issue tracking with first-class dependency support")
 	fmt.Fprintf(w, "\n%s\n", w.Style("Usage:", Cyan))
-	fmt.Fprintln(w, "  bw <command> [args]")
-	fmt.Fprintln(w, "  bw <command> --help")
+	w.Push(2)
+	fmt.Fprintln(w, "bw <command> [args]")
+	fmt.Fprintln(w, "bw <command> --help")
+	w.Pop()
 
 	for _, g := range commandGroups {
 		fmt.Fprintf(w, "\n%s\n", w.Style(g.name+":", Cyan))
+		w.Push(2)
 		for _, name := range g.cmds {
 			c := commandMap[name]
 			if c == nil {
@@ -478,8 +481,9 @@ func printUsage(w Writer) {
 			if len(c.Flags) > 0 {
 				usage += " [flags]"
 			}
-			fmt.Fprintf(w, "  %-28s %s\n", usage, c.Summary)
+			fmt.Fprintf(w, "%-28s %s\n", usage, c.Summary)
 		}
+		w.Pop()
 	}
 
 	fmt.Fprintln(w, "\nUse \"bw <command> --help\" for more information about a command.")
@@ -501,17 +505,23 @@ func printCommandHelp(w Writer, c *Command) {
 	if len(c.Flags) > 0 {
 		usage += " [flags]"
 	}
-	fmt.Fprintf(w, "\n%s\n  %s\n", w.Style("Usage:", Cyan), usage)
+	fmt.Fprintf(w, "\n%s\n", w.Style("Usage:", Cyan))
+	w.Push(2)
+	fmt.Fprintln(w, usage)
+	w.Pop()
 
 	if len(c.Positionals) > 0 {
 		fmt.Fprintf(w, "\n%s\n", w.Style("Arguments:", Cyan))
+		w.Push(2)
 		for _, p := range c.Positionals {
-			fmt.Fprintf(w, "  %-24s %s\n", p.Name, p.Help)
+			fmt.Fprintf(w, "%-24s %s\n", p.Name, p.Help)
 		}
+		w.Pop()
 	}
 
 	if len(c.Flags) > 0 {
 		fmt.Fprintf(w, "\n%s\n", w.Style("Flags:", Cyan))
+		w.Push(2)
 		for _, f := range c.Flags {
 			flag := f.Long
 			if f.Short != "" {
@@ -520,17 +530,22 @@ func printCommandHelp(w Writer, c *Command) {
 			if f.Value != "" {
 				flag += " " + f.Value
 			}
-			fmt.Fprintf(w, "  %-28s %s\n", flag, f.Help)
+			fmt.Fprintf(w, "%-28s %s\n", flag, f.Help)
 		}
+		w.Pop()
 	}
 
 	if len(c.Examples) > 0 {
 		fmt.Fprintf(w, "\n%s\n", w.Style("Examples:", Cyan))
+		w.Push(2)
 		for _, ex := range c.Examples {
-			fmt.Fprintf(w, "  %s\n", ex.Cmd)
+			fmt.Fprintln(w, ex.Cmd)
 			if ex.Help != "" {
-				fmt.Fprintf(w, "      %s\n", ex.Help)
+				w.Push(4)
+				fmt.Fprintln(w, ex.Help)
+				w.Pop()
 			}
 		}
+		w.Pop()
 	}
 }

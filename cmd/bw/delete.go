@@ -51,23 +51,30 @@ func cmdDelete(args []string, w Writer) error {
 		}
 		fmt.Fprintln(w, w.Style("DELETE PREVIEW", Bold))
 		fmt.Fprintln(w)
-		fmt.Fprintf(w, "Issue to delete:\n  %s: %s [P%d %s]\n",
+		fmt.Fprintln(w, "Issue to delete:")
+		w.Push(2)
+		fmt.Fprintf(w, "%s: %s [P%d %s]\n",
 			w.Style(plan.Issue.ID, Cyan), plan.Issue.Title, plan.Issue.Priority, plan.Issue.Type)
+		w.Pop()
 		if len(plan.Blocks) > 0 || len(plan.BlockedBy) > 0 {
 			total := len(plan.Blocks) + len(plan.BlockedBy)
 			fmt.Fprintf(w, "\nDependency links to remove: %d\n", total)
+			w.Push(2)
 			for _, id := range plan.Blocks {
-				fmt.Fprintf(w, "  %s blocks %s\n", w.Style(plan.Issue.ID, Cyan), w.Style(id, Cyan))
+				fmt.Fprintf(w, "%s blocks %s\n", w.Style(plan.Issue.ID, Cyan), w.Style(id, Cyan))
 			}
 			for _, id := range plan.BlockedBy {
-				fmt.Fprintf(w, "  %s blocked by %s\n", w.Style(plan.Issue.ID, Cyan), w.Style(id, Cyan))
+				fmt.Fprintf(w, "%s blocked by %s\n", w.Style(plan.Issue.ID, Cyan), w.Style(id, Cyan))
 			}
+			w.Pop()
 		}
 		if len(plan.Children) > 0 {
 			fmt.Fprintf(w, "\nChildren to orphan: %d\n", len(plan.Children))
+			w.Push(2)
 			for _, id := range plan.Children {
-				fmt.Fprintf(w, "  %s\n", w.Style(id, Cyan))
+				fmt.Fprintf(w, "%s\n", w.Style(id, Cyan))
 			}
+			w.Pop()
 		}
 		fmt.Fprintf(w, "\nTo proceed: %s\n", w.Style(fmt.Sprintf("bw delete %s --force", plan.Issue.ID), Dim))
 		return nil

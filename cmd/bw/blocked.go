@@ -53,18 +53,20 @@ func cmdBlocked(args []string, w Writer) error {
 			bi.ID,
 			bi.Title,
 		)
+		w.Push(2)
 		styledBlockers := make([]string, len(bi.OpenBlockers))
 		for i, id := range bi.OpenBlockers {
 			styledBlockers[i] = w.Style(id, Red)
 		}
-		fmt.Fprintf(w, "  Blocked by: %s\n", strings.Join(styledBlockers, ", "))
+		fmt.Fprintf(w, "Blocked by: %s\n", strings.Join(styledBlockers, ", "))
 		if len(bi.Blocks) > 0 {
 			styledBlocks := make([]string, len(bi.Blocks))
 			for i, id := range bi.Blocks {
 				styledBlocks[i] = w.Style(id, Red)
 			}
-			fmt.Fprintf(w, "  Blocks: %s\n", strings.Join(styledBlocks, ", "))
+			fmt.Fprintf(w, "Blocks: %s\n", strings.Join(styledBlocks, ", "))
 		}
+		w.Pop()
 	}
 	return nil
 }

@@ -105,13 +105,15 @@ func cmdUpgrade(args []string, w Writer) error {
 	if changelogContent, cerr := upgradeFetchChangelog(latest); cerr == nil {
 		if parsed := parseChangelog(changelogContent, cur, latest); parsed != "" {
 			fmt.Fprintln(w)
+			w.Push(2)
 			for _, line := range strings.Split(parsed, "\n") {
 				if strings.HasPrefix(line, "## ") {
-					fmt.Fprintf(w, "  %s\n", w.Style(strings.TrimPrefix(line, "## "), Bold))
+					fmt.Fprintln(w, w.Style(strings.TrimPrefix(line, "## "), Bold))
 				} else {
-					fmt.Fprintf(w, "  %s\n", line)
+					fmt.Fprintln(w, line)
 				}
 			}
+			w.Pop()
 		}
 	}
 
@@ -270,13 +272,15 @@ func downloadAsset(url string, size int64, w Writer) ([]byte, error) {
 	isTTY := w.Width() > 0
 	written := int64(0)
 	chunk := make([]byte, 32*1024)
+	w.Push(2)
 	for {
 		n, readErr := resp.Body.Read(chunk)
 		if n > 0 {
 			buf.Write(chunk[:n])
 			written += int64(n)
 			if isTTY && total > 0 {
-				fmt.Fprintf(w, "\r  %s",
+				fmt.Fprintf(w, "%s%s",
+					w.ClearLine(),
 					w.Style(fmt.Sprintf("%s/%s (%d%%)",
 						formatBytes(written), formatBytes(total),
 						written*100/total), Dim))
@@ -286,15 +290,17 @@ func downloadAsset(url string, size int64, w Writer) ([]byte, error) {
 			break
 		}
 		if readErr != nil {
+			w.Pop()
 			return nil, readErr
 		}
 	}
 
 	if isTTY && total > 0 {
-		fmt.Fprintf(w, "\r  %s %s\n", formatBytes(written), w.Style("done", Green))
+		fmt.Fprintf(w, "%s%s %s\n", w.ClearLine(), formatBytes(written), w.Style("done", Green))
 	} else {
-		fmt.Fprintf(w, "  %s %s\n", formatBytes(written), w.Style("done", Green))
+		fmt.Fprintf(w, "%s %s\n", formatBytes(written), w.Style("done", Green))
 	}
+	w.Pop()
 
 	return buf.Bytes(), nil
 }
@@ -460,9 +466,11 @@ func cmdUpgradeRepo(args []string, w Writer) error {
 	}
 
 	fmt.Fprintf(w, "upgrading repo v%d -> v%d...\n", from, repo.CurrentVersion)
+	w.Push(2)
 	for v := from; v < repo.CurrentVersion; v++ {
-		fmt.Fprintf(w, "  v%d -> v%d: %s\n", v, v+1, repo.Migrations[v].Description)
+		fmt.Fprintf(w, "v%d -> v%d: %s\n", v, v+1, repo.Migrations[v].Description)
 	}
+	w.Pop()
 
 	_, to, err := r.Upgrade()
 	if err != nil {
