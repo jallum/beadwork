@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-21T01:41:06Z",
+  "description": "",
+  "id": "bw-0vo",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Refactor prime command: template engine and styled output",
+  "type": "task",
+  "updated_at": "2026-02-21T01:41:06Z"
+}
