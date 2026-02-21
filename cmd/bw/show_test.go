@@ -414,6 +414,109 @@ func TestCmdShowUnblocksImmediate(t *testing.T) {
 	}
 }
 
+func TestCmdShowChildrenSection(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic task", issue.CreateOpts{})
+	c1, _ := env.Store.Create("Child one", issue.CreateOpts{Parent: epic.ID})
+	c2, _ := env.Store.Create("Child two", issue.CreateOpts{Parent: epic.ID})
+	env.Repo.Commit("setup epic with children")
+
+	var buf bytes.Buffer
+	err := cmdShow(env.Store, []string{epic.ID}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdShow: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "CHILDREN") {
+		t.Errorf("should show CHILDREN section: %q", out)
+	}
+	if !strings.Contains(out, c1.ID) {
+		t.Errorf("should show child 1 ID: %q", out)
+	}
+	if !strings.Contains(out, "Child one") {
+		t.Errorf("should show child 1 title: %q", out)
+	}
+	if !strings.Contains(out, c2.ID) {
+		t.Errorf("should show child 2 ID: %q", out)
+	}
+	if !strings.Contains(out, "Child two") {
+		t.Errorf("should show child 2 title: %q", out)
+	}
+}
+
+func TestCmdShowChildrenWithDeps(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{})
+	c1, _ := env.Store.Create("Step one", issue.CreateOpts{Parent: epic.ID})
+	c2, _ := env.Store.Create("Step two", issue.CreateOpts{Parent: epic.ID})
+	env.Store.Link(c1.ID, c2.ID)
+	env.Repo.Commit("setup epic with deps")
+
+	var buf bytes.Buffer
+	err := cmdShow(env.Store, []string{epic.ID}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdShow: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "CHILDREN") {
+		t.Errorf("should show CHILDREN section: %q", out)
+	}
+	// c2 should show blocked by c1
+	if !strings.Contains(out, "blocked by") {
+		t.Errorf("should show dependency annotation: %q", out)
+	}
+	if !strings.Contains(out, c1.ID) {
+		t.Errorf("should show c1 ID in dep annotation: %q", out)
+	}
+}
+
+func TestCmdShowNoChildrenForLeaf(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Leaf issue", issue.CreateOpts{})
+	env.Repo.Commit("create")
+
+	var buf bytes.Buffer
+	err := cmdShow(env.Store, []string{iss.ID}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdShow: %v", err)
+	}
+	out := buf.String()
+	if strings.Contains(out, "CHILDREN") {
+		t.Errorf("leaf issue should NOT show CHILDREN: %q", out)
+	}
+}
+
+func TestCmdShowOnlyChildren(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{Description: "Some desc"})
+	env.Store.Create("Child", issue.CreateOpts{Parent: epic.ID})
+	env.Repo.Commit("setup")
+
+	var buf bytes.Buffer
+	err := cmdShow(env.Store, []string{epic.ID, "--only", "children"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdShow --only children: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "CHILDREN") {
+		t.Errorf("should show CHILDREN: %q", out)
+	}
+	if strings.Contains(out, "Assignee:") {
+		t.Errorf("should NOT show summary: %q", out)
+	}
+	if strings.Contains(out, "DESCRIPTION") {
+		t.Errorf("should NOT show description: %q", out)
+	}
+}
+
 func TestCmdShowNotFound(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
