@@ -6,9 +6,15 @@
   "description": "",
   "id": "bw-df4",
   "labels": [],
+  "comments": [
+    {
+      "text": "cmd/bw/start.go:39 does store.Committer.(*repo.Repo) without a nil check. When the store is opened without a real repo backing it, this panics with: nil pointer dereference. Need a guard or a different way to get the git dir for gitUserName.",
+      "timestamp": "2026-02-21T18:14:13Z"
+    }
+  ],
   "priority": 1,
   "status": "open",
   "title": "bw start crashes with nil pointer when store.Committer is nil",
   "type": "bug",
-  "updated_at": "2026-02-21T18:14:08Z"
+  "updated_at": "2026-02-21T18:14:13Z"
 }
