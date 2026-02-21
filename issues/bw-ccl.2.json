@@ -11,9 +11,15 @@
   "id": "bw-ccl.2",
   "labels": [],
   "parent": "bw-ccl",
+  "comments": [
+    {
+      "text": "Ready: open issues where all Reverse[id] entries are in Closed. Blocked: open issues where any Reverse[id] entry is not in Closed. Both become simple filters on the snapshot — no per-issue readIssue() calls. Blocked() currently has an O(n*m) nested loop loading each blocker individually.",
+      "timestamp": "2026-02-21T21:16:46Z"
+    }
+  ],
   "priority": 2,
   "status": "open",
   "title": "Rewrite Ready() and Blocked() to use Snapshot",
   "type": "task",
-  "updated_at": "2026-02-21T21:16:37Z"
+  "updated_at": "2026-02-21T21:16:46Z"
 }
