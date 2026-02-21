@@ -2,13 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T01:31:16Z",
+  "close_reason": "done",
   "created": "2026-02-20T19:09:42Z",
   "description": "",
   "id": "bw-7f4c",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Split commands_test.go into per-command test files",
   "type": "task",
-  "updated_at": "2026-02-20T19:09:42Z"
+  "updated_at": "2026-02-21T01:31:16Z"
 }
