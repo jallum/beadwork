@@ -1,5 +1,5 @@
 {
-  "assignee": "gemini",
+  "assignee": "claude",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-02-20T06:51:20Z",
@@ -20,5 +20,5 @@
   "status": "in_progress",
   "title": "Evaluate bd dep tree equivalent",
   "type": "task",
-  "updated_at": "2026-02-21T04:21:53Z"
+  "updated_at": "2026-02-21T04:44:40Z"
 }
