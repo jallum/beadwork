@@ -1,0 +1,67 @@
+package issue
+
+import (
+	"sort"
+	"strings"
+)
+
+func (s *Store) List(filter Filter) ([]*Issue, error) {
+	statuses := StatusNames()
+	if len(filter.Statuses) > 0 {
+		statuses = filter.Statuses
+	} else if filter.Status != "" {
+		statuses = []string{filter.Status}
+	}
+
+	var ids []string
+	for _, status := range statuses {
+		dir := "status/" + status
+		entries, err := s.FS.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		for _, e := range entries {
+			if e.Name() == ".gitkeep" {
+				continue
+			}
+			ids = append(ids, e.Name())
+		}
+	}
+
+	var issues []*Issue
+	for _, id := range ids {
+		issue, err := s.readIssue(id)
+		if err != nil {
+			continue
+		}
+		if filter.Assignee != "" && issue.Assignee != filter.Assignee {
+			continue
+		}
+		if filter.Priority != nil && issue.Priority != *filter.Priority {
+			continue
+		}
+		if filter.Type != "" && issue.Type != filter.Type {
+			continue
+		}
+		if filter.Label != "" && !containsStr(issue.Labels, filter.Label) {
+			continue
+		}
+		if filter.Grep != "" {
+			needle := strings.ToLower(filter.Grep)
+			if !strings.Contains(strings.ToLower(issue.Title), needle) &&
+				!strings.Contains(strings.ToLower(issue.Description), needle) {
+				continue
+			}
+		}
+		issues = append(issues, issue)
+	}
+
+	sort.Slice(issues, func(i, j int) bool {
+		if issues[i].Priority != issues[j].Priority {
+			return issues[i].Priority < issues[j].Priority
+		}
+		return issues[i].Created < issues[j].Created
+	})
+
+	return issues, nil
+}
