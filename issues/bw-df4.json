@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-21T18:14:08Z",
+  "description": "",
+  "id": "bw-df4",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "bw start crashes with nil pointer when store.Committer is nil",
+  "type": "bug",
+  "updated_at": "2026-02-21T18:14:08Z"
+}
