@@ -6,6 +6,7 @@
     "bw-ccl.3",
     "bw-ccl.5"
   ],
+  "closed_at": "2026-02-21T21:58:15Z",
   "created": "2026-02-21T21:16:30Z",
   "description": "",
   "id": "bw-ccl.1",
@@ -18,8 +19,8 @@
     }
   ],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add Snapshot struct and constructor",
   "type": "task",
-  "updated_at": "2026-02-21T21:55:25Z"
+  "updated_at": "2026-02-21T21:58:15Z"
 }
