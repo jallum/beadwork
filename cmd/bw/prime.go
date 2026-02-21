@@ -48,18 +48,25 @@ func cmdPrime(store *issue.Store, _ []string, w Writer) error {
 }
 
 func primeState(store *issue.Store, w Writer, md func(string)) {
-	ready, _ := store.Ready()
-	all, _ := store.List(issue.Filter{})
+	snap, err := issue.NewSnapshot(store)
+	if err != nil {
+		return
+	}
 
+	ready := snap.Ready()
+
+	// Derive counts and in-progress list from the single snapshot.
 	openCount := 0
 	ipCount := 0
 	closedCount := 0
-	for _, iss := range all {
+	var inProgress []*issue.Issue
+	for _, iss := range snap.Issues {
 		switch iss.Status {
 		case "open":
 			openCount++
 		case "in_progress":
 			ipCount++
+			inProgress = append(inProgress, iss)
 		case "closed":
 			closedCount++
 		}
@@ -67,8 +74,8 @@ func primeState(store *issue.Store, w Writer, md func(string)) {
 
 	// Find max ID length for column alignment.
 	idw := 0
-	for _, iss := range all {
-		if iss.Status == "in_progress" && len(iss.ID) > idw {
+	for _, iss := range inProgress {
+		if len(iss.ID) > idw {
 			idw = len(iss.ID)
 		}
 	}
@@ -84,19 +91,17 @@ func primeState(store *issue.Store, w Writer, md func(string)) {
 	if ipCount > 0 {
 		md("\n**In progress:**\n")
 		w.Push(2)
-		for _, iss := range all {
-			if iss.Status == "in_progress" {
-				md(fmt.Sprintf("`%-*s`  P%d  %s\n", idw, iss.ID, iss.Priority, iss.Title))
-				if n := len(iss.Comments); n > 0 {
-					last := iss.Comments[n-1]
-					text := last.Text
-					if len(text) > 60 {
-						text = text[:57] + "..."
-					}
-					w.Push(2)
-					md(fmt.Sprintf("└ %q (%s)\n", text, relativeTime(last.Timestamp)))
-					w.Pop()
+		for _, iss := range inProgress {
+			md(fmt.Sprintf("`%-*s`  P%d  %s\n", idw, iss.ID, iss.Priority, iss.Title))
+			if n := len(iss.Comments); n > 0 {
+				last := iss.Comments[n-1]
+				text := last.Text
+				if len(text) > 60 {
+					text = text[:57] + "..."
 				}
+				w.Push(2)
+				md(fmt.Sprintf("└ %q (%s)\n", text, relativeTime(last.Timestamp)))
+				w.Pop()
 			}
 		}
 		w.Pop()
