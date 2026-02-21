@@ -2,12 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T01:24:39Z",
+  "close_reason": "done",
   "created": "2026-02-20T15:01:35Z",
   "description": "",
   "id": "bw-9410",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Show parity with bd",
-  "type": "task"
+  "type": "task",
+  "updated_at": "2026-02-21T01:24:39Z"
 }
