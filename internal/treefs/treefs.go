@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -657,22 +656,6 @@ func (t *TreeFS) writeBlob(s storer.EncodedObjectStorer, data []byte) (plumbing.
 	}
 	w.Close()
 	return s.SetEncodedObject(obj)
-}
-
-// Fetch fetches from a remote.
-func (t *TreeFS) Fetch(remoteName string, refSpec config.RefSpec) error {
-	return t.repo.Fetch(&git.FetchOptions{
-		RemoteName: remoteName,
-		RefSpecs:   []config.RefSpec{refSpec},
-	})
-}
-
-// Push pushes a ref to a remote.
-func (t *TreeFS) Push(remoteName string, refSpec config.RefSpec) error {
-	return t.repo.Push(&git.PushOptions{
-		RemoteName: remoteName,
-		RefSpecs:   []config.RefSpec{refSpec},
-	})
 }
 
 // Reset moves the ref to a new commit hash, discarding any pending overlay.

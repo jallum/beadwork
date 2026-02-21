@@ -128,8 +128,7 @@ func (r *Repo) Init(prefix string) error {
 	if remoteExists {
 		// Fetch remote branch
 		refSpec := config.RefSpec(fmt.Sprintf("+%s:%s", refLocal, refRemote))
-		err := r.tfs.Fetch("origin", refSpec)
-		if err != nil && err != git.NoErrAlreadyUpToDate {
+		if err := r.fetch("origin", refSpec); err != nil {
 			return fmt.Errorf("fetch failed: %w", err)
 		}
 
@@ -317,8 +316,7 @@ func (r *Repo) Sync() (status string, replayed []string, err error) {
 
 	// Try to fetch
 	refSpec := config.RefSpec(fmt.Sprintf("+%s:%s", refLocal, refRemote))
-	fetchErr := r.tfs.Fetch("origin", refSpec)
-	if fetchErr != nil && fetchErr != git.NoErrAlreadyUpToDate {
+	if fetchErr := r.fetch("origin", refSpec); fetchErr != nil {
 		// Remote branch may not exist — just push
 		if err := r.push(); err != nil {
 			return "", nil, fmt.Errorf("push failed: %w", err)
@@ -399,10 +397,20 @@ func (r *Repo) Push() error {
 
 func (r *Repo) push() error {
 	refSpec := config.RefSpec(refLocal + ":" + refLocal)
-	err := r.tfs.Push("origin", refSpec)
-	if err == git.NoErrAlreadyUpToDate {
-		return nil
-	}
+	return r.gitPush("origin", refSpec)
+}
+
+func (r *Repo) repoDir() string {
+	return filepath.Dir(r.GitDir)
+}
+
+func (r *Repo) fetch(remoteName string, refSpec config.RefSpec) error {
+	_, err := execGit(r.repoDir(), "fetch", remoteName, string(refSpec))
+	return err
+}
+
+func (r *Repo) gitPush(remoteName string, refSpec config.RefSpec) error {
+	_, err := execGit(r.repoDir(), "push", remoteName, string(refSpec))
 	return err
 }
 
