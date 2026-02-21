@@ -13,8 +13,7 @@ Issues have **status** (open → in_progress → closed, or deferred), **priorit
 - Claim work with `bw update <id> --status in_progress` before starting.
 - Record progress as you go — `bw comments add <id> "what happened"`. Context in your working memory can disappear without warning. Comments persist.
 - If you discover new work mid-task, create an issue. Don't create issues for things you'll finish in the same breath.
-- `bw close <id>` when done. Use `--reason` if the resolution isn't obvious.
-- Before ending your session: commit code, push your branch, and `bw sync`. Nothing should exist only in your context window.
+- Before ending your session: commit code, push your branch, `bw close <id>` (with `--reason` if the resolution isn't obvious), and `bw sync`. Nothing should exist only in your context window.
 
 ## Commands
 
@@ -24,7 +23,7 @@ Every command supports `--help`. Read commands accept `--json`.
 bw ready                               # Unblocked work
 bw blocked                             # Issues waiting on dependencies
 bw list                                # Open + in-progress issues (--all, --grep, --status, --label)
-bw show <id>                           # Full detail with deps and comments
+bw show <id>                           # Full detail with actionable blockers and comments
 bw history <id>                        # Mutation log from git history
 bw create "Title" -p 2 -t task         # New issue (P0-P4; task, bug, or epic)
 bw update <id> --status in_progress    # Change fields (--title, --priority, --assignee, --parent)

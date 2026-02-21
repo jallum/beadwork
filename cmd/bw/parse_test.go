@@ -43,13 +43,19 @@ func TestParseShowArgsMultiID(t *testing.T) {
 	}
 }
 
-func TestParseShowArgsShort(t *testing.T) {
-	a, err := parseShowArgs([]string{"bw-1234", "--short"})
+func TestParseShowArgsOnly(t *testing.T) {
+	a, err := parseShowArgs([]string{"bw-1234", "--only", "summary,blockedby"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !a.Short {
-		t.Error("expected Short = true")
+	if !a.showSection("summary") {
+		t.Error("expected summary = true")
+	}
+	if !a.showSection("blockedby") {
+		t.Error("expected blockedby = true")
+	}
+	if a.showSection("description") {
+		t.Error("expected description = false")
 	}
 }
 
@@ -391,51 +397,6 @@ func TestParseImportArgsMissingFile(t *testing.T) {
 	_, err := parseImportArgs([]string{})
 	if err == nil {
 		t.Error("expected error for missing file")
-	}
-}
-
-// --- parseGraphArgs ---
-
-func TestParseGraphArgsWithID(t *testing.T) {
-	a, err := parseGraphArgs([]string{"bw-1234"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if a.RootID != "bw-1234" {
-		t.Errorf("RootID = %q", a.RootID)
-	}
-	if a.All {
-		t.Error("expected All = false")
-	}
-}
-
-func TestParseGraphArgsAll(t *testing.T) {
-	a, err := parseGraphArgs([]string{"--all"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !a.All {
-		t.Error("expected All = true")
-	}
-	if a.RootID != "" {
-		t.Errorf("RootID = %q, want empty", a.RootID)
-	}
-}
-
-func TestParseGraphArgsMissing(t *testing.T) {
-	_, err := parseGraphArgs([]string{})
-	if err == nil {
-		t.Error("expected error when no ID and no --all")
-	}
-}
-
-func TestParseGraphArgsJSON(t *testing.T) {
-	a, err := parseGraphArgs([]string{"--all", "--json"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !a.JSON {
-		t.Error("expected JSON = true")
 	}
 }
 

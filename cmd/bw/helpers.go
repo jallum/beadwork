@@ -262,19 +262,6 @@ func fprintIssue(w Writer, iss *issue.Issue) {
 	if iss.Parent != "" {
 		fmt.Fprintf(w, "Parent: %s\n", iss.Parent)
 	}
-
-	// Description
-	if iss.Description != "" {
-		fmt.Fprintf(w, "\n%s\n\n", w.Style("DESCRIPTION", Bold))
-		w.Push(2)
-		desc := iss.Description
-		if ww := w.Width(); ww > 0 {
-			desc = wrap.Text(desc, ww)
-		}
-		fmt.Fprintln(w, desc)
-		w.Pop()
-	}
-
 }
 
 // fprintComments renders the COMMENTS section for an issue.
@@ -303,16 +290,48 @@ func fprintComments(w Writer, iss *issue.Issue) {
 	}
 }
 
-// fprintDeps renders rich dependency sections using store lookups.
-func fprintDeps(w Writer, iss *issue.Issue, store *issue.Store) {
+// fprintMap renders BLOCKED BY and UNBLOCKS sections.
+// BLOCKED BY uses tip-walking to find leaves, then walks closed tips back
+// to the nearest open ancestor — the actual actionable blocker.
+// UNBLOCKS shows the immediate dependents that closing this issue would unblock.
+func fprintMap(w Writer, iss *issue.Issue, store *issue.Store) {
+	_, rev := store.LoadEdges()
+
+	if len(iss.BlockedBy) > 0 {
+		tips, _ := store.Tips(iss.BlockedBy, rev)
+		actionable := nearestOpen(tips, iss.ID, store)
+		if len(actionable) > 0 {
+			fmt.Fprintln(w)
+			fmt.Fprintln(w, w.Style("BLOCKED BY", Bold))
+			w.Push(2)
+			for _, tip := range actionable {
+				ps := PriorityStyle(tip.Priority)
+				line := fmt.Sprintf("→ %s %s: %s  [%s %s]",
+					issue.StatusIcon(tip.Status), tip.ID, tip.Title,
+					w.Style("●", ps), w.Style(fmt.Sprintf("P%d", tip.Priority), ps))
+				// Annotate if this tip also blocks other issues
+				var others []string
+				for _, id := range tip.Blocks {
+					if id != iss.ID {
+						others = append(others, id)
+					}
+				}
+				if len(others) > 0 {
+					line += w.Style(fmt.Sprintf("  (also blocks: %s)", strings.Join(others, ", ")), Dim)
+				}
+				fmt.Fprintln(w, line)
+			}
+			w.Pop()
+		}
+	}
+
 	if len(iss.Blocks) > 0 {
 		fmt.Fprintln(w)
-		fmt.Fprintln(w, w.Style("BLOCKS", Bold))
+		fmt.Fprintln(w, w.Style("UNBLOCKS", Bold))
 		w.Push(2)
 		for _, id := range iss.Blocks {
 			dep, err := store.Get(id)
 			if err != nil {
-				fmt.Fprintf(w, "← %s\n", id)
 				continue
 			}
 			ps := PriorityStyle(dep.Priority)
@@ -322,23 +341,40 @@ func fprintDeps(w Writer, iss *issue.Issue, store *issue.Store) {
 		}
 		w.Pop()
 	}
-	if len(iss.BlockedBy) > 0 {
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, w.Style("DEPENDS ON", Bold))
-		w.Push(2)
-		for _, id := range iss.BlockedBy {
-			dep, err := store.Get(id)
-			if err != nil {
-				fmt.Fprintf(w, "→ %s\n", id)
-				continue
+}
+
+// nearestOpen takes tips from the blocker chain and, for each closed tip,
+// walks back via its Blocks field to find the nearest open ancestor.
+// Returns the deduped set of open issues that actually need work.
+func nearestOpen(tips []*issue.Issue, currentID string, store *issue.Store) []*issue.Issue {
+	seen := make(map[string]bool)
+	var result []*issue.Issue
+	for _, tip := range tips {
+		t := tip
+		for t.Status == "closed" {
+			var next *issue.Issue
+			for _, id := range t.Blocks {
+				if id == currentID {
+					continue
+				}
+				candidate, err := store.Get(id)
+				if err != nil {
+					continue
+				}
+				next = candidate
+				break
 			}
-			ps := PriorityStyle(dep.Priority)
-			fmt.Fprintf(w, "→ %s %s: %s  [%s %s]\n",
-				issue.StatusIcon(dep.Status), dep.ID, dep.Title,
-				w.Style("●", ps), w.Style(fmt.Sprintf("P%d", dep.Priority), ps))
+			if next == nil {
+				break
+			}
+			t = next
 		}
-		w.Pop()
+		if t.Status != "closed" && t.ID != currentID && !seen[t.ID] {
+			seen[t.ID] = true
+			result = append(result, t)
+		}
 	}
+	return result
 }
 
 // styleMD adds ANSI color to markdown text without altering it.

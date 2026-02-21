@@ -470,45 +470,6 @@ func TestLabelDirectoryCleanup(t *testing.T) {
 	}
 }
 
-func TestGraph(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	a, _ := env.Store.Create("Root", issue.CreateOpts{})
-	b, _ := env.Store.Create("Middle", issue.CreateOpts{})
-	c, _ := env.Store.Create("Leaf", issue.CreateOpts{})
-	env.Store.Link(a.ID, b.ID)
-	env.Store.Link(b.ID, c.ID)
-	env.CommitIntent("setup graph")
-
-	// Full graph
-	nodes, err := env.Store.Graph("")
-	if err != nil {
-		t.Fatalf("Graph: %v", err)
-	}
-	if len(nodes) != 3 {
-		t.Errorf("got %d nodes, want 3", len(nodes))
-	}
-
-	// Rooted graph
-	nodes, err = env.Store.Graph(a.ID)
-	if err != nil {
-		t.Fatalf("Graph rooted: %v", err)
-	}
-	if len(nodes) != 3 {
-		t.Errorf("rooted got %d nodes, want 3 (a->b->c)", len(nodes))
-	}
-
-	// Rooted at middle
-	nodes, err = env.Store.Graph(b.ID)
-	if err != nil {
-		t.Fatalf("Graph rooted at middle: %v", err)
-	}
-	if len(nodes) != 2 {
-		t.Errorf("middle-rooted got %d nodes, want 2 (b->c)", len(nodes))
-	}
-}
-
 func TestListByStatus(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -920,48 +881,6 @@ func TestGetNonExistent(t *testing.T) {
 	}
 }
 
-func TestGraphEmpty(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	// No issues at all — graph should return empty
-	nodes, err := env.Store.Graph("")
-	if err != nil {
-		t.Fatalf("Graph: %v", err)
-	}
-	if len(nodes) != 0 {
-		t.Errorf("got %d nodes, want 0", len(nodes))
-	}
-}
-
-func TestGraphRootedSubset(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	a, _ := env.Store.Create("Root A", issue.CreateOpts{})
-	b, _ := env.Store.Create("Child B", issue.CreateOpts{})
-	c, _ := env.Store.Create("Independent C", issue.CreateOpts{})
-	env.Store.Link(a.ID, b.ID)
-	env.CommitIntent("setup")
-
-	// Rooted at A should only return A and B, not C
-	nodes, err := env.Store.Graph(a.ID)
-	if err != nil {
-		t.Fatalf("Graph: %v", err)
-	}
-	ids := make(map[string]bool)
-	for _, n := range nodes {
-		ids[n.ID] = true
-	}
-	if !ids[a.ID] || !ids[b.ID] {
-		t.Error("expected A and B in rooted graph")
-	}
-	if ids[c.ID] {
-		t.Error("C should not be in graph rooted at A")
-	}
-	_ = c
-}
-
 func TestLinkNonExistentBlocker(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -1000,45 +919,6 @@ func TestReadCorruptJSON(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "corrupt") {
 		t.Errorf("error = %q, want 'corrupt'", err.Error())
-	}
-}
-
-func TestGraphNonexistentRootReturnsError(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	env.Store.Create("Exists", issue.CreateOpts{})
-	env.CommitIntent("create")
-
-	_, err := env.Store.Graph("nonexistent")
-	if err == nil {
-		t.Error("expected error for nonexistent root ID")
-	}
-}
-
-func TestGraphNoRelationshipsShowsOpen(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	// Create issues without any links
-	env.Store.Create("Standalone A", issue.CreateOpts{})
-	env.Store.Create("Standalone B", issue.CreateOpts{})
-	iss3, _ := env.Store.Create("Closed one", issue.CreateOpts{})
-	env.Store.Close(iss3.ID, "")
-	env.CommitIntent("setup")
-
-	// Graph with no root and no edges: should show all open issues
-	nodes, err := env.Store.Graph("")
-	if err != nil {
-		t.Fatalf("Graph: %v", err)
-	}
-	if len(nodes) != 2 {
-		t.Errorf("got %d nodes, want 2 (only open issues)", len(nodes))
-	}
-	for _, n := range nodes {
-		if n.Status == "closed" {
-			t.Error("closed issue should not appear in graph without edges")
-		}
 	}
 }
 
@@ -2428,5 +2308,282 @@ func TestNewlyUnblockedMultiple(t *testing.T) {
 	}
 	if len(unblocked) != 2 {
 		t.Errorf("got %d unblocked, want 2", len(unblocked))
+	}
+}
+
+// --- LoadEdges tests ---
+
+func TestLoadEdges(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("A", issue.CreateOpts{})
+	b, _ := env.Store.Create("B", issue.CreateOpts{})
+	c, _ := env.Store.Create("C", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID) // a blocks b
+	env.Store.Link(b.ID, c.ID) // b blocks c
+	env.CommitIntent("setup")
+
+	fwd, rev := env.Store.LoadEdges()
+
+	// Forward: a→[b], b→[c]
+	if len(fwd[a.ID]) != 1 || fwd[a.ID][0] != b.ID {
+		t.Errorf("forward[a] = %v, want [%s]", fwd[a.ID], b.ID)
+	}
+	if len(fwd[b.ID]) != 1 || fwd[b.ID][0] != c.ID {
+		t.Errorf("forward[b] = %v, want [%s]", fwd[b.ID], c.ID)
+	}
+
+	// Reverse: b→[a], c→[b]
+	if len(rev[b.ID]) != 1 || rev[b.ID][0] != a.ID {
+		t.Errorf("reverse[b] = %v, want [%s]", rev[b.ID], a.ID)
+	}
+	if len(rev[c.ID]) != 1 || rev[c.ID][0] != b.ID {
+		t.Errorf("reverse[c] = %v, want [%s]", rev[c.ID], b.ID)
+	}
+
+	// No edges from/to c in forward, no edges from/to a in reverse
+	if len(fwd[c.ID]) != 0 {
+		t.Errorf("forward[c] should be empty, got %v", fwd[c.ID])
+	}
+	if len(rev[a.ID]) != 0 {
+		t.Errorf("reverse[a] should be empty, got %v", rev[a.ID])
+	}
+}
+
+// --- Tips tests ---
+
+func TestTipsSimpleChain(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// A blocked by B blocked by C
+	a, _ := env.Store.Create("A", issue.CreateOpts{})
+	b, _ := env.Store.Create("B", issue.CreateOpts{})
+	c, _ := env.Store.Create("C", issue.CreateOpts{})
+	env.Store.Link(c.ID, b.ID) // c blocks b
+	env.Store.Link(b.ID, a.ID) // b blocks a
+	env.CommitIntent("setup")
+
+	// Re-read a to get updated BlockedBy
+	a, _ = env.Store.Get(a.ID)
+
+	// Walk reverse edges (blocked_by direction) from A's blockers
+	_, rev := env.Store.LoadEdges()
+	tips, err := env.Store.Tips(a.BlockedBy, rev)
+	if err != nil {
+		t.Fatalf("Tips: %v", err)
+	}
+
+	// Should find C (the leaf), not B
+	if len(tips) != 1 {
+		t.Fatalf("got %d tips, want 1", len(tips))
+	}
+	if tips[0].ID != c.ID {
+		t.Errorf("tip = %s, want %s", tips[0].ID, c.ID)
+	}
+}
+
+func TestTipsDiamond(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// A blocked by B and C, both blocked by D
+	a, _ := env.Store.Create("A", issue.CreateOpts{})
+	b, _ := env.Store.Create("B", issue.CreateOpts{})
+	c, _ := env.Store.Create("C", issue.CreateOpts{})
+	d, _ := env.Store.Create("D", issue.CreateOpts{})
+	env.Store.Link(b.ID, a.ID) // b blocks a
+	env.Store.Link(c.ID, a.ID) // c blocks a
+	env.Store.Link(d.ID, b.ID) // d blocks b
+	env.Store.Link(d.ID, c.ID) // d blocks c
+	env.CommitIntent("setup")
+
+	// Reload a to get updated BlockedBy
+	a, _ = env.Store.Get(a.ID)
+
+	_, rev := env.Store.LoadEdges()
+	tips, err := env.Store.Tips(a.BlockedBy, rev)
+	if err != nil {
+		t.Fatalf("Tips: %v", err)
+	}
+
+	// Should find D (deduplicated)
+	if len(tips) != 1 {
+		t.Fatalf("got %d tips, want 1", len(tips))
+	}
+	if tips[0].ID != d.ID {
+		t.Errorf("tip = %s, want %s", tips[0].ID, d.ID)
+	}
+}
+
+func TestTipsClosedIntermediary(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// A blocked by B blocked by C, B is closed
+	a, _ := env.Store.Create("A", issue.CreateOpts{})
+	b, _ := env.Store.Create("B", issue.CreateOpts{})
+	c, _ := env.Store.Create("C", issue.CreateOpts{})
+	env.Store.Link(c.ID, b.ID)
+	env.Store.Link(b.ID, a.ID)
+	env.Store.Close(b.ID, "done")
+	env.CommitIntent("setup")
+
+	// Re-read a to get updated BlockedBy
+	a, _ = env.Store.Get(a.ID)
+
+	_, rev := env.Store.LoadEdges()
+	tips, err := env.Store.Tips(a.BlockedBy, rev)
+	if err != nil {
+		t.Fatalf("Tips: %v", err)
+	}
+
+	// Should walk through closed B and find C
+	if len(tips) != 1 {
+		t.Fatalf("got %d tips, want 1", len(tips))
+	}
+	if tips[0].ID != c.ID {
+		t.Errorf("tip = %s, want %s", tips[0].ID, c.ID)
+	}
+}
+
+func TestTipsNoBlockers(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("A", issue.CreateOpts{})
+	env.CommitIntent("setup")
+
+	_, rev := env.Store.LoadEdges()
+	tips, err := env.Store.Tips(nil, rev)
+	if err != nil {
+		t.Fatalf("Tips: %v", err)
+	}
+
+	if len(tips) != 0 {
+		t.Errorf("got %d tips, want 0", len(tips))
+	}
+}
+
+func TestTipsMultipleRoots(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Two independent chains: A←B and X←Y
+	a, _ := env.Store.Create("A", issue.CreateOpts{})
+	b, _ := env.Store.Create("B", issue.CreateOpts{})
+	x, _ := env.Store.Create("X", issue.CreateOpts{})
+	y, _ := env.Store.Create("Y", issue.CreateOpts{})
+	env.Store.Link(b.ID, a.ID)
+	env.Store.Link(y.ID, x.ID)
+	env.CommitIntent("setup")
+
+	// Re-read to get updated BlockedBy
+	a, _ = env.Store.Get(a.ID)
+	x, _ = env.Store.Get(x.ID)
+
+	_, rev := env.Store.LoadEdges()
+	tips, err := env.Store.Tips([]string{a.BlockedBy[0], x.BlockedBy[0]}, rev)
+	if err != nil {
+		t.Fatalf("Tips: %v", err)
+	}
+
+	// Should find B and Y
+	if len(tips) != 2 {
+		t.Fatalf("got %d tips, want 2", len(tips))
+	}
+	ids := map[string]bool{tips[0].ID: true, tips[1].ID: true}
+	if !ids[b.ID] || !ids[y.ID] {
+		t.Errorf("tips = %v, want {%s, %s}", ids, b.ID, y.ID)
+	}
+}
+
+// TestReadyTipsChain verifies that in A←B←C (all open), only C (the tip) is ready.
+func TestReadyTipsChain(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Target", issue.CreateOpts{})
+	b, _ := env.Store.Create("Middle", issue.CreateOpts{})
+	c, _ := env.Store.Create("Leaf", issue.CreateOpts{})
+	env.Store.Link(c.ID, b.ID) // C blocks B
+	env.Store.Link(b.ID, a.ID) // B blocks A
+	env.CommitIntent("setup chain")
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[c.ID] {
+		t.Error("leaf C should be ready (no blockers)")
+	}
+	if ids[b.ID] {
+		t.Error("middle B should NOT be ready (blocked by C)")
+	}
+	if ids[a.ID] {
+		t.Error("target A should NOT be ready (blocked by B)")
+	}
+}
+
+// TestReadyBlockerIsActionable verifies that a blocker with no blockers appears in ready.
+func TestReadyBlockerIsActionable(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.CommitIntent("setup")
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[a.ID] {
+		t.Error("blocker A should be ready (it has no blockers itself)")
+	}
+	if ids[b.ID] {
+		t.Error("blocked B should NOT be ready")
+	}
+}
+
+// TestReadyChainPartialClose verifies that closing a leaf promotes the next in line.
+func TestReadyChainPartialClose(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Target", issue.CreateOpts{})
+	b, _ := env.Store.Create("Middle", issue.CreateOpts{})
+	c, _ := env.Store.Create("Leaf", issue.CreateOpts{})
+	env.Store.Link(c.ID, b.ID)
+	env.Store.Link(b.ID, a.ID)
+	env.CommitIntent("setup chain")
+
+	// Close C → B should become ready
+	env.Store.Close(c.ID, "")
+	env.CommitIntent("close leaf")
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[b.ID] {
+		t.Error("middle B should be ready after leaf C closed")
+	}
+	if ids[a.ID] {
+		t.Error("target A should NOT be ready (still blocked by B)")
 	}
 }

@@ -539,32 +539,17 @@ func (s *Store) Comment(id, text, author string) (*Issue, error) {
 	return issue, nil
 }
 
-type GraphNode struct {
-	ID        string   `json:"id"`
-	Title     string   `json:"title"`
-	Status    string   `json:"status"`
-	Blocks    []string `json:"blocks"`
-	BlockedBy []string `json:"blocked_by"`
-}
+// LoadEdges reads the blocks/ directory and returns forward and reverse
+// adjacency maps. Forward maps blocker → []blocked; reverse maps
+// blocked → []blocker.
+func (s *Store) LoadEdges() (forward, reverse map[string][]string) {
+	forward = make(map[string][]string)
+	reverse = make(map[string][]string)
 
-func (s *Store) Graph(rootID string) ([]GraphNode, error) {
-	if rootID != "" {
-		var err error
-		rootID, err = s.resolveID(rootID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// Read all block relationships
 	entries, err := s.FS.ReadDir("blocks")
 	if err != nil {
-		entries = nil
+		return forward, reverse
 	}
-
-	// Collect all issue IDs involved in any relationship
-	involved := make(map[string]bool)
-	edges := make(map[string][]string) // blocker -> []blocked
 
 	for _, e := range entries {
 		if !e.IsDir() || e.Name() == ".gitkeep" {
@@ -580,70 +565,54 @@ func (s *Store) Graph(rootID string) ([]GraphNode, error) {
 				continue
 			}
 			blockedID := c.Name()
-			edges[blockerID] = append(edges[blockerID], blockedID)
-			involved[blockerID] = true
-			involved[blockedID] = true
+			forward[blockerID] = append(forward[blockerID], blockedID)
+			reverse[blockedID] = append(reverse[blockedID], blockerID)
 		}
 	}
-
-	// If root specified, walk only reachable nodes
-	if rootID != "" {
-		reachable := make(map[string]bool)
-		s.walkGraph(rootID, edges, reachable)
-		involved = reachable
-	}
-
-	// If no relationships exist, show all open issues
-	if len(involved) == 0 {
-		issues, err := s.List(Filter{})
-		if err != nil {
-			return nil, err
-		}
-		var nodes []GraphNode
-		for _, iss := range issues {
-			if iss.Status == "closed" {
-				continue
-			}
-			nodes = append(nodes, GraphNode{
-				ID:        iss.ID,
-				Title:     iss.Title,
-				Status:    iss.Status,
-				Blocks:    iss.Blocks,
-				BlockedBy: iss.BlockedBy,
-			})
-		}
-		return nodes, nil
-	}
-
-	var nodes []GraphNode
-	for id := range involved {
-		iss, err := s.readIssue(id)
-		if err != nil {
-			continue
-		}
-		nodes = append(nodes, GraphNode{
-			ID:        iss.ID,
-			Title:     iss.Title,
-			Status:    iss.Status,
-			Blocks:    iss.Blocks,
-			BlockedBy: iss.BlockedBy,
-		})
-	}
-
-	sort.Slice(nodes, func(i, j int) bool {
-		return nodes[i].ID < nodes[j].ID
-	})
-	return nodes, nil
+	return forward, reverse
 }
 
-func (s *Store) walkGraph(id string, edges map[string][]string, visited map[string]bool) {
-	if visited[id] {
-		return
+// Tips walks from roots following edges, returning the leaf issues —
+// open nodes with no further outgoing edges in the map. Closed
+// intermediary nodes are walked through but not returned. This is the
+// shared primitive for surfacing actionable work in show and ready.
+func (s *Store) Tips(roots []string, edges map[string][]string) ([]*Issue, error) {
+	if len(roots) == 0 {
+		return nil, nil
 	}
-	visited[id] = true
-	for _, child := range edges[id] {
-		s.walkGraph(child, edges, visited)
+
+	visited := make(map[string]bool)
+	var tips []*Issue
+
+	var walk func(id string)
+	walk = func(id string) {
+		if visited[id] {
+			return
+		}
+		visited[id] = true
+
+		children := edges[id]
+		if len(children) == 0 {
+			// Leaf node — this is a tip
+			iss, err := s.readIssue(id)
+			if err != nil {
+				return
+			}
+			tips = append(tips, iss)
+			return
+		}
+
+		// Has children — walk deeper
+		for _, child := range children {
+			walk(child)
+		}
 	}
+
+	for _, root := range roots {
+		walk(root)
+	}
+
+	return tips, nil
 }
 
 // DeletePlan describes the side-effects that deleting an issue would have.
@@ -749,29 +718,35 @@ func (s *Store) Ready() ([]*Issue, error) {
 		return nil, err
 	}
 
+	_, rev := s.LoadEdges()
+
+	// Build a set of closed issue IDs for fast lookup.
+	closed := make(map[string]bool)
+	for _, iss := range issues {
+		if iss.Status == "closed" {
+			closed[iss.ID] = true
+		}
+	}
+
 	var ready []*Issue
-	for _, issue := range issues {
-		if issue.Status != "open" {
+	for _, iss := range issues {
+		if iss.Status != "open" {
 			continue
 		}
-		if len(issue.BlockedBy) == 0 {
-			ready = append(ready, issue)
+		blockers := rev[iss.ID]
+		if len(blockers) == 0 {
+			ready = append(ready, iss)
 			continue
 		}
 		allResolved := true
-		for _, blockerID := range issue.BlockedBy {
-			blocker, err := s.readIssue(blockerID)
-			if err != nil {
-				allResolved = false
-				break
-			}
-			if blocker.Status != "closed" {
+		for _, blockerID := range blockers {
+			if !closed[blockerID] {
 				allResolved = false
 				break
 			}
 		}
 		if allResolved {
-			ready = append(ready, issue)
+			ready = append(ready, iss)
 		}
 	}
 	return ready, nil

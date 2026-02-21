@@ -353,27 +353,6 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	})
 
 	// ════════════════════════════════════════════════════════
-	// Verify: graph --all
-	// ════════════════════════════════════════════════════════
-	t.Run("graph_all", func(t *testing.T) {
-		var buf bytes.Buffer
-		if err := cmdGraph([]string{"--all"}, PlainWriter(&buf)); err != nil {
-			t.Fatalf("graph --all: %v", err)
-		}
-		out := buf.String()
-		// A, B, C should be in a chain
-		if !strings.Contains(out, idA) {
-			t.Errorf("graph should contain A: %q", out)
-		}
-		if !strings.Contains(out, idB) {
-			t.Errorf("graph should contain B: %q", out)
-		}
-		if !strings.Contains(out, idC) {
-			t.Errorf("graph should contain C: %q", out)
-		}
-	})
-
-	// ════════════════════════════════════════════════════════
 	// Verify: export — JSONL with all fields
 	// ════════════════════════════════════════════════════════
 	t.Run("export", func(t *testing.T) {

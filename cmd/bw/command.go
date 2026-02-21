@@ -99,17 +99,19 @@ var commands = []Command{
 		Name:        "show",
 		Aliases:     []string{"view"},
 		Summary:     "Show issue details",
-		Description: "Display full details for an issue including status, priority, labels, and dependencies.",
+		Description: "Display full details for an issue including status, priority, labels, and dependency context.\nThe BLOCKED BY section shows actionable tips — the leaf issues that need work to unblock this one.\nThe UNBLOCKS section shows what completing this issue would immediately unblock.",
 		Positionals: []Positional{
 			{Name: "<id>", Required: true, Help: "Issue ID (can specify multiple)"},
 		},
 		Flags: []Flag{
 			{Long: "--json", Help: "Output as JSON"},
-			{Long: "--short", Help: "Compact one-line output"},
+			{Long: "--only", Value: "SECTIONS", Help: "Show only named sections (comma-separated: summary,description,blockedby,unblocks,comments,labels,parent)"},
 		},
 		Examples: []Example{
 			{Cmd: "bw show bw-a3f8"},
 			{Cmd: "bw show bw-a3f8 bw-b2c1"},
+			{Cmd: "bw show bw-a3f8 --only summary", Help: "Compact one-line summary"},
+			{Cmd: "bw show bw-a3f8 --only blockedby,unblocks", Help: "Dependency context only"},
 		},
 		Run: cmdShow,
 	},
@@ -320,23 +322,6 @@ var commands = []Command{
 		Run: cmdHistory,
 	},
 	{
-		Name:        "graph",
-		Summary:     "Dependency graph",
-		Description: "Display the dependency graph for an issue or all open issues.\nWith --all, shows all open issues grouped by connected component.",
-		Positionals: []Positional{
-			{Name: "<id>", Help: "Root issue ID (or use --all)"},
-		},
-		Flags: []Flag{
-			{Long: "--all", Help: "Show all open issues"},
-			{Long: "--json", Help: "Output as JSON"},
-		},
-		Examples: []Example{
-			{Cmd: "bw graph bw-a3f8"},
-			{Cmd: "bw graph --all"},
-		},
-		Run: cmdGraph,
-	},
-	{
 		Name:        "sync",
 		Summary:     "Fetch, rebase/replay, push",
 		Description: "Fetch from remote, rebase local commits, and push.\nUses intent replay to resolve conflicts automatically.",
@@ -453,7 +438,7 @@ var commandGroups = []struct {
 }{
 	{"Working With Issues", []string{"create", "show", "list", "update", "close", "reopen", "delete", "comments", "label", "defer", "undefer", "history"}},
 	{"Finding Work", []string{"ready", "blocked"}},
-	{"Dependencies", []string{"dep", "graph"}},
+	{"Dependencies", []string{"dep"}},
 	{"Sync & Data", []string{"sync", "export", "import"}},
 	{"Setup & Config", []string{"init", "config", "upgrade", "onboard", "prime"}},
 }

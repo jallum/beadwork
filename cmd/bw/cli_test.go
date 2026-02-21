@@ -188,12 +188,12 @@ func TestShowWithDependencies(t *testing.T) {
 
 	// Check blocker shows BLOCKS section with rich dep
 	outA := bw(t, env.Dir, "show", a.ID)
-	assertContains(t, outA, "BLOCKS")
+	assertContains(t, outA, "UNBLOCKS")
 	assertContains(t, outA, b.ID)
 
-	// Check blocked shows DEPENDS ON section with rich dep
+	// Check blocked shows BLOCKED BY section with rich dep
 	outB := bw(t, env.Dir, "show", b.ID)
-	assertContains(t, outB, "DEPENDS ON")
+	assertContains(t, outB, "BLOCKED BY")
 	assertContains(t, outB, a.ID)
 }
 
@@ -638,11 +638,11 @@ func TestImportDependencies(t *testing.T) {
 
 	// Check blocks relationship (rich dep format)
 	outB := bw(t, env.Dir, "show", "dep-bbb")
-	assertContains(t, outB, "DEPENDS ON")
+	assertContains(t, outB, "BLOCKED BY")
 	assertContains(t, outB, "dep-aaa")
 
 	outA := bw(t, env.Dir, "show", "dep-aaa")
-	assertContains(t, outA, "BLOCKS")
+	assertContains(t, outA, "UNBLOCKS")
 	assertContains(t, outA, "dep-bbb")
 
 	// Check parent relationship
@@ -930,7 +930,7 @@ func TestDepAddOutput(t *testing.T) {
 
 	// Verify link via show (rich dep format)
 	show := bw(t, env.Dir, "show", a.ID)
-	assertContains(t, show, "BLOCKS")
+	assertContains(t, show, "UNBLOCKS")
 	assertContains(t, show, b.ID)
 }
 
@@ -1093,81 +1093,6 @@ func TestUpdateNonExistent(t *testing.T) {
 
 	out := bwFail(t, env.Dir, "update", "test-zzzz", "--title", "X")
 	assertContains(t, out, "no issue found")
-}
-
-// --- Graph ---
-
-func TestGraphRootedOutput(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	a, _ := env.Store.Create("Root", issue.CreateOpts{})
-	b, _ := env.Store.Create("Child", issue.CreateOpts{})
-	env.Store.Link(a.ID, b.ID)
-	env.CommitIntent("setup graph")
-
-	out := bw(t, env.Dir, "graph", a.ID)
-	assertContains(t, out, a.ID)
-	assertContains(t, out, b.ID)
-}
-
-func TestGraphAllOutput(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	a, _ := env.Store.Create("A", issue.CreateOpts{})
-	b, _ := env.Store.Create("B", issue.CreateOpts{})
-	env.Store.Link(a.ID, b.ID)
-	env.CommitIntent("setup")
-
-	out := bw(t, env.Dir, "graph", "--all")
-	assertContains(t, out, a.ID)
-	assertContains(t, out, b.ID)
-}
-
-func TestGraphJSONOutput(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	a, _ := env.Store.Create("Graph JSON", issue.CreateOpts{})
-	b, _ := env.Store.Create("Dep", issue.CreateOpts{})
-	env.Store.Link(a.ID, b.ID)
-	env.CommitIntent("setup")
-
-	out := bw(t, env.Dir, "graph", a.ID, "--json")
-	assertContains(t, out, `"id"`)
-	assertContains(t, out, a.ID)
-}
-
-func TestGraphNoIssues(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	out := bw(t, env.Dir, "graph", "--all")
-	assertContains(t, out, "no issues")
-}
-
-func TestGraphNoArgs(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	out := bwFail(t, env.Dir, "graph")
-	assertContains(t, out, "issue ID required")
-}
-
-func TestGraphAllExcludesClosedUnlinked(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	a, _ := env.Store.Create("Open issue", issue.CreateOpts{})
-	b, _ := env.Store.Create("Closed unlinked", issue.CreateOpts{})
-	env.Store.Close(b.ID, "")
-	env.CommitIntent("setup")
-
-	// --all without a root filters closed nodes that have no relationships
-	out := bw(t, env.Dir, "graph", "--all")
-	assertContains(t, out, a.ID)
-	assertNotContains(t, out, b.ID)
 }
 
 // --- Init ---
