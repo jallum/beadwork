@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-21T03:10:59Z",
+  "description": "Three areas in upgrade.go use literal space prefixes: (1) lines 110-112 — changelog display indents each line with '  '; (2) lines 293-296 — download progress uses '  ' prefix; (3) line 464 — migration step listing uses '  ' prefix. Convert all three to w.Push(2)/w.Pop().",
+  "id": "bw-jho.4",
+  "labels": [],
+  "parent": "bw-jho",
+  "priority": 2,
+  "status": "open",
+  "title": "upgrade.go: replace hardcoded indentation with Writer Push/Pop",
+  "type": "task",
+  "updated_at": "2026-02-21T03:10:59Z"
+}
