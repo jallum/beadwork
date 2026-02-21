@@ -28,7 +28,7 @@ bw sync                                           # push to remote
 
 **Working With Issues**
 ```
-bw create <title> [flags]           Create an issue (--parent, --type, -p)
+bw create <title> [flags]           Create an issue (--parent, --type, -p, --silent)
 bw show <id>... [--short] [--json]  Show issue details (aliases: view)
 bw list [filters] [--json]          List issues (--grep, --all, --deferred)
 bw update <id> [flags]              Update an issue (--parent to set/clear)

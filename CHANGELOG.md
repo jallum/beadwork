@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.1 — 2026-02-20
+
+- Dotted child IDs: creating a child issue automatically generates a hierarchical ID (e.g., `abc.1`)
+- `bw list` now shows blocking/blocked-by relationships inline
+- `bw create --silent` suppresses output (useful for scripting)
+- Improved `bw prime` template with styled output and agent-id callout
+
 ## 0.6.0 — 2026-02-20
 
 - `bw delete` command with preview mode and `--force` to confirm
