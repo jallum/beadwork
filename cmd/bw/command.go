@@ -191,6 +191,7 @@ var commands = []Command{
 		Name:        "start",
 		Summary:     "Start working on an issue",
 		Description: "Move an issue to in_progress and assign it. Refuses to start blocked issues.\nDefaults assignee to git user.name if not provided.",
+		NeedsStore:  true,
 		Positionals: []Positional{
 			{Name: "<id>", Required: true, Help: "Issue ID"},
 		},
