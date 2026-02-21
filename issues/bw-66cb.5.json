@@ -5,14 +5,16 @@
     "bw-66cb.4"
   ],
   "blocks": [],
+  "closed_at": "2026-02-21T14:04:53Z",
+  "close_reason": "graph.go deleted, command/tests/prompts cleaned up",
   "created": "2026-02-21T13:29:42Z",
   "description": "Remove the bw graph command entirely (cmd/bw/graph.go, graph_test.go). Its functionality is replaced by the BLOCKED BY / BLOCKS sections in show.\n\nRemove from command registry in command.go. Remove the 'Dependencies' command group or rename it if 'dep' still lives there alone.\n\nAlso remove Store.Graph() and GraphNode type from internal/issue/issue.go — the shared primitives (loadEdges, walkTips) replace them. Update any callers of Graph() if they exist outside the graph command.",
   "id": "bw-66cb.5",
   "labels": [],
   "parent": "bw-66cb",
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "Remove bw graph command",
   "type": "task",
-  "updated_at": "2026-02-21T13:29:47Z"
+  "updated_at": "2026-02-21T14:04:53Z"
 }
