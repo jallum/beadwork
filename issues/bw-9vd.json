@@ -8,9 +8,15 @@
   "description": "Add a reusable line-wrapping function that wraps long text to a configurable width (e.g. terminal width or 80 cols). Should handle indented blocks correctly. Needed by show, comments, and potentially other commands that render long-form text.",
   "id": "bw-9vd",
   "labels": [],
+  "comments": [
+    {
+      "text": "Added internal/wrap package with Text() function that wraps text to a configurable width. Preserves existing line breaks, maintains leading indentation on continuation lines, and breaks words that exceed the available width. 26 unit tests covering edge cases including empty input, indented text, long words, unicode, and realistic bw show/comment block scenarios.",
+      "timestamp": "2026-02-21T01:38:30Z"
+    }
+  ],
   "priority": 2,
   "status": "in_progress",
   "title": "Add text line wrapping utility",
   "type": "task",
-  "updated_at": "2026-02-21T01:35:09Z"
+  "updated_at": "2026-02-21T01:38:30Z"
 }
