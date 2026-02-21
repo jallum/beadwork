@@ -12,6 +12,7 @@ import (
 var validShowSections = map[string]bool{
 	"summary":     true,
 	"description": true,
+	"children":    true,
 	"blockedby":   true,
 	"unblocks":    true,
 	"comments":    true,
@@ -96,6 +97,9 @@ func cmdShow(store *issue.Store, args []string, w Writer) error {
 		if sa.showSection("description") {
 			fprintDescription(w, iss)
 		}
+		if sa.showSection("children") {
+			fprintChildren(w, iss, store)
+		}
 		if sa.showSection("blockedby") || sa.showSection("unblocks") {
 			fprintMap(w, iss, store)
 		}
@@ -123,4 +127,30 @@ func fprintDescription(w Writer, iss *issue.Issue) {
 		fmt.Fprintln(w, desc)
 		w.Pop()
 	}
+}
+
+// fprintChildren renders the CHILDREN section for an epic.
+// Each child is shown with status icon, ID, priority, title, and
+// inline dependency annotations for intra-epic relationships.
+func fprintChildren(w Writer, iss *issue.Issue, store *issue.Store) {
+	children, err := store.Children(iss.ID)
+	if err != nil || len(children) == 0 {
+		return
+	}
+
+	fmt.Fprintf(w, "\n%s\n", w.Style("CHILDREN", Bold))
+	w.Push(2)
+	for _, child := range children {
+		ps := PriorityStyle(child.Priority)
+		line := fmt.Sprintf("%s %s  %s %s  %s",
+			issue.StatusIcon(child.Status),
+			w.Style(child.ID, Cyan),
+			w.Style("●", ps),
+			w.Style(fmt.Sprintf("P%d", child.Priority), ps),
+			child.Title,
+		)
+		line += formatDeps(w, child)
+		fmt.Fprintln(w, line)
+	}
+	w.Pop()
 }

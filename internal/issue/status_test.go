@@ -42,30 +42,19 @@ func TestStatusIcon(t *testing.T) {
 	}
 }
 
-func TestPriorityDot(t *testing.T) {
-	// Each priority should produce a colored ● with reset
+func TestPriorityIcon(t *testing.T) {
 	for p := 0; p <= 4; p++ {
-		dot := issue.PriorityDot(p)
-		if dot == "" {
-			t.Errorf("PriorityDot(%d) returned empty string", p)
-		}
-		color, ok := issue.PriorityColors[p]
-		if !ok {
-			t.Errorf("PriorityColors missing key %d", p)
-			continue
-		}
-		want := color + "●" + issue.ColorReset
-		if dot != want {
-			t.Errorf("PriorityDot(%d) = %q, want %q", p, dot, want)
+		got := issue.PriorityIcon(p)
+		if got != "●" {
+			t.Errorf("PriorityIcon(%d) = %q, want %q", p, got, "●")
 		}
 	}
 
-	// Unknown priority should still return a dot
-	dot := issue.PriorityDot(99)
-	if dot == "" {
-		t.Error("PriorityDot(99) returned empty string")
+	// Unknown priority returns "?"
+	if got := issue.PriorityIcon(99); got != "?" {
+		t.Errorf("PriorityIcon(99) = %q, want %q", got, "?")
 	}
-	if dot != "●"+issue.ColorReset {
-		t.Errorf("PriorityDot(99) = %q, want uncolored dot", dot)
+	if got := issue.PriorityIcon(-1); got != "?" {
+		t.Errorf("PriorityIcon(-1) = %q, want %q", got, "?")
 	}
 }

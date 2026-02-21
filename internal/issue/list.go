@@ -65,3 +65,19 @@ func (s *Store) List(filter Filter) ([]*Issue, error) {
 
 	return issues, nil
 }
+
+// Children returns all issues whose Parent field matches parentID,
+// sorted by priority then creation date.
+func (s *Store) Children(parentID string) ([]*Issue, error) {
+	all, err := s.List(Filter{})
+	if err != nil {
+		return nil, err
+	}
+	var children []*Issue
+	for _, iss := range all {
+		if iss.Parent == parentID {
+			children = append(children, iss)
+		}
+	}
+	return children, nil
+}
