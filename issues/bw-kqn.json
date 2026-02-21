@@ -7,13 +7,14 @@
     "bw-jki",
     "bw-yld"
   ],
+  "closed_at": "2026-02-21T04:43:00Z",
   "created": "2026-02-21T04:14:08Z",
   "description": "",
   "id": "bw-kqn",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "Root",
   "type": "task",
-  "updated_at": "2026-02-21T04:14:17Z"
+  "updated_at": "2026-02-21T04:43:00Z"
 }
