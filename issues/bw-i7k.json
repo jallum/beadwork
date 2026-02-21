@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "bw-kqn"
+  ],
   "created": "2026-02-21T04:14:08Z",
   "description": "",
   "id": "bw-i7k",
@@ -10,5 +12,5 @@
   "status": "open",
   "title": "Parent",
   "type": "task",
-  "updated_at": "2026-02-21T04:14:08Z"
+  "updated_at": "2026-02-21T04:14:16Z"
 }
