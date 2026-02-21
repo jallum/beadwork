@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-21T15:31:37Z",
+  "description": "",
+  "id": "bw-d5l.2",
+  "labels": [],
+  "parent": "bw-d5l",
+  "priority": 1,
+  "status": "open",
+  "title": "Update tests to inject store instead of relying on getInitializedRepo",
+  "type": "task",
+  "updated_at": "2026-02-21T15:31:37Z"
+}
