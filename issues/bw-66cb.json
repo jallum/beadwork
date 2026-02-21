@@ -7,7 +7,8 @@
   "id": "bw-66cb",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Evaluate bd dep tree equivalent",
-  "type": "task"
+  "type": "task",
+  "updated_at": "2026-02-21T01:33:42Z"
 }
