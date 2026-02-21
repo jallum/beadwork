@@ -2,13 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T14:04:53Z",
+  "close_reason": "Moot — graph command removed; output format exploration no longer needed",
   "created": "2026-02-20T06:51:26Z",
   "description": "bd graph supports multiple output formats: default horizontal DAG with box-drawing, --compact (tree-style list), --box (vertical boxes), --dot (Graphviz DOT), --html (D3.js interactive). Our 'bw graph' outputs a text tree and --json. Consider which formats are worth adding. --dot is low-effort and enables piping to Graphviz. --compact could replace our current text output. --html is high-effort but high-value for complex graphs.",
   "id": "bw-01c3",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Evaluate bd graph output formats",
   "type": "task",
-  "updated_at": "2026-02-21T01:34:29Z"
+  "updated_at": "2026-02-21T14:04:53Z"
 }
