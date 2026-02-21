@@ -825,29 +825,35 @@ func (s *Store) Ready() ([]*Issue, error) {
 		return nil, err
 	}
 
+	_, rev := s.LoadEdges()
+
+	// Build a set of closed issue IDs for fast lookup.
+	closed := make(map[string]bool)
+	for _, iss := range issues {
+		if iss.Status == "closed" {
+			closed[iss.ID] = true
+		}
+	}
+
 	var ready []*Issue
-	for _, issue := range issues {
-		if issue.Status != "open" {
+	for _, iss := range issues {
+		if iss.Status != "open" {
 			continue
 		}
-		if len(issue.BlockedBy) == 0 {
-			ready = append(ready, issue)
+		blockers := rev[iss.ID]
+		if len(blockers) == 0 {
+			ready = append(ready, iss)
 			continue
 		}
 		allResolved := true
-		for _, blockerID := range issue.BlockedBy {
-			blocker, err := s.readIssue(blockerID)
-			if err != nil {
-				allResolved = false
-				break
-			}
-			if blocker.Status != "closed" {
+		for _, blockerID := range blockers {
+			if !closed[blockerID] {
 				allResolved = false
 				break
 			}
 		}
 		if allResolved {
-			ready = append(ready, issue)
+			ready = append(ready, iss)
 		}
 	}
 	return ready, nil

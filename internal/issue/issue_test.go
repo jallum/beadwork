@@ -2618,3 +2618,92 @@ func TestTipsMultipleRoots(t *testing.T) {
 		t.Errorf("tips = %v, want {%s, %s}", ids, b.ID, y.ID)
 	}
 }
+
+// TestReadyTipsChain verifies that in A←B←C (all open), only C (the tip) is ready.
+func TestReadyTipsChain(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Target", issue.CreateOpts{})
+	b, _ := env.Store.Create("Middle", issue.CreateOpts{})
+	c, _ := env.Store.Create("Leaf", issue.CreateOpts{})
+	env.Store.Link(c.ID, b.ID) // C blocks B
+	env.Store.Link(b.ID, a.ID) // B blocks A
+	env.CommitIntent("setup chain")
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[c.ID] {
+		t.Error("leaf C should be ready (no blockers)")
+	}
+	if ids[b.ID] {
+		t.Error("middle B should NOT be ready (blocked by C)")
+	}
+	if ids[a.ID] {
+		t.Error("target A should NOT be ready (blocked by B)")
+	}
+}
+
+// TestReadyBlockerIsActionable verifies that a blocker with no blockers appears in ready.
+func TestReadyBlockerIsActionable(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.CommitIntent("setup")
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[a.ID] {
+		t.Error("blocker A should be ready (it has no blockers itself)")
+	}
+	if ids[b.ID] {
+		t.Error("blocked B should NOT be ready")
+	}
+}
+
+// TestReadyChainPartialClose verifies that closing a leaf promotes the next in line.
+func TestReadyChainPartialClose(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Target", issue.CreateOpts{})
+	b, _ := env.Store.Create("Middle", issue.CreateOpts{})
+	c, _ := env.Store.Create("Leaf", issue.CreateOpts{})
+	env.Store.Link(c.ID, b.ID)
+	env.Store.Link(b.ID, a.ID)
+	env.CommitIntent("setup chain")
+
+	// Close C → B should become ready
+	env.Store.Close(c.ID, "")
+	env.CommitIntent("close leaf")
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[b.ID] {
+		t.Error("middle B should be ready after leaf C closed")
+	}
+	if ids[a.ID] {
+		t.Error("target A should NOT be ready (still blocked by B)")
+	}
+}
