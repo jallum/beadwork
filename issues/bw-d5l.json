@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T15:54:33Z",
   "created": "2026-02-21T15:31:21Z",
   "description": "## Problem\n\nTests create an env.Store to set up fixture data, but commands call getInitializedRepo() internally to open their own Store. These two stores have different cached pictures of the world — uncommitted overlay changes in the test store are invisible to the command's store, and vice versa. A write-through cache on Store would amplify this divergence.\n\n## Solution\n\nPass repo and store into commands instead of having them open their own. This gives tests and production a single Store instance per invocation, making the cache correct by construction.\n\n## Plan\n\n### Phase 1: Change the Command signature\n\n1. Add `NeedsStore bool` to the Command struct.\n2. Change `Run` from `func(args []string, w Writer) error` to `func(r *repo.Repo, store *issue.Store, args []string, w Writer) error`.\n3. Update main.go dispatch: if `c.NeedsStore`, call `getInitializedRepo()` and pass the results; otherwise pass nil, nil.\n4. Update every command's Run function signature to accept (r, store, args, w). Commands that currently call `getInitializedRepo()` use the injected values instead; commands that don't need it ignore the nil params.\n5. Remove `getInitializedRepo()` calls from inside commands. Keep the helper itself (main.go uses it).\n\n### Phase 2: Update tests to inject store\n\n1. Change test calls from `cmdFoo(args, w)` to `cmdFoo(env.Repo, env.Store, args, w)`.\n2. Remove any test-local `getInitializedRepo()` workarounds (committing between setup and command execution just to sync stores).\n3. Verify all tests pass with injected store.\n\n### Phase 3: Add write-through cache to Store\n\n1. Add `cache map[string]*Issue` field to Store.\n2. readIssue: check cache first, populate on miss.\n3. writeIssue: write to FS first, then update cache (write-through).\n4. Delete: evict from cache after FS removal.\n5. Add ClearCache() for external sync operations.\n6. Verify all tests still pass — the cache should be invisible to callers.\n\n### Phase 4: Acceptance\n\nVerify the following before closing the epic:\n- [ ] All existing tests pass\n- [ ] No command calls getInitializedRepo() directly (only main.go does)\n- [ ] Commands that don't need store have NeedsStore: false and receive nil\n- [ ] Tests inject env.Store directly — no redundant commits to sync stores\n- [ ] Cache is exercised: a command that reads an issue twice only deserializes once (add test)\n- [ ] ClearCache exists and is called after sync/rebase operations\n- [ ] go vet / staticcheck clean",
   "id": "bw-d5l",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Inject store into commands and add write-through cache",
   "type": "task",
-  "updated_at": "2026-02-21T15:31:21Z"
+  "updated_at": "2026-02-21T15:54:33Z"
 }
