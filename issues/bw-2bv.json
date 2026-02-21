@@ -2,13 +2,14 @@
   "assignee": "agent-deadcode",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T22:02:17Z",
   "created": "2026-02-21T21:41:13Z",
   "description": "Audit found exported symbols whose only consumers are their own tests. Two categories:\n\n## Remove outright (zero production callers)\n\n- **issue.PriorityIcon** (status.go:34) — created during ANSI cleanup, never adopted. Delete function and test.\n- **treefs.RefName** (treefs.go:748) — method on *TreeFS, zero callers anywhere in project.\n- **treefs.FileInfo.Size** (treefs.go:38) — Size() method, field is populated but method never called.\n- **Args.IntErr** (cmd/bw/helpers.go:154) — richer variant of Args.Int(), no command uses it. Delete method and test.\n- **Args.PosJoined** (cmd/bw/helpers.go:184) — joins positional args, no command uses it. Delete method and test.\n\n## Unexport (used internally, exported only as test seam)\n\n- **repo.ValidatePrefix** (repo.go:73) — called by Init/ForceReinit internally. Exported only so external test package repo_test can call it. Unexport to validatePrefix; move or adjust test.\n- **repo.BranchName** (repo.go:18) — const used only within repo.go. Unexport to branchName.\n- **repo.Migration** (repo.go migrate.go:11) — type used only in Migrations slice declaration. External code reads .Description from slice elements but never names the type. Unexport to migration.\n- **treefs.Open** (treefs.go:56) — 26 test calls, zero production calls (production uses OpenFromRepo). Tests are package treefs so unexport works directly.\n- **intent.ParseIntent** (intent.go:248) — used internally by replayOne. Exported only for intent_test (external package). Unexport to parseIntent; adjust test.\n- **intent.ExtractQuoted** (intent.go:274) — used internally by replayCreate/replayComment. Exported only for intent_test. Unexport to extractQuoted; adjust test.",
   "id": "bw-2bv",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Remove dead code: test-only symbols with no production callers",
   "type": "task",
-  "updated_at": "2026-02-21T21:55:25Z"
+  "updated_at": "2026-02-21T22:02:17Z"
 }
