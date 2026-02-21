@@ -7,14 +7,15 @@
   "blocks": [
     "bw-os0.5"
   ],
+  "closed_at": "2026-02-21T23:14:46Z",
   "created": "2026-02-21T23:10:12Z",
   "description": "Counts from StatusCount() — zero deserialization. In-progress list from IDsWithStatus('in_progress') + readIssue for each. Ready list from store.Ready() (rewritten in .2). No Snapshot.",
   "id": "bw-os0.3",
   "labels": [],
   "parent": "bw-os0",
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Rewrite prime to use StatusCount and targeted queries",
   "type": "task",
-  "updated_at": "2026-02-21T23:10:24Z"
+  "updated_at": "2026-02-21T23:14:46Z"
 }
