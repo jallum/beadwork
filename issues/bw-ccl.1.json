@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-21T21:16:30Z",
+  "description": "",
+  "id": "bw-ccl.1",
+  "labels": [],
+  "parent": "bw-ccl",
+  "priority": 2,
+  "status": "open",
+  "title": "Add Snapshot struct and constructor",
+  "type": "task",
+  "updated_at": "2026-02-21T21:16:30Z"
+}
