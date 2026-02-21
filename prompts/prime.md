@@ -49,46 +49,45 @@ Design requirements for this prompt:
 
 # Beadwork
 
-This project tracks work with `bw`. Run `bw prime` after compaction or new session.
+Your built-in task tracking and planning tools work well for small, focused tasks. Beadwork extends them — it gives your plans, progress, and decisions a durable home in git that survives compaction, session boundaries, and context loss.
 
-## How It Works
+This means work that might otherwise feel risky — large refactors, multi-step features, changes that span many files — becomes safe to attempt. You can checkpoint progress, record decisions, and pick up exactly where you left off, even if you lose everything in your working memory.
+
+## The Model
 
 Issues have **status** (open → in_progress → closed, or deferred), **priority** (P0 critical → P4 backlog, default P2), and optionally **dependencies**, **labels**, **comments**, and **parent** relationships.
 
-`bw ready` is your starting point — it shows open issues with no unresolved blockers, sorted by priority. `bw blocked` shows what's waiting on dependencies. `bw show <id>` for full detail. `bw history <id>` to see what happened in previous sessions.
+Issues can form hierarchies: an epic with child tasks (`--parent <epic>`), wired together with dependencies (`bw dep add <blocker> blocks <blocked>`). Blocked issues can't be started. When a dependency closes, newly unblocked work surfaces automatically via `bw ready`.
 
-## Planning
+`bw show <id>` is more than a detail view — its BLOCKED BY section walks the full dependency tree down to the leaves, then surfaces only the issues that are actionable *right now*. If A depends on B which depends on C which depends on D, and D is the only open leaf, BLOCKED BY shows D — not the whole chain. As issues close, the next layer surfaces. It's like `bw ready` scoped to a specific issue.
 
-When you need to think through a multi-step approach, do it in beadwork — not in your head. Create an epic, break it into child tasks (`--parent <epic>`), wire dependencies (`bw dep add <blocker> blocks <blocked>`), add acceptance criteria as comments. The result isn't a plan you then have to execute separately — `bw ready` feeds you the next step. Your plan survives compaction, is visible to future sessions, and validates itself (blocked work can't be started, finished dependencies surface new work automatically).
+Comments serve double duty. They're breadcrumbs for your future self — context that survives compaction — and they're messages to anyone else working in the same project. An implementation note you leave on an issue can inform a collaborator's approach, flag a deviation from the original plan, or express a constraint that downstream work needs to account for.
 
-## Working
+## Finding and Doing Work
 
-- `bw start <id>` to claim work. It sets status, assigns you, and refuses to start blocked issues.
-- Record progress as you go — `bw comments add <id> "what happened"`. Context in your working memory can disappear without warning. Comments persist.
-- If you discover new work mid-task, create an issue: `bw create "Title" -p 2 -t task`. Don't create issues for things you'll finish in the same breath.
-- Before ending your session: `bw close <id>` completed work (with `--reason` if the resolution isn't obvious), commit code, push, and `bw sync`. Nothing should exist only in your context window.
+`bw ready` shows open issues with no unresolved blockers, sorted by priority. `bw blocked` shows what's waiting. `bw show <id>` for full detail on any issue. `bw history <id>` to see what happened in previous sessions.
 
-## Other Commands
+`bw start <id>` claims an issue — it sets status, assigns you, and won't let you start something that's still blocked. Use `--assign <agent-id>` to claim work on behalf of a specific agent. `bw close <id>` marks it done. `bw sync` pushes state to the remote so nothing exists only in your local copy.
 
-Every command supports `--help`. Read commands accept `--json`. For anything not covered here, `bw --help` lists all commands.
+When you discover new work mid-task, `bw create "Title" -p 2 -t task` captures it. For larger efforts, structuring work as an epic with children and dependencies means `bw ready` becomes your plan — it feeds you the next step automatically, and that plan survives across sessions.
 
-- Need to search? `bw list --grep "auth"` or filter by `--status`, `--label`, `--assignee`
-- Want to organize? `bw label <id> +bug -wontfix`
-- Need to defer? `bw defer <id> 2026-03-01`
-- Dependency wrong? `bw dep remove <id> blocks <id>`
-- Made a mistake? `bw delete <id>` (shows preview; `--force` to confirm)
+## Commands
+
+Every command supports `--help`. Read commands accept `--json`. `bw --help` lists everything, but common operations: `bw list --grep "auth"` or filter by `--status`, `--label`, `--assignee`. `bw label <id> +bug -wontfix`. `bw defer <id> 2026-03-01`. `bw dep remove <id> blocks <id>`. `bw delete <id>` (previews first; `--force` to confirm).
 
 <!-- IF workflow.agents == multi -->
 
-## Parallel Agents
+## Working in Parallel
 
-Multiple agents need separate git worktrees to avoid file conflicts. `bw` itself is concurrent-safe — issue state is shared across all worktrees. `bw start` auto-assigns from your git identity so other agents skip work you've claimed.
+Beadwork's issue state is concurrency-safe — multiple workers can read and update issues simultaneously without conflict. The repository's working tree is not. Working on two tasks in the same worktree is like preparing two meals with the same pans without washing them — things get crossed. Each logical block of work (a single issue, or an epic with its children) should have its own git worktree.
+
+`bw start --assign <agent-id>` lets a worker claim issues with its own identity, so other workers can see what's taken and skip it. Comments and issues are the shared communication layer between workers — use them to leave implementation notes, flag constraints, or record decisions that other workers need to know about.
 
 <!-- END -->
 <!-- IF workflow.review == pr -->
 
 ## Code Review
 
-Always work on a feature branch — never commit directly to main. Push and open a pull request when the work is ready. Reference the issue ID in the PR description.
+This project uses pull requests for review. Work on a feature branch, push when ready, and open a PR. Referencing the beadwork issue ID in the PR description connects the code change to its context.
 
 <!-- END -->

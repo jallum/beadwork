@@ -1,6 +1,40 @@
+<!--
+Design requirements for this prompt:
+
+This snippet is embedded in AGENTS.md (or CLAUDE.md) and lives permanently in
+the repo. It is the first thing an agent sees about beadwork — often before it
+has any other context about the project's workflow.
+
+1. Be minimal. This is a pointer, not documentation. The full workflow lives
+   in `bw prime`. Anything explained here that is also in prime creates
+   duplication that can drift. Keep this to what the agent needs to know
+   *before* it runs prime.
+
+2. Establish the core value proposition in one sentence. The agent needs to
+   understand *why* beadwork exists (durability across context loss) so it
+   can make a reasonable decision about when to use it vs. its built-in tools.
+
+3. Tell the agent how to get oriented. The key action is `bw prime` — that's
+   where the full workflow, current state, and ready queue live. This snippet
+   should make that the obvious next step.
+
+4. Give one actionable starting point. `bw ready` is the natural first command
+   for an agent that already has context. Including it here means an agent
+   resuming mid-session doesn't have to run prime just to find work.
+
+5. Don't teach workflow. No instructions about how to plan, how to use
+   comments, how to structure epics, how to work in parallel. All of that
+   belongs in prime, where it can adapt to project configuration and stay
+   co-located with the dynamic state output.
+
+6. Survive copy-paste. This is printed by `bw onboard` and pasted into a
+   project file. It should be self-contained, need no surrounding context,
+   and read correctly as a standalone section in any agent instructions file.
+-->
+
 ## Issue Tracking
 
-This project tracks work with `bw` (beadwork), which persists to git — it survives compaction, session boundaries, and context loss. Prefer it over in-memory task tracking.
+This project tracks work with `bw` (beadwork), which persists to git — it survives compaction, session boundaries, and context loss.
 
 If you don't have context about current work — new session, compaction, or just unsure — run `bw prime`. It shows the workflow, your current issues, and where things left off.
 
