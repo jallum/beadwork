@@ -7,9 +7,15 @@
   "id": "bw-ccl.4",
   "labels": [],
   "parent": "bw-ccl",
+  "comments": [
+    {
+      "text": "Independent of Snapshot. Add idSet map[string]bool to Store, populated lazily on first resolveID()/ExistingIDs() call, updated incrementally on create/delete. Follows existing cache pattern (see Store.cache + ClearCache()). Eliminates repeated ReadDir('issues') calls during ID generation.",
+      "timestamp": "2026-02-21T21:16:50Z"
+    }
+  ],
   "priority": 2,
   "status": "open",
   "title": "Add lazy ID set to Store for resolveID/ExistingIDs",
   "type": "task",
-  "updated_at": "2026-02-21T21:16:32Z"
+  "updated_at": "2026-02-21T21:16:50Z"
 }
