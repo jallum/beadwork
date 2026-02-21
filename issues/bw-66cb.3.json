@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "claude",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-02-21T13:29:27Z",
@@ -8,8 +8,8 @@
   "labels": [],
   "parent": "bw-66cb",
   "priority": 3,
-  "status": "open",
+  "status": "in_progress",
   "title": "Add --only flag to show for section filtering",
   "type": "task",
-  "updated_at": "2026-02-21T13:29:27Z"
+  "updated_at": "2026-02-21T13:50:27Z"
 }
