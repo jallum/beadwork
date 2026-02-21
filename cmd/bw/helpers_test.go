@@ -81,9 +81,6 @@ func TestParseArgsPositionals(t *testing.T) {
 	if a.PosFirst() != "my" {
 		t.Errorf("PosFirst() = %q, want my", a.PosFirst())
 	}
-	if a.PosJoined() != "my title here" {
-		t.Errorf("PosJoined() = %q", a.PosJoined())
-	}
 }
 
 func TestParseArgsEmpty(t *testing.T) {
@@ -93,9 +90,6 @@ func TestParseArgsEmpty(t *testing.T) {
 	}
 	if a.PosFirst() != "" {
 		t.Errorf("PosFirst() = %q, want empty", a.PosFirst())
-	}
-	if a.PosJoined() != "" {
-		t.Errorf("PosJoined() = %q, want empty", a.PosJoined())
 	}
 	if a.JSON() {
 		t.Error("expected JSON() to be false")
@@ -113,36 +107,6 @@ func TestParseArgsValueFlagAtEnd(t *testing.T) {
 	}
 	if a.String("--status") != "" {
 		t.Errorf("status = %q, want empty", a.String("--status"))
-	}
-}
-
-func TestParseArgsIntErr(t *testing.T) {
-	a, parseErr := ParseArgs([]string{"--priority", "abc"}, []string{"--priority"}, nil)
-	if parseErr != nil {
-		t.Fatal(parseErr)
-	}
-	_, set, err := a.IntErr("--priority")
-	if !set {
-		t.Error("expected set to be true")
-	}
-	if err == nil {
-		t.Error("expected error for non-numeric priority")
-	}
-
-	// Missing flag
-	_, set, err = a.IntErr("--missing")
-	if set || err != nil {
-		t.Errorf("expected set=false, err=nil for missing flag, got set=%v, err=%v", set, err)
-	}
-
-	// Valid int
-	a2, parseErr := ParseArgs([]string{"--priority", "3"}, []string{"--priority"}, nil)
-	if parseErr != nil {
-		t.Fatal(parseErr)
-	}
-	n, set, err := a2.IntErr("--priority")
-	if !set || err != nil || n != 3 {
-		t.Errorf("expected (3, true, nil), got (%d, %v, %v)", n, set, err)
 	}
 }
 

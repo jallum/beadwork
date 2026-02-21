@@ -150,19 +150,6 @@ func (a Args) Int(name string) int {
 	return v
 }
 
-// IntErr returns the parsed int, whether the flag was set, and any parse error.
-func (a Args) IntErr(name string) (int, bool, error) {
-	v, ok := a.flags[name]
-	if !ok {
-		return 0, false, nil
-	}
-	n, err := strconv.Atoi(v)
-	if err != nil {
-		return 0, true, fmt.Errorf("invalid %s: %s", name, v)
-	}
-	return n, true, nil
-}
-
 // Has returns true if a key-value flag was provided.
 func (a Args) Has(name string) bool {
 	_, ok := a.flags[name]
@@ -179,9 +166,6 @@ func (a Args) PosFirst() string {
 	}
 	return ""
 }
-
-// PosJoined returns all positional args joined with spaces.
-func (a Args) PosJoined() string { return strings.Join(a.pos, " ") }
 
 // parsePriority parses a priority value from a string.
 // Accepts numeric "0"-"4" or prefixed "P0"-"P4" (case-insensitive).

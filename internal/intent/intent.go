@@ -28,7 +28,7 @@ func Replay(store *issue.Store, intents []string) []error {
 }
 
 func replayOne(store *issue.Store, raw string) error {
-	parts := ParseIntent(raw)
+	parts := parseIntent(raw)
 	if len(parts) == 0 {
 		return nil // skip empty or unparseable
 	}
@@ -77,7 +77,7 @@ func replayCreate(store *issue.Store, parts []string, raw string) error {
 	issueType := parts[2]
 
 	// Extract quoted title
-	title := ExtractQuoted(raw)
+	title := extractQuoted(raw)
 	if title == "" {
 		title = strings.Join(parts[3:], " ")
 	}
@@ -233,7 +233,7 @@ func replayComment(store *issue.Store, parts []string, raw string) error {
 	if len(parts) < 1 {
 		return fmt.Errorf("malformed comment intent")
 	}
-	text := ExtractQuoted(raw)
+	text := extractQuoted(raw)
 	if text == "" && len(parts) > 1 {
 		text = strings.Join(parts[1:], " ")
 	}
@@ -244,8 +244,8 @@ func replayComment(store *issue.Store, parts []string, raw string) error {
 	return store.Commit(raw)
 }
 
-// ParseIntent splits an intent string respecting quoted strings.
-func ParseIntent(raw string) []string {
+// parseIntent splits an intent string respecting quoted strings.
+func parseIntent(raw string) []string {
 	var parts []string
 	var current strings.Builder
 	inQuote := false
@@ -270,8 +270,8 @@ func ParseIntent(raw string) []string {
 	return parts
 }
 
-// ExtractQuoted extracts the first quoted string from a raw intent.
-func ExtractQuoted(raw string) string {
+// extractQuoted extracts the first quoted string from a raw intent.
+func extractQuoted(raw string) string {
 	start := strings.Index(raw, "\"")
 	if start == -1 {
 		return ""

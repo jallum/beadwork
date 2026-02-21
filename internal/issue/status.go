@@ -30,10 +30,3 @@ func StatusIcon(status string) string {
 	return "?"
 }
 
-// PriorityIcon returns a plain dot for known priorities (0-4) or "?" for unknown.
-func PriorityIcon(priority int) string {
-	if priority >= 0 && priority <= 4 {
-		return "●"
-	}
-	return "?"
-}

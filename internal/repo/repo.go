@@ -15,13 +15,13 @@ import (
 	"github.com/jallum/beadwork/internal/treefs"
 )
 
-const BranchName = "beadwork"
+const branchName = "beadwork"
 
 // CurrentVersion is the highest repo schema version this binary understands.
 const CurrentVersion = 2
 
-const refLocal = "refs/heads/" + BranchName
-const refRemote = "refs/remotes/origin/" + BranchName
+const refLocal = "refs/heads/" + branchName
+const refRemote = "refs/remotes/origin/" + branchName
 
 type Repo struct {
 	GitDir      string
@@ -70,7 +70,7 @@ func (r *Repo) IsInitialized() bool {
 
 var prefixRe = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]*$`)
 
-func ValidatePrefix(prefix string) error {
+func validatePrefix(prefix string) error {
 	if prefix == "" {
 		return nil
 	}
@@ -85,12 +85,12 @@ func ValidatePrefix(prefix string) error {
 
 // ForceReinit destroys the existing beadwork branch and reinitializes.
 func (r *Repo) ForceReinit(prefix string) error {
-	if err := ValidatePrefix(prefix); err != nil {
+	if err := validatePrefix(prefix); err != nil {
 		return err
 	}
 
 	// Clean up any legacy worktree at .git/beadwork/
-	legacyWt := filepath.Join(r.GitDir, BranchName)
+	legacyWt := filepath.Join(r.GitDir, branchName)
 	if _, err := os.Stat(legacyWt); err == nil {
 		execGit(filepath.Dir(r.GitDir), "worktree", "remove", "--force", legacyWt)
 		os.RemoveAll(legacyWt)
@@ -118,7 +118,7 @@ func (r *Repo) Init(prefix string) error {
 		return fmt.Errorf("beadwork already initialized")
 	}
 
-	if err := ValidatePrefix(prefix); err != nil {
+	if err := validatePrefix(prefix); err != nil {
 		return err
 	}
 
@@ -206,7 +206,7 @@ func (r *Repo) remoteBranchExists() bool {
 		return false
 	}
 	// Use git CLI for ls-remote since go-git remote.List requires network
-	out, err := execGit(filepath.Dir(r.GitDir), "ls-remote", "--heads", "origin", BranchName)
+	out, err := execGit(filepath.Dir(r.GitDir), "ls-remote", "--heads", "origin", branchName)
 	if err != nil {
 		return false
 	}

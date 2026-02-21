@@ -6,7 +6,7 @@ import (
 
 func TestAllCommitsReturnsPopulatedFields(t *testing.T) {
 	dir := initTestRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -43,7 +43,7 @@ func TestAllCommitsReturnsPopulatedFields(t *testing.T) {
 
 func TestAllCommitsNewestFirst(t *testing.T) {
 	dir := initTestRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -77,7 +77,7 @@ func TestAllCommitsNewestFirst(t *testing.T) {
 
 func TestAllCommitsEmptyRepo(t *testing.T) {
 	dir := initEmptyRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}

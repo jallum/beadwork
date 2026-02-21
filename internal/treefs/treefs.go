@@ -35,7 +35,6 @@ type FileInfo struct {
 }
 
 func (fi FileInfo) Name() string { return fi.name }
-func (fi FileInfo) Size() int64  { return fi.size }
 func (fi FileInfo) IsDir() bool  { return fi.isDir }
 
 // TreeFS is a mutable in-memory filesystem backed by a git tree.
@@ -51,9 +50,9 @@ type TreeFS struct {
 	dirs map[string]bool
 }
 
-// Open opens a git repository and loads the tree from the given ref.
+// open opens a git repository and loads the tree from the given ref.
 // If the ref doesn't exist yet, the TreeFS starts empty.
-func Open(gitDir string, ref string) (*TreeFS, error) {
+func open(gitDir string, ref string) (*TreeFS, error) {
 	repo, err := git.PlainOpen(gitDir)
 	if err != nil {
 		return nil, fmt.Errorf("open repo: %w", err)
@@ -742,11 +741,6 @@ func (t *TreeFS) RefHash() plumbing.Hash {
 // HasRef returns true if the tracked ref exists.
 func (t *TreeFS) HasRef() bool {
 	return !t.baseRef.IsZero()
-}
-
-// RefName returns the reference name this TreeFS tracks.
-func (t *TreeFS) RefName() plumbing.ReferenceName {
-	return t.ref
 }
 
 // LookupRef looks up a reference by name.

@@ -31,7 +31,7 @@ func initTestRepo(t *testing.T) string {
 	dir := initGitRepo(t)
 
 	// Use TreeFS to create the orphan beadwork branch
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open for init: %v", err)
 	}
@@ -64,7 +64,7 @@ func run(t *testing.T, dir string, name string, args ...string) {
 
 func TestOpenExistingBranch(t *testing.T) {
 	dir := initTestRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -75,7 +75,7 @@ func TestOpenExistingBranch(t *testing.T) {
 
 func TestOpenNonexistentBranch(t *testing.T) {
 	dir := initEmptyRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -86,7 +86,7 @@ func TestOpenNonexistentBranch(t *testing.T) {
 
 func TestReadFileFromBase(t *testing.T) {
 	dir := initTestRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -102,7 +102,7 @@ func TestReadFileFromBase(t *testing.T) {
 
 func TestReadFileNotFound(t *testing.T) {
 	dir := initTestRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -115,7 +115,7 @@ func TestReadFileNotFound(t *testing.T) {
 
 func TestWriteAndReadFile(t *testing.T) {
 	dir := initTestRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -135,7 +135,7 @@ func TestWriteAndReadFile(t *testing.T) {
 
 func TestRemoveFile(t *testing.T) {
 	dir := initTestRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -152,7 +152,7 @@ func TestRemoveFile(t *testing.T) {
 
 func TestReadDir(t *testing.T) {
 	dir := initTestRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -177,7 +177,7 @@ func TestReadDir(t *testing.T) {
 
 func TestReadDirRoot(t *testing.T) {
 	dir := initTestRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -205,7 +205,7 @@ func TestReadDirRoot(t *testing.T) {
 
 func TestReadDirWithOverlay(t *testing.T) {
 	dir := initTestRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -235,7 +235,7 @@ func TestReadDirWithOverlay(t *testing.T) {
 
 func TestStat(t *testing.T) {
 	dir := initTestRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -270,7 +270,7 @@ func TestStat(t *testing.T) {
 
 func TestCommitCreatesGitObjects(t *testing.T) {
 	dir := initTestRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -310,7 +310,7 @@ func TestCommitCreatesGitObjects(t *testing.T) {
 
 func TestCommitNoopWhenClean(t *testing.T) {
 	dir := initTestRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -326,7 +326,7 @@ func TestCommitNoopWhenClean(t *testing.T) {
 
 func TestCommitOnNewBranch(t *testing.T) {
 	dir := initEmptyRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -361,11 +361,11 @@ func TestCASConflict(t *testing.T) {
 	dir := initTestRepo(t)
 
 	// Open two TreeFS instances against the same ref
-	tfs1, err := Open(dir, "refs/heads/beadwork")
+	tfs1, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open tfs1: %v", err)
 	}
-	tfs2, err := Open(dir, "refs/heads/beadwork")
+	tfs2, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open tfs2: %v", err)
 	}
@@ -389,7 +389,7 @@ func TestCASConflict(t *testing.T) {
 
 func TestMultipleCommits(t *testing.T) {
 	dir := initTestRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -417,7 +417,7 @@ func TestMultipleCommits(t *testing.T) {
 
 func TestRemoveAndCommit(t *testing.T) {
 	dir := initTestRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -436,7 +436,7 @@ func TestRemoveAndCommit(t *testing.T) {
 
 func TestMkdirAll(t *testing.T) {
 	dir := initTestRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
@@ -456,7 +456,7 @@ func TestMkdirAll(t *testing.T) {
 
 func TestWriteFileCreatesParentDirs(t *testing.T) {
 	dir := initTestRepo(t)
-	tfs, err := Open(dir, "refs/heads/beadwork")
+	tfs, err := open(dir, "refs/heads/beadwork")
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}

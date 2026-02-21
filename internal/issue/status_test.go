@@ -42,19 +42,3 @@ func TestStatusIcon(t *testing.T) {
 	}
 }
 
-func TestPriorityIcon(t *testing.T) {
-	for p := 0; p <= 4; p++ {
-		got := issue.PriorityIcon(p)
-		if got != "●" {
-			t.Errorf("PriorityIcon(%d) = %q, want %q", p, got, "●")
-		}
-	}
-
-	// Unknown priority returns "?"
-	if got := issue.PriorityIcon(99); got != "?" {
-		t.Errorf("PriorityIcon(99) = %q, want %q", got, "?")
-	}
-	if got := issue.PriorityIcon(-1); got != "?" {
-		t.Errorf("PriorityIcon(-1) = %q, want %q", got, "?")
-	}
-}

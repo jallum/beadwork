@@ -7,15 +7,15 @@ import (
 	"strings"
 )
 
-// Migration defines a schema migration from version N to N+1.
-type Migration struct {
+// migration defines a schema migration from version N to N+1.
+type migration struct {
 	Description string
 	Apply       func(r *Repo) error
 }
 
 // Migrations is the ordered list of migrations.
 // Migrations[0] migrates version 0 → 1, Migrations[1] migrates 1 → 2, etc.
-var Migrations = []Migration{
+var Migrations = []migration{
 	{
 		Description: "add version marker",
 		Apply: func(r *Repo) error {
