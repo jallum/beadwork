@@ -4,7 +4,9 @@
     "bw-os0.1",
     "bw-os0.2"
   ],
-  "blocks": [],
+  "blocks": [
+    "bw-os0.5"
+  ],
   "created": "2026-02-21T23:10:12Z",
   "description": "Counts from StatusCount() — zero deserialization. In-progress list from IDsWithStatus('in_progress') + readIssue for each. Ready list from store.Ready() (rewritten in .2). No Snapshot.",
   "id": "bw-os0.3",
