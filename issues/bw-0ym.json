@@ -1,5 +1,5 @@
 {
-  "assignee": "Jason Allum",
+  "assignee": "",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-02-21T13:28:43Z",
@@ -10,5 +10,5 @@
   "status": "in_progress",
   "title": "Refactor issue.go into smaller, idiomatic Go files",
   "type": "task",
-  "updated_at": "2026-02-21T18:23:00Z"
+  "updated_at": "2026-02-21T19:03:02Z"
 }
