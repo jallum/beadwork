@@ -6,9 +6,15 @@
   "description": "bd has 'dep tree' — an issue-centric dependency tree rooted at a single issue. Walks edges recursively with direction control (up/down/both), max-depth, status filtering. Our 'bw graph \u003cid\u003e' shows the connected component as a layered DAG but lacks direction control and tree-depth perspective. Decide whether to add 'bw dep tree' as a separate subcommand or extend 'bw graph \u003cid\u003e' with direction/depth flags.",
   "id": "bw-66cb",
   "labels": [],
+  "comments": [
+    {
+      "text": "test comment for debugging show output",
+      "timestamp": "2026-02-21T03:50:46Z"
+    }
+  ],
   "priority": 2,
   "status": "open",
   "title": "Evaluate bd dep tree equivalent",
   "type": "task",
-  "updated_at": "2026-02-21T01:34:29Z"
+  "updated_at": "2026-02-21T03:50:46Z"
 }
