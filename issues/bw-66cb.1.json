@@ -2,7 +2,8 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [
-    "bw-66cb.2"
+    "bw-66cb.2",
+    "bw-66cb.4"
   ],
   "created": "2026-02-21T13:29:10Z",
   "description": "Refactor internal/issue/issue.go to add two shared primitives:\n\n1. loadEdges() (forward map[string][]string, reverse map[string][]string) — reads blocks/ dir once, returns adjacency in both directions. Replaces the inline edge-loading in Graph() (lines 559-587) and the per-issue BlockedBy reads in Ready()/Blocked().\n\n2. walkTips(roots []string, edges map[string][]string) []string — walks from roots following the given edge map, returns leaf IDs (nodes with no outgoing open edges). 'Open' means the issue status is not closed. This is the core primitive: show and ready both compose from it.\n\nThese replace the existing walkGraph() helper (lines 639-647) which only walks downward and returns all reachable nodes rather than just leaves.\n\nKeep existing public API (Graph, Ready, Blocked, NewlyUnblocked) working during this refactor — they'll be updated in subsequent tasks.",

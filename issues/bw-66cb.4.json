@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-66cb.1"
+  ],
   "blocks": [],
   "created": "2026-02-21T13:29:34Z",
   "description": "Refactor bw ready to use the shared walkTips primitive. Currently Ready() scans all issues and checks immediate blockers (1 hop). Update it to surface only genuinely actionable tips — issues that are workable AND whose completion moves the graph forward.\n\nAn issue is a tip if:\n- It has no open blockers (workable)\n- It is the leaf of at least one blocked chain, OR it has no dependency relationships at all (standalone work)\n\nThis filters out intermediary issues that happen to be unblocked but exist only as structural nodes in a chain. The result is a more focused ready list that shows what actually needs attention.",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Update bw ready to use tip-walking (surface only actionable tips)",
   "type": "task",
-  "updated_at": "2026-02-21T13:29:34Z"
+  "updated_at": "2026-02-21T13:29:47Z"
 }
