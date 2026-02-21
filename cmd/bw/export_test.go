@@ -18,7 +18,7 @@ func TestCmdExportBasic(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdExport([]string{}, PlainWriter(&buf))
+	err := cmdExport(env.Repo, env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdExport: %v", err)
 	}
@@ -81,7 +81,7 @@ func TestCmdExportWithParent(t *testing.T) {
 	env.Repo.Commit("create with parent")
 
 	var buf bytes.Buffer
-	if err := cmdExport([]string{}, PlainWriter(&buf)); err != nil {
+	if err := cmdExport(env.Repo, env.Store, []string{}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("cmdExport: %v", err)
 	}
 

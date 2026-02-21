@@ -18,7 +18,7 @@ func TestCmdShowBasic(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{iss.ID}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{iss.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow: %v", err)
 	}
@@ -35,7 +35,7 @@ func TestCmdShowJSON(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{iss.ID, "--json"}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{iss.ID, "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow: %v", err)
 	}
@@ -62,7 +62,7 @@ func TestCmdShowMultiID(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{a.ID, b.ID}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{a.ID, b.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow multi: %v", err)
 	}
@@ -84,7 +84,7 @@ func TestCmdShowMultiIDJSON(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{a.ID, b.ID, "--json"}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{a.ID, b.ID, "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow multi --json: %v", err)
 	}
@@ -108,7 +108,7 @@ func TestCmdShowOnlySummary(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{iss.ID, "--only", "summary"}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{iss.ID, "--only", "summary"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow --only summary: %v", err)
 	}
@@ -138,7 +138,7 @@ func TestCmdShowOnlyDescription(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{iss.ID, "--only", "description"}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{iss.ID, "--only", "description"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow --only description: %v", err)
 	}
@@ -167,7 +167,7 @@ func TestCmdShowOnlyMultiple(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{b.ID, "--only", "summary,blockedby"}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{b.ID, "--only", "summary,blockedby"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow --only: %v", err)
 	}
@@ -191,7 +191,7 @@ func TestCmdShowOnlyInvalid(t *testing.T) {
 	env.Repo.Commit("create")
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{iss.ID, "--only", "nonsense"}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{iss.ID, "--only", "nonsense"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for invalid section name")
 	}
@@ -205,7 +205,7 @@ func TestCmdShowShortRemoved(t *testing.T) {
 	env.Repo.Commit("create")
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{iss.ID, "--short"}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{iss.ID, "--short"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("--short should be removed, expected error")
 	}
@@ -222,7 +222,7 @@ func TestCmdShowRichDeps(t *testing.T) {
 
 	// Show b — should display rich dep info for its blocker
 	var buf bytes.Buffer
-	err := cmdShow([]string{b.ID}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{b.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow: %v", err)
 	}
@@ -237,7 +237,7 @@ func TestCmdShowRichDeps(t *testing.T) {
 
 	// Show a — should display BLOCKS section
 	buf.Reset()
-	err = cmdShow([]string{a.ID}, PlainWriter(&buf))
+	err = cmdShow(env.Repo, env.Store, []string{a.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow: %v", err)
 	}
@@ -263,7 +263,7 @@ func TestCmdShowTipsDeepChain(t *testing.T) {
 	env.Repo.Commit("setup chain")
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{a.ID}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{a.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow: %v", err)
 	}
@@ -301,7 +301,7 @@ func TestCmdShowBlockedByClosedTipWalksBack(t *testing.T) {
 	env.Repo.Commit("setup chain")
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{a.ID}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{a.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow: %v", err)
 	}
@@ -337,7 +337,7 @@ func TestCmdShowBlockedByClosedTipsDedup(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{a.ID}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{a.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow: %v", err)
 	}
@@ -372,7 +372,7 @@ func TestCmdShowBlockedByAllResolved(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{a.ID}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{a.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow: %v", err)
 	}
@@ -396,7 +396,7 @@ func TestCmdShowUnblocksImmediate(t *testing.T) {
 	env.Repo.Commit("setup chain")
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{a.ID}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{a.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdShow: %v", err)
 	}
@@ -419,7 +419,7 @@ func TestCmdShowNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{"nonexistent"}, PlainWriter(&buf))
+	err := cmdShow(env.Repo, env.Store, []string{"nonexistent"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for nonexistent issue")
 	}

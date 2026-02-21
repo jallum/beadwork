@@ -37,23 +37,23 @@ func TestScenarioFullWorkflow(t *testing.T) {
 
 	// ── Step 1: Create 5 issues ──
 	var bufA bytes.Buffer
-	if err := cmdCreate([]string{"API design", "--priority", "1", "--type", "bug", "--assignee", "alice"}, PlainWriter(&bufA)); err != nil {
+	if err := cmdCreate(env.Repo, env.Store, []string{"API design", "--priority", "1", "--type", "bug", "--assignee", "alice"}, PlainWriter(&bufA)); err != nil {
 		t.Fatalf("create A: %v", err)
 	}
 	var bufB bytes.Buffer
-	if err := cmdCreate([]string{"Database schema", "--priority", "1", "--type", "task"}, PlainWriter(&bufB)); err != nil {
+	if err := cmdCreate(env.Repo, env.Store, []string{"Database schema", "--priority", "1", "--type", "task"}, PlainWriter(&bufB)); err != nil {
 		t.Fatalf("create B: %v", err)
 	}
 	var bufC bytes.Buffer
-	if err := cmdCreate([]string{"Frontend UI", "--priority", "2", "--type", "task"}, PlainWriter(&bufC)); err != nil {
+	if err := cmdCreate(env.Repo, env.Store, []string{"Frontend UI", "--priority", "2", "--type", "task"}, PlainWriter(&bufC)); err != nil {
 		t.Fatalf("create C: %v", err)
 	}
 	var bufD bytes.Buffer
-	if err := cmdCreate([]string{"Documentation", "--priority", "3", "--type", "task", "--defer", "2027-06-01"}, PlainWriter(&bufD)); err != nil {
+	if err := cmdCreate(env.Repo, env.Store, []string{"Documentation", "--priority", "3", "--type", "task", "--defer", "2027-06-01"}, PlainWriter(&bufD)); err != nil {
 		t.Fatalf("create D: %v", err)
 	}
 	var bufE bytes.Buffer
-	if err := cmdCreate([]string{"Performance audit", "--priority", "2", "--type", "task"}, PlainWriter(&bufE)); err != nil {
+	if err := cmdCreate(env.Repo, env.Store, []string{"Performance audit", "--priority", "2", "--type", "task"}, PlainWriter(&bufE)); err != nil {
 		t.Fatalf("create E: %v", err)
 	}
 
@@ -75,38 +75,38 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ── Step 2: Wire dependencies ──
 	// A blocks B, B blocks C
 	var buf bytes.Buffer
-	if err := cmdDepAdd([]string{idA, "blocks", idB}, PlainWriter(&buf)); err != nil {
+	if err := cmdDepAdd(env.Repo, env.Store, []string{idA, "blocks", idB}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("dep add A→B: %v", err)
 	}
 	buf.Reset()
-	if err := cmdDepAdd([]string{idB, "blocks", idC}, PlainWriter(&buf)); err != nil {
+	if err := cmdDepAdd(env.Repo, env.Store, []string{idB, "blocks", idC}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("dep add B→C: %v", err)
 	}
 
 	// ── Step 3: Label ──
 	buf.Reset()
-	if err := cmdLabel([]string{idA, "+backend", "+critical"}, PlainWriter(&buf)); err != nil {
+	if err := cmdLabel(env.Repo, env.Store, []string{idA, "+backend", "+critical"}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("label A: %v", err)
 	}
 	buf.Reset()
-	if err := cmdLabel([]string{idC, "+frontend"}, PlainWriter(&buf)); err != nil {
+	if err := cmdLabel(env.Repo, env.Store, []string{idC, "+frontend"}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("label C: %v", err)
 	}
 
 	// ── Step 4: Progress ──
 	// Close A
 	buf.Reset()
-	if err := cmdClose([]string{idA}, PlainWriter(&buf)); err != nil {
+	if err := cmdClose(env.Repo, env.Store, []string{idA}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("close A: %v", err)
 	}
 	// B to in_progress
 	buf.Reset()
-	if err := cmdUpdate([]string{idB, "--status", "in_progress"}, PlainWriter(&buf)); err != nil {
+	if err := cmdUpdate(env.Repo, env.Store, []string{idB, "--status", "in_progress"}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("update B: %v", err)
 	}
 	// Defer E
 	buf.Reset()
-	if err := cmdDefer([]string{idE, "2027-09-01"}, PlainWriter(&buf)); err != nil {
+	if err := cmdDefer(env.Repo, env.Store, []string{idE, "2027-09-01"}, PlainWriter(&buf)); err != nil {
 		t.Fatalf("defer E: %v", err)
 	}
 
@@ -115,7 +115,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("list_all_json", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdList([]string{"--all", "--json"}, PlainWriter(&buf)); err != nil {
+		if err := cmdList(env.Repo, env.Store, []string{"--all", "--json"}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("list --all --json: %v", err)
 		}
 		var issues []issue.Issue
@@ -212,7 +212,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("list_default", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdList([]string{}, PlainWriter(&buf)); err != nil {
+		if err := cmdList(env.Repo, env.Store, []string{}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("list: %v", err)
 		}
 		out := buf.String()
@@ -236,7 +236,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("list_in_progress", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdList([]string{"--status", "in_progress"}, PlainWriter(&buf)); err != nil {
+		if err := cmdList(env.Repo, env.Store, []string{"--status", "in_progress"}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("list --status in_progress: %v", err)
 		}
 		out := buf.String()
@@ -253,7 +253,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("list_deferred", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdList([]string{"--deferred"}, PlainWriter(&buf)); err != nil {
+		if err := cmdList(env.Repo, env.Store, []string{"--deferred"}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("list --deferred: %v", err)
 		}
 		out := buf.String()
@@ -273,7 +273,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("show_deferred", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdShow([]string{idD, "--json"}, PlainWriter(&buf)); err != nil {
+		if err := cmdShow(env.Repo, env.Store, []string{idD, "--json"}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("show D: %v", err)
 		}
 		var arr []issue.Issue
@@ -300,7 +300,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("ready_text", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdReady([]string{}, PlainWriter(&buf)); err != nil {
+		if err := cmdReady(env.Repo, env.Store, []string{}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("ready: %v", err)
 		}
 		if !strings.Contains(buf.String(), "no ready issues") {
@@ -313,7 +313,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("ready_json", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdReady([]string{"--json"}, PlainWriter(&buf)); err != nil {
+		if err := cmdReady(env.Repo, env.Store, []string{"--json"}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("ready --json: %v", err)
 		}
 		var issues []issue.Issue
@@ -330,7 +330,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("blocked_json", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdBlocked([]string{"--json"}, PlainWriter(&buf)); err != nil {
+		if err := cmdBlocked(env.Repo, env.Store, []string{"--json"}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("blocked --json: %v", err)
 		}
 		var result []struct {
@@ -357,7 +357,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	// ════════════════════════════════════════════════════════
 	t.Run("export", func(t *testing.T) {
 		var buf bytes.Buffer
-		if err := cmdExport([]string{}, PlainWriter(&buf)); err != nil {
+		if err := cmdExport(env.Repo, env.Store, []string{}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("export: %v", err)
 		}
 		lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
@@ -458,7 +458,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 	t.Run("export_import_roundtrip", func(t *testing.T) {
 		// Export to JSONL
 		var exportBuf bytes.Buffer
-		if err := cmdExport([]string{}, PlainWriter(&exportBuf)); err != nil {
+		if err := cmdExport(env.Repo, env.Store, []string{}, PlainWriter(&exportBuf)); err != nil {
 			t.Fatalf("export: %v", err)
 		}
 
@@ -468,7 +468,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 
 		// Try dry-run import — should detect all 5 as collisions
 		var dryBuf bytes.Buffer
-		if err := cmdImport([]string{tmpFile, "--dry-run"}, PlainWriter(&dryBuf)); err != nil {
+		if err := cmdImport(env.Repo, env.Store, []string{tmpFile, "--dry-run"}, PlainWriter(&dryBuf)); err != nil {
 			t.Fatalf("import dry-run: %v", err)
 		}
 		out := dryBuf.String()

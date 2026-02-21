@@ -17,7 +17,7 @@ func TestCmdUpdatePriority(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUpdate([]string{iss.ID, "--priority", "1"}, PlainWriter(&buf))
+	err := cmdUpdate(env.Repo, env.Store, []string{iss.ID, "--priority", "1"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpdate: %v", err)
 	}
@@ -36,7 +36,7 @@ func TestCmdUpdateMultipleFields(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUpdate([]string{iss.ID, "--assignee", "bob", "--type", "bug", "--title", "Updated title"}, PlainWriter(&buf))
+	err := cmdUpdate(env.Repo, env.Store, []string{iss.ID, "--assignee", "bob", "--type", "bug", "--title", "Updated title"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpdate: %v", err)
 	}
@@ -61,7 +61,7 @@ func TestCmdUpdateJSON(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUpdate([]string{iss.ID, "--assignee", "alice", "--json"}, PlainWriter(&buf))
+	err := cmdUpdate(env.Repo, env.Store, []string{iss.ID, "--assignee", "alice", "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpdate: %v", err)
 	}
@@ -83,7 +83,7 @@ func TestCmdUpdateDescription(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUpdate([]string{iss.ID, "--description", "new description"}, PlainWriter(&buf))
+	err := cmdUpdate(env.Repo, env.Store, []string{iss.ID, "--description", "new description"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpdate: %v", err)
 	}
@@ -102,7 +102,7 @@ func TestCmdUpdateStatus(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUpdate([]string{iss.ID, "--status", "in_progress"}, PlainWriter(&buf))
+	err := cmdUpdate(env.Repo, env.Store, []string{iss.ID, "--status", "in_progress"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpdate: %v", err)
 	}
@@ -118,7 +118,7 @@ func TestCmdUpdateNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdUpdate([]string{"nonexistent", "--title", "x"}, PlainWriter(&buf))
+	err := cmdUpdate(env.Repo, env.Store, []string{"nonexistent", "--title", "x"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for nonexistent issue")
 	}
