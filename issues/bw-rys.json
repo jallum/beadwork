@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-21T21:29:42Z",
+  "description": "When bw show displays an epic, it only shows the epic itself and its comments. The child issues, their statuses, and the dependency graph between them are not visible. An agent picking up an epic in a new session sees the high-level description but has no way to understand the plan structure without running bw show on each child individually or checking bw ready. The epic view should inline its children with their status, priority, and dependency relationships — giving a complete picture of the plan in one command.",
+  "id": "bw-rys",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Show children and dependency graph in epic view",
+  "type": "feature",
+  "updated_at": "2026-02-21T21:29:42Z"
+}
