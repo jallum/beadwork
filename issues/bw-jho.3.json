@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-21T03:10:57Z",
+  "description": "blocked.go lines 60, 66: 'Blocked by:' and 'Blocks:' lines under each issue header use literal '  ' prefix. Use w.Push(2)/w.Pop() to wrap the detail section.",
+  "id": "bw-jho.3",
+  "labels": [],
+  "parent": "bw-jho",
+  "priority": 2,
+  "status": "open",
+  "title": "blocked.go: replace hardcoded indentation with Writer Push/Pop",
+  "type": "task",
+  "updated_at": "2026-02-21T03:10:57Z"
+}
