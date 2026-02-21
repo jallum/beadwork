@@ -2,18 +2,22 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/template"
 	"github.com/jallum/beadwork/prompts"
 )
 
 func cmdPrime(w Writer) error {
-	_, store, err := getInitializedRepo()
+	r, store, err := getInitializedRepo()
 	if err != nil {
 		return err
 	}
 
-	fmt.Fprint(w, prompts.Prime)
+	out := template.Process(prompts.Prime, r.ListConfig())
+	fmt.Fprint(w, styleMD(w, strings.TrimRight(out, "\n")))
+	fmt.Fprintln(w)
 
 	// Dynamic section: current project state
 	ready, _ := store.Ready()
@@ -33,28 +37,48 @@ func cmdPrime(w Writer) error {
 		}
 	}
 
-	fmt.Fprintln(w, "## Current State")
-	fmt.Fprintln(w)
-	fmt.Fprintf(w, "  %d open, %d in progress, %d closed\n", openCount, ipCount, closedCount)
-	fmt.Fprintf(w, "  %d ready (unblocked)\n", len(ready))
-	fmt.Fprintln(w)
+	// Find max ID length for column alignment.
+	idw := 0
+	for _, iss := range all {
+		if iss.Status == "in_progress" && len(iss.ID) > idw {
+			idw = len(iss.ID)
+		}
+	}
+	for _, iss := range ready {
+		if len(iss.ID) > idw {
+			idw = len(iss.ID)
+		}
+	}
+
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "\n## Current State\n\n")
+	fmt.Fprintf(&sb, "%d open, %d in progress, %d closed\n", openCount, ipCount, closedCount)
+	fmt.Fprintf(&sb, "%d ready (unblocked)\n", len(ready))
 
 	if ipCount > 0 {
-		fmt.Fprintln(w, "  In progress:")
+		fmt.Fprintf(&sb, "\n**In progress:**\n")
 		for _, iss := range all {
 			if iss.Status == "in_progress" {
-				fmt.Fprintf(w, "    %-14s p%d %s\n", iss.ID, iss.Priority, iss.Title)
+				fmt.Fprintf(&sb, "  `%-*s`  P%d  %s\n", idw, iss.ID, iss.Priority, iss.Title)
+				if n := len(iss.Comments); n > 0 {
+					last := iss.Comments[n-1]
+					text := last.Text
+					if len(text) > 60 {
+						text = text[:57] + "..."
+					}
+					fmt.Fprintf(&sb, "    └ %q (%s)\n", text, relativeTime(last.Timestamp))
+				}
 			}
 		}
-		fmt.Fprintln(w)
 	}
 
 	if len(ready) > 0 {
-		fmt.Fprintln(w, "  Ready for work:")
+		fmt.Fprintf(&sb, "\n**Ready for work:**\n")
 		for _, iss := range ready {
-			fmt.Fprintf(w, "    %-14s p%d %s\n", iss.ID, iss.Priority, iss.Title)
+			fmt.Fprintf(&sb, "  `%-*s`  P%d  %s\n", idw, iss.ID, iss.Priority, iss.Title)
 		}
-		fmt.Fprintln(w)
 	}
+
+	fmt.Fprintln(w, styleMD(w, sb.String()))
 	return nil
 }

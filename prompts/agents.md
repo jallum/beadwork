@@ -1,12 +1,7 @@
 ## Issue Tracking
 
-This project uses **bw (beadwork)** for issue tracking.
-Run `bw prime` for workflow context.
+This project tracks work with `bw` (beadwork), which persists to git — it survives compaction, session boundaries, and context loss. Prefer it over in-memory task tracking.
 
-**Quick reference:**
-- `bw ready` - Find unblocked work
-- `bw create "Title" --type task --priority 2` - Create issue
-- `bw close <id>` - Complete work
-- `bw sync` - Sync with git (run at session end)
+If you don't have context about current work — new session, compaction, or just unsure — run `bw prime`. It shows the workflow, your current issues, and where things left off.
 
-For full workflow details: `bw prime`
+Start with `bw ready` to find available work.

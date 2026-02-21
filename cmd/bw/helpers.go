@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/repo"
@@ -296,9 +297,95 @@ func fprintDeps(w Writer, iss *issue.Issue, store *issue.Store) {
 	}
 }
 
+// styleMD adds ANSI color to markdown text without altering it.
+// Headings → Bold+Cyan, bullets → Cyan, **bold** → Bold, `code` → Dim+Yellow.
+func styleMD(w Writer, text string) string {
+	var out strings.Builder
+	inFence := false
+	for i, line := range strings.Split(text, "\n") {
+		if i > 0 {
+			out.WriteByte('\n')
+		}
+		if strings.HasPrefix(line, "```") {
+			inFence = !inFence
+		}
+		switch {
+		case inFence && strings.HasPrefix(strings.TrimSpace(line), "#"):
+			out.WriteString(w.Style(line, Green))
+		case inFence:
+			out.WriteString(line)
+		case strings.HasPrefix(line, "# ") || strings.HasPrefix(line, "## "):
+			out.WriteString(w.Style(line, Bold, Cyan))
+		case strings.HasPrefix(line, "- "):
+			out.WriteString(w.Style("- ", Cyan) + styleInline(w, line[2:]))
+		default:
+			out.WriteString(styleInline(w, line))
+		}
+	}
+	return out.String()
+}
+
+// styleInline colors **bold** and `code` spans in place.
+func styleInline(w Writer, line string) string {
+	var out strings.Builder
+	i := 0
+	for i < len(line) {
+		if i+1 < len(line) && line[i] == '*' && line[i+1] == '*' {
+			end := strings.Index(line[i+2:], "**")
+			if end >= 0 {
+				out.WriteString(w.Style(line[i:i+2+end+2], Bold))
+				i += 2 + end + 2
+				continue
+			}
+		}
+		if line[i] == '`' {
+			end := strings.IndexByte(line[i+1:], '`')
+			if end >= 0 {
+				out.WriteString(w.Style(line[i:i+1+end+1], Dim, Yellow))
+				i += 1 + end + 1
+				continue
+			}
+		}
+		out.WriteByte(line[i])
+		i++
+	}
+	return out.String()
+}
+
 func trimDate(s string) string {
 	if len(s) >= 10 {
 		return s[:10]
 	}
 	return s
+}
+
+// relativeTime returns a human-readable relative time like "2h ago".
+func relativeTime(timestamp string) string {
+	t, err := time.Parse(time.RFC3339, timestamp)
+	if err != nil {
+		return timestamp
+	}
+	return relativeTimeSince(t, time.Now())
+}
+
+// relativeTimeSince computes relative time between t and now.
+func relativeTimeSince(t, now time.Time) string {
+	d := now.Sub(t)
+	if d < time.Minute {
+		return "just now"
+	}
+	switch {
+	case d < time.Hour:
+		return fmt.Sprintf("%dm ago", int(d.Minutes()))
+	case d < 24*time.Hour:
+		return fmt.Sprintf("%dh ago", int(d.Hours()))
+	case d < 30*24*time.Hour:
+		return fmt.Sprintf("%dd ago", int(d.Hours()/24))
+	default:
+		mo := int(d.Hours() / 24 / 30)
+		if mo < 1 {
+			mo = 1
+		}
+		return fmt.Sprintf("%dmo ago", mo)
+	}
 }

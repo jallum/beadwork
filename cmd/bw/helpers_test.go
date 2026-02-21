@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/testutil"
@@ -357,5 +358,34 @@ func TestGetInitializedReturnsError(t *testing.T) {
 	}
 	if r == nil || s == nil {
 		t.Error("expected non-nil repo and store")
+	}
+}
+
+func TestRelativeTimeSince(t *testing.T) {
+	now := time.Date(2026, 2, 20, 12, 0, 0, 0, time.UTC)
+	tests := []struct {
+		t    time.Time
+		want string
+	}{
+		{now.Add(-30 * time.Second), "just now"},
+		{now.Add(-5 * time.Minute), "5m ago"},
+		{now.Add(-2 * time.Hour), "2h ago"},
+		{now.Add(-3 * 24 * time.Hour), "3d ago"},
+		{now.Add(-45 * 24 * time.Hour), "1mo ago"},
+		{now.Add(-90 * 24 * time.Hour), "3mo ago"},
+		{now.Add(10 * time.Minute), "just now"}, // future
+	}
+	for _, tt := range tests {
+		got := relativeTimeSince(tt.t, now)
+		if got != tt.want {
+			t.Errorf("relativeTimeSince(%v, now) = %q, want %q", tt.t, got, tt.want)
+		}
+	}
+}
+
+func TestRelativeTimeInvalidTimestamp(t *testing.T) {
+	got := relativeTime("not-a-timestamp")
+	if got != "not-a-timestamp" {
+		t.Errorf("relativeTime(invalid) = %q, want raw string", got)
 	}
 }

@@ -1,85 +1,51 @@
-# Beadwork Workflow Context
+# Beadwork
 
-> **Context Recovery**: Run `bw prime` after compaction, clear, or new session
+This project tracks work with `bw`. Run `bw prime` after compaction or new session.
 
-## Session Close Protocol
+## How It Works
 
-**CRITICAL**: Before saying "done" or "complete", you MUST run this checklist:
+Issues have **status** (open → in_progress → closed, or deferred), **priority** (P0 critical → P4 backlog, default P2), and optionally **dependencies**, **labels**, **comments**, and **parent** relationships.
 
-```
-[ ] 1. git status              (check what changed)
-[ ] 2. git add <files>         (stage code changes)
-[ ] 3. bw sync                 (commit beadwork changes)
-[ ] 4. git commit -m "..."     (commit code)
-[ ] 5. bw sync                 (commit any new beadwork changes)
-[ ] 6. git push                (push to remote)
-```
+`bw ready` is your starting point — it shows open issues with no unresolved blockers, sorted by priority. `bw show <id>` for details. `bw history <id>` to see what happened in previous sessions.
 
-**NEVER skip this.** Work is not done until pushed.
+## Working
 
-## Core Rules
-- **Default**: Use beadwork for ALL task tracking (`bw create`, `bw ready`, `bw close`)
-- **Prohibited**: Do NOT use TodoWrite, TaskCreate, or markdown files for task tracking
-- **Workflow**: Create bw issue BEFORE writing code, mark in_progress when starting
-- Persistence you don't need beats lost context
-- Git workflow: run `bw sync` at session end
-- Session management: check `bw ready` for available work
+- Claim work with `bw update <id> --status in_progress` before starting.
+- When you learn something a future session needs to know, `bw comments add <id> "what happened"`.
+- If you discover new work mid-task, create an issue. Don't create issues for things you'll finish in the same breath.
+- `bw close <id>` when done. Use `--reason` if the resolution isn't obvious.
+- Before ending your session: commit code, `bw sync`, `git push`. Nothing should exist only in your context window.
 
-## Essential Commands
+## Commands
 
-### Finding Work
-- `bw ready` - Show issues ready to work (no open blockers)
-- `bw list --status open` - All open issues
-- `bw list --status in_progress` - Your active work
-- `bw show <id>` - Detailed issue view with dependencies
+Every command supports `--help`. Read commands accept `--json`.
 
-### Creating & Updating
-- `bw create "Title" -p 2 -t task` - New issue
-  - Priority: 0-4 (0=critical, 2=default, 4=backlog). Also accepts P0-P4. NOT "high"/"medium"/"low"
-  - Type: task, bug, epic
-  - Also: `-a <assignee>`, `-d <description>`
-- `bw update <id> --status in_progress` - Claim work
-- `bw update <id> --assignee me` - Assign to someone
-- `bw update <id> --title/--priority/-d` - Update fields
-- `bw close <id>` - Mark complete
-- `bw close <id> --reason "explanation"` - Close with reason
-- `bw reopen <id>` - Reopen a closed issue
-- `bw label <id> +bug +urgent -wontfix` - Add/remove labels
-
-### Dependencies
-- `bw dep add <blocker> blocks <blocked>` - Add dependency (blocker must close before blocked is ready)
-- `bw dep remove <blocker> blocks <blocked>` - Remove dependency
-- `bw graph <id>` - Show dependency tree for an issue
-- `bw graph --all` - Show all open issue dependencies
-
-### Sync
-- `bw sync` - Fetch, rebase/replay, push to remote
-
-## Common Workflows
-
-**Starting work:**
-```
-bw ready                               # Find available work
-bw show <id>                           # Review issue details
-bw update <id> --status in_progress    # Claim it
+```bash
+bw ready                               # Unblocked work
+bw blocked                             # Issues waiting on dependencies
+bw list                                # Open + in-progress issues (--all, --grep, --status, --label)
+bw show <id>                           # Full detail with deps and comments
+bw history <id>                        # Mutation log from git history
+bw create "Title" -p 2 -t task         # New issue (P0-P4; task, bug, or epic)
+bw update <id> --status in_progress    # Change fields (--title, --priority, --assignee, --parent)
+bw close <id> [--reason "..."]         # Mark complete
+bw comments add <id> "text"            # Leave a note for future sessions
+bw dep add <blocker> blocks <blocked>  # Dependency link
+bw label <id> +bug -wontfix            # Add/remove labels
+bw sync                                # Fetch, merge, push
 ```
 
-**Completing work:**
-```
-# Commit code FIRST, then close the ticket
-git add <files> && git commit -m "..."
-bw close <id> --reason "done"
-bw sync
-```
+<!-- IF workflow.agents == multi -->
 
-**Creating dependent work:**
-```
-bw create "Implement feature X" -t task -p 2
-bw create "Write tests for X" -t task -p 2
-bw dep add <feature-id> blocks <test-id>
-```
+## Parallel Agents
 
-## Notes
-- `--json` on any read command for structured output
-- IDs support prefix matching ("a1b2" matches "proj-a1b2")
-- Statuses: open, in_progress, deferred, closed
+Multiple agents need separate git worktrees to avoid file conflicts. `bw` itself is concurrent-safe — issue state is shared across all worktrees. Claim work (`--status in_progress` with `--assignee`) before starting so other agents skip it.
+
+<!-- END -->
+<!-- IF workflow.review == pr -->
+
+## Code Review
+
+Push your feature branch and open a pull request rather than merging directly. Reference the issue ID in the PR description.
+
+<!-- END -->

@@ -6,16 +6,21 @@ import (
 )
 
 func TestPrimePriorityRange(t *testing.T) {
-	if !strings.Contains(Prime, "Priority: 0-4 (0=critical, 2=default, 4=backlog)") {
-		t.Error("prime.md should document priority range as 0-4 (0=critical, 2=default, 4=backlog)")
+	if !strings.Contains(Prime, "P0 critical") {
+		t.Error("prime.md should document P0 as critical")
 	}
-	if !strings.Contains(Prime, "Also accepts P0-P4") {
+	if !strings.Contains(Prime, "P4 backlog") {
+		t.Error("prime.md should document P4 as backlog")
+	}
+	if !strings.Contains(Prime, "P0-P4") {
 		t.Error("prime.md should mention P0-P4 notation")
 	}
 }
 
 func TestPrimeStatuses(t *testing.T) {
-	if !strings.Contains(Prime, "Statuses: open, in_progress, deferred, closed") {
-		t.Error("prime.md should list all four statuses: open, in_progress, deferred, closed")
+	for _, s := range []string{"open", "in_progress", "closed", "deferred"} {
+		if !strings.Contains(Prime, s) {
+			t.Errorf("prime.md should mention status %q", s)
+		}
 	}
 }
