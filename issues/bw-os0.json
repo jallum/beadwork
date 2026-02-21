@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T23:14:46Z",
   "created": "2026-02-21T23:09:59Z",
   "description": "Every hot-path command (prime, ready, blocked) deserializes ALL issues to answer questions about the handful that are open. The storage layer already has status directory indexes and blocks directory edges — Snapshot ignores them and does a full table scan. Kill the Snapshot struct; each Store method queries the indexes it needs and fetches only the issues it needs.",
   "id": "bw-os0",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Remove Snapshot, query status indexes directly",
   "type": "epic",
-  "updated_at": "2026-02-21T23:09:59Z"
+  "updated_at": "2026-02-21T23:14:46Z"
 }
