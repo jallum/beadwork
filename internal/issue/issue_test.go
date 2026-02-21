@@ -2062,12 +2062,88 @@ func TestCreateWithParent(t *testing.T) {
 	}
 	env.CommitIntent("create " + child.ID)
 
+	// Child should get a dotted ID
+	want := parent.ID + ".1"
+	if child.ID != want {
+		t.Errorf("child.ID = %q, want %q", child.ID, want)
+	}
+
 	got, err := env.Store.Get(child.ID)
 	if err != nil {
 		t.Fatalf("Get child: %v", err)
 	}
 	if got.Parent != parent.ID {
 		t.Errorf("child.Parent = %q, want %q", got.Parent, parent.ID)
+	}
+}
+
+func TestCreateChildIDsAreSequential(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	parent, _ := env.Store.Create("Parent", issue.CreateOpts{})
+	env.CommitIntent("create " + parent.ID)
+
+	c1, _ := env.Store.Create("Child 1", issue.CreateOpts{Parent: parent.ID})
+	env.CommitIntent("create " + c1.ID)
+	c2, _ := env.Store.Create("Child 2", issue.CreateOpts{Parent: parent.ID})
+	env.CommitIntent("create " + c2.ID)
+	c3, _ := env.Store.Create("Child 3", issue.CreateOpts{Parent: parent.ID})
+	env.CommitIntent("create " + c3.ID)
+
+	if c1.ID != parent.ID+".1" {
+		t.Errorf("c1.ID = %q, want %s.1", c1.ID, parent.ID)
+	}
+	if c2.ID != parent.ID+".2" {
+		t.Errorf("c2.ID = %q, want %s.2", c2.ID, parent.ID)
+	}
+	if c3.ID != parent.ID+".3" {
+		t.Errorf("c3.ID = %q, want %s.3", c3.ID, parent.ID)
+	}
+}
+
+func TestCreateGrandchild(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	parent, _ := env.Store.Create("Parent", issue.CreateOpts{})
+	env.CommitIntent("create " + parent.ID)
+
+	child, _ := env.Store.Create("Child", issue.CreateOpts{Parent: parent.ID})
+	env.CommitIntent("create " + child.ID)
+
+	grandchild, _ := env.Store.Create("Grandchild", issue.CreateOpts{Parent: child.ID})
+	env.CommitIntent("create " + grandchild.ID)
+
+	// e.g., test-abc.1.1
+	want := child.ID + ".1"
+	if grandchild.ID != want {
+		t.Errorf("grandchild.ID = %q, want %q", grandchild.ID, want)
+	}
+}
+
+func TestDottedChildIDPermanentAfterOrphaning(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	parent, _ := env.Store.Create("Parent", issue.CreateOpts{})
+	env.CommitIntent("create " + parent.ID)
+
+	child, _ := env.Store.Create("Child", issue.CreateOpts{Parent: parent.ID})
+	env.CommitIntent("create " + child.ID)
+
+	// Clear parent link
+	empty := ""
+	env.Store.Update(child.ID, issue.UpdateOpts{Parent: &empty})
+	env.CommitIntent("clear parent")
+
+	got, _ := env.Store.Get(child.ID)
+	if got.Parent != "" {
+		t.Errorf("Parent should be empty, got %q", got.Parent)
+	}
+	// ID should still be dotted
+	if got.ID != parent.ID+".1" {
+		t.Errorf("ID should remain %s.1 after orphaning, got %q", parent.ID, got.ID)
 	}
 }
 
