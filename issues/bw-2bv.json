@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "agent-deadcode",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-02-21T21:41:13Z",
@@ -7,8 +7,8 @@
   "id": "bw-2bv",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Remove dead code: test-only symbols with no production callers",
   "type": "task",
-  "updated_at": "2026-02-21T21:41:13Z"
+  "updated_at": "2026-02-21T21:55:25Z"
 }
