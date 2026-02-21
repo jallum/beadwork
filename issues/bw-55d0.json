@@ -2,12 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T01:24:39Z",
+  "close_reason": "done",
   "created": "2026-02-20T07:02:48Z",
   "description": "bd supports '-l, --labels frontend,urgent' at create time. bw requires a separate 'bw label' call after creation. Adding labels at create time reduces round-trips and is more natural for scripting.",
   "id": "bw-55d0",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add --labels flag to create",
-  "type": "feature"
+  "type": "feature",
+  "updated_at": "2026-02-21T01:24:39Z"
 }
