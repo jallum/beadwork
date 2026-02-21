@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 type StartArgs struct {
@@ -29,16 +30,13 @@ func parseStartArgs(raw []string) (StartArgs, error) {
 	}, nil
 }
 
-func cmdStart(args []string, w Writer) error {
+func cmdStart(store *issue.Store, args []string, w Writer) error {
 	sa, err := parseStartArgs(args)
 	if err != nil {
 		return err
 	}
 
-	r, store, err := getInitializedRepo()
-	if err != nil {
-		return err
-	}
+	r := store.Committer.(*repo.Repo)
 
 	// Default assignee to git user.name
 	assignee := sa.Assignee
@@ -66,7 +64,7 @@ func cmdStart(args []string, w Writer) error {
 	}
 
 	intent := fmt.Sprintf("start %s assignee=%q", iss.ID, assignee)
-	if err := r.Commit(intent); err != nil {
+	if err := store.Commit(intent); err != nil {
 		return fmt.Errorf("commit failed: %w", err)
 	}
 

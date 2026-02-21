@@ -18,7 +18,7 @@ func TestCmdStartBasic(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdStart([]string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdStart: %v", err)
 	}
@@ -46,7 +46,7 @@ func TestCmdStartJSON(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdStart([]string{iss.ID, "--assignee", "bob", "--json"}, PlainWriter(&buf))
+	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "bob", "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdStart --json: %v", err)
 	}
@@ -73,7 +73,7 @@ func TestCmdStartBlocked(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdStart([]string{b.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	err := cmdStart(env.Store, []string{b.ID, "--assignee", "alice"}, PlainWriter(&buf))
 	if err == nil {
 		t.Fatal("expected error for blocked issue")
 	}
@@ -95,7 +95,7 @@ func TestCmdStartAlreadyInProgress(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdStart([]string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
 	if err == nil {
 		t.Fatal("expected error for in_progress issue")
 	}
@@ -110,7 +110,7 @@ func TestCmdStartClosed(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdStart([]string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
 	if err == nil {
 		t.Fatal("expected error for closed issue")
 	}
@@ -121,7 +121,7 @@ func TestCmdStartNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdStart([]string{"nonexistent", "--assignee", "alice"}, PlainWriter(&buf))
+	err := cmdStart(env.Store, []string{"nonexistent", "--assignee", "alice"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for nonexistent issue")
 	}
@@ -132,7 +132,7 @@ func TestCmdStartNoArgs(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdStart(nil, PlainWriter(&buf))
+	err := cmdStart(env.Store, nil, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for missing args")
 	}
