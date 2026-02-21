@@ -10,6 +10,12 @@
   "id": "bw-d5l.1",
   "labels": [],
   "parent": "bw-d5l",
+  "comments": [
+    {
+      "text": "PR #50 merged — all CI green. https://github.com/jallum/beadwork/pull/50",
+      "timestamp": "2026-02-21T15:46:23Z"
+    }
+  ],
   "priority": 1,
   "status": "closed",
   "title": "Change Command.Run signature to accept repo and store",
