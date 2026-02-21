@@ -12,6 +12,12 @@
   "id": "bw-d5l.3",
   "labels": [],
   "parent": "bw-d5l",
+  "comments": [
+    {
+      "text": "PR #51 merged — all CI green. https://github.com/jallum/beadwork/pull/51",
+      "timestamp": "2026-02-21T15:54:33Z"
+    }
+  ],
   "priority": 1,
   "status": "closed",
   "title": "Add write-through cache to Store",
