@@ -6,14 +6,16 @@
   "blocks": [
     "bw-66cb.5"
   ],
+  "closed_at": "2026-02-21T13:50:21Z",
+  "close_reason": "BLOCKED BY/BLOCKS sections with tip-walking replace DEPENDS ON",
   "created": "2026-02-21T13:29:19Z",
   "description": "Update bw show output to include two new default sections:\n\nBLOCKED BY — walk the blocker tree (reverse edges) from this issue, surface only the actionable tips (leaves with no further open blockers). If A←B←C←D, showing A displays only D. If the immediate blockers ARE the tips (no deeper chain), show them directly.\n\nBLOCKS — walk the blocks tree (forward edges) from this issue, surface the downstream tips (leaf issues that would eventually be unblocked).\n\nThese replace the current flat dep listings in show output. Use the shared walkTips primitive from the previous task.\n\nInclude the 'also blocks: ...' annotation when a blocker also blocks other issues (gives context about impact without showing the full graph).\n\nBoth sections should be part of default show output — no --map flag needed.",
   "id": "bw-66cb.2",
   "labels": [],
   "parent": "bw-66cb",
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add BLOCKED BY / BLOCKS sections to show using tip-walking",
   "type": "task",
-  "updated_at": "2026-02-21T13:47:11Z"
+  "updated_at": "2026-02-21T13:50:21Z"
 }
