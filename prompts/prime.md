@@ -61,7 +61,7 @@ Issues can form hierarchies: an epic with child tasks (`--parent <epic>`), wired
 
 `bw show <id>` is more than a detail view — its BLOCKED BY section walks the full dependency tree down to the leaves, then surfaces only the issues that are actionable _right now_. If A depends on B which depends on C which depends on D, and D is the only open leaf, BLOCKED BY shows D — not the whole chain. As issues close, the next layer surfaces. It's like `bw ready` scoped to a specific issue.
 
-Comments serve double duty. They're breadcrumbs for your future self — context that survives compaction — and they're messages to anyone else working in the same project. An implementation note you leave on an issue can inform a collaborator's approach, flag a deviation from the original plan, or express a constraint that downstream work needs to account for.
+Comments (`bw comments add <id> "..."`) serve double duty. They're breadcrumbs for your future self — context that survives compaction — and they're messages to anyone else working in the same project. An implementation note you leave on an issue can inform a collaborator's approach, flag a deviation from the original plan, or express a constraint that downstream work needs to account for.
 
 ## Finding and Doing Work
 

@@ -17,6 +17,7 @@ const (
 	Yellow
 	Cyan
 	Green
+	Strikethrough
 )
 
 var styleCode = map[Style]string{
@@ -26,7 +27,8 @@ var styleCode = map[Style]string{
 	BrightRed: "\033[91m",
 	Yellow:    "\033[33m",
 	Cyan:      "\033[36m",
-	Green:     "\033[32m",
+	Green:         "\033[32m",
+	Strikethrough: "\033[9m",
 }
 
 const reset = "\033[0m"

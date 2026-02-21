@@ -61,7 +61,7 @@ func cmdClose(store *issue.Store, args []string, w Writer) error {
 		}
 		fprintJSON(w, result)
 	} else {
-		fmt.Fprintf(w, "closed %s: %s\n", iss.ID, iss.Title)
+		fmt.Fprintf(w, "closed %s: %s\n", iss.ID, w.Style(iss.Title, Strikethrough))
 		if len(unblocked) > 0 {
 			w.Push(2)
 			for _, u := range unblocked {
