@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-kqn"
+  ],
   "blocks": [],
   "created": "2026-02-21T04:14:08Z",
   "description": "",
@@ -10,5 +12,5 @@
   "status": "open",
   "title": "Child 1",
   "type": "task",
-  "updated_at": "2026-02-21T04:14:08Z"
+  "updated_at": "2026-02-21T04:14:16Z"
 }
