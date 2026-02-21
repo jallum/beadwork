@@ -15,7 +15,7 @@ func TestCmdCreateBasic(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdCreate(env.Repo, env.Store, []string{"Test issue"}, PlainWriter(&buf))
+	err := cmdCreate(env.Store, []string{"Test issue"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdCreate: %v", err)
 	}
@@ -29,7 +29,7 @@ func TestCmdCreateWithFlags(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdCreate(env.Repo, env.Store, []string{"Bug report", "--priority", "1", "--type", "bug", "--assignee", "alice"}, PlainWriter(&buf))
+	err := cmdCreate(env.Store, []string{"Bug report", "--priority", "1", "--type", "bug", "--assignee", "alice"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdCreate: %v", err)
 	}
@@ -61,7 +61,7 @@ func TestCmdCreateJSON(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdCreate(env.Repo, env.Store, []string{"JSON test", "--json"}, PlainWriter(&buf))
+	err := cmdCreate(env.Store, []string{"JSON test", "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdCreate: %v", err)
 	}
@@ -80,7 +80,7 @@ func TestCmdCreateWithLabels(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdCreate(env.Repo, env.Store, []string{"Labeled task", "--labels", "frontend,urgent"}, PlainWriter(&buf))
+	err := cmdCreate(env.Store, []string{"Labeled task", "--labels", "frontend,urgent"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdCreate: %v", err)
 	}
@@ -108,7 +108,7 @@ func TestCmdCreateSilent(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdCreate(env.Repo, env.Store, []string{"Silent test", "--silent"}, PlainWriter(&buf))
+	err := cmdCreate(env.Store, []string{"Silent test", "--silent"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdCreate: %v", err)
 	}
@@ -134,7 +134,7 @@ func TestCmdCreateSilentNoExtraOutput(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdCreate(env.Repo, env.Store, []string{"Silent only ID", "--silent"}, PlainWriter(&buf))
+	err := cmdCreate(env.Store, []string{"Silent only ID", "--silent"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdCreate: %v", err)
 	}
@@ -157,7 +157,7 @@ func TestCmdCreateWithLabelsJSON(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdCreate(env.Repo, env.Store, []string{"Labeled JSON", "--labels", "backend", "--json"}, PlainWriter(&buf))
+	err := cmdCreate(env.Store, []string{"Labeled JSON", "--labels", "backend", "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdCreate: %v", err)
 	}

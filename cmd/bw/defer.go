@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/jallum/beadwork/internal/issue"
-	"github.com/jallum/beadwork/internal/repo"
 )
 
 type DeferArgs struct {
@@ -33,7 +32,7 @@ func validateDate(s string) error {
 	return nil
 }
 
-func cmdDefer(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
+func cmdDefer(store *issue.Store, args []string, w Writer) error {
 	da, err := parseDeferArgs(args)
 	if err != nil {
 		return err
@@ -53,7 +52,7 @@ func cmdDefer(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
 	}
 
 	intent := fmt.Sprintf("defer %s until %s", iss.ID, da.Date)
-	if err := r.Commit(intent); err != nil {
+	if err := store.Commit(intent); err != nil {
 		return fmt.Errorf("commit failed: %w", err)
 	}
 

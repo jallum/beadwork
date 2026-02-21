@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
-	"github.com/jallum/beadwork/internal/repo"
 )
 
 type CreateArgs struct {
@@ -68,7 +67,7 @@ func parseCreateArgs(raw []string) (CreateArgs, error) {
 	return ca, nil
 }
 
-func cmdCreate(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
+func cmdCreate(store *issue.Store, args []string, w Writer) error {
 	ca, err := parseCreateArgs(args)
 	if err != nil {
 		return err
@@ -99,7 +98,7 @@ func cmdCreate(r *repo.Repo, store *issue.Store, args []string, w Writer) error 
 	if iss.Parent != "" {
 		intent += " parent=" + iss.Parent
 	}
-	if err := r.Commit(intent); err != nil {
+	if err := store.Commit(intent); err != nil {
 		return fmt.Errorf("commit failed: %w", err)
 	}
 

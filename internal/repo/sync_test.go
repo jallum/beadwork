@@ -123,7 +123,7 @@ func TestSyncDirtyRebaseIntentReplay(t *testing.T) {
 
 	if status == "needs replay" {
 		// Replay the intents
-		errs := intent.Replay(env.Repo, env.Store, intents)
+		errs := intent.Replay(env.Store, intents)
 		if len(errs) > 0 {
 			for _, e := range errs {
 				t.Logf("replay error: %v", e)
@@ -190,7 +190,7 @@ func TestSyncMultipleIntentsReplay(t *testing.T) {
 	}
 
 	if status == "needs replay" {
-		errs := intent.Replay(env.Repo, env.Store, intents)
+		errs := intent.Replay(env.Store, intents)
 		for _, e := range errs {
 			t.Logf("replay error: %v", e)
 		}
@@ -276,7 +276,7 @@ func TestIntentReplayIdempotent(t *testing.T) {
 
 	// Now try to replay the close intent again — it should fail gracefully
 	intents := []string{"close " + iss.ID}
-	errs := intent.Replay(env.Repo, env.Store, intents)
+	errs := intent.Replay(env.Store, intents)
 	if len(errs) != 1 {
 		t.Errorf("expected 1 error (already closed), got %d", len(errs))
 	}

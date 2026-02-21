@@ -8,8 +8,9 @@ import (
 	"github.com/jallum/beadwork/internal/repo"
 )
 
-func cmdSync(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
+func cmdSync(store *issue.Store, args []string, w Writer) error {
 	_ = args
+	r := store.Committer.(*repo.Repo)
 
 	status, intents, err := r.Sync()
 	if err != nil {
@@ -21,7 +22,7 @@ func cmdSync(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
 
 	if status == "needs replay" {
 		fmt.Fprintf(w, "rebase conflict — replaying %d intent(s)...\n", len(intents))
-		errs := intent.Replay(r, store, intents)
+		errs := intent.Replay(store, intents)
 		if len(errs) > 0 {
 			w.Push(2)
 			for _, e := range errs {

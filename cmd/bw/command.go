@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/jallum/beadwork/internal/issue"
-	"github.com/jallum/beadwork/internal/repo"
 )
 
 // Flag describes a single command-line flag.
@@ -37,8 +36,8 @@ type Command struct {
 	Positionals []Positional
 	Flags       []Flag
 	Examples    []Example
-	NeedsStore  bool // when true, main injects an initialized repo+store
-	Run         func(r *repo.Repo, store *issue.Store, args []string, w Writer) error
+	NeedsStore  bool // when true, main injects an initialized store
+	Run         func(store *issue.Store, args []string, w Writer) error
 }
 
 // valueFlags returns the long names of flags that take a value (non-boolean).
@@ -436,8 +435,8 @@ var commands = []Command{
 }
 
 // wrapNoArgs adapts a func(Writer) error to the standard command signature.
-func wrapNoArgs(fn func(w Writer) error) func(*repo.Repo, *issue.Store, []string, Writer) error {
-	return func(_ *repo.Repo, _ *issue.Store, _ []string, w Writer) error {
+func wrapNoArgs(fn func(w Writer) error) func(*issue.Store, []string, Writer) error {
+	return func(_ *issue.Store, _ []string, w Writer) error {
 		return fn(w)
 	}
 }

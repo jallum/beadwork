@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
-	"github.com/jallum/beadwork/internal/repo"
 )
 
 type LabelArgs struct {
@@ -39,7 +38,7 @@ func parseLabelArgs(raw []string) (LabelArgs, error) {
 	return la, nil
 }
 
-func cmdLabel(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
+func cmdLabel(store *issue.Store, args []string, w Writer) error {
 	la, err := parseLabelArgs(args)
 	if err != nil {
 		return err
@@ -58,7 +57,7 @@ func cmdLabel(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
 		parts = append(parts, "-"+l)
 	}
 	intent := fmt.Sprintf("label %s %s", iss.ID, strings.Join(parts, " "))
-	if err := r.Commit(intent); err != nil {
+	if err := store.Commit(intent); err != nil {
 		return fmt.Errorf("commit failed: %w", err)
 	}
 

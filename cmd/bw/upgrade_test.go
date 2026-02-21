@@ -460,7 +460,7 @@ func TestCmdUpgradeUpToDate(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err := cmdUpgrade(nil, nil, []string{}, PlainWriter(&buf))
+	err := cmdUpgrade(nil, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpgrade: %v", err)
 	}
@@ -480,7 +480,7 @@ func TestCmdUpgradeCheckOnly(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err := cmdUpgrade(nil, nil, []string{"--check"}, PlainWriter(&buf))
+	err := cmdUpgrade(nil, []string{"--check"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpgrade --check: %v", err)
 	}
@@ -506,7 +506,7 @@ func TestCmdUpgradeConfirmNo(t *testing.T) {
 	upgradeStdin = strings.NewReader("n\n")
 
 	var buf bytes.Buffer
-	err := cmdUpgrade(nil, nil, []string{}, PlainWriter(&buf))
+	err := cmdUpgrade(nil, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpgrade: %v", err)
 	}
@@ -536,7 +536,7 @@ func TestCmdUpgradeYesFlag(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err := cmdUpgrade(nil, nil, []string{"--yes"}, PlainWriter(&buf))
+	err := cmdUpgrade(nil, []string{"--yes"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpgrade --yes: %v", err)
 	}
@@ -574,7 +574,7 @@ func TestCmdUpgradeFullFlowConfirmYes(t *testing.T) {
 	upgradeStdin = strings.NewReader("y\n")
 
 	var buf bytes.Buffer
-	err := cmdUpgrade(nil, nil, []string{}, PlainWriter(&buf))
+	err := cmdUpgrade(nil, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpgrade: %v", err)
 	}
@@ -598,7 +598,7 @@ func TestCmdUpgradeFetchError(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err := cmdUpgrade(nil, nil, []string{}, PlainWriter(&buf))
+	err := cmdUpgrade(nil, []string{}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for fetch failure")
 	}
@@ -618,7 +618,7 @@ func TestCmdUpgradeInvalidVersion(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err := cmdUpgrade(nil, nil, []string{}, PlainWriter(&buf))
+	err := cmdUpgrade(nil, []string{}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for invalid version")
 	}
@@ -646,7 +646,7 @@ func TestCmdUpgradeDownloadError(t *testing.T) {
 	upgradeStdin = strings.NewReader("y\n")
 
 	var buf bytes.Buffer
-	err := cmdUpgrade(nil, nil, []string{}, PlainWriter(&buf))
+	err := cmdUpgrade(nil, []string{}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for download failure")
 	}
@@ -659,7 +659,7 @@ func TestCmdUpgradeRoutesToRepo(t *testing.T) {
 	// Verify that "repo" subcommand is routed correctly
 	// This will fail because we're not in a git repo, but it proves routing works
 	var buf bytes.Buffer
-	err := cmdUpgrade(nil, nil, []string{"repo"}, PlainWriter(&buf))
+	err := cmdUpgrade(nil, []string{"repo"}, PlainWriter(&buf))
 	if err == nil {
 		// Might succeed if we happen to be in a valid beadwork repo
 		return
@@ -807,7 +807,7 @@ func TestCmdUpgradeCheckShowsChangelog(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err := cmdUpgrade(nil, nil, []string{"--check"}, PlainWriter(&buf))
+	err := cmdUpgrade(nil, []string{"--check"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpgrade --check: %v", err)
 	}
@@ -845,7 +845,7 @@ func TestCmdUpgradeChangelogFailureNonFatal(t *testing.T) {
 	upgradeStdin = strings.NewReader("y\n")
 
 	var buf bytes.Buffer
-	err := cmdUpgrade(nil, nil, []string{}, PlainWriter(&buf))
+	err := cmdUpgrade(nil, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("upgrade should succeed despite changelog failure: %v", err)
 	}
@@ -881,7 +881,7 @@ func TestCmdUpgradeNarratesSteps(t *testing.T) {
 	upgradeStdin = strings.NewReader("y\n")
 
 	var buf bytes.Buffer
-	err := cmdUpgrade(nil, nil, []string{}, PlainWriter(&buf))
+	err := cmdUpgrade(nil, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpgrade: %v", err)
 	}
@@ -927,7 +927,7 @@ func TestCmdUpgradeSymlinkNarration(t *testing.T) {
 	upgradeStdin = strings.NewReader("y\n")
 
 	var buf bytes.Buffer
-	err := cmdUpgrade(nil, nil, []string{}, PlainWriter(&buf))
+	err := cmdUpgrade(nil, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdUpgrade: %v", err)
 	}

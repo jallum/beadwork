@@ -90,13 +90,27 @@ type Issue struct {
 	UpdatedAt   string   `json:"updated_at,omitempty"`
 }
 
+// Committer persists pending TreeFS mutations to the underlying storage.
+type Committer interface {
+	Commit(message string) error
+}
+
 type Store struct {
 	FS              *treefs.TreeFS
 	Prefix          string
+	Committer       Committer // nil for read-only use
 	DefaultPriority *int
 	IDRetries       int       // retries per length before bumping; 0 means 10
 	RandReader      io.Reader // random source; nil means crypto/rand.Reader
 	cache           map[string]*Issue
+}
+
+// Commit persists pending mutations with the given intent message.
+func (s *Store) Commit(intent string) error {
+	if s.Committer == nil {
+		return fmt.Errorf("store is read-only: no committer configured")
+	}
+	return s.Committer.Commit(intent)
 }
 
 // ClearCache discards all cached issues. Call after operations that

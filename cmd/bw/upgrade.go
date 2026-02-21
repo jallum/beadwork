@@ -64,7 +64,7 @@ func parseUpgradeArgs(raw []string) (UpgradeArgs, error) {
 	}, nil
 }
 
-func cmdUpgrade(_ *repo.Repo, _ *issue.Store, args []string, w Writer) error {
+func cmdUpgrade(_ *issue.Store, args []string, w Writer) error {
 	if len(args) > 0 && args[0] == "repo" {
 		return cmdUpgradeRepo(args[1:], w)
 	}

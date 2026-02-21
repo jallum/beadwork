@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
-	"github.com/jallum/beadwork/internal/repo"
 )
 
 // nilIfEmpty returns nil for empty slices so omitempty works.
@@ -92,7 +91,7 @@ func parseExportArgs(raw []string) (ExportArgs, error) {
 	}, nil
 }
 
-func cmdExport(_ *repo.Repo, store *issue.Store, args []string, w Writer) error {
+func cmdExport(store *issue.Store, args []string, w Writer) error {
 	ea, err := parseExportArgs(args)
 	if err != nil {
 		return err

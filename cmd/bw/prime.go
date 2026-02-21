@@ -7,10 +7,12 @@ import (
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/repo"
 	"github.com/jallum/beadwork/internal/template"
+
 	"github.com/jallum/beadwork/prompts"
 )
 
-func cmdPrime(r *repo.Repo, store *issue.Store, _ []string, w Writer) error {
+func cmdPrime(store *issue.Store, _ []string, w Writer) error {
+	r := store.Committer.(*repo.Repo)
 	out := template.Process(prompts.Prime, r.ListConfig())
 	fmt.Fprint(w, styleMD(w, strings.TrimRight(out, "\n")))
 	fmt.Fprintln(w)

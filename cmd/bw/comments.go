@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/jallum/beadwork/internal/issue"
-	"github.com/jallum/beadwork/internal/repo"
 	"github.com/jallum/beadwork/internal/wrap"
 )
 
@@ -69,7 +68,7 @@ func parseCommentsArgs(raw []string) (CommentsArgs, error) {
 	return ca, nil
 }
 
-func cmdComments(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
+func cmdComments(store *issue.Store, args []string, w Writer) error {
 	ca, err := parseCommentsArgs(args)
 	if err != nil {
 		return err
@@ -82,7 +81,7 @@ func cmdComments(r *repo.Repo, store *issue.Store, args []string, w Writer) erro
 		}
 
 		intent := fmt.Sprintf("comment %s %q", iss.ID, ca.Text)
-		if err := r.Commit(intent); err != nil {
+		if err := store.Commit(intent); err != nil {
 			return fmt.Errorf("commit failed: %w", err)
 		}
 

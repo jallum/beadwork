@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
-	"github.com/jallum/beadwork/internal/repo"
 )
 
 type BlockedArgs struct {
@@ -20,7 +19,7 @@ func parseBlockedArgs(raw []string) (BlockedArgs, error) {
 	return BlockedArgs{JSON: a.JSON()}, nil
 }
 
-func cmdBlocked(_ *repo.Repo, store *issue.Store, args []string, w Writer) error {
+func cmdBlocked(store *issue.Store, args []string, w Writer) error {
 	ba, err := parseBlockedArgs(args)
 	if err != nil {
 		return err
