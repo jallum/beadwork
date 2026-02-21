@@ -88,7 +88,7 @@ Comments (`bw comments add <id> "..."`) are durable context — breadcrumbs for 
 
 Land the work: code that isn't committed, issues that aren't closed, and state that isn't synced don't exist to the next session or to other workers. Committing and closing are part of completing a task in this project — not a separate action that requires additional permission. Reference the issue ID in commit messages to connect the code change to its context.
 
-Every task gets a ticket — even small ones. Tickets are cheap (`bw create "Title" -p 2 -t task`), and they capture _why_ a change was made, not just what changed. Commit messages record the what; tickets record the intent. Without them, changelogs and release notes require reverse-engineering from diffs. Larger efforts: structure as an epic with children and dependencies so `bw ready` feeds you the next step automatically.
+Every task gets a ticket — even small ones. Tickets are cheap (`bw create "Title" --description "..." -p 2 -t task`), and they capture _why_ a change was made, not just what changed. Commit messages record the what; tickets record the intent. Without them, changelogs and release notes require reverse-engineering from diffs. Capture the plan at creation time with `--description`; use comments for what emerges later. Larger efforts: structure as an epic with children and dependencies so `bw ready` feeds you the next step automatically.
 
 <!-- IF workflow.agents == multi -->
 
