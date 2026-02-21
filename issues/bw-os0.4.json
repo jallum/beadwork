@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "bw-os0.5"
+  ],
   "created": "2026-02-21T23:10:16Z",
   "description": "Replace NewSnapshot(s) + snap.Children(id) with s.Children(id) in both DeletePreview and Delete. Children() scans all issues (no parent index today). Delete is rare; accept the cost. Add parent index later if it matters.",
   "id": "bw-os0.4",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Update Delete to use Store.Children() instead of Snapshot",
   "type": "task",
-  "updated_at": "2026-02-21T23:10:16Z"
+  "updated_at": "2026-02-21T23:10:25Z"
 }
