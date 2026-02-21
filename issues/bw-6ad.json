@@ -6,9 +6,15 @@
   "description": "",
   "id": "bw-6ad",
   "labels": [],
+  "comments": [
+    {
+      "text": "The close command (cmd/bw/close.go:64) currently prints: closed \u003cid\u003e: \u003ctitle\u003e. Update it to render the title with Unicode combining strikethrough (U+0336) so the title appears struck through, e.g. closed bw-6ad: T̶i̶t̶l̶e̶ ̶t̶e̶x̶t̶. This gives a visual cue that the issue is done.",
+      "timestamp": "2026-02-21T18:13:23Z"
+    }
+  ],
   "priority": 2,
   "status": "open",
   "title": "Use ASCII strikethrough for title in close command output",
   "type": "task",
-  "updated_at": "2026-02-21T18:13:18Z"
+  "updated_at": "2026-02-21T18:13:23Z"
 }
