@@ -16,12 +16,12 @@ Or download a binary from [releases](https://github.com/jallum/beadwork/releases
 ## Quick Start
 
 ```bash
-bw init                                         # initialize in any git repo
-bw create "Fix auth bug" --type bug -p 1        # create an issue
-bw ready                                        # list unblocked work
+bw init                                           # initialize in any git repo
+bw create "Fix auth bug" --type bug -p 1          # create an issue
+bw ready                                          # list unblocked work
 bw comments add bw-a1b2 "Fixed in latest deploy"  # add a comment
-bw close bw-a1b2                                # close it
-bw sync                                         # push to remote
+bw close bw-a1b2                                  # close it
+bw sync                                           # push to remote
 ```
 
 ## Commands
