@@ -6,9 +6,15 @@
   "description": "Output bare issue ID only, enabling scripting patterns like id=$(bw create \"Fix bug\" --silent). Useful for piping into other commands without parsing human-readable output.",
   "id": "bw-3433",
   "labels": [],
+  "comments": [
+    {
+      "text": "Added --silent flag to create command. When set, outputs only the bare issue ID (e.g. bw-abc1) with no other text, enabling scripting patterns like id=$(bw create 'Fix bug' --silent). Silent takes precedence over --json. Added two tests: TestCmdCreateSilent verifies bare ID output and absence of human-readable text, TestCmdCreateSilentNoExtraOutput verifies single-line output with correct prefix. All tests pass.",
+      "timestamp": "2026-02-21T01:38:22Z"
+    }
+  ],
   "priority": 3,
   "status": "in_progress",
   "title": "Add --silent flag to create",
   "type": "feature",
-  "updated_at": "2026-02-21T01:35:09Z"
+  "updated_at": "2026-02-21T01:38:22Z"
 }
