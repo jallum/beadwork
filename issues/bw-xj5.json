@@ -6,9 +6,15 @@
   "description": "bw fails with 'error: open repo: repository does not exist' when run from a git worktree.\n\n## Root cause\n\n`findGitDir()` in `internal/repo/repo.go:418` uses `git rev-parse --git-dir`. In a normal repo this returns `.git`, but in a worktree it returns the worktree-specific git dir (e.g. `/path/to/repo/.git/worktrees/worktree-name`).\n\n`FindRepo()` on line 39 derives the repo root via `filepath.Dir(gitDir)`, which in a worktree gives `.git/worktrees` — not the repo root. `git.PlainOpen` then fails on that invalid path.\n\nThe same `filepath.Dir(r.GitDir)` pattern is used throughout the codebase wherever the repo root is needed, so all of those break too.\n\n## Fix\n\nChange `findGitDir()` to use `git rev-parse --git-common-dir` instead of `--git-dir`. This command returns the main `.git` directory in both cases:\n\n- Normal repo: `.git` → `filepath.Dir` → repo root ✓\n- Worktree: `/path/to/main/repo/.git` → `filepath.Dir` → repo root ✓\n\nAll downstream uses of `GitDir` (which derive repo root via `filepath.Dir`) would then work correctly.\n\n## Affected code\n\n- `internal/repo/repo.go:39` — `FindRepo()`: `repoDir := filepath.Dir(gitDir)` used for `git.PlainOpen`\n- `internal/repo/repo.go:93-95` — `ForceReinit()`: legacy worktree cleanup path\n- `internal/repo/repo.go:209` — `remoteBranchExists()`: `execGit(filepath.Dir(r.GitDir), ...)`\n- `internal/repo/repo.go:230` — `derivePrefix()`: `filepath.Dir(r.GitDir)` for name derivation\n- `internal/repo/repo.go:403-404` — `repoDir()`: returns `filepath.Dir(r.GitDir)`\n- `cmd/bw/helpers.go:53` — `gitUserName()`: `cmd.Dir = filepath.Dir(gitDir)`\n\nAll share the same assumption: `filepath.Dir(GitDir)` == repo root. The `--git-common-dir` fix corrects this at the source.\n\n## Testing\n\n- Run `bw ready` from a git worktree and confirm it works\n- Run `bw init`, `bw create`, `bw list` from a worktree\n- Confirm normal (non-worktree) behavior is unchanged",
   "id": "bw-xj5",
   "labels": [],
+  "comments": [
+    {
+      "text": "## Revised plan: centralize repo-root derivation\n\nThe fix is in repo.go, not main.go. Repo owns the git directory concept.\n\nThere's already a repoDir() method (line 403) but three call sites bypass it. The work:\n\n1. Fix findGitDir() — swap --git-dir for --git-common-dir\n2. Consolidate internal callers — ForceReinit (line 95), remoteBranchExists (line 209), and derivePrefix (line 230) should all go through repoDir() instead of filepath.Dir(r.GitDir) directly\n3. Export RepoDir() — rename the method so gitUserName in helpers.go can use it instead of taking GitDir and deriving the path itself\n\nAfter this, repo-root derivation exists in exactly two places: FindRepo() (before struct creation) and RepoDir() (after).",
+      "timestamp": "2026-02-21T23:17:18Z"
+    }
+  ],
   "priority": 2,
   "status": "open",
   "title": "Support running from git worktrees",
   "type": "bug",
-  "updated_at": "2026-02-21T23:15:40Z"
+  "updated_at": "2026-02-21T23:17:18Z"
 }
