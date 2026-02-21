@@ -2,13 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T16:52:29Z",
+  "close_reason": "Code and tests verified — all pass",
   "created": "2026-02-21T16:50:59Z",
   "description": "Code and tests already written — just needs go test ./internal/template/ to verify. See template.go and template_test.go.",
   "id": "bw-gtj",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Template processor: strip plain HTML comments",
   "type": "task",
-  "updated_at": "2026-02-21T16:51:48Z"
+  "updated_at": "2026-02-21T16:52:29Z"
 }
