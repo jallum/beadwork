@@ -188,7 +188,7 @@ func TestShowWithDependencies(t *testing.T) {
 
 	// Check blocker shows BLOCKS section with rich dep
 	outA := bw(t, env.Dir, "show", a.ID)
-	assertContains(t, outA, "BLOCKS")
+	assertContains(t, outA, "UNBLOCKS")
 	assertContains(t, outA, b.ID)
 
 	// Check blocked shows BLOCKED BY section with rich dep
@@ -642,7 +642,7 @@ func TestImportDependencies(t *testing.T) {
 	assertContains(t, outB, "dep-aaa")
 
 	outA := bw(t, env.Dir, "show", "dep-aaa")
-	assertContains(t, outA, "BLOCKS")
+	assertContains(t, outA, "UNBLOCKS")
 	assertContains(t, outA, "dep-bbb")
 
 	// Check parent relationship
@@ -930,7 +930,7 @@ func TestDepAddOutput(t *testing.T) {
 
 	// Verify link via show (rich dep format)
 	show := bw(t, env.Dir, "show", a.ID)
-	assertContains(t, show, "BLOCKS")
+	assertContains(t, show, "UNBLOCKS")
 	assertContains(t, show, b.ID)
 }
 

@@ -290,11 +290,11 @@ func fprintComments(w Writer, iss *issue.Issue) {
 	}
 }
 
-// fprintMap renders BLOCKED BY and BLOCKS sections using tip-walking.
-// Instead of showing immediate dependencies, it walks the full dependency
-// tree and surfaces only the actionable tips (leaf nodes).
+// fprintMap renders BLOCKED BY and UNBLOCKS sections.
+// BLOCKED BY uses tip-walking to surface only the actionable leaf issues.
+// UNBLOCKS shows the immediate dependents that closing this issue would unblock.
 func fprintMap(w Writer, iss *issue.Issue, store *issue.Store) {
-	fwd, rev := store.LoadEdges()
+	_, rev := store.LoadEdges()
 
 	if len(iss.BlockedBy) > 0 {
 		tips, _ := store.Tips(iss.BlockedBy, rev)
@@ -324,19 +324,20 @@ func fprintMap(w Writer, iss *issue.Issue, store *issue.Store) {
 	}
 
 	if len(iss.Blocks) > 0 {
-		tips, _ := store.Tips(iss.Blocks, fwd)
-		if len(tips) > 0 {
-			fmt.Fprintln(w)
-			fmt.Fprintln(w, w.Style("BLOCKS", Bold))
-			w.Push(2)
-			for _, tip := range tips {
-				ps := PriorityStyle(tip.Priority)
-				fmt.Fprintf(w, "← %s %s: %s  [%s %s]\n",
-					issue.StatusIcon(tip.Status), tip.ID, tip.Title,
-					w.Style("●", ps), w.Style(fmt.Sprintf("P%d", tip.Priority), ps))
+		fmt.Fprintln(w)
+		fmt.Fprintln(w, w.Style("UNBLOCKS", Bold))
+		w.Push(2)
+		for _, id := range iss.Blocks {
+			dep, err := store.Get(id)
+			if err != nil {
+				continue
 			}
-			w.Pop()
+			ps := PriorityStyle(dep.Priority)
+			fmt.Fprintf(w, "← %s %s: %s  [%s %s]\n",
+				issue.StatusIcon(dep.Status), dep.ID, dep.Title,
+				w.Style("●", ps), w.Style(fmt.Sprintf("P%d", dep.Priority), ps))
 		}
+		w.Pop()
 	}
 }
 

@@ -99,19 +99,19 @@ var commands = []Command{
 		Name:        "show",
 		Aliases:     []string{"view"},
 		Summary:     "Show issue details",
-		Description: "Display full details for an issue including status, priority, labels, and dependency context.\nThe BLOCKED BY section shows actionable tips — the leaf issues that need work to unblock this one.\nThe BLOCKS section shows what completing this issue would eventually unblock.",
+		Description: "Display full details for an issue including status, priority, labels, and dependency context.\nThe BLOCKED BY section shows actionable tips — the leaf issues that need work to unblock this one.\nThe UNBLOCKS section shows what completing this issue would immediately unblock.",
 		Positionals: []Positional{
 			{Name: "<id>", Required: true, Help: "Issue ID (can specify multiple)"},
 		},
 		Flags: []Flag{
 			{Long: "--json", Help: "Output as JSON"},
-			{Long: "--only", Value: "SECTIONS", Help: "Show only named sections (comma-separated: summary,description,blockedby,blocks,comments,labels,parent)"},
+			{Long: "--only", Value: "SECTIONS", Help: "Show only named sections (comma-separated: summary,description,blockedby,unblocks,comments,labels,parent)"},
 		},
 		Examples: []Example{
 			{Cmd: "bw show bw-a3f8"},
 			{Cmd: "bw show bw-a3f8 bw-b2c1"},
 			{Cmd: "bw show bw-a3f8 --only summary", Help: "Compact one-line summary"},
-			{Cmd: "bw show bw-a3f8 --only blockedby,blocks", Help: "Dependency context only"},
+			{Cmd: "bw show bw-a3f8 --only blockedby,unblocks", Help: "Dependency context only"},
 		},
 		Run: cmdShow,
 	},

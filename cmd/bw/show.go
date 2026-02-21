@@ -13,7 +13,7 @@ var validShowSections = map[string]bool{
 	"summary":     true,
 	"description": true,
 	"blockedby":   true,
-	"blocks":      true,
+	"unblocks":    true,
 	"comments":    true,
 	"labels":      true,
 	"parent":      true,
@@ -101,7 +101,7 @@ func cmdShow(args []string, w Writer) error {
 		if sa.showSection("description") {
 			fprintDescription(w, iss)
 		}
-		if sa.showSection("blockedby") || sa.showSection("blocks") {
+		if sa.showSection("blockedby") || sa.showSection("unblocks") {
 			fprintMap(w, iss, store)
 		}
 		if sa.showSection("comments") {

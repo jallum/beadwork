@@ -242,8 +242,8 @@ func TestCmdShowRichDeps(t *testing.T) {
 		t.Fatalf("cmdShow: %v", err)
 	}
 	out = buf.String()
-	if !strings.Contains(out, "BLOCKS") {
-		t.Errorf("should show BLOCKS section: %q", out)
+	if !strings.Contains(out, "UNBLOCKS") {
+		t.Errorf("should show UNBLOCKS section: %q", out)
 	}
 	if !strings.Contains(out, "Blocked issue") {
 		t.Errorf("should show blocked issue title: %q", out)
@@ -284,11 +284,11 @@ func TestCmdShowTipsDeepChain(t *testing.T) {
 	}
 }
 
-func TestCmdShowBlocksTips(t *testing.T) {
+func TestCmdShowUnblocksImmediate(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	// A blocks B blocks C — showing A should display C in BLOCKS (the tip)
+	// A blocks B blocks C — showing A should display B (immediate), not C
 	a, _ := env.Store.Create("Root blocker", issue.CreateOpts{})
 	b, _ := env.Store.Create("Middle", issue.CreateOpts{})
 	c, _ := env.Store.Create("Downstream leaf", issue.CreateOpts{})
@@ -303,15 +303,15 @@ func TestCmdShowBlocksTips(t *testing.T) {
 	}
 	out := buf.String()
 
-	if !strings.Contains(out, "BLOCKS") {
-		t.Errorf("should show BLOCKS section: %q", out)
+	if !strings.Contains(out, "UNBLOCKS") {
+		t.Errorf("should show UNBLOCKS section: %q", out)
 	}
-	if !strings.Contains(out, "Downstream leaf") {
-		t.Errorf("should show downstream leaf: %q", out)
+	if !strings.Contains(out, "Middle") {
+		t.Errorf("should show immediate dep Middle: %q", out)
 	}
-	// Middle should NOT appear
-	if strings.Contains(out, "Middle") {
-		t.Errorf("should NOT show middle node: %q", out)
+	// Downstream leaf should NOT appear (not an immediate dep)
+	if strings.Contains(out, "Downstream leaf") {
+		t.Errorf("should NOT show downstream leaf: %q", out)
 	}
 }
 
