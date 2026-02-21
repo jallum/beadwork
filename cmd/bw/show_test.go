@@ -284,6 +284,105 @@ func TestCmdShowTipsDeepChain(t *testing.T) {
 	}
 }
 
+func TestCmdShowBlockedByClosedTipWalksBack(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// D blocks C blocks B blocks A — D is closed.
+	// Showing A should display C (nearest open ancestor of the closed tip).
+	a, _ := env.Store.Create("Target", issue.CreateOpts{})
+	b, _ := env.Store.Create("Middle", issue.CreateOpts{})
+	c, _ := env.Store.Create("Workable", issue.CreateOpts{})
+	d, _ := env.Store.Create("Done leaf", issue.CreateOpts{})
+	env.Store.Link(d.ID, c.ID)
+	env.Store.Link(c.ID, b.ID)
+	env.Store.Link(b.ID, a.ID)
+	env.Store.Close(d.ID, "")
+	env.Repo.Commit("setup chain")
+
+	var buf bytes.Buffer
+	err := cmdShow([]string{a.ID}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdShow: %v", err)
+	}
+	out := buf.String()
+
+	if !strings.Contains(out, "Workable") {
+		t.Errorf("should show nearest open blocker C: %q", out)
+	}
+	if !strings.Contains(out, c.ID) {
+		t.Errorf("should show C's ID %s: %q", c.ID, out)
+	}
+	// Closed leaf D should NOT appear
+	if strings.Contains(out, "Done leaf") {
+		t.Errorf("should NOT show closed leaf D: %q", out)
+	}
+}
+
+func TestCmdShowBlockedByClosedTipsDedup(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// D blocks C, E blocks C, C blocks A — D and E both closed.
+	// Showing A should display C once (deduped).
+	a, _ := env.Store.Create("Target", issue.CreateOpts{})
+	c, _ := env.Store.Create("Shared blocker", issue.CreateOpts{})
+	d, _ := env.Store.Create("Done D", issue.CreateOpts{})
+	e, _ := env.Store.Create("Done E", issue.CreateOpts{})
+	env.Store.Link(d.ID, c.ID)
+	env.Store.Link(e.ID, c.ID)
+	env.Store.Link(c.ID, a.ID)
+	env.Store.Close(d.ID, "")
+	env.Store.Close(e.ID, "")
+	env.Repo.Commit("setup")
+
+	var buf bytes.Buffer
+	err := cmdShow([]string{a.ID}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdShow: %v", err)
+	}
+	out := buf.String()
+
+	if !strings.Contains(out, "Shared blocker") {
+		t.Errorf("should show C: %q", out)
+	}
+	// Should only appear once in BLOCKED BY
+	idx1 := strings.Index(out, c.ID)
+	if idx1 < 0 {
+		t.Fatalf("C's ID not found: %q", out)
+	}
+	// Check no second occurrence after BLOCKED BY header
+	blockedByIdx := strings.Index(out, "BLOCKED BY")
+	afterHeader := out[blockedByIdx:]
+	count := strings.Count(afterHeader, c.ID)
+	if count != 1 {
+		t.Errorf("C's ID should appear once in BLOCKED BY, got %d: %q", count, afterHeader)
+	}
+}
+
+func TestCmdShowBlockedByAllResolved(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// B blocks A, B is closed — no BLOCKED BY section (all resolved).
+	a, _ := env.Store.Create("Target", issue.CreateOpts{})
+	b, _ := env.Store.Create("Resolved", issue.CreateOpts{})
+	env.Store.Link(b.ID, a.ID)
+	env.Store.Close(b.ID, "")
+	env.Repo.Commit("setup")
+
+	var buf bytes.Buffer
+	err := cmdShow([]string{a.ID}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdShow: %v", err)
+	}
+	out := buf.String()
+
+	if strings.Contains(out, "BLOCKED BY") {
+		t.Errorf("should NOT show BLOCKED BY when all blockers resolved: %q", out)
+	}
+}
+
 func TestCmdShowUnblocksImmediate(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()

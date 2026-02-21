@@ -291,18 +291,20 @@ func fprintComments(w Writer, iss *issue.Issue) {
 }
 
 // fprintMap renders BLOCKED BY and UNBLOCKS sections.
-// BLOCKED BY uses tip-walking to surface only the actionable leaf issues.
+// BLOCKED BY uses tip-walking to find leaves, then walks closed tips back
+// to the nearest open ancestor — the actual actionable blocker.
 // UNBLOCKS shows the immediate dependents that closing this issue would unblock.
 func fprintMap(w Writer, iss *issue.Issue, store *issue.Store) {
 	_, rev := store.LoadEdges()
 
 	if len(iss.BlockedBy) > 0 {
 		tips, _ := store.Tips(iss.BlockedBy, rev)
-		if len(tips) > 0 {
+		actionable := nearestOpen(tips, iss.ID, store)
+		if len(actionable) > 0 {
 			fmt.Fprintln(w)
 			fmt.Fprintln(w, w.Style("BLOCKED BY", Bold))
 			w.Push(2)
-			for _, tip := range tips {
+			for _, tip := range actionable {
 				ps := PriorityStyle(tip.Priority)
 				line := fmt.Sprintf("→ %s %s: %s  [%s %s]",
 					issue.StatusIcon(tip.Status), tip.ID, tip.Title,
@@ -339,6 +341,40 @@ func fprintMap(w Writer, iss *issue.Issue, store *issue.Store) {
 		}
 		w.Pop()
 	}
+}
+
+// nearestOpen takes tips from the blocker chain and, for each closed tip,
+// walks back via its Blocks field to find the nearest open ancestor.
+// Returns the deduped set of open issues that actually need work.
+func nearestOpen(tips []*issue.Issue, currentID string, store *issue.Store) []*issue.Issue {
+	seen := make(map[string]bool)
+	var result []*issue.Issue
+	for _, tip := range tips {
+		t := tip
+		for t.Status == "closed" {
+			var next *issue.Issue
+			for _, id := range t.Blocks {
+				if id == currentID {
+					continue
+				}
+				candidate, err := store.Get(id)
+				if err != nil {
+					continue
+				}
+				next = candidate
+				break
+			}
+			if next == nil {
+				break
+			}
+			t = next
+		}
+		if t.Status != "closed" && t.ID != currentID && !seen[t.ID] {
+			seen[t.ID] = true
+			result = append(result, t)
+		}
+	}
+	return result
 }
 
 // styleMD adds ANSI color to markdown text without altering it.
