@@ -2,13 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T03:13:23Z",
+  "close_reason": "Added ClearLine() to Writer interface; ColorWriter emits \\r\\033[K, PlainWriter emits bare \\r",
   "created": "2026-02-21T03:08:40Z",
   "description": "## Problem\n\nThe download progress indicator in `bw upgrade` leaves garbled text on screen when transitioning from the progress display to the final \"done\" message.\n\nObserved output:\n```\ndownloading beadwork_0.6.2_darwin_arm64.tar.gz...\n   3.5 MB doneMB (100%)%\n```\n\nExpected output:\n```\ndownloading beadwork_0.6.2_darwin_arm64.tar.gz...\n   3.5 MB done\n```\n\n## Root Cause\n\nIn `cmd/bw/upgrade.go`, the progress loop (line 279) prints via `\\r`:\n```\n\\r  3.5 MB/3.5 MB (100%)\n```\n\nThe final \"done\" line (line 294) also uses `\\r` but is shorter:\n```\n\\r  3.5 MB done\n```\n\nSince `\\r` only moves the cursor to the start of the line without clearing it, the trailing characters from the longer progress string (`MB (100%)%`) remain visible.\n\n## Fix\n\nAdd an ANSI clear-to-end-of-line escape (`\\033[K`) after the `\\r` on line 294 so the old progress text is erased before writing the \"done\" message. The same escape should also be added to the progress line (line 279) to handle shrinking output (e.g. when the unit changes from KB to MB mid-download).\n\n```go\n// line 279\nfmt.Fprintf(w, \"\\r\\033[K  %s\", ...)\n\n// line 294\nfmt.Fprintf(w, \"\\r\\033[K  %s %s\\n\", formatBytes(written), w.Style(\"done\", Green))\n```",
   "id": "bw-0uf",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Download progress indicator renders garbled output during upgrade",
   "type": "bug",
-  "updated_at": "2026-02-21T03:08:40Z"
+  "updated_at": "2026-02-21T03:13:23Z"
 }
