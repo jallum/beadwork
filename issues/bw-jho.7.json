@@ -2,14 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T03:34:40Z",
   "created": "2026-02-21T03:30:47Z",
   "description": "prime.go builds the 'Current State' section into a strings.Builder then passes it through styleMD as one blob. Since styleMD is line-by-line, write directly to w instead — apply styleMD per line (or use w.Style inline) and use Push/Pop for the indented issue listings. Eliminates the '  ' and '    └' hardcoded prefixes.",
   "id": "bw-jho.7",
   "labels": [],
   "parent": "bw-jho",
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "prime.go: write dynamic section directly to Writer instead of strings.Builder",
   "type": "task",
-  "updated_at": "2026-02-21T03:32:23Z"
+  "updated_at": "2026-02-21T03:34:40Z"
 }
