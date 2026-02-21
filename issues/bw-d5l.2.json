@@ -6,14 +6,15 @@
   "blocks": [
     "bw-d5l.3"
   ],
+  "closed_at": "2026-02-21T15:47:56Z",
   "created": "2026-02-21T15:31:37Z",
   "description": "Ref: parent epic bw-d5l, Phase 2.\n\nDepends on Phase 1 (bw-d5l.1) completing the signature change.\n\n1. Update all test calls from cmdFoo(args, w) to cmdFoo(env.Repo, env.Store, args, w).\n2. Remove any test workarounds that commit between setup and command execution just to synchronize two separate stores.\n3. Tests for commands with NeedsStore: false (init, onboard, upgrade) pass (nil, nil).\n4. Verify all tests pass. No test should call getInitializedRepo() directly.",
   "id": "bw-d5l.2",
   "labels": [],
   "parent": "bw-d5l",
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Update tests to inject store instead of relying on getInitializedRepo",
   "type": "task",
-  "updated_at": "2026-02-21T15:31:46Z"
+  "updated_at": "2026-02-21T15:47:56Z"
 }
