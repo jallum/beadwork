@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -102,7 +103,23 @@ func NewStore(fs *treefs.TreeFS, prefix string) *Store {
 }
 
 func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
-	id, err := s.generateID()
+	// Resolve parent first (needed for dotted child ID generation).
+	var parentID string
+	if opts.Parent != "" {
+		var err error
+		parentID, err = s.resolveID(opts.Parent)
+		if err != nil {
+			return nil, fmt.Errorf("parent: %w", err)
+		}
+	}
+
+	var id string
+	var err error
+	if parentID != "" {
+		id, err = s.generateChildID(parentID)
+	} else {
+		id, err = s.generateID()
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -121,6 +138,7 @@ func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
 		Description: opts.Description,
 		ID:          id,
 		Labels:      []string{},
+		Parent:      parentID,
 		Status:      status,
 		Title:       title,
 		Type:        opts.Type,
@@ -135,15 +153,6 @@ func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
 		issue.Priority = *s.DefaultPriority
 	} else {
 		issue.Priority = 2
-	}
-
-
-	if opts.Parent != "" {
-		parentID, err := s.resolveID(opts.Parent)
-		if err != nil {
-			return nil, fmt.Errorf("parent: %w", err)
-		}
-		issue.Parent = parentID
 	}
 
 	if err := s.writeIssue(issue); err != nil {
@@ -838,6 +847,28 @@ func (s *Store) generateID() (string, error) {
 		}
 	}
 	return "", fmt.Errorf("failed to generate unique ID after trying lengths 3-8")
+}
+
+// generateChildID returns the next sequential child ID for the given parent.
+// Format: parentID.N where N is max(existing child numbers) + 1.
+func (s *Store) generateChildID(parentID string) (string, error) {
+	existing := s.ExistingIDs()
+	prefix := parentID + "."
+	maxN := 0
+	for id := range existing {
+		if !strings.HasPrefix(id, prefix) {
+			continue
+		}
+		rest := id[len(prefix):]
+		n, err := strconv.Atoi(rest)
+		if err != nil {
+			continue // skip grandchildren (e.g. "parent.1.1")
+		}
+		if n > maxN {
+			maxN = n
+		}
+	}
+	return fmt.Sprintf("%s.%d", parentID, maxN+1), nil
 }
 
 func (s *Store) ExistingIDs() map[string]bool {
