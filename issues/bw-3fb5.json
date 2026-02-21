@@ -2,13 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T01:29:13Z",
+  "close_reason": "done",
   "created": "2026-02-20T18:51:28Z",
   "description": "When importing bd JSONL, parse dependencies with type=parent-child and wire up the internal parent field. Already partially done — verify it handles dotted IDs (e.g., bd-abc.1 with depends_on_id=bd-abc) and reconstructs the relationship correctly even when the dependency entry is missing but the ID implies parentage.",
   "id": "bw-3fb5",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Repair parent-child linkage on import",
   "type": "feature",
-  "updated_at": "2026-02-20T18:59:21Z"
+  "updated_at": "2026-02-21T01:29:13Z"
 }
