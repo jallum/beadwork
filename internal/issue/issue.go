@@ -646,6 +646,82 @@ func (s *Store) walkGraph(id string, edges map[string][]string, visited map[stri
 	}
 }
 
+// LoadEdges reads the blocks/ directory and returns forward and reverse
+// adjacency maps. Forward maps blocker → []blocked; reverse maps
+// blocked → []blocker.
+func (s *Store) LoadEdges() (forward, reverse map[string][]string) {
+	forward = make(map[string][]string)
+	reverse = make(map[string][]string)
+
+	entries, err := s.FS.ReadDir("blocks")
+	if err != nil {
+		return forward, reverse
+	}
+
+	for _, e := range entries {
+		if !e.IsDir() || e.Name() == ".gitkeep" {
+			continue
+		}
+		blockerID := e.Name()
+		children, err := s.FS.ReadDir("blocks/" + blockerID)
+		if err != nil {
+			continue
+		}
+		for _, c := range children {
+			if c.Name() == ".gitkeep" {
+				continue
+			}
+			blockedID := c.Name()
+			forward[blockerID] = append(forward[blockerID], blockedID)
+			reverse[blockedID] = append(reverse[blockedID], blockerID)
+		}
+	}
+	return forward, reverse
+}
+
+// Tips walks from roots following edges, returning the leaf issues —
+// open nodes with no further outgoing edges in the map. Closed
+// intermediary nodes are walked through but not returned. This is the
+// shared primitive for surfacing actionable work in show and ready.
+func (s *Store) Tips(roots []string, edges map[string][]string) ([]*Issue, error) {
+	if len(roots) == 0 {
+		return nil, nil
+	}
+
+	visited := make(map[string]bool)
+	var tips []*Issue
+
+	var walk func(id string)
+	walk = func(id string) {
+		if visited[id] {
+			return
+		}
+		visited[id] = true
+
+		children := edges[id]
+		if len(children) == 0 {
+			// Leaf node — this is a tip
+			iss, err := s.readIssue(id)
+			if err != nil {
+				return
+			}
+			tips = append(tips, iss)
+			return
+		}
+
+		// Has children — walk deeper
+		for _, child := range children {
+			walk(child)
+		}
+	}
+
+	for _, root := range roots {
+		walk(root)
+	}
+
+	return tips, nil
+}
+
 // DeletePlan describes the side-effects that deleting an issue would have.
 type DeletePlan struct {
 	Issue     *Issue   `json:"issue"`
