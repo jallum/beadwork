@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
@@ -13,11 +15,39 @@ import (
 
 func cmdPrime(store *issue.Store, _ []string, w Writer) error {
 	r := store.Committer.(*repo.Repo)
-	out := template.Process(prompts.Prime, r.ListConfig())
-	fmt.Fprint(w, styleMD(w, strings.TrimRight(out, "\n")))
-	fmt.Fprintln(w)
+	md := func(s string) { fmt.Fprint(w, styleMD(w, s)) }
 
-	// Dynamic section: current project state
+	var buf bytes.Buffer
+	firstFlush := true
+
+	flush := func() {
+		s := strings.Trim(buf.String(), "\n")
+		buf.Reset()
+		if s == "" {
+			return
+		}
+		if !firstFlush {
+			fmt.Fprintln(w)
+		}
+		fmt.Fprint(w, styleMD(w, s))
+		fmt.Fprintln(w)
+		firstFlush = false
+	}
+
+	sections := map[string]func(io.Writer){
+		"STATE": func(_ io.Writer) {
+			flush()
+			primeState(store, w, md)
+		},
+	}
+
+	template.Process(&buf, prompts.Prime, r.ListConfig(), sections)
+	flush()
+
+	return nil
+}
+
+func primeState(store *issue.Store, w Writer, md func(string)) {
 	ready, _ := store.Ready()
 	all, _ := store.List(issue.Filter{})
 
@@ -48,10 +78,7 @@ func cmdPrime(store *issue.Store, _ []string, w Writer) error {
 		}
 	}
 
-	md := func(s string) { fmt.Fprint(w, styleMD(w, s)) }
-
-	md("\n## Current State\n\n")
-	md(fmt.Sprintf("%d open, %d in progress, %d closed\n", openCount, ipCount, closedCount))
+	md(fmt.Sprintf("\n%d open, %d in progress, %d closed\n", openCount, ipCount, closedCount))
 	md(fmt.Sprintf("%d ready (unblocked)\n", len(ready)))
 
 	if ipCount > 0 {
@@ -83,6 +110,4 @@ func cmdPrime(store *issue.Store, _ []string, w Writer) error {
 		}
 		w.Pop()
 	}
-
-	return nil
 }

@@ -1,30 +1,33 @@
 package template
 
-import "strings"
+import (
+	"io"
+	"strings"
+)
 
-// Process evaluates conditional directives in text against config values.
-// Directives are HTML comments: <!-- IF key == value --> and <!-- END -->.
-// Lines containing only a directive are stripped from output.
-// Content between IF/END is included only when the config matches.
-// Plain HTML comments (<!-- ... -->, including multi-line) are stripped entirely.
-func Process(text string, config map[string]string) string {
+// Process evaluates conditional directives and section markers in text,
+// writing the result to w. Config values control IF/END conditionals.
+// Section markers (<!-- NAME -->) invoke the corresponding callback from
+// sections; unregistered markers are stripped. Plain HTML comments are
+// stripped entirely.
+func Process(w io.Writer, text string, config map[string]string, sections map[string]func(io.Writer)) {
 	lines := strings.Split(text, "\n")
-	var out []string
 	skipDepth := 0
 	inComment := false
+	first := true
+
+	emit := func(s string) {
+		if !first {
+			io.WriteString(w, "\n")
+		}
+		io.WriteString(w, s)
+		first = false
+	}
 
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 
-		// Multi-line HTML comment stripping (non-directive comments).
-		if !inComment && strings.HasPrefix(trimmed, "<!--") &&
-			!strings.HasPrefix(trimmed, "<!-- IF ") && trimmed != "<!-- END -->" {
-			if !strings.Contains(trimmed, "-->") {
-				inComment = true
-			}
-			// Single-line plain comment: just skip it.
-			continue
-		}
+		// Continue multi-line comment.
 		if inComment {
 			if strings.Contains(trimmed, "-->") {
 				inComment = false
@@ -32,6 +35,7 @@ func Process(text string, config map[string]string) string {
 			continue
 		}
 
+		// IF directive.
 		if cond, ok := parseIF(trimmed); ok {
 			if skipDepth > 0 {
 				skipDepth++
@@ -43,6 +47,7 @@ func Process(text string, config map[string]string) string {
 			continue
 		}
 
+		// END directive.
 		if trimmed == "<!-- END -->" {
 			if skipDepth > 0 {
 				skipDepth--
@@ -50,12 +55,33 @@ func Process(text string, config map[string]string) string {
 			continue
 		}
 
+		// Section marker.
+		if name, ok := parseSection(trimmed); ok {
+			if skipDepth == 0 {
+				if fn := sections[name]; fn != nil {
+					if !first {
+						io.WriteString(w, "\n")
+					}
+					fn(w)
+					first = false
+				}
+			}
+			continue
+		}
+
+		// Plain HTML comment (single or multi-line).
+		if strings.HasPrefix(trimmed, "<!--") {
+			if !strings.Contains(trimmed, "-->") {
+				inComment = true
+			}
+			continue
+		}
+
+		// Content line.
 		if skipDepth == 0 {
-			out = append(out, line)
+			emit(line)
 		}
 	}
-
-	return strings.Join(out, "\n")
 }
 
 // parseIF checks if a line is an IF directive and returns the condition.
@@ -69,6 +95,23 @@ func parseIF(trimmed string) (string, bool) {
 		return "", false
 	}
 	return cond, true
+}
+
+// parseSection checks if a line is a section marker (<!-- NAME -->)
+// where NAME is a single word with no spaces.
+func parseSection(trimmed string) (string, bool) {
+	after, ok := strings.CutPrefix(trimmed, "<!-- ")
+	if !ok {
+		return "", false
+	}
+	name, ok := strings.CutSuffix(after, " -->")
+	if !ok {
+		return "", false
+	}
+	if strings.ContainsRune(name, ' ') {
+		return "", false
+	}
+	return name, true
 }
 
 // evalCondition checks "key == value" against the config map.
