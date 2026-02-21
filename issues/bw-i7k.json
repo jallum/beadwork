@@ -4,13 +4,14 @@
   "blocks": [
     "bw-kqn"
   ],
+  "closed_at": "2026-02-21T04:42:51Z",
   "created": "2026-02-21T04:14:08Z",
   "description": "",
   "id": "bw-i7k",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "Parent",
   "type": "task",
-  "updated_at": "2026-02-21T04:14:16Z"
+  "updated_at": "2026-02-21T04:42:51Z"
 }
