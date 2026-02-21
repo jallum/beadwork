@@ -8,20 +8,26 @@ import (
 	"github.com/jallum/beadwork/internal/repo"
 )
 
+// repoFrom extracts the *repo.Repo from a store's Committer.
+// Used by replay functions that need repo-level operations (e.g. SetConfig).
+func repoFrom(store *issue.Store) *repo.Repo {
+	return store.Committer.(*repo.Repo)
+}
+
 // Replay executes a list of intent strings against the current state.
 // Each intent is a structured commit message like "create bw-a1b2 p1 task \"title\"".
 // Returns a list of errors for intents that failed (non-fatal).
-func Replay(r *repo.Repo, store *issue.Store, intents []string) []error {
+func Replay(store *issue.Store, intents []string) []error {
 	var errors []error
 	for _, raw := range intents {
-		if err := replayOne(r, store, raw); err != nil {
+		if err := replayOne(store, raw); err != nil {
 			errors = append(errors, fmt.Errorf("replay %q: %w", raw, err))
 		}
 	}
 	return errors
 }
 
-func replayOne(r *repo.Repo, store *issue.Store, raw string) error {
+func replayOne(store *issue.Store, raw string) error {
 	parts := ParseIntent(raw)
 	if len(parts) == 0 {
 		return nil // skip empty or unparseable
@@ -30,25 +36,25 @@ func replayOne(r *repo.Repo, store *issue.Store, raw string) error {
 	verb := parts[0]
 	switch verb {
 	case "create":
-		return replayCreate(r, store, parts[1:], raw)
+		return replayCreate(store, parts[1:], raw)
 	case "close":
-		return replayClose(r, store, parts[1:], raw)
+		return replayClose(store, parts[1:], raw)
 	case "reopen":
-		return replayReopen(r, store, parts[1:], raw)
+		return replayReopen(store, parts[1:], raw)
 	case "update":
-		return replayUpdate(r, store, parts[1:], raw)
+		return replayUpdate(store, parts[1:], raw)
 	case "link":
-		return replayLink(r, store, parts[1:], raw)
+		return replayLink(store, parts[1:], raw)
 	case "unlink":
-		return replayUnlink(r, store, parts[1:], raw)
+		return replayUnlink(store, parts[1:], raw)
 	case "label":
-		return replayLabel(r, store, parts[1:], raw)
+		return replayLabel(store, parts[1:], raw)
 	case "delete":
-		return replayDelete(r, store, parts[1:], raw)
+		return replayDelete(store, parts[1:], raw)
 	case "config":
-		return replayConfig(r, parts[1:], raw)
+		return replayConfig(store, parts[1:], raw)
 	case "comment":
-		return replayComment(r, store, parts[1:], raw)
+		return replayComment(store, parts[1:], raw)
 	case "init":
 		return nil // skip init intents
 	default:
@@ -56,7 +62,7 @@ func replayOne(r *repo.Repo, store *issue.Store, raw string) error {
 	}
 }
 
-func replayCreate(r *repo.Repo, store *issue.Store, parts []string, raw string) error {
+func replayCreate(store *issue.Store, parts []string, raw string) error {
 	// create <id> p<n> <type> "<title>"
 	if len(parts) < 4 {
 		return fmt.Errorf("malformed create intent")
@@ -84,10 +90,10 @@ func replayCreate(r *repo.Repo, store *issue.Store, parts []string, raw string) 
 	if err != nil {
 		return err
 	}
-	return r.Commit(raw)
+	return store.Commit(raw)
 }
 
-func replayClose(r *repo.Repo, store *issue.Store, parts []string, raw string) error {
+func replayClose(store *issue.Store, parts []string, raw string) error {
 	if len(parts) < 1 {
 		return fmt.Errorf("malformed close intent")
 	}
@@ -95,10 +101,10 @@ func replayClose(r *repo.Repo, store *issue.Store, parts []string, raw string) e
 	if err != nil {
 		return err
 	}
-	return r.Commit(raw)
+	return store.Commit(raw)
 }
 
-func replayReopen(r *repo.Repo, store *issue.Store, parts []string, raw string) error {
+func replayReopen(store *issue.Store, parts []string, raw string) error {
 	if len(parts) < 1 {
 		return fmt.Errorf("malformed reopen intent")
 	}
@@ -106,10 +112,10 @@ func replayReopen(r *repo.Repo, store *issue.Store, parts []string, raw string) 
 	if err != nil {
 		return err
 	}
-	return r.Commit(raw)
+	return store.Commit(raw)
 }
 
-func replayUpdate(r *repo.Repo, store *issue.Store, parts []string, raw string) error {
+func replayUpdate(store *issue.Store, parts []string, raw string) error {
 	// update <id> key=value key=value ...
 	if len(parts) < 2 {
 		return fmt.Errorf("malformed update intent")
@@ -147,10 +153,10 @@ func replayUpdate(r *repo.Repo, store *issue.Store, parts []string, raw string) 
 	if err != nil {
 		return err
 	}
-	return r.Commit(raw)
+	return store.Commit(raw)
 }
 
-func replayLink(r *repo.Repo, store *issue.Store, parts []string, raw string) error {
+func replayLink(store *issue.Store, parts []string, raw string) error {
 	// link <id1> blocks <id2>
 	if len(parts) < 3 || parts[1] != "blocks" {
 		return fmt.Errorf("malformed link intent")
@@ -158,10 +164,10 @@ func replayLink(r *repo.Repo, store *issue.Store, parts []string, raw string) er
 	if err := store.Link(parts[0], parts[2]); err != nil {
 		return err
 	}
-	return r.Commit(raw)
+	return store.Commit(raw)
 }
 
-func replayUnlink(r *repo.Repo, store *issue.Store, parts []string, raw string) error {
+func replayUnlink(store *issue.Store, parts []string, raw string) error {
 	// unlink <id1> blocks <id2>
 	if len(parts) < 3 || parts[1] != "blocks" {
 		return fmt.Errorf("malformed unlink intent")
@@ -169,10 +175,10 @@ func replayUnlink(r *repo.Repo, store *issue.Store, parts []string, raw string) 
 	if err := store.Unlink(parts[0], parts[2]); err != nil {
 		return err
 	}
-	return r.Commit(raw)
+	return store.Commit(raw)
 }
 
-func replayLabel(r *repo.Repo, store *issue.Store, parts []string, raw string) error {
+func replayLabel(store *issue.Store, parts []string, raw string) error {
 	// label <id> +bug +frontend -wontfix
 	if len(parts) < 2 {
 		return fmt.Errorf("malformed label intent")
@@ -190,10 +196,10 @@ func replayLabel(r *repo.Repo, store *issue.Store, parts []string, raw string) e
 	if err != nil {
 		return err
 	}
-	return r.Commit(raw)
+	return store.Commit(raw)
 }
 
-func replayDelete(r *repo.Repo, store *issue.Store, parts []string, raw string) error {
+func replayDelete(store *issue.Store, parts []string, raw string) error {
 	if len(parts) < 1 {
 		return fmt.Errorf("malformed delete intent")
 	}
@@ -201,10 +207,10 @@ func replayDelete(r *repo.Repo, store *issue.Store, parts []string, raw string) 
 	if err != nil {
 		return err
 	}
-	return r.Commit(raw)
+	return store.Commit(raw)
 }
 
-func replayConfig(r *repo.Repo, parts []string, raw string) error {
+func replayConfig(store *issue.Store, parts []string, raw string) error {
 	// config key=value
 	if len(parts) < 1 {
 		return fmt.Errorf("malformed config intent")
@@ -216,13 +222,14 @@ func replayConfig(r *repo.Repo, parts []string, raw string) error {
 	}
 	key := kv[:eqIdx]
 	value := kv[eqIdx+1:]
+	r := repoFrom(store)
 	if err := r.SetConfig(key, value); err != nil {
 		return err
 	}
-	return r.Commit(raw)
+	return store.Commit(raw)
 }
 
-func replayComment(r *repo.Repo, store *issue.Store, parts []string, raw string) error {
+func replayComment(store *issue.Store, parts []string, raw string) error {
 	if len(parts) < 1 {
 		return fmt.Errorf("malformed comment intent")
 	}
@@ -234,7 +241,7 @@ func replayComment(r *repo.Repo, store *issue.Store, parts []string, raw string)
 	if err != nil {
 		return err
 	}
-	return r.Commit(raw)
+	return store.Commit(raw)
 }
 
 // ParseIntent splits an intent string respecting quoted strings.

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/jallum/beadwork/internal/issue"
-	"github.com/jallum/beadwork/internal/repo"
 )
 
 type InitArgs struct {
@@ -23,7 +22,7 @@ func parseInitArgs(raw []string) (InitArgs, error) {
 	}, nil
 }
 
-func cmdInit(_ *repo.Repo, _ *issue.Store, args []string, w Writer) error {
+func cmdInit(_ *issue.Store, args []string, w Writer) error {
 	ia, err := parseInitArgs(args)
 	if err != nil {
 		return err

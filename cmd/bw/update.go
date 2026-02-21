@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
-	"github.com/jallum/beadwork/internal/repo"
 )
 
 type UpdateArgs struct {
@@ -82,7 +81,7 @@ func parseUpdateArgs(raw []string) (UpdateArgs, error) {
 	return ua, nil
 }
 
-func cmdUpdate(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
+func cmdUpdate(store *issue.Store, args []string, w Writer) error {
 	ua, err := parseUpdateArgs(args)
 	if err != nil {
 		return err
@@ -132,7 +131,7 @@ func cmdUpdate(r *repo.Repo, store *issue.Store, args []string, w Writer) error 
 	}
 
 	intent := fmt.Sprintf("update %s %s", iss.ID, strings.Join(changes, " "))
-	if err := r.Commit(intent); err != nil {
+	if err := store.Commit(intent); err != nil {
 		return fmt.Errorf("commit failed: %w", err)
 	}
 

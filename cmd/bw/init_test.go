@@ -34,7 +34,7 @@ func TestCmdInitFresh(t *testing.T) {
 	defer os.Chdir(orig)
 
 	var buf bytes.Buffer
-	err := cmdInit(nil, nil, []string{"--prefix", "fresh"}, PlainWriter(&buf))
+	err := cmdInit(nil, []string{"--prefix", "fresh"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdInit: %v", err)
 	}
@@ -51,7 +51,7 @@ func TestCmdInitAlreadyInitialized(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdInit(nil, nil, []string{}, PlainWriter(&buf))
+	err := cmdInit(nil, []string{}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for already initialized")
 	}
@@ -65,7 +65,7 @@ func TestCmdInitForce(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdInit(nil, nil, []string{"--force", "--prefix", "newpfx"}, PlainWriter(&buf))
+	err := cmdInit(nil, []string{"--force", "--prefix", "newpfx"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdInit --force: %v", err)
 	}
@@ -98,7 +98,7 @@ func TestCmdInitDefaultPrefix(t *testing.T) {
 	defer os.Chdir(orig)
 
 	var buf bytes.Buffer
-	err := cmdInit(nil, nil, []string{}, PlainWriter(&buf))
+	err := cmdInit(nil, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdInit: %v", err)
 	}
@@ -112,7 +112,7 @@ func TestCmdInitForceInvalidPrefix(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdInit(nil, nil, []string{"--force", "--prefix", "has space"}, PlainWriter(&buf))
+	err := cmdInit(nil, []string{"--force", "--prefix", "has space"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for invalid prefix")
 	}
@@ -123,7 +123,7 @@ func TestCmdInitUnknownFlag(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdInit(nil, nil, []string{"--verbose"}, PlainWriter(&buf))
+	err := cmdInit(nil, []string{"--verbose"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for unknown flag")
 	}
@@ -135,7 +135,7 @@ func TestCmdInitForceDefaultPrefix(t *testing.T) {
 
 	// Force reinit without specifying prefix (uses empty string -> derives from repo)
 	var buf bytes.Buffer
-	err := cmdInit(nil, nil, []string{"--force"}, PlainWriter(&buf))
+	err := cmdInit(nil, []string{"--force"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdInit --force: %v", err)
 	}
@@ -167,7 +167,7 @@ func TestCmdInitInvalidPrefix(t *testing.T) {
 	defer os.Chdir(orig)
 
 	var buf bytes.Buffer
-	err := cmdInit(nil, nil, []string{"--prefix", "invalid prefix!"}, PlainWriter(&buf))
+	err := cmdInit(nil, []string{"--prefix", "invalid prefix!"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for invalid prefix")
 	}

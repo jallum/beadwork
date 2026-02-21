@@ -19,7 +19,7 @@ func TestCmdListBasic(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdList(env.Repo, env.Store, []string{}, PlainWriter(&buf))
+	err := cmdList(env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList: %v", err)
 	}
@@ -36,7 +36,7 @@ func TestCmdListJSON(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdList(env.Repo, env.Store, []string{"--json"}, PlainWriter(&buf))
+	err := cmdList(env.Store, []string{"--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList: %v", err)
 	}
@@ -55,7 +55,7 @@ func TestCmdListEmpty(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdList(env.Repo, env.Store, []string{}, PlainWriter(&buf))
+	err := cmdList(env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList: %v", err)
 	}
@@ -73,7 +73,7 @@ func TestCmdListFilterByStatus(t *testing.T) {
 	env.Repo.Commit("create and close")
 
 	var buf bytes.Buffer
-	err := cmdList(env.Repo, env.Store, []string{"--status", "closed"}, PlainWriter(&buf))
+	err := cmdList(env.Store, []string{"--status", "closed"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList: %v", err)
 	}
@@ -95,7 +95,7 @@ func TestCmdListDefaultShowsOpenAndInProgress(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdList(env.Repo, env.Store, []string{}, PlainWriter(&buf))
+	err := cmdList(env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList: %v", err)
 	}
@@ -121,7 +121,7 @@ func TestCmdListGrep(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdList(env.Repo, env.Store, []string{"--grep", "login"}, PlainWriter(&buf))
+	err := cmdList(env.Store, []string{"--grep", "login"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList --grep: %v", err)
 	}
@@ -143,7 +143,7 @@ func TestCmdListGrepShortFlag(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdList(env.Repo, env.Store, []string{"-g", "login"}, PlainWriter(&buf))
+	err := cmdList(env.Store, []string{"-g", "login"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList -g: %v", err)
 	}
@@ -162,7 +162,7 @@ func TestCmdListShowsDeps(t *testing.T) {
 	env.Repo.Commit("create and link")
 
 	var buf bytes.Buffer
-	err := cmdList(env.Repo, env.Store, []string{}, PlainWriter(&buf))
+	err := cmdList(env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList: %v", err)
 	}
@@ -187,7 +187,7 @@ func TestCmdListNoDepsNoBrackets(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdList(env.Repo, env.Store, []string{}, PlainWriter(&buf))
+	err := cmdList(env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList: %v", err)
 	}
@@ -210,7 +210,7 @@ func TestCmdListShowsMultipleDeps(t *testing.T) {
 	env.Repo.Commit("create and link")
 
 	var buf bytes.Buffer
-	err := cmdList(env.Repo, env.Store, []string{}, PlainWriter(&buf))
+	err := cmdList(env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList: %v", err)
 	}

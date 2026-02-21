@@ -79,6 +79,52 @@ func TestCreateDefaults(t *testing.T) {
 	}
 }
 
+func TestCommitDelegatesToCommitter(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Wire repo as the store's Committer.
+	env.Store.Committer = env.Repo
+
+	iss, err := env.Store.Create("Test commit", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	intent := "create " + iss.ID
+	if err := env.Store.Commit(intent); err != nil {
+		t.Fatalf("store.Commit: %v", err)
+	}
+
+	// Verify commit landed in git history.
+	commits, err := env.Repo.AllCommits()
+	if err != nil {
+		t.Fatalf("AllCommits: %v", err)
+	}
+	found := false
+	for _, c := range commits {
+		if c.Message == intent {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("commit with intent %q not found in history", intent)
+	}
+}
+
+func TestCommitWithoutCommitterErrors(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Nil out the Committer that NewEnv wires up.
+	env.Store.Committer = nil
+	err := env.Store.Commit("should fail")
+	if err == nil {
+		t.Fatal("expected error from read-only store, got nil")
+	}
+}
+
 func TestCreateDefaultPriorityFromStore(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/jallum/beadwork/internal/issue"
-	"github.com/jallum/beadwork/internal/repo"
 )
 
 type DeleteArgs struct {
@@ -31,7 +30,7 @@ func parseDeleteArgs(raw []string) (DeleteArgs, error) {
 	}, nil
 }
 
-func cmdDelete(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
+func cmdDelete(store *issue.Store, args []string, w Writer) error {
 	da, err := parseDeleteArgs(args)
 	if err != nil {
 		return err
@@ -85,7 +84,7 @@ func cmdDelete(r *repo.Repo, store *issue.Store, args []string, w Writer) error 
 	}
 
 	intent := fmt.Sprintf("delete %s", iss.ID)
-	if err := r.Commit(intent); err != nil {
+	if err := store.Commit(intent); err != nil {
 		return fmt.Errorf("commit failed: %w", err)
 	}
 

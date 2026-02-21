@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/jallum/beadwork/internal/issue"
-	"github.com/jallum/beadwork/internal/repo"
 )
 
 type UndeferArgs struct {
@@ -23,7 +22,7 @@ func parseUndeferArgs(raw []string) (UndeferArgs, error) {
 	return UndeferArgs{ID: raw[0], JSON: a.JSON()}, nil
 }
 
-func cmdUndefer(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
+func cmdUndefer(store *issue.Store, args []string, w Writer) error {
 	ua, err := parseUndeferArgs(args)
 	if err != nil {
 		return err
@@ -40,7 +39,7 @@ func cmdUndefer(r *repo.Repo, store *issue.Store, args []string, w Writer) error
 	}
 
 	intent := fmt.Sprintf("undefer %s", iss.ID)
-	if err := r.Commit(intent); err != nil {
+	if err := store.Commit(intent); err != nil {
 		return fmt.Errorf("commit failed: %w", err)
 	}
 

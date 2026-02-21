@@ -14,7 +14,7 @@ func TestReplayCreate(t *testing.T) {
 	defer env.Cleanup()
 
 	intents := []string{`create test-0000 p1 bug "Login crashes on timeout"`}
-	errs := intent.Replay(env.Repo, env.Store, intents)
+	errs := intent.Replay(env.Store, intents)
 	if len(errs) > 0 {
 		t.Fatalf("Replay errors: %v", errs)
 	}
@@ -40,7 +40,7 @@ func TestReplayCreateNoQuotes(t *testing.T) {
 
 	// Create without quoted title — should use remaining parts as title
 	intents := []string{`create test-0000 p2 task Unquoted title words`}
-	errs := intent.Replay(env.Repo, env.Store, intents)
+	errs := intent.Replay(env.Store, intents)
 	if len(errs) > 0 {
 		t.Fatalf("Replay errors: %v", errs)
 	}
@@ -60,7 +60,7 @@ func TestReplayCreateDefaultPriority(t *testing.T) {
 
 	// Create with no priority prefix — should default to p3
 	intents := []string{`create test-0000 p3 task "Default priority task"`}
-	errs := intent.Replay(env.Repo, env.Store, intents)
+	errs := intent.Replay(env.Store, intents)
 	if len(errs) > 0 {
 		t.Fatalf("Replay errors: %v", errs)
 	}
@@ -78,7 +78,7 @@ func TestReplayClose(t *testing.T) {
 	iss, _ := env.Store.Create("To close", issue.CreateOpts{})
 	env.CommitIntent("create " + iss.ID)
 
-	errs := intent.Replay(env.Repo, env.Store, []string{"close " + iss.ID})
+	errs := intent.Replay(env.Store, []string{"close " + iss.ID})
 	if len(errs) > 0 {
 		t.Fatalf("Replay errors: %v", errs)
 	}
@@ -97,7 +97,7 @@ func TestReplayCloseAlreadyClosed(t *testing.T) {
 	env.Store.Close(iss.ID, "")
 	env.CommitIntent("create and close " + iss.ID)
 
-	errs := intent.Replay(env.Repo, env.Store, []string{"close " + iss.ID})
+	errs := intent.Replay(env.Store, []string{"close " + iss.ID})
 	if len(errs) != 1 {
 		t.Fatalf("expected 1 error, got %d", len(errs))
 	}
@@ -117,7 +117,7 @@ func TestReplayReopen(t *testing.T) {
 	env.Store.Close(iss.ID, "")
 	env.CommitIntent("setup " + iss.ID)
 
-	errs := intent.Replay(env.Repo, env.Store, []string{"reopen " + iss.ID})
+	errs := intent.Replay(env.Store, []string{"reopen " + iss.ID})
 	if len(errs) > 0 {
 		t.Fatalf("Replay errors: %v", errs)
 	}
@@ -135,7 +135,7 @@ func TestReplayReopenNotClosed(t *testing.T) {
 	iss, _ := env.Store.Create("Open issue", issue.CreateOpts{})
 	env.CommitIntent("create " + iss.ID)
 
-	errs := intent.Replay(env.Repo, env.Store, []string{"reopen " + iss.ID})
+	errs := intent.Replay(env.Store, []string{"reopen " + iss.ID})
 	if len(errs) != 1 {
 		t.Fatalf("expected 1 error, got %d", len(errs))
 	}
@@ -151,7 +151,7 @@ func TestReplayUpdate(t *testing.T) {
 	intents := []string{
 		"update " + iss.ID + " status=in_progress assignee=agent-1 priority=1",
 	}
-	errs := intent.Replay(env.Repo, env.Store, intents)
+	errs := intent.Replay(env.Store, intents)
 	if len(errs) > 0 {
 		t.Fatalf("Replay errors: %v", errs)
 	}
@@ -175,7 +175,7 @@ func TestReplayUpdateTitle(t *testing.T) {
 	iss, _ := env.Store.Create("Old title", issue.CreateOpts{})
 	env.CommitIntent("create " + iss.ID)
 
-	errs := intent.Replay(env.Repo, env.Store, []string{
+	errs := intent.Replay(env.Store, []string{
 		"update " + iss.ID + " title=New",
 	})
 	if len(errs) > 0 {
@@ -196,7 +196,7 @@ func TestReplayLink(t *testing.T) {
 	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
 	env.CommitIntent("create " + a.ID + " and " + b.ID)
 
-	errs := intent.Replay(env.Repo, env.Store, []string{
+	errs := intent.Replay(env.Store, []string{
 		"link " + a.ID + " blocks " + b.ID,
 	})
 	if len(errs) > 0 {
@@ -222,7 +222,7 @@ func TestReplayUnlink(t *testing.T) {
 	env.Store.Link(a.ID, b.ID)
 	env.CommitIntent("setup link")
 
-	errs := intent.Replay(env.Repo, env.Store, []string{
+	errs := intent.Replay(env.Store, []string{
 		"unlink " + a.ID + " blocks " + b.ID,
 	})
 	if len(errs) > 0 {
@@ -243,7 +243,7 @@ func TestReplayLabel(t *testing.T) {
 	env.Store.Label(iss.ID, []string{"old"}, nil)
 	env.CommitIntent("setup " + iss.ID)
 
-	errs := intent.Replay(env.Repo, env.Store, []string{
+	errs := intent.Replay(env.Store, []string{
 		"label " + iss.ID + " +new -old",
 	})
 	if len(errs) > 0 {
@@ -260,7 +260,7 @@ func TestReplayConfig(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	errs := intent.Replay(env.Repo, env.Store, []string{
+	errs := intent.Replay(env.Store, []string{
 		"config default.priority=2",
 	})
 	if len(errs) > 0 {
@@ -284,7 +284,7 @@ func TestReplayMultipleIntents(t *testing.T) {
 		`create test-0000 p1 bug "First issue"`,
 		`create test-0000 p2 task "Second issue"`,
 	}
-	errs := intent.Replay(env.Repo, env.Store, intents)
+	errs := intent.Replay(env.Store, intents)
 	if len(errs) > 0 {
 		t.Fatalf("Replay errors: %v", errs)
 	}
@@ -310,7 +310,7 @@ func TestReplayMalformedIntents(t *testing.T) {
 		"config",               // missing key=value
 		"config noequals",      // missing =
 	}
-	errs := intent.Replay(env.Repo, env.Store, intents)
+	errs := intent.Replay(env.Store, intents)
 	if len(errs) != len(intents) {
 		t.Errorf("expected %d errors, got %d: %v", len(intents), len(errs), errs)
 	}
@@ -326,7 +326,7 @@ func TestReplayEmptyAndUnknown(t *testing.T) {
 		"init beadwork",
 		"somefutureverb arg1 arg2",
 	}
-	errs := intent.Replay(env.Repo, env.Store, intents)
+	errs := intent.Replay(env.Store, intents)
 	if len(errs) != 0 {
 		t.Errorf("expected 0 errors for empty/unknown intents, got %d: %v", len(errs), errs)
 	}
@@ -336,7 +336,7 @@ func TestReplayUpdateNonexistentIssue(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	errs := intent.Replay(env.Repo, env.Store, []string{
+	errs := intent.Replay(env.Store, []string{
 		"update test-zzzz status=closed",
 	})
 	if len(errs) != 1 {
@@ -348,7 +348,7 @@ func TestReplayCloseNonexistentIssue(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	errs := intent.Replay(env.Repo, env.Store, []string{
+	errs := intent.Replay(env.Store, []string{
 		"close test-zzzz",
 	})
 	if len(errs) != 1 {
@@ -368,7 +368,7 @@ func TestReplayPartialFailure(t *testing.T) {
 		"close " + iss.ID,
 		"close test-zzzz",
 	}
-	errs := intent.Replay(env.Repo, env.Store, intents)
+	errs := intent.Replay(env.Store, intents)
 	if len(errs) != 1 {
 		t.Fatalf("expected 1 error, got %d: %v", len(errs), errs)
 	}
@@ -385,7 +385,7 @@ func TestReplayCreateQuotedTitleWithSpaces(t *testing.T) {
 	defer env.Cleanup()
 
 	intents := []string{`create test-0000 p2 task "Title with multiple words"`}
-	errs := intent.Replay(env.Repo, env.Store, intents)
+	errs := intent.Replay(env.Store, intents)
 	if len(errs) > 0 {
 		t.Fatalf("Replay errors: %v", errs)
 	}
@@ -407,7 +407,7 @@ func TestReplayIdempotentLink(t *testing.T) {
 
 	// Replay the same link again — the link is a no-op on disk,
 	// so commit is silently skipped. No error expected.
-	errs := intent.Replay(env.Repo, env.Store, []string{
+	errs := intent.Replay(env.Store, []string{
 		"link " + a.ID + " blocks " + b.ID,
 	})
 	if len(errs) != 0 {
@@ -473,7 +473,7 @@ func TestReplayIdempotentUnlink(t *testing.T) {
 	env.CommitIntent("setup")
 
 	// Unlink when no link exists — should succeed (idempotent)
-	errs := intent.Replay(env.Repo, env.Store, []string{
+	errs := intent.Replay(env.Store, []string{
 		"unlink " + a.ID + " blocks " + b.ID,
 	})
 	if len(errs) != 0 {
@@ -488,7 +488,7 @@ func TestReplayUpdateType(t *testing.T) {
 	iss, _ := env.Store.Create("Test", issue.CreateOpts{})
 	env.CommitIntent("create " + iss.ID)
 
-	errs := intent.Replay(env.Repo, env.Store, []string{
+	errs := intent.Replay(env.Store, []string{
 		"update " + iss.ID + " type=bug",
 	})
 	if len(errs) > 0 {
@@ -515,7 +515,7 @@ func TestReplayDelete(t *testing.T) {
 	iss, _ := env.Store.Create("To delete", issue.CreateOpts{})
 	env.CommitIntent("create " + iss.ID)
 
-	errs := intent.Replay(env.Repo, env.Store, []string{"delete " + iss.ID})
+	errs := intent.Replay(env.Store, []string{"delete " + iss.ID})
 	if len(errs) > 0 {
 		t.Fatalf("Replay errors: %v", errs)
 	}
@@ -530,7 +530,7 @@ func TestReplayDeleteNonexistent(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	errs := intent.Replay(env.Repo, env.Store, []string{"delete test-zzzz"})
+	errs := intent.Replay(env.Store, []string{"delete test-zzzz"})
 	if len(errs) != 1 {
 		t.Fatalf("expected 1 error, got %d: %v", len(errs), errs)
 	}
@@ -543,7 +543,7 @@ func TestReplayComment(t *testing.T) {
 	iss, _ := env.Store.Create("Commentable", issue.CreateOpts{})
 	env.CommitIntent("create " + iss.ID)
 
-	errs := intent.Replay(env.Repo, env.Store, []string{
+	errs := intent.Replay(env.Store, []string{
 		`comment ` + iss.ID + ` "Replayed comment"`,
 	})
 	if len(errs) > 0 {
@@ -563,7 +563,7 @@ func TestReplayCommentMalformed(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	errs := intent.Replay(env.Repo, env.Store, []string{
+	errs := intent.Replay(env.Store, []string{
 		"comment",
 	})
 	if len(errs) != 1 {
@@ -575,7 +575,7 @@ func TestReplayCommentNonexistent(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	errs := intent.Replay(env.Repo, env.Store, []string{
+	errs := intent.Replay(env.Store, []string{
 		`comment test-zzzz "Missing issue"`,
 	})
 	if len(errs) != 1 {
@@ -591,7 +591,7 @@ func TestReplayUpdateParent(t *testing.T) {
 	child, _ := env.Store.Create("Child", issue.CreateOpts{})
 	env.CommitIntent("create issues")
 
-	errs := intent.Replay(env.Repo, env.Store, []string{
+	errs := intent.Replay(env.Store, []string{
 		"update " + child.ID + " parent=" + parent.ID,
 	})
 	if len(errs) > 0 {

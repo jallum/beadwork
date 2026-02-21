@@ -39,11 +39,12 @@ func parseConfigArgs(raw []string) (ConfigArgs, error) {
 	return ca, nil
 }
 
-func cmdConfig(r *repo.Repo, _ *issue.Store, args []string, w Writer) error {
+func cmdConfig(store *issue.Store, args []string, w Writer) error {
 	ca, err := parseConfigArgs(args)
 	if err != nil {
 		return err
 	}
+	r := store.Committer.(*repo.Repo)
 
 	switch ca.Subcmd {
 	case "get":

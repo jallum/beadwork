@@ -18,7 +18,7 @@ func TestCmdDeletePreview(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdDelete(env.Repo, env.Store, []string{iss.ID}, PlainWriter(&buf))
+	err := cmdDelete(env.Store, []string{iss.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdDelete preview: %v", err)
 	}
@@ -39,7 +39,7 @@ func TestCmdDeletePreviewDoesNotModify(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	cmdDelete(env.Repo, env.Store, []string{iss.ID}, PlainWriter(&buf))
+	cmdDelete(env.Store, []string{iss.ID}, PlainWriter(&buf))
 
 	// Issue should still exist
 	got, err := env.Store.Get(iss.ID)
@@ -59,7 +59,7 @@ func TestCmdDeleteForce(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdDelete(env.Repo, env.Store, []string{iss.ID, "--force"}, PlainWriter(&buf))
+	err := cmdDelete(env.Store, []string{iss.ID, "--force"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdDelete --force: %v", err)
 	}
@@ -82,7 +82,7 @@ func TestCmdDeleteForceJSON(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdDelete(env.Repo, env.Store, []string{iss.ID, "--force", "--json"}, PlainWriter(&buf))
+	err := cmdDelete(env.Store, []string{iss.ID, "--force", "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdDelete --force --json: %v", err)
 	}
@@ -101,7 +101,7 @@ func TestCmdDeleteNonexistent(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdDelete(env.Repo, env.Store, []string{"test-zzzz", "--force"}, PlainWriter(&buf))
+	err := cmdDelete(env.Store, []string{"test-zzzz", "--force"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for nonexistent issue")
 	}

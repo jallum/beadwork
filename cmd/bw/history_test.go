@@ -96,7 +96,7 @@ func TestCmdHistoryShowsMatchingCommits(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err = cmdHistory(env.Repo, env.Store, []string{iss.ID}, PlainWriter(&buf))
+	err = cmdHistory(env.Store, []string{iss.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdHistory: %v", err)
 	}
@@ -129,7 +129,7 @@ func TestCmdHistoryFiltersOutOtherIssues(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err = cmdHistory(env.Repo, env.Store, []string{iss1.ID}, PlainWriter(&buf))
+	err = cmdHistory(env.Store, []string{iss1.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdHistory: %v", err)
 	}
@@ -161,7 +161,7 @@ func TestCmdHistoryChronologicalOrder(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err = cmdHistory(env.Repo, env.Store, []string{iss.ID}, PlainWriter(&buf))
+	err = cmdHistory(env.Store, []string{iss.ID}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdHistory: %v", err)
 	}
@@ -200,7 +200,7 @@ func TestCmdHistoryLimit(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err = cmdHistory(env.Repo, env.Store, []string{iss.ID, "--limit", "2"}, PlainWriter(&buf))
+	err = cmdHistory(env.Store, []string{iss.ID, "--limit", "2"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdHistory: %v", err)
 	}
@@ -234,7 +234,7 @@ func TestCmdHistoryJSON(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err = cmdHistory(env.Repo, env.Store, []string{iss.ID, "--json"}, PlainWriter(&buf))
+	err = cmdHistory(env.Store, []string{iss.ID, "--json"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdHistory: %v", err)
 	}
@@ -272,7 +272,7 @@ func TestCmdHistoryNonexistentID(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdHistory(env.Repo, env.Store, []string{"test-zzzz"}, PlainWriter(&buf))
+	err := cmdHistory(env.Store, []string{"test-zzzz"}, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for nonexistent ID")
 	}

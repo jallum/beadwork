@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/jallum/beadwork/internal/issue"
-	"github.com/jallum/beadwork/internal/repo"
 )
 
 // DepArgs holds the parsed subcommand and IDs for "bw dep add|remove".
@@ -40,16 +39,16 @@ func parseDepArgs(raw []string) (DepArgs, error) {
 	return da, nil
 }
 
-func cmdDep(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
+func cmdDep(store *issue.Store, args []string, w Writer) error {
 	da, err := parseDepArgs(args)
 	if err != nil {
 		return err
 	}
 	switch da.Subcmd {
 	case "add":
-		return cmdDepAdd(r, store, []string{da.BlockerID, "blocks", da.BlockedID}, w)
+		return cmdDepAdd(store, []string{da.BlockerID, "blocks", da.BlockedID}, w)
 	case "remove":
-		return cmdDepRemove(r, store, []string{da.BlockerID, "blocks", da.BlockedID}, w)
+		return cmdDepRemove(store, []string{da.BlockerID, "blocks", da.BlockedID}, w)
 	}
 	return nil
 }
@@ -66,7 +65,7 @@ func parseDepAddArgs(raw []string) (DepAddArgs, error) {
 	return DepAddArgs{BlockerID: raw[0], BlockedID: raw[2]}, nil
 }
 
-func cmdDepAdd(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
+func cmdDepAdd(store *issue.Store, args []string, w Writer) error {
 	la, err := parseDepAddArgs(args)
 	if err != nil {
 		return err
@@ -81,7 +80,7 @@ func cmdDepAdd(r *repo.Repo, store *issue.Store, args []string, w Writer) error 
 	blocker, _ := store.Get(la.BlockerID)
 	blocked, _ := store.Get(la.BlockedID)
 	intent := fmt.Sprintf("link %s blocks %s", blocker.ID, blocked.ID)
-	if err := r.Commit(intent); err != nil {
+	if err := store.Commit(intent); err != nil {
 		return fmt.Errorf("commit failed: %w", err)
 	}
 
@@ -101,7 +100,7 @@ func parseDepRemoveArgs(raw []string) (DepRemoveArgs, error) {
 	return DepRemoveArgs{BlockerID: raw[0], BlockedID: raw[2]}, nil
 }
 
-func cmdDepRemove(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
+func cmdDepRemove(store *issue.Store, args []string, w Writer) error {
 	ua, err := parseDepRemoveArgs(args)
 	if err != nil {
 		return err
@@ -115,7 +114,7 @@ func cmdDepRemove(r *repo.Repo, store *issue.Store, args []string, w Writer) err
 	blocked, _ := store.Get(ua.BlockedID)
 	// Intent verb stays "unlink" for replay compatibility.
 	intent := fmt.Sprintf("unlink %s blocks %s", blocker.ID, blocked.ID)
-	if err := r.Commit(intent); err != nil {
+	if err := store.Commit(intent); err != nil {
 		return fmt.Errorf("commit failed: %w", err)
 	}
 

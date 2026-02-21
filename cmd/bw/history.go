@@ -43,7 +43,7 @@ type commitEntry struct {
 	Intent    string `json:"intent"`
 }
 
-func cmdHistory(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
+func cmdHistory(store *issue.Store, args []string, w Writer) error {
 	ha, err := parseHistoryArgs(args)
 	if err != nil {
 		return err
@@ -55,6 +55,7 @@ func cmdHistory(r *repo.Repo, store *issue.Store, args []string, w Writer) error
 		return err
 	}
 
+	r := store.Committer.(*repo.Repo)
 	commits, err := r.AllCommits()
 	if err != nil {
 		return fmt.Errorf("reading history: %w", err)

@@ -45,6 +45,7 @@ func NewEnv(t *testing.T) *Env {
 	}
 
 	store := issue.NewStore(r.TreeFS(), r.Prefix)
+	store.Committer = r
 
 	return &Env{
 		T:     t,
@@ -90,6 +91,7 @@ func (e *Env) CloneEnv(barePath string) *Env {
 	}
 
 	store := issue.NewStore(r.TreeFS(), r.Prefix)
+	store.Committer = r
 
 	return &Env{
 		T:     e.T,

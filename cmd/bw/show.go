@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
-	"github.com/jallum/beadwork/internal/repo"
 	"github.com/jallum/beadwork/internal/wrap"
 )
 
@@ -67,7 +66,7 @@ func (sa ShowArgs) showSection(name string) bool {
 	return sa.Sections[name]
 }
 
-func cmdShow(_ *repo.Repo, store *issue.Store, args []string, w Writer) error {
+func cmdShow(store *issue.Store, args []string, w Writer) error {
 	sa, err := parseShowArgs(args)
 	if err != nil {
 		return err

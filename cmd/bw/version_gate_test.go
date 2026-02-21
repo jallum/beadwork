@@ -16,7 +16,7 @@ func TestVersionGateBlocksOlderRepo(t *testing.T) {
 	env.Repo.SetConfig("version", "0")
 	env.Repo.Commit("downgrade to v0")
 
-	_, _, err := getInitializedRepo()
+	_, err := getInitializedStore()
 	if err == nil {
 		t.Fatal("expected error for v0 repo")
 	}
@@ -33,7 +33,7 @@ func TestVersionGateBlocksNewerRepo(t *testing.T) {
 	env.Repo.SetConfig("version", "99")
 	env.Repo.Commit("future version")
 
-	_, _, err := getInitializedRepo()
+	_, err := getInitializedStore()
 	if err == nil {
 		t.Fatal("expected error for v99 repo")
 	}
@@ -68,7 +68,7 @@ func TestCmdUpgradeRepoFromV0(t *testing.T) {
 
 	// Commands should work now
 	buf.Reset()
-	err = cmdList(env.Repo, env.Store, []string{}, PlainWriter(&buf))
+	err = cmdList(env.Store, []string{}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdList after upgrade: %v", err)
 	}

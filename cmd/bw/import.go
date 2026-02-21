@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/jallum/beadwork/internal/issue"
-	"github.com/jallum/beadwork/internal/repo"
 )
 
 type importComment struct {
@@ -57,7 +56,7 @@ func parseImportArgs(raw []string) (ImportArgs, error) {
 	}, nil
 }
 
-func cmdImport(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
+func cmdImport(store *issue.Store, args []string, w Writer) error {
 	ia, err := parseImportArgs(args)
 	if err != nil {
 		return err
@@ -199,7 +198,7 @@ func cmdImport(r *repo.Repo, store *issue.Store, args []string, w Writer) error 
 	}
 
 	intent := fmt.Sprintf("import %d issues", len(toImport))
-	if err := r.Commit(intent); err != nil {
+	if err := store.Commit(intent); err != nil {
 		return fmt.Errorf("commit failed: %w", err)
 	}
 
