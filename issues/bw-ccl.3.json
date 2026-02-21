@@ -5,6 +5,7 @@
     "bw-ccl.2"
   ],
   "blocks": [],
+  "closed_at": "2026-02-21T22:04:00Z",
   "created": "2026-02-21T21:16:31Z",
   "description": "",
   "id": "bw-ccl.3",
@@ -17,8 +18,8 @@
     }
   ],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Rewrite prime to use single Snapshot with tips-based display",
   "type": "task",
-  "updated_at": "2026-02-21T22:02:57Z"
+  "updated_at": "2026-02-21T22:04:00Z"
 }
