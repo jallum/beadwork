@@ -10,11 +10,15 @@
     {
       "text": "test comment for debugging show output",
       "timestamp": "2026-02-21T03:50:46Z"
+    },
+    {
+      "text": "second test comment",
+      "timestamp": "2026-02-21T03:51:31Z"
     }
   ],
   "priority": 2,
   "status": "open",
   "title": "Evaluate bd dep tree equivalent",
   "type": "task",
-  "updated_at": "2026-02-21T03:50:46Z"
+  "updated_at": "2026-02-21T03:51:31Z"
 }
