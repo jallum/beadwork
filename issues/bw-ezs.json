@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-21T21:24:22Z",
+  "description": "PriorityColors, ColorReset, and PriorityDot embed ANSI escape codes in the domain layer. The CLI already has its own styling via writer.go PriorityStyle. Replace with a plain PriorityIcon function.",
+  "id": "bw-ezs",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Remove ANSI escape codes from issue/status.go",
+  "type": "task",
+  "updated_at": "2026-02-21T21:24:22Z"
+}
