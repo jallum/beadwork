@@ -39,9 +39,6 @@ func (fi FileInfo) Name() string { return fi.name }
 func (fi FileInfo) Size() int64  { return fi.size }
 func (fi FileInfo) IsDir() bool  { return fi.isDir }
 
-// sentinel for deleted entries in the overlay
-var deleted = []byte{}
-
 // TreeFS is a mutable in-memory filesystem backed by a git tree.
 type TreeFS struct {
 	repo    *git.Repository
@@ -621,19 +618,6 @@ func (t *TreeFS) writeTreeFromFiles(s storer.EncodedObjectStorer, files map[stri
 			Mode: filemode.Dir,
 			Hash: subHash,
 		})
-	}
-
-	// Also add empty directories that have .gitkeep files (via dirs)
-	// But only if they don't already have entries
-	for dirPath := range t.dirs {
-		parts := strings.SplitN(dirPath, "/", 2)
-		topDir := parts[0]
-		if _, hasFiles := subtreeFiles[topDir]; !hasFiles {
-			if _, hasEntry := root.files[topDir]; !hasEntry {
-				// This is an empty directory — skip (git doesn't store empty dirs)
-				continue
-			}
-		}
 	}
 
 	// Sort entries for deterministic trees

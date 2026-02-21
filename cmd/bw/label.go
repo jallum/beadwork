@@ -14,7 +14,7 @@ type LabelArgs struct {
 
 func parseLabelArgs(raw []string) (LabelArgs, error) {
 	if len(raw) < 2 {
-		return LabelArgs{}, fmt.Errorf("usage: bw label <id> +label [-label] ...")
+		return LabelArgs{}, fmt.Errorf("usage: bw label <id> +label [-label]")
 	}
 	la := LabelArgs{ID: raw[0], JSON: hasFlag(raw, "--json")}
 	for _, arg := range raw[1:] {
