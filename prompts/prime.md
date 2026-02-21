@@ -25,8 +25,10 @@ Design requirements for this prompt:
 5. Teach worktree hygiene. Concurrent work in a single worktree causes
    contamination — like cooking two meals with the same unwashed pans. The
    natural unit is one worktree per logical block of related work (a single
-   bead or an epic with children). Beadwork's issue state is concurrency-safe
-   by design; the repo's working tree is not.
+   bead or an epic with children), named after the ticket or epic it serves.
+   The name signals purpose and lifecycle — a worktree has a beginning, a
+   middle, and an end. Beadwork's issue state is concurrency-safe by design;
+   the repo's working tree is not.
 
 6. Frame beadwork as shared state. In multi-agent setups, beadwork is the
    durable communication layer between workers. Comments and issues serve
@@ -52,7 +54,13 @@ Design requirements for this prompt:
     — if it's not committed, closed, and synced, it doesn't exist to the
     next session or to other workers.
 
-11. No implementation details or setup instructions. Keep the focus on usage
+11. Every task gets a ticket. Agents skip ticket creation for small tasks,
+    treating it as overhead. But tickets are cheap and capture intent —
+    why a change was made, not just what changed. Commit messages record
+    the what; tickets record the why. Without them, release notes and
+    changelogs require reverse-engineering intent from diffs.
+
+12. No implementation details or setup instructions. Keep the focus on usage
     and mental model.
 -->
 
@@ -80,13 +88,13 @@ Comments (`bw comments add <id> "..."`) are durable context — breadcrumbs for 
 
 Land the work: code that isn't committed, issues that aren't closed, and state that isn't synced don't exist to the next session or to other workers. Committing and closing are part of completing a task in this project — not a separate action that requires additional permission. Reference the issue ID in commit messages to connect the code change to its context.
 
-New work mid-task: `bw create "Title" -p 2 -t task`. Larger efforts: structure as an epic with children and dependencies so `bw ready` feeds you the next step automatically.
+Every task gets a ticket — even small ones. Tickets are cheap (`bw create "Title" -p 2 -t task`), and they capture _why_ a change was made, not just what changed. Commit messages record the what; tickets record the intent. Without them, changelogs and release notes require reverse-engineering from diffs. Larger efforts: structure as an epic with children and dependencies so `bw ready` feeds you the next step automatically.
 
 <!-- IF workflow.agents == multi -->
 
 ## Working in Parallel
 
-Beadwork's issue state is concurrency-safe — multiple workers can update issues simultaneously. The working tree is not. Working on two tasks in the same worktree is like cooking two meals with the same unwashed pans. Each logical block of work (a single issue, or an epic with its children) needs its own git worktree.
+Beadwork's issue state is concurrency-safe — multiple workers can update issues simultaneously. The working tree is not. Working on two tasks in the same worktree is like cooking two meals with the same unwashed pans. Each logical block of work (a single issue, or an epic with its children) gets its own worktree, named after the ticket or epic it serves. The name signals purpose and lifecycle — a worktree has a beginning, a middle, and an end.
 
 `bw start --assign <agent-id>` claims work with a specific identity so others skip it. Comments and issues are the shared communication layer — leave implementation notes, flag constraints, record decisions other workers need.
 

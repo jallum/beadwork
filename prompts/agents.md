@@ -22,10 +22,11 @@ has any other context about the project's workflow.
    for an agent that already has context. Including it here means an agent
    resuming mid-session doesn't have to run prime just to find work.
 
-5. Don't teach workflow. No instructions about how to plan, how to use
-   comments, how to structure epics, how to work in parallel. All of that
-   belongs in prime, where it can adapt to project configuration and stay
-   co-located with the dynamic state output.
+5. Establish policy, not procedure. This snippet should state what the project
+   expects (every change gets a ticket, land the work, etc.) without explaining
+   how to use the tools. Detailed workflow — planning with epics, using
+   comments, working in parallel — belongs in prime, where it can adapt to
+   project configuration and stay co-located with the dynamic state output.
 
 6. Grant permission to land work. Agents often have system-level instructions
    that prevent committing or pushing without explicit user permission. This
@@ -46,4 +47,4 @@ Run `bw prime` at the start of every session. It shows the workflow, current iss
 
 Completing a task means committing code, closing the issue (`bw close`), and syncing (`bw sync`). These are part of the work, not separate actions requiring additional permission.
 
-Start with `bw ready` to find available work.
+Every code change gets a ticket — whether it came from the backlog or from a direct request. Start with `bw ready` to find available work.
