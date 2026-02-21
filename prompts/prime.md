@@ -78,7 +78,7 @@ Comments (`bw comments add <id> "..."`) are durable context — breadcrumbs for 
 
 `bw show <id>` is the natural first step when picking up work — the issue may already have a description, comments, or plans from a previous session. `bw start <id>` claims it (sets status, assigns you, refuses blocked work). `--assign <agent-id>` claims on behalf of a specific agent. `bw close <id>` marks it done. `bw sync` pushes to the remote.
 
-Land the work: code that isn't committed, issues that aren't closed, and state that isn't synced don't exist to the next session or to other workers. Committing and closing are part of completing a task in this project — not a separate action that requires additional permission. Finishing the task means finishing the bookkeeping.
+Land the work: code that isn't committed, issues that aren't closed, and state that isn't synced don't exist to the next session or to other workers. Committing and closing are part of completing a task in this project — not a separate action that requires additional permission. Reference the issue ID in commit messages to connect the code change to its context.
 
 New work mid-task: `bw create "Title" -p 2 -t task`. Larger efforts: structure as an epic with children and dependencies so `bw ready` feeds you the next step automatically.
 
