@@ -2,13 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T01:31:16Z",
+  "close_reason": "done",
   "created": "2026-02-20T22:14:27Z",
   "description": "",
   "id": "bw-qi2",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "TTY-aware color output with Writer interface",
   "type": "task",
-  "updated_at": "2026-02-20T22:14:27Z"
+  "updated_at": "2026-02-21T01:31:16Z"
 }
