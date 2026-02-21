@@ -6,13 +6,31 @@ import "strings"
 // Directives are HTML comments: <!-- IF key == value --> and <!-- END -->.
 // Lines containing only a directive are stripped from output.
 // Content between IF/END is included only when the config matches.
+// Plain HTML comments (<!-- ... -->, including multi-line) are stripped entirely.
 func Process(text string, config map[string]string) string {
 	lines := strings.Split(text, "\n")
 	var out []string
 	skipDepth := 0
+	inComment := false
 
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
+
+		// Multi-line HTML comment stripping (non-directive comments).
+		if !inComment && strings.HasPrefix(trimmed, "<!--") &&
+			!strings.HasPrefix(trimmed, "<!-- IF ") && trimmed != "<!-- END -->" {
+			if !strings.Contains(trimmed, "-->") {
+				inComment = true
+			}
+			// Single-line plain comment: just skip it.
+			continue
+		}
+		if inComment {
+			if strings.Contains(trimmed, "-->") {
+				inComment = false
+			}
+			continue
+		}
 
 		if cond, ok := parseIF(trimmed); ok {
 			if skipDepth > 0 {

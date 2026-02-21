@@ -90,6 +90,33 @@ func TestProcessUnmatchedEnd(t *testing.T) {
 	}
 }
 
+func TestProcessSingleLineComment(t *testing.T) {
+	input := "before\n<!-- this is a comment -->\nafter"
+	got := Process(input, nil)
+	want := "before\nafter"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestProcessMultiLineComment(t *testing.T) {
+	input := "before\n<!--\nDesign notes:\n1. Be concise\n2. Be clear\n-->\nafter"
+	got := Process(input, nil)
+	want := "before\nafter"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestProcessCommentDoesNotAffectDirectives(t *testing.T) {
+	input := "<!--\nA comment block\n-->\nbefore\n<!-- IF x == y -->\nconditional\n<!-- END -->\nafter"
+	got := Process(input, map[string]string{"x": "y"})
+	want := "before\nconditional\nafter"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
 func TestProcessMixedContent(t *testing.T) {
 	input := "# Header\n\nPlain text.\n\n<!-- IF workflow.review == pr -->\n## Code Review\n\nPush branches.\n<!-- END -->\n\n## Footer\n"
 	cfg := map[string]string{"workflow.review": "pr"}
