@@ -6,9 +6,15 @@
   "description": "",
   "id": "bw-jdy",
   "labels": [],
+  "comments": [
+    {
+      "text": "Implemented inline dependency display in list, ready, and blocked output. Added formatDeps helper in helpers.go that renders [blocks: ...] and [blocked by: ...] suffixes. Updated list.go, ready.go, and blocked.go to append dependency info. For blocked.go, also added a 'Blocks:' line when a blocked issue itself blocks others. Updated existing tests in scenario_test.go and cli_test.go to use line-based issue ID checking (hasListedIssue/assertNotListedIssue) since dependency IDs now appear in output. Added comprehensive new tests: 5 formatDeps unit tests, 3 list dep tests, 2 ready dep tests, and 2 blocked dep tests.",
+      "timestamp": "2026-02-21T01:42:28Z"
+    }
+  ],
   "priority": 2,
   "status": "in_progress",
   "title": "Show blocking/blocked-by relationships in list output",
   "type": "feature",
-  "updated_at": "2026-02-21T01:35:09Z"
+  "updated_at": "2026-02-21T01:42:28Z"
 }
