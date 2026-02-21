@@ -14,9 +14,9 @@ has any other context about the project's workflow.
    understand *why* beadwork exists (durability across context loss) so it
    can make a reasonable decision about when to use it vs. its built-in tools.
 
-3. Tell the agent how to get oriented. The key action is `bw prime` — that's
-   where the full workflow, current state, and ready queue live. This snippet
-   should make that the obvious next step.
+3. Make prime unconditional. The agent should run `bw prime` at the start of
+   every session — not conditionally, not only when it thinks it lacks context.
+   Conditional triggers get parsed narrowly and skipped.
 
 4. Give one actionable starting point. `bw ready` is the natural first command
    for an agent that already has context. Including it here means an agent
@@ -42,7 +42,7 @@ has any other context about the project's workflow.
 
 This project tracks work with `bw` (beadwork), which persists to git — it survives compaction, session boundaries, and context loss.
 
-If you don't have context about current work — new session, compaction, or just unsure — run `bw prime`. It shows the workflow, your current issues, and where things left off.
+Run `bw prime` at the start of every session. It shows the workflow, current issues, and where things left off.
 
 Completing a task means committing code, closing the issue (`bw close`), and syncing (`bw sync`). These are part of the work, not separate actions requiring additional permission.
 
