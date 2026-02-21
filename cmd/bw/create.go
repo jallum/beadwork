@@ -17,12 +17,13 @@ type CreateArgs struct {
 	DeferUntil  string
 	Labels      []string
 	JSON        bool
+	Silent      bool
 }
 
 func parseCreateArgs(raw []string) (CreateArgs, error) {
 	a, err := ParseArgs(raw,
 		[]string{"--priority", "--type", "--assignee", "--description", "--defer", "--labels", "--parent"},
-		[]string{"--json"},
+		[]string{"--json", "--silent"},
 	)
 	if err != nil {
 		return CreateArgs{}, err
@@ -42,6 +43,7 @@ func parseCreateArgs(raw []string) (CreateArgs, error) {
 	ca.DeferUntil = a.String("--defer")
 	ca.Parent = a.String("--parent")
 	ca.JSON = a.JSON()
+	ca.Silent = a.Bool("--silent")
 	if a.Has("--priority") {
 		p, err := parsePriority(a.String("--priority"))
 		if err != nil {
@@ -105,7 +107,9 @@ func cmdCreate(args []string, w Writer) error {
 		return fmt.Errorf("commit failed: %w", err)
 	}
 
-	if ca.JSON {
+	if ca.Silent {
+		fmt.Fprintln(w, iss.ID)
+	} else if ca.JSON {
 		fprintJSON(w, iss)
 	} else {
 		fmt.Fprintf(w, "created %s: %s\n", iss.ID, iss.Title)

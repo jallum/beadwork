@@ -85,11 +85,13 @@ var commands = []Command{
 			{Long: "--defer", Value: "DATE", Help: "Defer until date (YYYY-MM-DD)"},
 			{Long: "--parent", Value: "ID", Help: "Parent issue ID"},
 			{Long: "--json", Help: "Output as JSON"},
+			{Long: "--silent", Help: "Output bare issue ID only"},
 		},
 		Examples: []Example{
 			{Cmd: `bw create "Fix login bug" --priority 1 --type bug`},
 			{Cmd: `bw create "New feature" -a alice`},
 			{Cmd: `bw create "Q3 planning" --defer 2027-07-01`},
+			{Cmd: `bw create "Fix bug" --silent`, Help: "Output bare ID for scripting"},
 		},
 		Run: cmdCreate,
 	},

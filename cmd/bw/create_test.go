@@ -103,6 +103,55 @@ func TestCmdCreateWithLabels(t *testing.T) {
 	}
 }
 
+func TestCmdCreateSilent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdCreate([]string{"Silent test", "--silent"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdCreate: %v", err)
+	}
+	out := strings.TrimSpace(buf.String())
+
+	// Silent output should be the bare issue ID only
+	issues, _ := env.Store.List(issue.Filter{})
+	if len(issues) != 1 {
+		t.Fatalf("expected 1 issue, got %d", len(issues))
+	}
+	if out != issues[0].ID {
+		t.Errorf("silent output = %q, want bare ID %q", out, issues[0].ID)
+	}
+
+	// Should NOT contain the human-readable "created" prefix
+	if strings.Contains(buf.String(), "created") {
+		t.Errorf("silent output should not contain 'created': %q", buf.String())
+	}
+}
+
+func TestCmdCreateSilentNoExtraOutput(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdCreate([]string{"Silent only ID", "--silent"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdCreate: %v", err)
+	}
+	out := buf.String()
+
+	// Output should be exactly one line: the issue ID followed by a newline
+	lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
+	if len(lines) != 1 {
+		t.Errorf("expected 1 line of output, got %d: %q", len(lines), out)
+	}
+
+	// The line should match the issue ID prefix pattern
+	if !strings.HasPrefix(lines[0], env.Store.Prefix+"-") {
+		t.Errorf("silent output %q does not start with prefix %q", lines[0], env.Store.Prefix+"-")
+	}
+}
+
 func TestCmdCreateWithLabelsJSON(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
