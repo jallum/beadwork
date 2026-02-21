@@ -2,6 +2,7 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T01:44:09Z",
   "created": "2026-02-20T18:21:18Z",
   "description": "Output bare issue ID only, enabling scripting patterns like id=$(bw create \"Fix bug\" --silent). Useful for piping into other commands without parsing human-readable output.",
   "id": "bw-3433",
@@ -13,8 +14,8 @@
     }
   ],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add --silent flag to create",
   "type": "feature",
-  "updated_at": "2026-02-21T01:38:22Z"
+  "updated_at": "2026-02-21T01:44:09Z"
 }
