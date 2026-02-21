@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "claude",
   "blocked_by": [
     "bw-66cb.1"
   ],
@@ -12,8 +12,8 @@
   "labels": [],
   "parent": "bw-66cb",
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Add BLOCKED BY / BLOCKS sections to show using tip-walking",
   "type": "task",
-  "updated_at": "2026-02-21T13:29:47Z"
+  "updated_at": "2026-02-21T13:47:11Z"
 }
