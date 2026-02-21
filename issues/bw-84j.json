@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-21T14:31:18Z",
+  "description": "## Summary\n\nAdd a `bw start \u003cid\u003e` command that owns the \"pick up work\" workflow. It's the natural counterpart to `bw close` — together they bookend the lifecycle of working on an issue.\n\n## Behavior\n\n`bw start \u003cid\u003e [--assignee \u003cname\u003e]`\n\n1. Resolve the issue ID\n2. **Validate the issue is startable:**\n   - Must be open (not closed, not already in_progress)\n   - Must not be blocked — if it is, error with the list of open blockers and suggest `bw ready`\n3. Move status to `in_progress`\n4. Set assignee:\n   - If `--assignee` provided, use that\n   - Otherwise, default to `git config user.name`\n5. Set `updated_at`\n6. Commit and print confirmation\n\n### Example output\n\n```\n$ bw start bw-0ym\nstarted bw-0ym: Refactor issue.go into smaller files (agent: jallum)\n```\n\n### Error case — blocked\n\n```\n$ bw start bw-0ym\nerror: bw-0ym is blocked by:\n  ○ bw-66cb: Evaluate bd dep tree equivalent\n  ○ bw-01c3: Evaluate bd graph output formats\n\nuse bw ready to find available work\n```\n\n### Flags\n\n- `--assignee \u003cname\u003e` / `-a` — override the default assignee\n- `--json` — output result as JSON\n\n## Side effects\n\n- Simplify the prime prompt: replace the two-step \"update status + assignee\" dance with `bw start \u003cid\u003e`\n- Drop `--assignee` from `bw create` (assignment means active work, not planning)\n- Update the multi-agent conditional in prime.md to use `start` instead of `update --status in_progress --assignee`",
+  "id": "bw-84j",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Add bw start command",
+  "type": "task",
+  "updated_at": "2026-02-21T14:31:18Z"
+}
