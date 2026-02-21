@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.0 — 2026-02-21
+
+- **New `bw start` command** — claims and begins work on an issue in one step. Validates the issue is open and unblocked, moves it to `in_progress`, and assigns from `git config user.name` (or `--assignee`). If the issue has unresolved blockers, it shows the blocker titles and suggests `bw ready`. The `--assignee` flag has been removed from `bw create` — assignment now means active work, not planning.
+- **Actionable tips in `bw show`** — dependency sections now walk the blocker tree to surface only the leaf issues that need work. If A←B←C←D, showing A displays only D. New BLOCKED BY and UNBLOCKS sections replace the old flat dependency lists. Use `--only` to filter output to specific sections (replaces `--short`).
+- **`bw graph` removed** — its job is now done better by show's dependency sections.
+- **`bw close` strikethroughs the title** for a visual "done" cue.
+- **`bw prime` injects project state inline** — ready queue and issue counts now appear in context under "Finding and Doing Work" rather than appended at the end.
+- **Reworked `bw prime` and `bw onboard` prompts** — prime now emphasizes landing the work (commit, close, sync) and connects issues to commits. The onboard prompt has also changed — if you've customized your agent configuration based on the old output, re-run `bw onboard` to pick up the new version.
+- **Sync uses system git for network operations** — fixes SSH failures on macOS when the SSH agent has no loaded keys.
+
 ## 0.6.2 — 2026-02-20
 
 - `bw show` wraps long text to terminal width with indent-aware formatting
