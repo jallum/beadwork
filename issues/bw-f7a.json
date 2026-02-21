@@ -13,11 +13,15 @@
     {
       "text": "Added Width() to Writer interface (colorWriter returns term.GetSize, plainWriter returns 0). fprintIssue wraps description at width-2, fprintComments wraps comment text at width-4. Two new tests verify wrapping with a fixedWidthWriter test helper.",
       "timestamp": "2026-02-21T02:32:58Z"
+    },
+    {
+      "text": "Reopening to rework: replacing hacky width-N arithmetic with indent-aware Writer. Consolidating plainWriter/colorWriter into single struct with Push/Pop indent stack. Width() auto-adjusts for current indent. Write() auto-prefixes lines.",
+      "timestamp": "2026-02-21T02:49:13Z"
     }
   ],
   "priority": 2,
   "status": "closed",
   "title": "Wrap long text in show output",
   "type": "task",
-  "updated_at": "2026-02-21T02:33:01Z"
+  "updated_at": "2026-02-21T02:49:13Z"
 }
