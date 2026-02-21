@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "bw-os0.2"
+  ],
   "created": "2026-02-21T23:10:04Z",
   "description": "Add StatusCount(status) int, IDsWithStatus(status) []string, and IsClosed(id) bool to Store. Thin wrappers around ReadDir/Stat on the status index directories. StatusCount counts entries without deserialization. IDsWithStatus returns IDs from a status directory. IsClosed does a single Stat on status/closed/{id}.",
   "id": "bw-os0.1",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Add status-querying helpers to Store",
   "type": "task",
-  "updated_at": "2026-02-21T23:10:04Z"
+  "updated_at": "2026-02-21T23:10:24Z"
 }
