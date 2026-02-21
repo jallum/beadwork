@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T19:07:32Z",
   "created": "2026-02-21T13:28:43Z",
   "description": "## Problem\n\n`internal/issue/issue.go` is 1,044 lines and `issue_test.go` is 2,432 lines. The file covers ~13 distinct concerns in a single file, making it hard to navigate and maintain.\n\n## Approach\n\nSplit into smaller files within the same `package issue` — no API changes, purely structural. Each file gets its corresponding `_test.go`.\n\n### Target file layout\n\n| File | Concern | Approx lines |\n|------|---------|-------------|\n| `issue.go` | Types: `Issue`, `Comment`, `Store`, opts structs, `Filter` | ~100 |\n| `status.go` | `StatusInfo`, `Statuses`, `StatusNames()`, `StatusIcon()`, `PriorityColors`, `PriorityDot()` | ~60 |\n| `create.go` | `NewStore()`, `Create()`, `Import()`, `Get()` | ~80 |\n| `update.go` | `Update()`, `Close()`, `Reopen()` | ~130 |\n| `list.go` | `List()` with filtering/sorting | ~60 |\n| `blocking.go` | `Link()`, `Unlink()`, `Ready()`, `Blocked()`, `NewlyUnblocked()`, `BlockedIssue`, `CloseResult` | ~200 |\n| `graph.go` | `Graph()`, `GraphNode`, `walkGraph()` | ~110 |\n| `label.go` | `Label()` | ~50 |\n| `comment.go` | `Comment()` | ~25 |\n| `delete.go` | `DeletePlan`, `DeletePreview()`, `Delete()` | ~100 |\n| `id.go` | `generateID()`, `generateChildID()`, `ExistingIDs()`, `resolveID()` | ~90 |\n| `persist.go` | `readIssue()`, `writeIssue()`, `setStatus()`, `moveStatus()`, `containsStr()`, `removeStr()` | ~50 |\n\nTest files follow the same split (e.g. `blocking_test.go`, `create_test.go`, etc.). `comment_test.go` already exists separately.\n\n### Constraints\n\n- Same package, no API changes — purely a file reorganization\n- Shared helpers (`containsStr`, `removeStr`, persistence) go in `persist.go`\n- Move tests in the same commit as their source to keep bisect clean\n- One commit per file extraction to make review easy, OR one big atomic move",
   "id": "bw-0ym",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Refactor issue.go into smaller, idiomatic Go files",
   "type": "task",
-  "updated_at": "2026-02-21T19:03:02Z"
+  "updated_at": "2026-02-21T19:07:32Z"
 }
