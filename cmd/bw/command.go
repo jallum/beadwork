@@ -322,23 +322,6 @@ var commands = []Command{
 		Run: cmdHistory,
 	},
 	{
-		Name:        "graph",
-		Summary:     "Dependency graph",
-		Description: "Display the dependency graph for an issue or all open issues.\nWith --all, shows all open issues grouped by connected component.",
-		Positionals: []Positional{
-			{Name: "<id>", Help: "Root issue ID (or use --all)"},
-		},
-		Flags: []Flag{
-			{Long: "--all", Help: "Show all open issues"},
-			{Long: "--json", Help: "Output as JSON"},
-		},
-		Examples: []Example{
-			{Cmd: "bw graph bw-a3f8"},
-			{Cmd: "bw graph --all"},
-		},
-		Run: cmdGraph,
-	},
-	{
 		Name:        "sync",
 		Summary:     "Fetch, rebase/replay, push",
 		Description: "Fetch from remote, rebase local commits, and push.\nUses intent replay to resolve conflicts automatically.",
@@ -455,7 +438,7 @@ var commandGroups = []struct {
 }{
 	{"Working With Issues", []string{"create", "show", "list", "update", "close", "reopen", "delete", "comments", "label", "defer", "undefer", "history"}},
 	{"Finding Work", []string{"ready", "blocked"}},
-	{"Dependencies", []string{"dep", "graph"}},
+	{"Dependencies", []string{"dep"}},
 	{"Sync & Data", []string{"sync", "export", "import"}},
 	{"Setup & Config", []string{"init", "config", "upgrade", "onboard", "prime"}},
 }

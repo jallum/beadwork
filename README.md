@@ -29,7 +29,7 @@ bw sync                                           # push to remote
 **Working With Issues**
 ```
 bw create <title> [flags]           Create an issue (--parent, --type, -p, --silent)
-bw show <id>... [--short] [--json]  Show issue details (aliases: view)
+bw show <id>... [--only <sections>] [--json]  Show issue details with deps (aliases: view)
 bw list [filters] [--json]          List issues (--grep, --all, --deferred)
 bw update <id> [flags]              Update an issue (--parent to set/clear)
 bw close <id> [--reason <r>]        Close an issue
@@ -53,7 +53,6 @@ bw blocked [--json]            List issues waiting on dependencies
 ```
 bw dep add <id> blocks <id>    Add a dependency
 bw dep remove <id> blocks <id> Remove a dependency
-bw graph <id>|--all [--json]   Dependency graph
 ```
 
 **Sync & Data**

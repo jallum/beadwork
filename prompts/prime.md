@@ -23,7 +23,7 @@ Every command supports `--help`. Read commands accept `--json`.
 bw ready                               # Unblocked work
 bw blocked                             # Issues waiting on dependencies
 bw list                                # Open + in-progress issues (--all, --grep, --status, --label)
-bw show <id>                           # Full detail with deps and comments
+bw show <id>                           # Full detail with actionable blockers and comments
 bw history <id>                        # Mutation log from git history
 bw create "Title" -p 2 -t task         # New issue (P0-P4; task, bug, or epic)
 bw update <id> --status in_progress    # Change fields (--title, --priority, --assignee, --parent)

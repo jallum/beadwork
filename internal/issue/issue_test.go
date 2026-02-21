@@ -470,45 +470,6 @@ func TestLabelDirectoryCleanup(t *testing.T) {
 	}
 }
 
-func TestGraph(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	a, _ := env.Store.Create("Root", issue.CreateOpts{})
-	b, _ := env.Store.Create("Middle", issue.CreateOpts{})
-	c, _ := env.Store.Create("Leaf", issue.CreateOpts{})
-	env.Store.Link(a.ID, b.ID)
-	env.Store.Link(b.ID, c.ID)
-	env.CommitIntent("setup graph")
-
-	// Full graph
-	nodes, err := env.Store.Graph("")
-	if err != nil {
-		t.Fatalf("Graph: %v", err)
-	}
-	if len(nodes) != 3 {
-		t.Errorf("got %d nodes, want 3", len(nodes))
-	}
-
-	// Rooted graph
-	nodes, err = env.Store.Graph(a.ID)
-	if err != nil {
-		t.Fatalf("Graph rooted: %v", err)
-	}
-	if len(nodes) != 3 {
-		t.Errorf("rooted got %d nodes, want 3 (a->b->c)", len(nodes))
-	}
-
-	// Rooted at middle
-	nodes, err = env.Store.Graph(b.ID)
-	if err != nil {
-		t.Fatalf("Graph rooted at middle: %v", err)
-	}
-	if len(nodes) != 2 {
-		t.Errorf("middle-rooted got %d nodes, want 2 (b->c)", len(nodes))
-	}
-}
-
 func TestListByStatus(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -920,48 +881,6 @@ func TestGetNonExistent(t *testing.T) {
 	}
 }
 
-func TestGraphEmpty(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	// No issues at all — graph should return empty
-	nodes, err := env.Store.Graph("")
-	if err != nil {
-		t.Fatalf("Graph: %v", err)
-	}
-	if len(nodes) != 0 {
-		t.Errorf("got %d nodes, want 0", len(nodes))
-	}
-}
-
-func TestGraphRootedSubset(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	a, _ := env.Store.Create("Root A", issue.CreateOpts{})
-	b, _ := env.Store.Create("Child B", issue.CreateOpts{})
-	c, _ := env.Store.Create("Independent C", issue.CreateOpts{})
-	env.Store.Link(a.ID, b.ID)
-	env.CommitIntent("setup")
-
-	// Rooted at A should only return A and B, not C
-	nodes, err := env.Store.Graph(a.ID)
-	if err != nil {
-		t.Fatalf("Graph: %v", err)
-	}
-	ids := make(map[string]bool)
-	for _, n := range nodes {
-		ids[n.ID] = true
-	}
-	if !ids[a.ID] || !ids[b.ID] {
-		t.Error("expected A and B in rooted graph")
-	}
-	if ids[c.ID] {
-		t.Error("C should not be in graph rooted at A")
-	}
-	_ = c
-}
-
 func TestLinkNonExistentBlocker(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -1000,45 +919,6 @@ func TestReadCorruptJSON(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "corrupt") {
 		t.Errorf("error = %q, want 'corrupt'", err.Error())
-	}
-}
-
-func TestGraphNonexistentRootReturnsError(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	env.Store.Create("Exists", issue.CreateOpts{})
-	env.CommitIntent("create")
-
-	_, err := env.Store.Graph("nonexistent")
-	if err == nil {
-		t.Error("expected error for nonexistent root ID")
-	}
-}
-
-func TestGraphNoRelationshipsShowsOpen(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	// Create issues without any links
-	env.Store.Create("Standalone A", issue.CreateOpts{})
-	env.Store.Create("Standalone B", issue.CreateOpts{})
-	iss3, _ := env.Store.Create("Closed one", issue.CreateOpts{})
-	env.Store.Close(iss3.ID, "")
-	env.CommitIntent("setup")
-
-	// Graph with no root and no edges: should show all open issues
-	nodes, err := env.Store.Graph("")
-	if err != nil {
-		t.Fatalf("Graph: %v", err)
-	}
-	if len(nodes) != 2 {
-		t.Errorf("got %d nodes, want 2 (only open issues)", len(nodes))
-	}
-	for _, n := range nodes {
-		if n.Status == "closed" {
-			t.Error("closed issue should not appear in graph without edges")
-		}
 	}
 }
 

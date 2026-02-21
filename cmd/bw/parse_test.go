@@ -400,51 +400,6 @@ func TestParseImportArgsMissingFile(t *testing.T) {
 	}
 }
 
-// --- parseGraphArgs ---
-
-func TestParseGraphArgsWithID(t *testing.T) {
-	a, err := parseGraphArgs([]string{"bw-1234"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if a.RootID != "bw-1234" {
-		t.Errorf("RootID = %q", a.RootID)
-	}
-	if a.All {
-		t.Error("expected All = false")
-	}
-}
-
-func TestParseGraphArgsAll(t *testing.T) {
-	a, err := parseGraphArgs([]string{"--all"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !a.All {
-		t.Error("expected All = true")
-	}
-	if a.RootID != "" {
-		t.Errorf("RootID = %q, want empty", a.RootID)
-	}
-}
-
-func TestParseGraphArgsMissing(t *testing.T) {
-	_, err := parseGraphArgs([]string{})
-	if err == nil {
-		t.Error("expected error when no ID and no --all")
-	}
-}
-
-func TestParseGraphArgsJSON(t *testing.T) {
-	a, err := parseGraphArgs([]string{"--all", "--json"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !a.JSON {
-		t.Error("expected JSON = true")
-	}
-}
-
 // --- parseListArgs ---
 
 func TestParseListArgsDefaults(t *testing.T) {
