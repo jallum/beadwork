@@ -3,8 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
@@ -78,15 +76,4 @@ func cmdStart(args []string, w Writer) error {
 		fmt.Fprintf(w, "started %s: %s (%s)\n", iss.ID, iss.Title, assignee)
 	}
 	return nil
-}
-
-// gitUserName returns git config user.name, or "unknown" if unavailable.
-func gitUserName(gitDir string) string {
-	cmd := exec.Command("git", "config", "user.name")
-	cmd.Dir = filepath.Dir(gitDir)
-	out, err := cmd.Output()
-	if err != nil {
-		return "unknown"
-	}
-	return strings.TrimSpace(string(out))
 }
