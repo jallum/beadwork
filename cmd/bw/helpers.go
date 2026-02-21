@@ -182,6 +182,23 @@ func parsePriority(s string) (int, error) {
 	return n, nil
 }
 
+// formatDeps returns a compact inline dependency string for list output.
+// Example: " [blocks: bw-abc, bw-def] [blocked by: bw-xyz]"
+// Returns "" when there are no dependencies.
+func formatDeps(iss *issue.Issue) string {
+	var parts []string
+	if len(iss.Blocks) > 0 {
+		parts = append(parts, "[blocks: "+strings.Join(iss.Blocks, ", ")+"]")
+	}
+	if len(iss.BlockedBy) > 0 {
+		parts = append(parts, "[blocked by: "+strings.Join(iss.BlockedBy, ", ")+"]")
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return " " + strings.Join(parts, " ")
+}
+
 func fprintJSON(w Writer, v interface{}) {
 	data, _ := json.MarshalIndent(v, "", "  ")
 	fmt.Fprintln(w, string(data))

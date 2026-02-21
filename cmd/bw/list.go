@@ -108,13 +108,14 @@ func cmdList(args []string, w Writer) error {
 		}
 		for _, iss := range displayed {
 			ps := PriorityStyle(iss.Priority)
-			fmt.Fprintf(w, "%s %s [%s %s] [%s] - %s\n",
+			fmt.Fprintf(w, "%s %s [%s %s] [%s] - %s%s\n",
 				issue.StatusIcon(iss.Status),
 				iss.ID,
 				w.Style("●", ps),
 				w.Style(fmt.Sprintf("P%d", iss.Priority), ps),
 				iss.Type,
 				iss.Title,
+				formatDeps(iss),
 			)
 		}
 		if limit > 0 && len(issues) > limit {

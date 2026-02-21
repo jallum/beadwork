@@ -54,6 +54,9 @@ func cmdBlocked(args []string, w Writer) error {
 			bi.Title,
 		)
 		fmt.Fprintf(w, "  Blocked by: %s\n", strings.Join(bi.OpenBlockers, ", "))
+		if len(bi.Blocks) > 0 {
+			fmt.Fprintf(w, "  Blocks: %s\n", strings.Join(bi.Blocks, ", "))
+		}
 	}
 	return nil
 }

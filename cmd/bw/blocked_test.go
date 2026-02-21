@@ -196,6 +196,62 @@ func TestCmdBlockedPartiallyResolved(t *testing.T) {
 	}
 }
 
+func TestCmdBlockedShowsBlocksLine(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Chain: a blocks b blocks c
+	a, _ := env.Store.Create("First", issue.CreateOpts{})
+	b, _ := env.Store.Create("Middle", issue.CreateOpts{})
+	c, _ := env.Store.Create("Last", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Link(b.ID, c.ID)
+	env.Repo.Commit("chain")
+
+	var buf bytes.Buffer
+	err := cmdBlocked([]string{}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdBlocked: %v", err)
+	}
+	out := buf.String()
+
+	// b is blocked and also blocks c, so it should show "Blocks: c.ID"
+	if !strings.Contains(out, "Blocks: "+c.ID) {
+		t.Errorf("blocked output should show Blocks line for middle issue: %q", out)
+	}
+
+	// c is blocked but doesn't block anything — no Blocks line
+	// Split output by issue entries and check c's section
+	if !strings.Contains(out, "Blocked by: "+a.ID) {
+		t.Errorf("should show b is blocked by a: %q", out)
+	}
+	if !strings.Contains(out, "Blocked by: "+b.ID) {
+		t.Errorf("should show c is blocked by b: %q", out)
+	}
+}
+
+func TestCmdBlockedNoBlocksLineWhenNotBlocking(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Leaf blocked", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Repo.Commit("link")
+
+	var buf bytes.Buffer
+	err := cmdBlocked([]string{}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdBlocked: %v", err)
+	}
+	out := buf.String()
+
+	// b is blocked but doesn't block anything — should not have "Blocks:" line
+	if strings.Contains(out, "Blocks:") {
+		t.Errorf("leaf blocked issue should not have Blocks line: %q", out)
+	}
+}
+
 func TestParseBlockedArgs(t *testing.T) {
 	ba, err := parseBlockedArgs([]string{})
 	if err != nil {

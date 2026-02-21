@@ -151,3 +151,79 @@ func TestCmdListGrepShortFlag(t *testing.T) {
 		t.Errorf("-g login should match: %q", buf.String())
 	}
 }
+
+func TestCmdListShowsDeps(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker task", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked task", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Repo.Commit("create and link")
+
+	var buf bytes.Buffer
+	err := cmdList([]string{}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdList: %v", err)
+	}
+	out := buf.String()
+
+	// Blocker should show [blocks: <b.ID>]
+	if !strings.Contains(out, "[blocks: "+b.ID+"]") {
+		t.Errorf("output should show blocks for blocker: %q", out)
+	}
+
+	// Blocked should show [blocked by: <a.ID>]
+	if !strings.Contains(out, "[blocked by: "+a.ID+"]") {
+		t.Errorf("output should show blocked by for blocked task: %q", out)
+	}
+}
+
+func TestCmdListNoDepsNoBrackets(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("Standalone task", issue.CreateOpts{})
+	env.Repo.Commit("create issue")
+
+	var buf bytes.Buffer
+	err := cmdList([]string{}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdList: %v", err)
+	}
+	out := buf.String()
+
+	if strings.Contains(out, "[blocks:") || strings.Contains(out, "[blocked by:") {
+		t.Errorf("standalone issue should not show dep brackets: %q", out)
+	}
+}
+
+func TestCmdListShowsMultipleDeps(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker A", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocker B", issue.CreateOpts{})
+	c, _ := env.Store.Create("Blocked by both", issue.CreateOpts{})
+	env.Store.Link(a.ID, c.ID)
+	env.Store.Link(b.ID, c.ID)
+	env.Repo.Commit("create and link")
+
+	var buf bytes.Buffer
+	err := cmdList([]string{}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdList: %v", err)
+	}
+	out := buf.String()
+
+	// C should show both blockers (order is sorted alphabetically)
+	if !strings.Contains(out, "[blocked by:") {
+		t.Errorf("output should show blocked by for C: %q", out)
+	}
+	if !strings.Contains(out, a.ID) {
+		t.Errorf("output should mention blocker A (%s): %q", a.ID, out)
+	}
+	if !strings.Contains(out, b.ID) {
+		t.Errorf("output should mention blocker B (%s): %q", b.ID, out)
+	}
+}

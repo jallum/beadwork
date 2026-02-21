@@ -349,8 +349,9 @@ func TestReadyOutput(t *testing.T) {
 	assertContains(t, out, a.ID)
 	assertContains(t, out, "Blocker")
 
-	// Blocked task should not appear
-	assertNotContains(t, out, b.ID)
+	// Blocked task should not appear as a listed issue
+	// (its ID may appear in [blocks: ...] suffix on the blocker line)
+	assertNotListedIssue(t, out, b.ID)
 
 	// Footer
 	assertContains(t, out, "Ready:")
@@ -758,6 +759,21 @@ func assertNotContains(t *testing.T, output, substr string) {
 	t.Helper()
 	if strings.Contains(output, substr) {
 		t.Errorf("output should not contain %q:\n%s", substr, output)
+	}
+}
+
+// assertNotListedIssue checks that an issue ID does not appear as a primary
+// listed issue in the output (i.e., as the second field on a line, after the
+// status icon). The ID may still appear in [blocks: ...] or [blocked by: ...]
+// suffixes without triggering a failure.
+func assertNotListedIssue(t *testing.T, output, id string) {
+	t.Helper()
+	for _, line := range strings.Split(output, "\n") {
+		fields := strings.Fields(strings.TrimSpace(line))
+		if len(fields) >= 2 && fields[1] == id {
+			t.Errorf("output should not list issue %q:\n%s", id, output)
+			return
+		}
 	}
 }
 

@@ -47,12 +47,13 @@ func cmdReady(args []string, w Writer) error {
 
 	for _, iss := range issues {
 		ps := PriorityStyle(iss.Priority)
-		fmt.Fprintf(w, "%s %s %s %s %s\n",
+		fmt.Fprintf(w, "%s %s %s %s %s%s\n",
 			issue.StatusIcon(iss.Status),
 			iss.ID,
 			w.Style("●", ps),
 			w.Style(fmt.Sprintf("P%d", iss.Priority), ps),
 			iss.Title,
+			formatDeps(iss),
 		)
 	}
 
