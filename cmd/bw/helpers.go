@@ -10,6 +10,7 @@ import (
 
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/repo"
+	"github.com/jallum/beadwork/internal/wrap"
 )
 
 func getRepo() (*repo.Repo, error) {
@@ -265,7 +266,11 @@ func fprintIssue(w Writer, iss *issue.Issue) {
 	// Description
 	if iss.Description != "" {
 		fmt.Fprintf(w, "\n%s\n\n", w.Style("DESCRIPTION", Bold))
-		for _, line := range strings.Split(iss.Description, "\n") {
+		desc := iss.Description
+		if ww := w.Width(); ww > 4 {
+			desc = wrap.Text(desc, ww-2)
+		}
+		for _, line := range strings.Split(desc, "\n") {
 			fmt.Fprintf(w, "  %s\n", line)
 		}
 	}
@@ -284,7 +289,13 @@ func fprintComments(w Writer, iss *issue.Issue) {
 			} else {
 				fmt.Fprintf(w, "  %s\n", w.Style(ts, Dim))
 			}
-			fmt.Fprintf(w, "    %s\n", c.Text)
+			text := c.Text
+			if ww := w.Width(); ww > 6 {
+				text = wrap.Text(text, ww-4)
+			}
+			for _, line := range strings.Split(text, "\n") {
+				fmt.Fprintf(w, "    %s\n", line)
+			}
 		}
 	}
 }

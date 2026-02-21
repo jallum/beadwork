@@ -2,7 +2,10 @@ package main
 
 import (
 	"io"
+	"os"
 	"strings"
+
+	"golang.org/x/term"
 )
 
 // Style represents an ANSI text style.
@@ -46,16 +49,19 @@ func PriorityStyle(priority int) Style {
 	return Dim
 }
 
-// Writer extends io.Writer with terminal styling.
+// Writer extends io.Writer with terminal styling and width awareness.
 // plainWriter returns strings unchanged; colorWriter wraps with ANSI codes.
 type Writer interface {
 	io.Writer
 	Style(s string, styles ...Style) string
+	// Width returns the terminal width, or 0 if unavailable (disables wrapping).
+	Width() int
 }
 
 type plainWriter struct{ io.Writer }
 
 func (w *plainWriter) Style(s string, _ ...Style) string { return s }
+func (w *plainWriter) Width() int                        { return 0 }
 
 type colorWriter struct{ io.Writer }
 
@@ -72,6 +78,14 @@ func (w *colorWriter) Style(s string, styles ...Style) string {
 	b.WriteString(s)
 	b.WriteString(reset)
 	return b.String()
+}
+
+func (w *colorWriter) Width() int {
+	width, _, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		return 0
+	}
+	return width
 }
 
 // PlainWriter returns a Writer that ignores all styling.

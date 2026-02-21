@@ -213,6 +213,82 @@ func TestFprintIssue(t *testing.T) {
 	}
 }
 
+// fixedWidthWriter wraps a plainWriter with a fixed width for testing wrapping.
+type fixedWidthWriter struct {
+	Writer
+	width int
+}
+
+func (w *fixedWidthWriter) Width() int { return w.width }
+
+func TestFprintIssueWrapsDescription(t *testing.T) {
+	iss := &issue.Issue{
+		ID:          "test-wrap",
+		Title:       "Wrap test",
+		Status:      "open",
+		Priority:    2,
+		Type:        "task",
+		Created:     "2024-01-15T12:00:00Z",
+		Description: "This is a long description that should be wrapped when the terminal width is narrow enough to trigger wrapping behavior",
+	}
+
+	var buf bytes.Buffer
+	w := &fixedWidthWriter{PlainWriter(&buf), 40}
+	fprintIssue(w, iss)
+	out := buf.String()
+
+	// With width=40 and 2-char indent, lines wrap at 38 chars.
+	// Each content line (after indent) should be at most 38 chars.
+	inDesc := false
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "DESCRIPTION") {
+			inDesc = true
+			continue
+		}
+		if !inDesc || line == "" {
+			continue
+		}
+		content := strings.TrimPrefix(line, "  ")
+		if len(content) > 38 {
+			t.Errorf("description line exceeds width: %d chars: %q", len(content), content)
+		}
+	}
+}
+
+func TestFprintCommentsWrapsText(t *testing.T) {
+	iss := &issue.Issue{
+		ID:       "test-cwrap",
+		Title:    "Comment wrap test",
+		Status:   "open",
+		Priority: 2,
+		Type:     "task",
+		Created:  "2024-01-15T12:00:00Z",
+		Comments: []issue.Comment{
+			{
+				Timestamp: "2024-01-16T10:00:00Z",
+				Text:      "This is a long comment that should be wrapped when the terminal width is narrow enough to trigger wrapping",
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	w := &fixedWidthWriter{PlainWriter(&buf), 40}
+	fprintComments(w, iss)
+	out := buf.String()
+
+	// With width=40 and 4-char indent, content lines wrap at 36 chars.
+	lines := strings.Split(out, "\n")
+	for _, line := range lines {
+		if !strings.HasPrefix(line, "    ") {
+			continue
+		}
+		content := strings.TrimPrefix(line, "    ")
+		if len(content) > 36 {
+			t.Errorf("comment line exceeds width: %d chars: %q", len(content), content)
+		}
+	}
+}
+
 func TestFprintIssueFull(t *testing.T) {
 	iss := &issue.Issue{
 		ID:          "test-5678",
