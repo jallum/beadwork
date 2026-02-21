@@ -2,7 +2,8 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [
-    "bw-os0.2"
+    "bw-os0.2",
+    "bw-os0.3"
   ],
   "created": "2026-02-21T23:10:04Z",
   "description": "Add StatusCount(status) int, IDsWithStatus(status) []string, and IsClosed(id) bool to Store. Thin wrappers around ReadDir/Stat on the status index directories. StatusCount counts entries without deserialization. IDsWithStatus returns IDs from a status directory. IsClosed does a single Stat on status/closed/{id}.",

@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-os0.1"
+  ],
   "blocks": [],
   "created": "2026-02-21T23:10:12Z",
   "description": "Counts from StatusCount() — zero deserialization. In-progress list from IDsWithStatus('in_progress') + readIssue for each. Ready list from store.Ready() (rewritten in .2). No Snapshot.",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Rewrite prime to use StatusCount and targeted queries",
   "type": "task",
-  "updated_at": "2026-02-21T23:10:12Z"
+  "updated_at": "2026-02-21T23:10:24Z"
 }
