@@ -26,7 +26,7 @@
   ],
   "priority": 2,
   "status": "in_progress",
-  "title": "Evaluate bd dep tree equivalent",
-  "type": "task",
-  "updated_at": "2026-02-21T13:25:18Z"
+  "title": "Dependency graph: surface actionable tips in show and ready",
+  "type": "epic",
+  "updated_at": "2026-02-21T13:29:00Z"
 }
