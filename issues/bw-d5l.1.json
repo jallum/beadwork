@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "bw-d5l.2"
+  ],
   "created": "2026-02-21T15:31:30Z",
   "description": "Ref: parent epic bw-d5l, Phase 1.\n\n1. In command.go, add `NeedsStore bool` to Command struct.\n2. Change Run signature from `func(args []string, w Writer) error` to `func(r *repo.Repo, store *issue.Store, args []string, w Writer) error`.\n3. In main.go dispatch, conditionally call getInitializedRepo() when c.NeedsStore is true, pass (r, store) to Run. Pass (nil, nil) otherwise.\n4. Update all 23 command definitions:\n   - 20 commands that call getInitializedRepo(): set NeedsStore: true, remove internal getInitializedRepo() call, use injected params.\n   - 3 commands that don't (init, onboard, upgrade): set NeedsStore: false, accept but ignore nil params.\n5. Keep getInitializedRepo() in helpers.go — main.go still calls it.\n6. All tests must compile and pass after this change.",
   "id": "bw-d5l.1",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Change Command.Run signature to accept repo and store",
   "type": "task",
-  "updated_at": "2026-02-21T15:31:30Z"
+  "updated_at": "2026-02-21T15:31:37Z"
 }
