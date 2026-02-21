@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T17:51:39Z",
   "created": "2026-02-21T17:51:36Z",
   "description": "",
   "id": "bw-gw4",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Support \u003c!-- STATE --\u003e marker in template processor",
   "type": "task",
-  "updated_at": "2026-02-21T17:51:36Z"
+  "updated_at": "2026-02-21T17:51:39Z"
 }
