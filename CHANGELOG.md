@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.0 — 2026-02-20
+
+- `bw delete` command with preview mode and `--force` to confirm
+- `bw comments` subcommand to list and add comments on issues
+- `bw history` command to show commit history for an issue
+- `--parent` flag on `create` and `update` with cycle detection
+- TTY-aware colored output (IDs, priorities, section headers, success states)
+- `bw upgrade` now shows download progress, step narration, and changelog for the version span
+- `bw list` defaults to open + in\_progress; new `--grep` filter for searching title and description
+- `install.sh` for curl-based installation
+
 ## 0.5.3 — 2026-02-20
 
 - `bw import -` reads from stdin, enabling piping (`bd export | bw import -`)
