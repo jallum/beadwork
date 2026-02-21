@@ -10,6 +10,12 @@
   "id": "bw-d5l.4",
   "labels": [],
   "parent": "bw-d5l",
+  "comments": [
+    {
+      "text": "Acceptance verified: all tests pass, go vet clean, no command calls getInitializedRepo(), cache tested with 3 dedicated tests, ClearCache called after sync.",
+      "timestamp": "2026-02-21T15:54:33Z"
+    }
+  ],
   "priority": 1,
   "status": "closed",
   "title": "Acceptance: verify epic completion criteria",
