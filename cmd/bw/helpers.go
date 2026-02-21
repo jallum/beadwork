@@ -262,19 +262,6 @@ func fprintIssue(w Writer, iss *issue.Issue) {
 	if iss.Parent != "" {
 		fmt.Fprintf(w, "Parent: %s\n", iss.Parent)
 	}
-
-	// Description
-	if iss.Description != "" {
-		fmt.Fprintf(w, "\n%s\n\n", w.Style("DESCRIPTION", Bold))
-		w.Push(2)
-		desc := iss.Description
-		if ww := w.Width(); ww > 0 {
-			desc = wrap.Text(desc, ww)
-		}
-		fmt.Fprintln(w, desc)
-		w.Pop()
-	}
-
 }
 
 // fprintComments renders the COMMENTS section for an issue.

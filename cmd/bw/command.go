@@ -105,11 +105,13 @@ var commands = []Command{
 		},
 		Flags: []Flag{
 			{Long: "--json", Help: "Output as JSON"},
-			{Long: "--short", Help: "Compact one-line output"},
+			{Long: "--only", Value: "SECTIONS", Help: "Show only named sections (comma-separated: summary,description,blockedby,blocks,comments,labels,parent)"},
 		},
 		Examples: []Example{
 			{Cmd: "bw show bw-a3f8"},
 			{Cmd: "bw show bw-a3f8 bw-b2c1"},
+			{Cmd: "bw show bw-a3f8 --only summary", Help: "Compact one-line summary"},
+			{Cmd: "bw show bw-a3f8 --only blockedby,blocks", Help: "Dependency context only"},
 		},
 		Run: cmdShow,
 	},

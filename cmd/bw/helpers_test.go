@@ -305,12 +305,14 @@ func TestFprintIssueFull(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	fprintIssue(PlainWriter(&buf), iss)
+	w := PlainWriter(&buf)
+	fprintIssue(w, iss)
+	fprintDescription(w, iss)
 	out := buf.String()
 	if !strings.Contains(out, "[BUG]") {
 		t.Errorf("missing [BUG] type tag: %q", out)
 	}
-	// Deps are now rendered by fprintDeps (not fprintIssue)
+	// Deps are now rendered by fprintMap (not fprintIssue)
 	if !strings.Contains(out, "Parent: test-cccc") {
 		t.Errorf("missing Parent in output: %q", out)
 	}

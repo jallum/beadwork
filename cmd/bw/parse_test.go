@@ -43,13 +43,19 @@ func TestParseShowArgsMultiID(t *testing.T) {
 	}
 }
 
-func TestParseShowArgsShort(t *testing.T) {
-	a, err := parseShowArgs([]string{"bw-1234", "--short"})
+func TestParseShowArgsOnly(t *testing.T) {
+	a, err := parseShowArgs([]string{"bw-1234", "--only", "summary,blockedby"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !a.Short {
-		t.Error("expected Short = true")
+	if !a.showSection("summary") {
+		t.Error("expected summary = true")
+	}
+	if !a.showSection("blockedby") {
+		t.Error("expected blockedby = true")
+	}
+	if a.showSection("description") {
+		t.Error("expected description = false")
 	}
 }
 

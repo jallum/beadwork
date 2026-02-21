@@ -98,29 +98,116 @@ func TestCmdShowMultiIDJSON(t *testing.T) {
 	}
 }
 
-func TestCmdShowShort(t *testing.T) {
+func TestCmdShowOnlySummary(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	iss, _ := env.Store.Create("Short show", issue.CreateOpts{})
+	iss, _ := env.Store.Create("Summary only", issue.CreateOpts{
+		Description: "Should not appear",
+	})
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdShow([]string{iss.ID, "--short"}, PlainWriter(&buf))
+	err := cmdShow([]string{iss.ID, "--only", "summary"}, PlainWriter(&buf))
 	if err != nil {
-		t.Fatalf("cmdShow --short: %v", err)
+		t.Fatalf("cmdShow --only summary: %v", err)
 	}
 	out := buf.String()
-	// Should be a compact one-liner, not the full multi-line display
-	lines := strings.Split(strings.TrimSpace(out), "\n")
-	if len(lines) != 1 {
-		t.Errorf("expected 1 line for --short, got %d: %q", len(lines), out)
-	}
 	if !strings.Contains(out, iss.ID) {
 		t.Errorf("missing ID: %q", out)
 	}
-	if !strings.Contains(out, "Short show") {
+	if !strings.Contains(out, "Summary only") {
 		t.Errorf("missing title: %q", out)
+	}
+	if strings.Contains(out, "DESCRIPTION") {
+		t.Errorf("should NOT show description section: %q", out)
+	}
+	if strings.Contains(out, "Should not appear") {
+		t.Errorf("should NOT show description text: %q", out)
+	}
+}
+
+func TestCmdShowOnlyDescription(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Desc test", issue.CreateOpts{
+		Description: "The description text",
+	})
+	env.Store.Comment(iss.ID, "A comment", "")
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdShow([]string{iss.ID, "--only", "description"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdShow --only description: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "The description text") {
+		t.Errorf("missing description: %q", out)
+	}
+	// Should NOT show header, comments, etc.
+	if strings.Contains(out, "Assignee:") {
+		t.Errorf("should NOT show metadata: %q", out)
+	}
+	if strings.Contains(out, "COMMENTS") {
+		t.Errorf("should NOT show comments: %q", out)
+	}
+}
+
+func TestCmdShowOnlyMultiple(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked", issue.CreateOpts{
+		Description: "Some desc",
+	})
+	env.Store.Link(a.ID, b.ID)
+	env.Repo.Commit("setup")
+
+	var buf bytes.Buffer
+	err := cmdShow([]string{b.ID, "--only", "summary,blockedby"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdShow --only: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "Blocked") {
+		t.Errorf("missing title: %q", out)
+	}
+	if !strings.Contains(out, "BLOCKED BY") {
+		t.Errorf("missing BLOCKED BY: %q", out)
+	}
+	if strings.Contains(out, "DESCRIPTION") {
+		t.Errorf("should NOT show description: %q", out)
+	}
+}
+
+func TestCmdShowOnlyInvalid(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Test", issue.CreateOpts{})
+	env.Repo.Commit("create")
+
+	var buf bytes.Buffer
+	err := cmdShow([]string{iss.ID, "--only", "nonsense"}, PlainWriter(&buf))
+	if err == nil {
+		t.Error("expected error for invalid section name")
+	}
+}
+
+func TestCmdShowShortRemoved(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Test", issue.CreateOpts{})
+	env.Repo.Commit("create")
+
+	var buf bytes.Buffer
+	err := cmdShow([]string{iss.ID, "--short"}, PlainWriter(&buf))
+	if err == nil {
+		t.Error("--short should be removed, expected error")
 	}
 }
 
