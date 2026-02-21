@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.2 — 2026-02-20
+
+- `bw show` wraps long text to terminal width with indent-aware formatting
+- Closing an issue now reveals any newly-unblocked issues that were waiting on it
+
 ## 0.6.1 — 2026-02-20
 
 - Dotted child IDs: creating a child issue automatically generates a hierarchical ID (e.g., `abc.1`)
