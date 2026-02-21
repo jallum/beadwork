@@ -582,3 +582,24 @@ func TestReplayCommentNonexistent(t *testing.T) {
 		t.Fatalf("expected 1 error, got %d: %v", len(errs), errs)
 	}
 }
+
+func TestReplayUpdateParent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	parent, _ := env.Store.Create("Parent", issue.CreateOpts{})
+	child, _ := env.Store.Create("Child", issue.CreateOpts{})
+	env.CommitIntent("create issues")
+
+	errs := intent.Replay(env.Repo, env.Store, []string{
+		"update " + child.ID + " parent=" + parent.ID,
+	})
+	if len(errs) > 0 {
+		t.Fatalf("Replay errors: %v", errs)
+	}
+
+	got, _ := env.Store.Get(child.ID)
+	if got.Parent != parent.ID {
+		t.Errorf("Parent = %q, want %q", got.Parent, parent.ID)
+	}
+}

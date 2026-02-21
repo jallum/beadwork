@@ -138,6 +138,8 @@ func replayUpdate(r *repo.Repo, store *issue.Store, parts []string, raw string) 
 			opts.Type = &val
 		case "title":
 			opts.Title = &val
+		case "parent":
+			opts.Parent = &val
 		}
 	}
 

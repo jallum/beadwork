@@ -137,6 +137,15 @@ func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
 		issue.Priority = 2
 	}
 
+
+	if opts.Parent != "" {
+		parentID, err := s.resolveID(opts.Parent)
+		if err != nil {
+			return nil, fmt.Errorf("parent: %w", err)
+		}
+		issue.Parent = parentID
+	}
+
 	if err := s.writeIssue(issue); err != nil {
 		return nil, err
 	}
@@ -251,6 +260,32 @@ func (s *Store) Update(id string, opts UpdateOpts) (*Issue, error) {
 	}
 	if opts.DeferUntil != nil {
 		issue.DeferUntil = *opts.DeferUntil
+	}
+	if opts.Parent != nil {
+		if *opts.Parent != "" {
+			if *opts.Parent == id {
+				return nil, fmt.Errorf("cannot set issue as its own parent")
+			}
+			parentID, err := s.resolveID(*opts.Parent)
+			if err != nil {
+				return nil, fmt.Errorf("parent: %w", err)
+			}
+			// Cycle detection: walk ancestor chain
+			current := parentID
+			for current != "" {
+				if current == id {
+					return nil, fmt.Errorf("circular parent reference: %s is an ancestor of %s", id, parentID)
+				}
+				ancestor, err := s.readIssue(current)
+				if err != nil {
+					break
+				}
+				current = ancestor.Parent
+			}
+			issue.Parent = parentID
+		} else {
+			issue.Parent = ""
+		}
 	}
 	if opts.Status != nil {
 		oldStatus := issue.Status
@@ -898,6 +933,7 @@ func removeStr(slice []string, s string) []string {
 }
 
 type CreateOpts struct {
+	Parent      string
 	Description string
 	Priority    *int
 	Type        string
@@ -906,6 +942,7 @@ type CreateOpts struct {
 }
 
 type UpdateOpts struct {
+	Parent      *string
 	Title       *string
 	Description *string
 	Priority    *int

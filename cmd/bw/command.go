@@ -93,6 +93,7 @@ var commands = []Command{
 			{Long: "--assignee", Short: "-a", Value: "WHO", Help: "Assignee"},
 			{Long: "--description", Short: "-d", Value: "TEXT", Help: "Description"},
 			{Long: "--defer", Value: "DATE", Help: "Defer until date (YYYY-MM-DD)"},
+			{Long: "--parent", Value: "ID", Help: "Parent issue ID"},
 			{Long: "--json", Help: "Output as JSON"},
 		},
 		Examples: []Example{
@@ -159,6 +160,7 @@ var commands = []Command{
 			{Long: "--type", Short: "-t", Value: "TYPE", Help: "New type"},
 			{Long: "--status", Short: "-s", Value: "STATUS", Help: "New status"},
 			{Long: "--defer", Value: "DATE", Help: "Defer until date (YYYY-MM-DD)"},
+			{Long: "--parent", Value: "ID", Help: "Parent issue ID (empty to clear)"},
 			{Long: "--json", Help: "Output as JSON"},
 		},
 		Examples: []Example{

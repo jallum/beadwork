@@ -9,6 +9,7 @@ import (
 
 type CreateArgs struct {
 	Title       string
+	Parent      string
 	Priority    *int
 	Type        string
 	Assignee    string
@@ -20,7 +21,7 @@ type CreateArgs struct {
 
 func parseCreateArgs(raw []string) (CreateArgs, error) {
 	a, err := ParseArgs(raw,
-		[]string{"--priority", "--type", "--assignee", "--description", "--defer", "--labels"},
+		[]string{"--priority", "--type", "--assignee", "--description", "--defer", "--labels", "--parent"},
 		[]string{"--json"},
 	)
 	if err != nil {
@@ -39,6 +40,7 @@ func parseCreateArgs(raw []string) (CreateArgs, error) {
 	ca.Assignee = a.String("--assignee")
 	ca.Description = a.String("--description")
 	ca.DeferUntil = a.String("--defer")
+	ca.Parent = a.String("--parent")
 	ca.JSON = a.JSON()
 	if a.Has("--priority") {
 		p, err := parsePriority(a.String("--priority"))
@@ -80,6 +82,7 @@ func cmdCreate(args []string, w Writer) error {
 		Assignee:    ca.Assignee,
 		Description: ca.Description,
 		DeferUntil:  ca.DeferUntil,
+		Parent:      ca.Parent,
 	}
 
 	iss, err := store.Create(ca.Title, opts)
@@ -95,6 +98,9 @@ func cmdCreate(args []string, w Writer) error {
 	}
 
 	intent := fmt.Sprintf("create %s p%d %s %q", iss.ID, iss.Priority, iss.Type, iss.Title)
+	if iss.Parent != "" {
+		intent += " parent=" + iss.Parent
+	}
 	if err := r.Commit(intent); err != nil {
 		return fmt.Errorf("commit failed: %w", err)
 	}

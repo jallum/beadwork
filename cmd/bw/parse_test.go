@@ -990,3 +990,43 @@ func TestParseDeleteArgsMissingID(t *testing.T) {
 		t.Errorf("error = %q, want usage message", err.Error())
 	}
 }
+
+// --- parseCreateArgs with --parent ---
+
+func TestParseCreateArgsWithParent(t *testing.T) {
+	a, err := parseCreateArgs([]string{"Child task", "--parent", "bw-1234"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.Parent != "bw-1234" {
+		t.Errorf("Parent = %q, want %q", a.Parent, "bw-1234")
+	}
+}
+
+// --- parseUpdateArgs with --parent ---
+
+func TestParseUpdateArgsWithParent(t *testing.T) {
+	a, err := parseUpdateArgs([]string{"bw-1234", "--parent", "bw-5678"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.Parent != "bw-5678" {
+		t.Errorf("Parent = %q, want %q", a.Parent, "bw-5678")
+	}
+	if !a.ParentSet {
+		t.Error("expected ParentSet = true")
+	}
+}
+
+func TestParseUpdateArgsWithParentClear(t *testing.T) {
+	a, err := parseUpdateArgs([]string{"bw-1234", "--parent", ""})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.Parent != "" {
+		t.Errorf("Parent = %q, want empty", a.Parent)
+	}
+	if !a.ParentSet {
+		t.Error("expected ParentSet = true")
+	}
+}
