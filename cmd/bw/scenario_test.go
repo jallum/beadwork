@@ -37,7 +37,7 @@ func TestScenarioFullWorkflow(t *testing.T) {
 
 	// ── Step 1: Create 5 issues ──
 	var bufA bytes.Buffer
-	if err := cmdCreate(env.Store, []string{"API design", "--priority", "1", "--type", "bug", "--assignee", "alice"}, PlainWriter(&bufA)); err != nil {
+	if err := cmdCreate(env.Store, []string{"API design", "--priority", "1", "--type", "bug"}, PlainWriter(&bufA)); err != nil {
 		t.Fatalf("create A: %v", err)
 	}
 	var bufB bytes.Buffer
@@ -144,9 +144,6 @@ func TestScenarioFullWorkflow(t *testing.T) {
 		}
 		if a.Type != "bug" {
 			t.Errorf("A type=%q, want bug", a.Type)
-		}
-		if a.Assignee != "alice" {
-			t.Errorf("A assignee=%q, want alice", a.Assignee)
 		}
 		if len(a.Labels) != 2 {
 			t.Errorf("A labels=%v, want 2 labels", a.Labels)

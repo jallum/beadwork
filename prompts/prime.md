@@ -55,7 +55,7 @@ This means work that might otherwise feel risky — large refactors, multi-step 
 
 ## The Model
 
-Issues have **status** (open → in_progress → closed, or deferred), **priority** (P0 critical → P4 backlog, default P2), and optionally **dependencies**, **labels**, **comments**, and **parent** relationships.
+Issues have **status** (open → in_progress → closed, or deferred), **priority** (P0-P4: P0 critical → P4 backlog, default P2), and optionally **dependencies**, **labels**, **comments**, and **parent** relationships.
 
 Issues can form hierarchies: an epic with child tasks (`--parent <epic>`), wired together with dependencies (`bw dep add <blocker> blocks <blocked>`). Blocked issues can't be started. When a dependency closes, newly unblocked work surfaces automatically via `bw ready`.
 

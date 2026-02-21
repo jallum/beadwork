@@ -388,6 +388,61 @@ func (s *Store) Reopen(id string) (*Issue, error) {
 	return issue, nil
 }
 
+// BlockedError is returned by Start when the issue has open blockers.
+type BlockedError struct {
+	ID       string
+	Blockers []string // IDs of open blockers
+}
+
+func (e *BlockedError) Error() string {
+	return fmt.Sprintf("%s is blocked by %s", e.ID, strings.Join(e.Blockers, ", "))
+}
+
+// Start transitions an open issue to in_progress and sets its assignee.
+// Returns a BlockedError if the issue has unresolved blockers.
+func (s *Store) Start(id, assignee string) (*Issue, error) {
+	id, err := s.resolveID(id)
+	if err != nil {
+		return nil, err
+	}
+	iss, err := s.readIssue(id)
+	if err != nil {
+		return nil, err
+	}
+	if iss.Status != "open" {
+		return nil, fmt.Errorf("%s is %s, not open", id, iss.Status)
+	}
+
+	// Check for open blockers
+	if len(iss.BlockedBy) > 0 {
+		var open []string
+		for _, blockerID := range iss.BlockedBy {
+			blocker, err := s.readIssue(blockerID)
+			if err != nil {
+				open = append(open, blockerID)
+				continue
+			}
+			if blocker.Status != "closed" {
+				open = append(open, blockerID)
+			}
+		}
+		if len(open) > 0 {
+			return nil, &BlockedError{ID: id, Blockers: open}
+		}
+	}
+
+	if err := s.moveStatus(id, "open", "in_progress"); err != nil {
+		return nil, err
+	}
+	iss.Status = "in_progress"
+	iss.Assignee = assignee
+	iss.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	if err := s.writeIssue(iss); err != nil {
+		return nil, err
+	}
+	return iss, nil
+}
+
 func (s *Store) Link(blockerID, blockedID string) error {
 	blockerID, err := s.resolveID(blockerID)
 	if err != nil {

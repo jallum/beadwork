@@ -2,6 +2,7 @@ package issue_test
 
 import (
 	"encoding/json"
+	"errors"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -2694,5 +2695,122 @@ func TestDeleteEvictsFromCache(t *testing.T) {
 	_, err = env.Store.Get(iss.ID)
 	if err == nil {
 		t.Error("Get after Delete should return error, not stale cached value")
+	}
+}
+
+func TestStartBasic(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Start me", issue.CreateOpts{})
+	env.CommitIntent("create")
+
+	started, err := env.Store.Start(iss.ID, "alice")
+	if err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	if started.Status != "in_progress" {
+		t.Errorf("status = %q, want in_progress", started.Status)
+	}
+	if started.Assignee != "alice" {
+		t.Errorf("assignee = %q, want alice", started.Assignee)
+	}
+}
+
+func TestStartBlocked(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.CommitIntent("setup")
+
+	_, err := env.Store.Start(b.ID, "alice")
+	if err == nil {
+		t.Fatal("expected error for blocked issue")
+	}
+}
+
+func TestStartAlreadyInProgress(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("In progress", issue.CreateOpts{})
+	status := "in_progress"
+	env.Store.Update(iss.ID, issue.UpdateOpts{Status: &status})
+	env.CommitIntent("setup")
+
+	_, err := env.Store.Start(iss.ID, "alice")
+	if err == nil {
+		t.Fatal("expected error for in_progress issue")
+	}
+}
+
+func TestStartClosed(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Closed", issue.CreateOpts{})
+	env.Store.Close(iss.ID, "")
+	env.CommitIntent("setup")
+
+	_, err := env.Store.Start(iss.ID, "alice")
+	if err == nil {
+		t.Fatal("expected error for closed issue")
+	}
+}
+
+func TestStartNonExistent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	_, err := env.Store.Start("nonexistent", "alice")
+	if err == nil {
+		t.Fatal("expected error for nonexistent issue")
+	}
+}
+
+func TestStartBlockedReturnsBlockerIDs(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker A", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocker B", issue.CreateOpts{})
+	c, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+	env.Store.Link(a.ID, c.ID)
+	env.Store.Link(b.ID, c.ID)
+	env.CommitIntent("setup")
+
+	_, err := env.Store.Start(c.ID, "alice")
+	if err == nil {
+		t.Fatal("expected error for blocked issue")
+	}
+
+	var be *issue.BlockedError
+	if !errors.As(err, &be) {
+		t.Fatalf("expected BlockedError, got %T: %v", err, err)
+	}
+	if len(be.Blockers) != 2 {
+		t.Errorf("got %d blockers, want 2", len(be.Blockers))
+	}
+}
+
+func TestStartClosedBlockerAllowsStart(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Close(a.ID, "")
+	env.CommitIntent("setup")
+
+	started, err := env.Store.Start(b.ID, "alice")
+	if err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	if started.Status != "in_progress" {
+		t.Errorf("status = %q, want in_progress", started.Status)
 	}
 }

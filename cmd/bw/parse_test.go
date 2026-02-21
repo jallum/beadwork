@@ -210,7 +210,7 @@ func TestParseCreateArgsExtraPositionalsError(t *testing.T) {
 }
 
 func TestParseCreateArgsWithFlags(t *testing.T) {
-	a, err := parseCreateArgs([]string{"Bug report", "-p", "1", "-t", "bug", "-a", "alice", "-d", "desc text"})
+	a, err := parseCreateArgs([]string{"Bug report", "-p", "1", "-t", "bug", "-d", "desc text"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,9 +222,6 @@ func TestParseCreateArgsWithFlags(t *testing.T) {
 	}
 	if a.Type != "bug" {
 		t.Errorf("Type = %q", a.Type)
-	}
-	if a.Assignee != "alice" {
-		t.Errorf("Assignee = %q", a.Assignee)
 	}
 	if a.Description != "desc text" {
 		t.Errorf("Description = %q", a.Description)

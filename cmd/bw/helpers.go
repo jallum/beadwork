@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -43,6 +45,17 @@ func getInitializedStore() (*issue.Store, error) {
 		}
 	}
 	return store, nil
+}
+
+// gitUserName returns git config user.name, or "unknown" if unavailable.
+func gitUserName(gitDir string) string {
+	cmd := exec.Command("git", "config", "user.name")
+	cmd.Dir = filepath.Dir(gitDir)
+	out, err := cmd.Output()
+	if err != nil {
+		return "unknown"
+	}
+	return strings.TrimSpace(string(out))
 }
 
 func fatal(msg string) {

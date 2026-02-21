@@ -123,8 +123,8 @@ func TestCmdPrimeTemplateProcessing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}
-	if strings.Contains(buf.String(), "Parallel Agents") {
-		t.Error("should not contain 'Parallel Agents' without config")
+	if strings.Contains(buf.String(), "Working in Parallel") {
+		t.Error("should not contain 'Working in Parallel' without config")
 	}
 
 	// With config: conditional section appears
@@ -136,7 +136,7 @@ func TestCmdPrimeTemplateProcessing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}
-	if !strings.Contains(buf.String(), "Parallel Agents") {
-		t.Errorf("output missing 'Parallel Agents': %q", buf.String())
+	if !strings.Contains(buf.String(), "Working in Parallel") {
+		t.Errorf("output missing 'Working in Parallel': %q", buf.String())
 	}
 }
