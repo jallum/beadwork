@@ -267,7 +267,7 @@ func downloadAsset(url string, size int64, w Writer) ([]byte, error) {
 	}
 
 	// Stream with progress reporting
-	_, isTTY := w.(*colorWriter)
+	isTTY := w.Width() > 0
 	written := int64(0)
 	chunk := make([]byte, 32*1024)
 	for {

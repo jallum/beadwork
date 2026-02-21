@@ -12,7 +12,8 @@ const version = "0.6.1"
 func main() {
 	var w Writer
 	if term.IsTerminal(int(os.Stdout.Fd())) && os.Getenv("NO_COLOR") == "" {
-		w = ColorWriter(os.Stdout)
+		width, _, _ := term.GetSize(int(os.Stdout.Fd()))
+		w = ColorWriter(os.Stdout, width)
 	} else {
 		w = PlainWriter(os.Stdout)
 	}

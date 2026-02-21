@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -9,6 +10,10 @@ import (
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/testutil"
 )
+
+var ansiRe = regexp.MustCompile(`\x1b\[[0-9;]*m`)
+
+func stripANSI(s string) string { return ansiRe.ReplaceAllString(s, "") }
 
 func TestParseArgsBooleans(t *testing.T) {
 	a, err := ParseArgs([]string{"--json", "--all", "positional"}, nil, []string{"--json", "--all"})
@@ -213,14 +218,6 @@ func TestFprintIssue(t *testing.T) {
 	}
 }
 
-// fixedWidthWriter wraps a plainWriter with a fixed width for testing wrapping.
-type fixedWidthWriter struct {
-	Writer
-	width int
-}
-
-func (w *fixedWidthWriter) Width() int { return w.width }
-
 func TestFprintIssueWrapsDescription(t *testing.T) {
 	iss := &issue.Issue{
 		ID:          "test-wrap",
@@ -233,12 +230,13 @@ func TestFprintIssueWrapsDescription(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	w := &fixedWidthWriter{PlainWriter(&buf), 40}
+	w := ColorWriter(&buf, 40)
 	fprintIssue(w, iss)
-	out := buf.String()
+
+	// Strip ANSI codes for line-length checking.
+	out := stripANSI(buf.String())
 
 	// With width=40 and 2-char indent, lines wrap at 38 chars.
-	// Each content line (after indent) should be at most 38 chars.
 	inDesc := false
 	for _, line := range strings.Split(out, "\n") {
 		if strings.Contains(line, "DESCRIPTION") {
@@ -272,13 +270,14 @@ func TestFprintCommentsWrapsText(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	w := &fixedWidthWriter{PlainWriter(&buf), 40}
+	w := ColorWriter(&buf, 40)
 	fprintComments(w, iss)
-	out := buf.String()
+
+	// Strip ANSI codes for line-length checking.
+	out := stripANSI(buf.String())
 
 	// With width=40 and 4-char indent, content lines wrap at 36 chars.
-	lines := strings.Split(out, "\n")
-	for _, line := range lines {
+	for _, line := range strings.Split(out, "\n") {
 		if !strings.HasPrefix(line, "    ") {
 			continue
 		}
