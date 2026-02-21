@@ -9,9 +9,15 @@
   "id": "bw-ccl.5",
   "labels": [],
   "parent": "bw-ccl",
+  "comments": [
+    {
+      "text": "Delete and DeletePreview both call List(Filter{}) to find children by scanning other.Parent == id. With snapshot, scan snap.Issues instead — no second List() call. Could also build a Children map[string][]string in the snapshot if parent lookups become common.",
+      "timestamp": "2026-02-21T21:16:52Z"
+    }
+  ],
   "priority": 2,
   "status": "open",
   "title": "Update Delete to use Snapshot for child lookup",
   "type": "task",
-  "updated_at": "2026-02-21T21:16:37Z"
+  "updated_at": "2026-02-21T21:16:52Z"
 }
