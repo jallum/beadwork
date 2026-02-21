@@ -118,6 +118,9 @@ func TestSyncDirtyRebaseIntentReplay(t *testing.T) {
 		t.Fatalf("Sync: %v", err)
 	}
 
+	// After sync the underlying tree changed; discard stale cache.
+	env.Store.ClearCache()
+
 	if status == "needs replay" {
 		// Replay the intents
 		errs := intent.Replay(env.Repo, env.Store, intents)
