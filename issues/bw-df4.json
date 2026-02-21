@@ -2,6 +2,7 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-21T18:21:18Z",
   "created": "2026-02-21T18:14:08Z",
   "description": "",
   "id": "bw-df4",
@@ -13,8 +14,8 @@
     }
   ],
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "bw start crashes with nil pointer when store.Committer is nil",
   "type": "bug",
-  "updated_at": "2026-02-21T18:20:21Z"
+  "updated_at": "2026-02-21T18:21:18Z"
 }
