@@ -30,22 +30,10 @@ func StatusIcon(status string) string {
 	return "?"
 }
 
-// Priority definitions
-
-var PriorityColors = map[int]string{
-	0: "\033[91m", // bright red (P0 — critical)
-	1: "\033[31m", // red
-	2: "\033[33m", // yellow
-	3: "\033[36m", // cyan
-	4: "\033[2m",  // dim
-}
-
-const ColorReset = "\033[0m"
-
-func PriorityDot(priority int) string {
-	color, ok := PriorityColors[priority]
-	if !ok {
-		color = ""
+// PriorityIcon returns a plain dot for known priorities (0-4) or "?" for unknown.
+func PriorityIcon(priority int) string {
+	if priority >= 0 && priority <= 4 {
+		return "●"
 	}
-	return color + "●" + ColorReset
+	return "?"
 }
