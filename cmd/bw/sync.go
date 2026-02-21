@@ -16,6 +16,9 @@ func cmdSync(r *repo.Repo, store *issue.Store, args []string, w Writer) error {
 		return err
 	}
 
+	// After sync the underlying tree may have changed; discard stale cache.
+	store.ClearCache()
+
 	if status == "needs replay" {
 		fmt.Fprintf(w, "rebase conflict — replaying %d intent(s)...\n", len(intents))
 		errs := intent.Replay(r, store, intents)
