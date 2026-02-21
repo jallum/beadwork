@@ -8,8 +8,8 @@
   "labels": [],
   "parent": "bw-jho",
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "sync.go: replace hardcoded indentation with Writer Push/Pop",
   "type": "task",
-  "updated_at": "2026-02-21T03:11:00Z"
+  "updated_at": "2026-02-21T03:32:23Z"
 }
