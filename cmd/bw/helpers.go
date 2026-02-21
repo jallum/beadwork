@@ -284,6 +284,7 @@ func fprintComments(w Writer, iss *issue.Issue) {
 		fmt.Fprintln(w, w.Style("COMMENTS", Bold))
 		w.Push(2)
 		for _, c := range iss.Comments {
+			fmt.Fprintln(w)
 			ts := trimDate(c.Timestamp)
 			if c.Author != "" {
 				fmt.Fprintf(w, "%s %s\n", w.Style(ts, Dim), w.Style(c.Author, Bold))
