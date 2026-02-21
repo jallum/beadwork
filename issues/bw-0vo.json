@@ -3,12 +3,12 @@
   "blocked_by": [],
   "blocks": [],
   "created": "2026-02-21T01:41:06Z",
-  "description": "",
+  "description": "Extract template processing into internal/template with conditional IF/END directives evaluated against repo config. Add markdown-aware ANSI styling (styleMD/styleInline) and relativeTime helper to helpers.go. Refactor cmdPrime to use template.Process for prompt rendering, show last comment on in-progress issues, and align columns. Simplify prompts/prime.md and prompts/agents.md.",
   "id": "bw-0vo",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Refactor prime command: template engine and styled output",
   "type": "task",
-  "updated_at": "2026-02-21T01:41:06Z"
+  "updated_at": "2026-02-21T01:41:17Z"
 }
