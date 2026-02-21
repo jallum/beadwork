@@ -15,81 +15,90 @@ Design requirements for this prompt:
    Beadwork makes that work safe to attempt — progress is checkpointed, state
    is recoverable, and losing context doesn't mean losing the plot.
 
-4. Teach worktree hygiene. Concurrent work in a single worktree causes
+4. Plans belong in beadwork, not just in context. Agents naturally plan in
+   their context window. That's fine for understanding work, but a plan that
+   lives only in context is lost at compaction. When work has multiple discrete
+   steps — especially steps that could each be completed independently — the
+   plan should be materialized as issues. An epic with children *is* the plan,
+   and `bw ready` *is* the execution loop.
+
+5. Teach worktree hygiene. Concurrent work in a single worktree causes
    contamination — like cooking two meals with the same unwashed pans. The
    natural unit is one worktree per logical block of related work (a single
    bead or an epic with children). Beadwork's issue state is concurrency-safe
    by design; the repo's working tree is not.
 
-5. Frame beadwork as shared state. In multi-agent setups, beadwork is the
+6. Frame beadwork as shared state. In multi-agent setups, beadwork is the
    durable communication layer between workers. Comments and issues serve
    double duty — breadcrumbs for your future self (surviving compaction) and
-   messages to collaborators. One worker can leave implementation notes that
-   inform another worker's approach, flag deviations from the original plan,
-   or express constraints that downstream consumers need to know about.
+   messages to collaborators.
 
-6. Stay compact. This goes into an agent's context window. Every unnecessary
+7. Stay compact. This goes into an agent's context window. Every unnecessary
    sentence is a tax on the agent's attention budget. Dense, scannable, no
    filler.
 
-7. Adapt to project configuration. Conditional sections (multi-agent, PR
+8. Adapt to project configuration. Conditional sections (multi-agent, PR
    review, etc.) should only show what's relevant to how this repo is actually
    configured. Don't burden the agent with information about modes it isn't
    using.
 
-8. Be the canonical reference. AGENTS.md is deliberately minimal — just a
+9. Be the canonical reference. AGENTS.md is deliberately minimal — just a
    pointer to `bw prime`. This prompt is the single source of truth for how
-   to use beadwork in this project. No workflow knowledge should live only
-   in the README or elsewhere.
+   to use beadwork in this project.
 
-9. No implementation details or setup instructions. The agent doesn't need to
-   know about install, upgrade, storage internals, or repo schema. Keep the
-   focus on usage and mental model.
+10. Land the work. Agents tend to stop after the code is written, leaving
+    issues open, changes uncommitted, and state unsynced. The prompt should
+    help agents understand that unfinished bookkeeping is invisible progress
+    — if it's not committed, closed, and synced, it doesn't exist to the
+    next session or to other workers.
+
+11. No implementation details or setup instructions. Keep the focus on usage
+    and mental model.
 -->
 
 # Beadwork
 
-Your built-in task tracking and planning tools work well for small, focused tasks. Beadwork extends them — it gives your plans, progress, and decisions a durable home in git that survives compaction, session boundaries, and context loss.
+Your built-in planning tools work well for small tasks. Beadwork extends them with durable state in git — plans, progress, and decisions that survive compaction, session boundaries, and context loss. This makes ambitious work safe to attempt: checkpoint progress, record decisions, and pick up where you left off even after losing your entire context.
 
-This means work that might otherwise feel risky — large refactors, multi-step features, changes that span many files — becomes safe to attempt. You can checkpoint progress, record decisions, and pick up exactly where you left off, even if you lose everything in your working memory.
+A plan in your context window is fragile — one compaction and it's gone. Make it durable: a comment on the issue preserves a simple plan; an epic with children and dependencies preserves a complex one. Either way, the plan survives across sessions and `bw ready` feeds you the next step.
 
 ## The Model
 
 Issues have **status** (open → in_progress → closed, or deferred), **priority** (P0-P4: P0 critical → P4 backlog, default P2), and optionally **dependencies**, **labels**, **comments**, and **parent** relationships.
 
-Issues can form hierarchies: an epic with child tasks (`--parent <epic>`), wired together with dependencies (`bw dep add <blocker> blocks <blocked>`). Blocked issues can't be started. When a dependency closes, newly unblocked work surfaces automatically via `bw ready`.
+Issues can form hierarchies: an epic with child tasks (`--parent <epic>`), wired with dependencies (`bw dep add <blocker> blocks <blocked>`). Blocked issues can't be started. When a dependency closes, newly unblocked work surfaces via `bw ready`.
 
-`bw show <id>` is more than a detail view — its BLOCKED BY section walks the full dependency tree down to the leaves, then surfaces only the issues that are actionable _right now_. If A depends on B which depends on C which depends on D, and D is the only open leaf, BLOCKED BY shows D — not the whole chain. As issues close, the next layer surfaces. It's like `bw ready` scoped to a specific issue.
-
-Comments (`bw comments add <id> "..."`) serve double duty. They're breadcrumbs for your future self — context that survives compaction — and they're messages to anyone else working in the same project. An implementation note you leave on an issue can inform a collaborator's approach, flag a deviation from the original plan, or express a constraint that downstream work needs to account for.
+Comments (`bw comments add <id> "..."`) are durable context — breadcrumbs for your future self after compaction, and messages to anyone else working in the project.
 
 ## Finding and Doing Work
 
 <!-- STATE -->
 
-`bw ready` refreshes this view between sessions — open issues with no unresolved blockers, sorted by priority. `bw blocked` shows what's waiting on dependencies. `bw show <id>` for full detail. `bw history <id>` for what happened in previous sessions.
+`bw ready` refreshes this view between sessions. `bw blocked` shows what's waiting. `bw show <id>` for detail. `bw history <id>` for previous sessions.
 
-`bw start <id>` claims an issue — it sets status, assigns you, and won't let you start something that's still blocked. Use `--assign <agent-id>` to claim work on behalf of a specific agent. `bw close <id>` marks it done. `bw sync` pushes state to the remote so nothing exists only in your local copy.
+`bw show <id>` is the natural first step when picking up work — the issue may already have a description, comments, or plans from a previous session. `bw start <id>` claims it (sets status, assigns you, refuses blocked work). `--assign <agent-id>` claims on behalf of a specific agent. `bw close <id>` marks it done. `bw sync` pushes to the remote.
 
-When you discover new work mid-task, `bw create "Title" -p 2 -t task` captures it. For larger efforts, structuring work as an epic with children and dependencies means `bw ready` becomes your plan — it feeds you the next step automatically, and that plan survives across sessions.
+Land the work: code that isn't committed, issues that aren't closed, and state that isn't synced don't exist to the next session or to other workers. Committing and closing are part of completing a task in this project — not a separate action that requires additional permission. Finishing the task means finishing the bookkeeping.
+
+New work mid-task: `bw create "Title" -p 2 -t task`. Larger efforts: structure as an epic with children and dependencies so `bw ready` feeds you the next step automatically.
 
 <!-- IF workflow.agents == multi -->
 
 ## Working in Parallel
 
-Beadwork's issue state is concurrency-safe — multiple workers can read and update issues simultaneously without conflict. The repository's working tree is not. Working on two tasks in the same worktree is like preparing two meals with the same pans without washing them — things get crossed. Each logical block of work (a single issue, or an epic with its children) should have its own git worktree.
+Beadwork's issue state is concurrency-safe — multiple workers can update issues simultaneously. The working tree is not. Working on two tasks in the same worktree is like cooking two meals with the same unwashed pans. Each logical block of work (a single issue, or an epic with its children) needs its own git worktree.
 
-`bw start --assign <agent-id>` lets a worker claim issues with its own identity, so other workers can see what's taken and skip it. Comments and issues are the shared communication layer between workers — use them to leave implementation notes, flag constraints, or record decisions that other workers need to know about.
+`bw start --assign <agent-id>` claims work with a specific identity so others skip it. Comments and issues are the shared communication layer — leave implementation notes, flag constraints, record decisions other workers need.
 
 <!-- END -->
 <!-- IF workflow.review == pr -->
 
 ## Code Review
 
-This project uses pull requests for review. Work on a feature branch, push when ready, and open a PR. Referencing the beadwork issue ID in the PR description connects the code change to its context.
+Work on a feature branch, push when ready, open a PR. Reference the beadwork issue ID in the description.
 
 <!-- END -->
 
 ## Commands
 
-Every command supports `--help`. Read commands accept `--json`. `bw --help` lists everything, but common operations: `bw list --grep "auth"` or filter by `--status`, `--label`, `--assignee`. `bw label <id> +bug -wontfix`. `bw defer <id> 2026-03-01`. `bw dep remove <id> blocks <id>`. `bw delete <id>` (previews first; `--force` to confirm).
+Every command supports `--help`. Read commands accept `--json`. `bw --help` lists everything. Common operations: `bw list --grep "auth"` or filter by `--status`, `--label`, `--assignee`. `bw label <id> +bug -wontfix`. `bw defer <id> 2026-03-01`. `bw dep remove <id> blocks <id>`. `bw delete <id>` (previews first; `--force` to confirm).
