@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-os0.2"
+  ],
   "blocks": [],
   "created": "2026-02-21T23:10:20Z",
   "description": "Remove the Snapshot struct and its tests. Behaviors tested there (Ready, Blocked, Children, Tips) are now tested through the Store methods that replace them. Store.Tips() already exists and walks lazily.",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Delete snapshot.go and snapshot_test.go",
   "type": "task",
-  "updated_at": "2026-02-21T23:10:20Z"
+  "updated_at": "2026-02-21T23:10:24Z"
 }

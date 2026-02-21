@@ -4,7 +4,8 @@
     "bw-os0.1"
   ],
   "blocks": [
-    "bw-os0.3"
+    "bw-os0.3",
+    "bw-os0.5"
   ],
   "created": "2026-02-21T23:10:08Z",
   "description": "Ready(): scan open index, fetch those issues, point-check each blocker against closed index via IsClosed(). Cost becomes 1 ReadDir + N readIssue (N=open count) + M Stat (M=blocker count). Blocked(): same pattern over open + in_progress indexes. Remove the Snapshot-based wrappers.",
