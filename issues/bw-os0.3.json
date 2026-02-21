@@ -1,7 +1,8 @@
 {
   "assignee": "",
   "blocked_by": [
-    "bw-os0.1"
+    "bw-os0.1",
+    "bw-os0.2"
   ],
   "blocks": [],
   "created": "2026-02-21T23:10:12Z",
