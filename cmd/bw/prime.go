@@ -50,35 +50,41 @@ func cmdPrime(w Writer) error {
 		}
 	}
 
-	var sb strings.Builder
-	fmt.Fprintf(&sb, "\n## Current State\n\n")
-	fmt.Fprintf(&sb, "%d open, %d in progress, %d closed\n", openCount, ipCount, closedCount)
-	fmt.Fprintf(&sb, "%d ready (unblocked)\n", len(ready))
+	md := func(s string) { fmt.Fprint(w, styleMD(w, s)) }
+
+	md("\n## Current State\n\n")
+	md(fmt.Sprintf("%d open, %d in progress, %d closed\n", openCount, ipCount, closedCount))
+	md(fmt.Sprintf("%d ready (unblocked)\n", len(ready)))
 
 	if ipCount > 0 {
-		fmt.Fprintf(&sb, "\n**In progress:**\n")
+		md("\n**In progress:**\n")
+		w.Push(2)
 		for _, iss := range all {
 			if iss.Status == "in_progress" {
-				fmt.Fprintf(&sb, "  `%-*s`  P%d  %s\n", idw, iss.ID, iss.Priority, iss.Title)
+				md(fmt.Sprintf("`%-*s`  P%d  %s\n", idw, iss.ID, iss.Priority, iss.Title))
 				if n := len(iss.Comments); n > 0 {
 					last := iss.Comments[n-1]
 					text := last.Text
 					if len(text) > 60 {
 						text = text[:57] + "..."
 					}
-					fmt.Fprintf(&sb, "    └ %q (%s)\n", text, relativeTime(last.Timestamp))
+					w.Push(2)
+					md(fmt.Sprintf("└ %q (%s)\n", text, relativeTime(last.Timestamp)))
+					w.Pop()
 				}
 			}
 		}
+		w.Pop()
 	}
 
 	if len(ready) > 0 {
-		fmt.Fprintf(&sb, "\n**Ready for work:**\n")
+		md("\n**Ready for work:**\n")
+		w.Push(2)
 		for _, iss := range ready {
-			fmt.Fprintf(&sb, "  `%-*s`  P%d  %s\n", idw, iss.ID, iss.Priority, iss.Title)
+			md(fmt.Sprintf("`%-*s`  P%d  %s\n", idw, iss.ID, iss.Priority, iss.Title))
 		}
+		w.Pop()
 	}
 
-	fmt.Fprintln(w, styleMD(w, sb.String()))
 	return nil
 }

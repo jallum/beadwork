@@ -67,8 +67,12 @@ func cmdClose(args []string, w Writer) error {
 		fprintJSON(w, result)
 	} else {
 		fmt.Fprintf(w, "closed %s: %s\n", iss.ID, iss.Title)
-		for _, u := range unblocked {
-			fmt.Fprintf(w, "  unblocked %s: %s\n", u.ID, u.Title)
+		if len(unblocked) > 0 {
+			w.Push(2)
+			for _, u := range unblocked {
+				fmt.Fprintf(w, "unblocked %s: %s\n", u.ID, u.Title)
+			}
+			w.Pop()
 		}
 	}
 	return nil

@@ -22,9 +22,11 @@ func cmdSync(args []string, w Writer) error {
 		fmt.Fprintf(w, "rebase conflict — replaying %d intent(s)...\n", len(intents))
 		errs := intent.Replay(r, store, intents)
 		if len(errs) > 0 {
+			w.Push(2)
 			for _, e := range errs {
-				fmt.Fprintf(w, "  warning: %s\n", e)
+				fmt.Fprintf(w, "warning: %s\n", e)
 			}
+			w.Pop()
 		}
 		if err := r.Push(); err != nil {
 			return fmt.Errorf("push after replay failed: %w", err)

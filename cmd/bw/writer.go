@@ -60,6 +60,9 @@ type Writer interface {
 	Push(n int)
 	// Pop removes the most recent indent level.
 	Pop()
+	// ClearLine returns a carriage return that also clears to end of line
+	// on color-capable terminals; plain writers return a bare "\r".
+	ClearLine() string
 }
 
 // writer is the single concrete implementation of Writer.
@@ -135,6 +138,13 @@ func (w *writer) Pop() {
 		w.stack = w.stack[:len(w.stack)-1]
 		w.rebuildPrefix()
 	}
+}
+
+func (w *writer) ClearLine() string {
+	if w.color {
+		return "\r\033[K"
+	}
+	return "\r"
 }
 
 func (w *writer) rebuildPrefix() {
