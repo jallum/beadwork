@@ -14,7 +14,7 @@ Issues have **status** (open → in_progress → closed, or deferred), **priorit
 - Record progress as you go — `bw comments add <id> "what happened"`. Context in your working memory can disappear without warning. Comments persist.
 - If you discover new work mid-task, create an issue. Don't create issues for things you'll finish in the same breath.
 - `bw close <id>` when done. Use `--reason` if the resolution isn't obvious.
-- Before ending your session: commit code, `bw sync`, `git push`. Nothing should exist only in your context window.
+- Before ending your session: commit code, push your branch, and `bw sync`. Nothing should exist only in your context window.
 
 ## Commands
 
@@ -46,6 +46,6 @@ Multiple agents need separate git worktrees to avoid file conflicts. `bw` itself
 
 ## Code Review
 
-Push your feature branch and open a pull request rather than merging directly. Reference the issue ID in the PR description.
+Always work on a feature branch — never commit directly to main. Push and open a pull request when the work is ready. Reference the issue ID in the PR description.
 
 <!-- END -->
