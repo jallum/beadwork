@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-21T15:31:30Z",
+  "description": "",
+  "id": "bw-d5l.1",
+  "labels": [],
+  "parent": "bw-d5l",
+  "priority": 1,
+  "status": "open",
+  "title": "Change Command.Run signature to accept repo and store",
+  "type": "task",
+  "updated_at": "2026-02-21T15:31:30Z"
+}
