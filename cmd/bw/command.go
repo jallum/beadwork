@@ -99,7 +99,7 @@ var commands = []Command{
 		Name:        "show",
 		Aliases:     []string{"view"},
 		Summary:     "Show issue details",
-		Description: "Display full details for an issue including status, priority, labels, and dependencies.",
+		Description: "Display full details for an issue including status, priority, labels, and dependency context.\nThe BLOCKED BY section shows actionable tips — the leaf issues that need work to unblock this one.\nThe BLOCKS section shows what completing this issue would eventually unblock.",
 		Positionals: []Positional{
 			{Name: "<id>", Required: true, Help: "Issue ID (can specify multiple)"},
 		},

@@ -65,7 +65,7 @@ func cmdShow(args []string, w Writer) error {
 			)
 		} else {
 			fprintIssue(w, iss)
-			fprintDeps(w, iss, store)
+			fprintMap(w, iss, store)
 			fprintComments(w, iss)
 		}
 	}

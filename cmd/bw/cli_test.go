@@ -191,9 +191,9 @@ func TestShowWithDependencies(t *testing.T) {
 	assertContains(t, outA, "BLOCKS")
 	assertContains(t, outA, b.ID)
 
-	// Check blocked shows DEPENDS ON section with rich dep
+	// Check blocked shows BLOCKED BY section with rich dep
 	outB := bw(t, env.Dir, "show", b.ID)
-	assertContains(t, outB, "DEPENDS ON")
+	assertContains(t, outB, "BLOCKED BY")
 	assertContains(t, outB, a.ID)
 }
 
@@ -638,7 +638,7 @@ func TestImportDependencies(t *testing.T) {
 
 	// Check blocks relationship (rich dep format)
 	outB := bw(t, env.Dir, "show", "dep-bbb")
-	assertContains(t, outB, "DEPENDS ON")
+	assertContains(t, outB, "BLOCKED BY")
 	assertContains(t, outB, "dep-aaa")
 
 	outA := bw(t, env.Dir, "show", "dep-aaa")

@@ -303,41 +303,53 @@ func fprintComments(w Writer, iss *issue.Issue) {
 	}
 }
 
-// fprintDeps renders rich dependency sections using store lookups.
-func fprintDeps(w Writer, iss *issue.Issue, store *issue.Store) {
-	if len(iss.Blocks) > 0 {
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, w.Style("BLOCKS", Bold))
-		w.Push(2)
-		for _, id := range iss.Blocks {
-			dep, err := store.Get(id)
-			if err != nil {
-				fmt.Fprintf(w, "← %s\n", id)
-				continue
-			}
-			ps := PriorityStyle(dep.Priority)
-			fmt.Fprintf(w, "← %s %s: %s  [%s %s]\n",
-				issue.StatusIcon(dep.Status), dep.ID, dep.Title,
-				w.Style("●", ps), w.Style(fmt.Sprintf("P%d", dep.Priority), ps))
-		}
-		w.Pop()
-	}
+// fprintMap renders BLOCKED BY and BLOCKS sections using tip-walking.
+// Instead of showing immediate dependencies, it walks the full dependency
+// tree and surfaces only the actionable tips (leaf nodes).
+func fprintMap(w Writer, iss *issue.Issue, store *issue.Store) {
+	fwd, rev := store.LoadEdges()
+
 	if len(iss.BlockedBy) > 0 {
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, w.Style("DEPENDS ON", Bold))
-		w.Push(2)
-		for _, id := range iss.BlockedBy {
-			dep, err := store.Get(id)
-			if err != nil {
-				fmt.Fprintf(w, "→ %s\n", id)
-				continue
+		tips, _ := store.Tips(iss.BlockedBy, rev)
+		if len(tips) > 0 {
+			fmt.Fprintln(w)
+			fmt.Fprintln(w, w.Style("BLOCKED BY", Bold))
+			w.Push(2)
+			for _, tip := range tips {
+				ps := PriorityStyle(tip.Priority)
+				line := fmt.Sprintf("→ %s %s: %s  [%s %s]",
+					issue.StatusIcon(tip.Status), tip.ID, tip.Title,
+					w.Style("●", ps), w.Style(fmt.Sprintf("P%d", tip.Priority), ps))
+				// Annotate if this tip also blocks other issues
+				var others []string
+				for _, id := range tip.Blocks {
+					if id != iss.ID {
+						others = append(others, id)
+					}
+				}
+				if len(others) > 0 {
+					line += w.Style(fmt.Sprintf("  (also blocks: %s)", strings.Join(others, ", ")), Dim)
+				}
+				fmt.Fprintln(w, line)
 			}
-			ps := PriorityStyle(dep.Priority)
-			fmt.Fprintf(w, "→ %s %s: %s  [%s %s]\n",
-				issue.StatusIcon(dep.Status), dep.ID, dep.Title,
-				w.Style("●", ps), w.Style(fmt.Sprintf("P%d", dep.Priority), ps))
+			w.Pop()
 		}
-		w.Pop()
+	}
+
+	if len(iss.Blocks) > 0 {
+		tips, _ := store.Tips(iss.Blocks, fwd)
+		if len(tips) > 0 {
+			fmt.Fprintln(w)
+			fmt.Fprintln(w, w.Style("BLOCKS", Bold))
+			w.Push(2)
+			for _, tip := range tips {
+				ps := PriorityStyle(tip.Priority)
+				fmt.Fprintf(w, "← %s %s: %s  [%s %s]\n",
+					issue.StatusIcon(tip.Status), tip.ID, tip.Title,
+					w.Style("●", ps), w.Style(fmt.Sprintf("P%d", tip.Priority), ps))
+			}
+			w.Pop()
+		}
 	}
 }
 
