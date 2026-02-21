@@ -909,9 +909,10 @@ func TestReadCorruptJSON(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	// Create a valid issue, then corrupt it
+	// Create a valid issue, then corrupt it on disk
 	iss, _ := env.Store.Create("Valid", issue.CreateOpts{})
 	env.Repo.TreeFS().WriteFile("issues/"+iss.ID+".json", []byte("{invalid json"))
+	env.Store.ClearCache()
 
 	_, err := env.Store.Get(iss.ID)
 	if err == nil {
