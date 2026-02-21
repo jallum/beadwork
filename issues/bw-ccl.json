@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-21T21:16:26Z",
+  "description": "",
+  "id": "bw-ccl",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Introduce Snapshot for single-load graph queries",
+  "type": "epic",
+  "updated_at": "2026-02-21T21:16:26Z"
+}
