@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.1 — 2026-02-22
+
+- **`bw show` header includes comment count** — the header bracket now shows how many comments an issue has (e.g., `· 3 comments`) or `· NO COMMENTS` when empty, so you can tell at a glance whether there's discussion without scrolling to the bottom.
+
 ## 0.8.0 — 2026-02-22
 
 - **`bw start` now shows full issue context** — starting an issue prints the description, children, dependencies, comments, and a "Landing the Work" section with next steps. Delegates get the full picture without needing a separate `bw show`.
