@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-u24.1"
+  ],
   "blocks": [],
   "created": "2026-02-22T13:47:28Z",
   "description": "These three verbs generate intents but have no replay handler — they hit the default case and return nil. Add replayStart (parse assignee, call store.Start), replayDefer (parse date, update status+DeferUntil), replayUndefer (clear DeferUntil, set status=open). Without these, started issues revert to open and deferred issues lose their dates after conflict replay.",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Add replay handlers for start, defer, undefer",
   "type": "task",
-  "updated_at": "2026-02-22T19:34:22Z"
+  "updated_at": "2026-02-22T19:34:26Z"
 }
