@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-02-22T20:52:29Z",
@@ -7,8 +7,8 @@
   "id": "bw-kaf",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Scope landing steps in start.md to one ticket per commit",
   "type": "task",
-  "updated_at": "2026-02-22T20:52:29Z"
+  "updated_at": "2026-02-22T20:52:32Z"
 }
