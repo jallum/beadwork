@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-22T14:06:04Z",
+  "description": "In ready.go's cmdReady (or by enriching Store.Ready()), partition the ready issues into groups: issues with a Parent are grouped under that parent, issues without a parent stand alone at the top level. The parent issue itself may or may not be in the ready list — if it is, it becomes the group header; if not, it still needs to be loaded to serve as the header. Return or organize the data so the rendering loop can iterate group-by-group.",
+  "id": "bw-ytt.1",
+  "labels": [],
+  "parent": "bw-ytt",
+  "priority": 1,
+  "status": "open",
+  "title": "Partition ready issues into parent groups in Store.Ready() or cmdReady",
+  "type": "task",
+  "updated_at": "2026-02-22T14:06:04Z"
+}
