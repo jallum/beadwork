@@ -2,13 +2,14 @@
   "assignee": "agent-r9m",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-22T17:47:47Z",
   "created": "2026-02-22T17:43:35Z",
   "description": "Currently bw show displays comment timestamps in a compact or relative format. Update it to use the full, formatted date-time (e.g. 2026-02-22 14:30:05) so comment timestamps are unambiguous and complete.",
   "id": "bw-r9m",
   "labels": [],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Use full formatted date-time in bw show for comments",
   "type": "task",
-  "updated_at": "2026-02-22T17:45:54Z"
+  "updated_at": "2026-02-22T17:47:47Z"
 }
