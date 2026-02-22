@@ -4,14 +4,15 @@
   "blocks": [
     "bw-ytt.1"
   ],
+  "closed_at": "2026-02-22T14:08:39Z",
   "created": "2026-02-22T14:06:09Z",
   "description": "Add test cases for cmdReady covering: (1) mixed parent and standalone issues group correctly, (2) child issues whose parent is not itself ready still group under the parent, (3) all-standalone issues produce unchanged flat output, (4) JSON output remains a flat array regardless of parent relationships.",
   "id": "bw-ytt.3",
   "labels": [],
   "parent": "bw-ytt",
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add tests for grouped ready output",
   "type": "task",
-  "updated_at": "2026-02-22T14:07:09Z"
+  "updated_at": "2026-02-22T14:08:39Z"
 }
