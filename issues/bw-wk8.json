@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-02-22T21:09:19Z",
@@ -7,8 +7,8 @@
   "id": "bw-wk8",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Resolver-based template processor + rename start.md to land_the_work.md",
   "type": "task",
-  "updated_at": "2026-02-22T21:09:19Z"
+  "updated_at": "2026-02-22T21:09:22Z"
 }
