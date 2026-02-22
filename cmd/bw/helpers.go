@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -48,9 +47,10 @@ func getInitializedStore() (*issue.Store, error) {
 }
 
 // gitUserName returns git config user.name, or "unknown" if unavailable.
-func gitUserName(gitDir string) string {
+// repoDir should be the repository root (e.g. from Repo.RepoDir()).
+func gitUserName(repoDir string) string {
 	cmd := exec.Command("git", "config", "user.name")
-	cmd.Dir = filepath.Dir(gitDir)
+	cmd.Dir = repoDir
 	out, err := cmd.Output()
 	if err != nil {
 		return "unknown"
