@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-22T16:19:27Z",
   "created": "2026-02-22T16:19:00Z",
   "description": "The prompts/*.md files are templates consumed by bw, not documentation. Prettier reformats them in ways that can break template processing or alter whitespace-sensitive output. Add prompts/ to .prettierignore (or equivalent) so they're left alone.",
   "id": "bw-di9",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Exclude prompts directory from prettier",
   "type": "task",
-  "updated_at": "2026-02-22T16:19:09Z"
+  "updated_at": "2026-02-22T16:19:27Z"
 }
