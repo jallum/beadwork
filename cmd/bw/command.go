@@ -8,10 +8,11 @@ import (
 
 // Flag describes a single command-line flag.
 type Flag struct {
-	Long  string // e.g. "--priority"
-	Short string // e.g. "-p" (optional)
-	Value string // metavar for help, e.g. "N" — empty means boolean
-	Help  string // e.g. "Priority (0-4 or P0-P4, 0=highest)"
+	Long   string // e.g. "--priority"
+	Short  string // e.g. "-p" (optional)
+	Value  string // metavar for help, e.g. "N" — empty means boolean
+	Help   string // e.g. "Priority (0-4 or P0-P4, 0=highest)"
+	Hidden bool   // when true, flag is omitted from help output but still functional
 }
 
 // Positional describes a positional argument.
@@ -81,7 +82,7 @@ var commands = []Command{
 			{Name: "<title>", Required: true, Help: "Issue title (multiple words joined)"},
 		},
 		Flags: []Flag{
-			{Long: "--id", Value: "ID", Help: "Explicit issue ID (skip random generation)"},
+			{Long: "--id", Value: "ID", Help: "Explicit issue ID (skip random generation)", Hidden: true},
 			{Long: "--priority", Short: "-p", Value: "N", Help: "Priority (0-4 or P0-P4, 0=highest)"},
 			{Long: "--type", Short: "-t", Value: "TYPE", Help: "Issue type (task, bug, etc.)"},
 			{Long: "--description", Short: "-d", Value: "TEXT", Help: "Description"},
@@ -550,10 +551,17 @@ func printCommandHelp(w Writer, c *Command) {
 		w.Pop()
 	}
 
-	if len(c.Flags) > 0 {
+	// Collect visible flags for display.
+	var visibleFlags []Flag
+	for _, f := range c.Flags {
+		if !f.Hidden {
+			visibleFlags = append(visibleFlags, f)
+		}
+	}
+	if len(visibleFlags) > 0 {
 		fmt.Fprintf(w, "\n%s\n", w.Style("Flags:", Cyan))
 		w.Push(2)
-		for _, f := range c.Flags {
+		for _, f := range visibleFlags {
 			flag := f.Long
 			if f.Short != "" {
 				flag = f.Short + ", " + f.Long

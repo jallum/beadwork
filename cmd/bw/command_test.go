@@ -93,8 +93,14 @@ func TestPrintCommandHelp(t *testing.T) {
 		t.Error("missing 'bw create' in help output")
 	}
 
-	// Should contain flag descriptions
+	// Should contain visible flag descriptions and omit hidden ones
 	for _, f := range cmd.Flags {
+		if f.Hidden {
+			if strings.Contains(out, f.Help) {
+				t.Errorf("hidden flag %q help text should not appear in help output", f.Long)
+			}
+			continue
+		}
 		if !strings.Contains(out, f.Long) {
 			t.Errorf("missing flag %q in help output", f.Long)
 		}
@@ -286,6 +292,71 @@ func TestCommandValueFlags(t *testing.T) {
 		if f == "--json" {
 			t.Error("--json should not be a value flag")
 		}
+	}
+}
+
+func TestHiddenFlagOmittedFromHelp(t *testing.T) {
+	cmd := &Command{
+		Name:    "hidden-test",
+		Summary: "Test hidden flags",
+		Flags: []Flag{
+			{Long: "--visible", Help: "Visible flag"},
+			{Long: "--secret", Value: "VAL", Help: "Secret flag", Hidden: true},
+		},
+		Run: func(*issue.Store, []string, Writer) error { return nil },
+	}
+
+	var buf bytes.Buffer
+	printCommandHelp(PlainWriter(&buf), cmd)
+	out := buf.String()
+
+	if !strings.Contains(out, "--visible") {
+		t.Error("visible flag should appear in help output")
+	}
+	if strings.Contains(out, "--secret") {
+		t.Error("hidden flag --secret should not appear in help output")
+	}
+	if strings.Contains(out, "Secret flag") {
+		t.Error("hidden flag help text should not appear in help output")
+	}
+}
+
+func TestHiddenFlagStillInValueFlags(t *testing.T) {
+	cmd := &Command{
+		Name:    "vf-test",
+		Summary: "Test valueFlags includes hidden",
+		Flags: []Flag{
+			{Long: "--visible", Value: "X", Help: "Visible"},
+			{Long: "--hidden", Value: "Y", Help: "Hidden", Hidden: true},
+		},
+		Run: func(*issue.Store, []string, Writer) error { return nil },
+	}
+
+	vf := cmd.valueFlags()
+	found := false
+	for _, f := range vf {
+		if f == "--hidden" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("valueFlags() should include hidden flags (they are still functional)")
+	}
+}
+
+func TestCreateHelpHidesIDFlag(t *testing.T) {
+	cmd := commandMap["create"]
+	if cmd == nil {
+		t.Fatal("create command not found")
+	}
+
+	var buf bytes.Buffer
+	printCommandHelp(PlainWriter(&buf), cmd)
+	out := buf.String()
+
+	if strings.Contains(out, "--id") {
+		t.Error("--id flag should be hidden from create help output")
 	}
 }
 
