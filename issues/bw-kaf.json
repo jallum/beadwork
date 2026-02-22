@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-22T20:52:29Z",
+  "description": "start.md says 'Commit referencing {id}' which agents read as 'mention the id in whatever commit.' Adjust to make clear the commit is scoped to this ticket only, and frame landing as a gate before the next ticket — not a deferred checklist.",
+  "id": "bw-kaf",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Scope landing steps in start.md to one ticket per commit",
+  "type": "task",
+  "updated_at": "2026-02-22T20:52:29Z"
+}
