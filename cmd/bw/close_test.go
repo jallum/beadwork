@@ -128,6 +128,32 @@ func TestCmdReopenJSON(t *testing.T) {
 	}
 }
 
+func TestCmdReopenInProgress(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Unclaim me", issue.CreateOpts{})
+	env.Store.Start(iss.ID, "alice")
+	env.Repo.Commit("create and start " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdReopen(env.Store, []string{iss.ID}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdReopen in_progress: %v", err)
+	}
+	if !strings.Contains(buf.String(), "reopened") {
+		t.Errorf("output = %q", buf.String())
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.Status != "open" {
+		t.Errorf("status = %q, want open", got.Status)
+	}
+	if got.Assignee != "" {
+		t.Errorf("assignee = %q, want empty", got.Assignee)
+	}
+}
+
 func TestCmdReopenNotFound(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()

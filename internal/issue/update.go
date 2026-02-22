@@ -113,14 +113,18 @@ func (s *Store) Reopen(id string) (*Issue, error) {
 	if err != nil {
 		return nil, err
 	}
-	if issue.Status != "closed" {
-		return nil, fmt.Errorf("%s is not closed", id)
+	switch issue.Status {
+	case "closed", "in_progress":
+		// ok
+	default:
+		return nil, fmt.Errorf("%s is %s, not closed or in_progress", id, issue.Status)
 	}
 
-	if err := s.moveStatus(id, "closed", "open"); err != nil {
+	if err := s.moveStatus(id, issue.Status, "open"); err != nil {
 		return nil, err
 	}
 	issue.Status = "open"
+	issue.Assignee = ""
 	issue.ClosedAt = ""
 	issue.CloseReason = ""
 	issue.UpdatedAt = s.nowRFC3339()

@@ -115,7 +115,38 @@ func TestReopenNotClosed(t *testing.T) {
 
 	_, err := env.Store.Reopen(iss.ID)
 	if err == nil {
-		t.Error("expected error reopening non-closed issue")
+		t.Error("expected error reopening open issue")
+	}
+}
+
+
+func TestReopenInProgress(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Unclaim me", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	started, _ := env.Store.Start(iss.ID, "alice")
+	env.CommitIntent("start " + started.ID)
+
+	reopened, err := env.Store.Reopen(iss.ID)
+	if err != nil {
+		t.Fatalf("Reopen in_progress: %v", err)
+	}
+	if reopened.Status != "open" {
+		t.Errorf("status = %q, want open", reopened.Status)
+	}
+	if reopened.Assignee != "" {
+		t.Errorf("assignee = %q, want empty", reopened.Assignee)
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.Status != "open" {
+		t.Errorf("persisted status = %q, want open", got.Status)
+	}
+	if got.Assignee != "" {
+		t.Errorf("persisted assignee = %q, want empty", got.Assignee)
 	}
 }
 
