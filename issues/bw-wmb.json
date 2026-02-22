@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-22T15:11:06Z",
+  "description": "Add a global --dry-run flag that applies to all commands that modify the repo. When set, the command executes normally (builds the treefs mutations, formats output, etc.) but skips the final commit. This lets callers inspect output, prompts, and side effects without persisting anything. The flag should be parsed in main before dispatch and threaded through to the store or committer — e.g. by replacing the committer with a no-op, so command code doesn't need to know about it.",
+  "id": "bw-wmb",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Add global --dry-run flag for repo-modifying commands",
+  "type": "task",
+  "updated_at": "2026-02-22T15:11:06Z"
+}
