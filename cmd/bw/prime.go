@@ -39,7 +39,9 @@ func cmdPrime(store *issue.Store, _ []string, w Writer) error {
 		}
 	}
 
-	template.ProcessWithCommands(&buf, prompts.Prime, r.ListConfig(), nil, cmdFn)
+	cfg := r.ListConfig()
+	resolve := func(key string) string { return cfg[key] }
+	template.ProcessWithCommands(&buf, prompts.Prime, resolve, nil, cmdFn)
 	flush()
 
 	return nil

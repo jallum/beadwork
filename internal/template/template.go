@@ -6,24 +6,31 @@ import (
 )
 
 // Process evaluates conditional directives and section markers in text,
-// writing the result to w. Config values control IF/END conditionals.
+// writing the result to w. The resolve function maps variable names to
+// values for IF/END conditionals; nil is treated as always-empty.
 // Section markers (<!-- NAME -->) invoke the corresponding callback from
 // sections; unregistered markers are stripped. Plain HTML comments are
 // stripped entirely.
-func Process(w io.Writer, text string, config map[string]string, sections map[string]func(io.Writer)) {
-	ProcessWithCommands(w, text, config, sections, nil)
+func Process(w io.Writer, text string, resolve func(string) string, sections map[string]func(io.Writer)) {
+	ProcessWithCommands(w, text, resolve, sections, nil)
 }
 
 // ProcessWithCommands is like Process but also supports inline command
 // markers of the form <!-- bw arg1 arg2 ... -->. When cmdFn is non-nil,
 // it is invoked with the parsed argument tokens for each command marker.
-func ProcessWithCommands(w io.Writer, text string, config map[string]string, sections map[string]func(io.Writer), cmdFn func(args []string, w io.Writer)) {
+func ProcessWithCommands(w io.Writer, text string, resolve func(string) string, sections map[string]func(io.Writer), cmdFn func(args []string, w io.Writer)) {
 	lines := strings.Split(text, "\n")
 	skipDepth := 0
 	inComment := false
 	first := true
+	lastBlank := false
 
 	emit := func(s string) {
+		blank := strings.TrimSpace(s) == ""
+		if blank && lastBlank {
+			return
+		}
+		lastBlank = blank
 		if !first {
 			io.WriteString(w, "\n")
 		}
@@ -48,7 +55,7 @@ func ProcessWithCommands(w io.Writer, text string, config map[string]string, sec
 				skipDepth++
 				continue
 			}
-			if !evalCondition(cond, config) {
+			if !evalCondition(cond, resolve) {
 				skipDepth = 1
 			}
 			continue
@@ -151,13 +158,16 @@ func parseCommand(trimmed string) ([]string, bool) {
 	return args, true
 }
 
-// evalCondition checks "key == value" against the config map.
-func evalCondition(cond string, config map[string]string) bool {
+// evalCondition checks "key == value" against the resolve function.
+func evalCondition(cond string, resolve func(string) string) bool {
 	parts := strings.SplitN(cond, "==", 2)
 	if len(parts) != 2 {
 		return false
 	}
 	key := strings.TrimSpace(parts[0])
 	val := strings.TrimSpace(parts[1])
-	return config[key] == val
+	if resolve == nil {
+		return val == ""
+	}
+	return resolve(key) == val
 }

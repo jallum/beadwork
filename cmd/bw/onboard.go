@@ -11,7 +11,7 @@ import (
 func cmdOnboard(w Writer) error {
 	text := fmt.Sprintf(prompts.Onboard, prompts.AgentsMD)
 	var buf bytes.Buffer
-	template.Process(&buf, text, nil, nil)
+	template.Process(&buf, text, nil, nil) // no conditionals in onboard
 	fmt.Fprint(w, buf.String())
 	return nil
 }

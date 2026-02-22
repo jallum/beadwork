@@ -85,10 +85,23 @@ func cmdStart(store *issue.Store, args []string, w Writer) error {
 	fprintMap(w, iss, store)
 	fprintComments(w, iss)
 
-	// Next steps from start.md template
-	tmpl := strings.ReplaceAll(prompts.Start, "{id}", iss.ID)
+	// Next steps from land_the_work.md template
+	tmpl := strings.ReplaceAll(prompts.LandTheWork, "{id}", iss.ID)
+	cfg := r.ListConfig()
+	resolve := func(key string) string {
+		switch key {
+		case "type":
+			return iss.Type
+		case "status":
+			return iss.Status
+		case "parent":
+			return iss.Parent
+		default:
+			return cfg[key]
+		}
+	}
 	var buf bytes.Buffer
-	template.Process(&buf, tmpl, r.ListConfig(), nil)
+	template.Process(&buf, tmpl, resolve, nil)
 
 	text := strings.TrimSpace(buf.String())
 	if text != "" {
