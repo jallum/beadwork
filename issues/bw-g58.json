@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-22T15:54:45Z",
+  "description": "cmdPrime currently builds its own ready-work listing. It should call into the same code path as cmdReady (or invoke it directly) so the two stay consistent and there's no duplicated logic.",
+  "id": "bw-g58",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "bw prime should reuse bw ready output for available work",
+  "type": "task",
+  "updated_at": "2026-02-22T15:54:45Z"
+}
