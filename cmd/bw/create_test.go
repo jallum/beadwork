@@ -149,6 +149,64 @@ func TestCmdCreateSilentNoExtraOutput(t *testing.T) {
 	}
 }
 
+func TestCmdCreateWithExplicitID(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdCreate(env.Store, []string{"Explicit ID", "--id", "test-myid"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdCreate: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "test-myid") {
+		t.Errorf("output = %q, want 'test-myid'", out)
+	}
+
+	// Verify the issue was created with the explicit ID
+	iss, err := env.Store.Get("test-myid")
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if iss.Title != "Explicit ID" {
+		t.Errorf("title = %q, want %q", iss.Title, "Explicit ID")
+	}
+}
+
+func TestCmdCreateWithExplicitIDSilent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdCreate(env.Store, []string{"Silent explicit", "--id", "test-silent-id", "--silent"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdCreate: %v", err)
+	}
+	out := strings.TrimSpace(buf.String())
+	if out != "test-silent-id" {
+		t.Errorf("silent output = %q, want %q", out, "test-silent-id")
+	}
+}
+
+func TestCmdCreateWithExplicitIDJSON(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdCreate(env.Store, []string{"JSON explicit", "--id", "test-json-id", "--json"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdCreate: %v", err)
+	}
+
+	var iss issue.Issue
+	if err := json.Unmarshal(buf.Bytes(), &iss); err != nil {
+		t.Fatalf("JSON parse: %v", err)
+	}
+	if iss.ID != "test-json-id" {
+		t.Errorf("ID = %q, want %q", iss.ID, "test-json-id")
+	}
+}
+
 func TestCmdCreateWithLabelsJSON(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()

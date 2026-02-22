@@ -81,6 +81,7 @@ var commands = []Command{
 			{Name: "<title>", Required: true, Help: "Issue title (multiple words joined)"},
 		},
 		Flags: []Flag{
+			{Long: "--id", Value: "ID", Help: "Explicit issue ID (skip random generation)"},
 			{Long: "--priority", Short: "-p", Value: "N", Help: "Priority (0-4 or P0-P4, 0=highest)"},
 			{Long: "--type", Short: "-t", Value: "TYPE", Help: "Issue type (task, bug, etc.)"},
 			{Long: "--description", Short: "-d", Value: "TEXT", Help: "Description"},

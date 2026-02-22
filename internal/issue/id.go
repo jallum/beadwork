@@ -10,6 +10,20 @@ import (
 
 const base36 = "0123456789abcdefghijklmnopqrstuvwxyz"
 
+// validateExplicitID checks that the given ID is well-formed and unique.
+func (s *Store) validateExplicitID(id string) (string, error) {
+	// Format check: no whitespace, non-empty.
+	if strings.ContainsAny(id, " \t\n\r") {
+		return "", fmt.Errorf("invalid ID %q: must not contain whitespace", id)
+	}
+	// Uniqueness check.
+	existing := s.ExistingIDs()
+	if existing[id] {
+		return "", fmt.Errorf("ID %q already exists", id)
+	}
+	return id, nil
+}
+
 func (s *Store) generateID() (string, error) {
 	existing := s.ExistingIDs()
 	retries := s.IDRetries

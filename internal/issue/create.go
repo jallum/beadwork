@@ -24,7 +24,9 @@ func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
 
 	var id string
 	var err error
-	if parentID != "" {
+	if opts.ID != "" {
+		id, err = s.validateExplicitID(opts.ID)
+	} else if parentID != "" {
 		id, err = s.generateChildID(parentID)
 	} else {
 		id, err = s.generateID()

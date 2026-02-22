@@ -73,6 +73,7 @@ func (s *Store) ClearCache() {
 }
 
 type CreateOpts struct {
+	ID          string // explicit ID; skips random generation but still validates
 	Parent      string
 	Description string
 	Priority    *int
