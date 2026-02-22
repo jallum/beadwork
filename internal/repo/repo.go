@@ -99,13 +99,6 @@ func (r *Repo) ForceReinit(prefix string) error {
 		return err
 	}
 
-	// Clean up any legacy worktree at .git/beadwork/
-	legacyWt := filepath.Join(r.GitDir, BranchName)
-	if _, err := os.Stat(legacyWt); err == nil {
-		execGit(r.RepoDir(), "worktree", "remove", "--force", legacyWt)
-		os.RemoveAll(legacyWt)
-	}
-
 	// Delete local branch ref
 	if r.localBranchExists() {
 		r.tfs.DeleteRef(refLocal)
@@ -489,7 +482,7 @@ func resolveWorktreeGitDir(dotGitFile string) (string, error) {
 	return filepath.Abs(commondir)
 }
 
-// execGit is kept only for ls-remote in remoteBranchExists and legacy cleanup.
+// execGit is kept for network operations: ls-remote, fetch, and push.
 func execGit(dir string, args ...string) (string, error) {
 	cmd := exec.Command("git", args...)
 	cmd.Dir = dir
