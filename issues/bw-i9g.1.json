@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "agent-i9g",
   "blocked_by": [],
   "blocks": [
     "bw-i9g.4"
@@ -10,8 +10,8 @@
   "labels": [],
   "parent": "bw-i9g",
   "priority": 1,
-  "status": "open",
+  "status": "in_progress",
   "title": "Replace findGitDir() with pure-Go directory walk",
   "type": "task",
-  "updated_at": "2026-02-22T13:30:50Z"
+  "updated_at": "2026-02-22T16:27:10Z"
 }
