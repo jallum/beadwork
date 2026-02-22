@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-22T20:29:41Z",
+  "description": "The Worktrees section in prime.md is disconnected from the Starting the Work section, so agents internalize the workflow without worktrees and treat them as optional hygiene. Merge worktree guidance into Starting the Work so the connection is inseparable, and remove the standalone Worktrees section.",
+  "id": "bw-m82",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Integrate worktree guidance into Starting the Work section",
+  "type": "task",
+  "updated_at": "2026-02-22T20:29:41Z"
+}
