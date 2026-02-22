@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "agent-r9m",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-02-22T17:43:35Z",
@@ -7,8 +7,8 @@
   "id": "bw-r9m",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "in_progress",
   "title": "Use full formatted date-time in bw show for comments",
   "type": "task",
-  "updated_at": "2026-02-22T17:43:35Z"
+  "updated_at": "2026-02-22T17:45:54Z"
 }
