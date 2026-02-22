@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-22T22:37:40Z",
   "created": "2026-02-22T22:31:24Z",
   "description": "Move display sections (children, map, comments) from hardcoded Go into the template using \u003c!-- bw show ... --\u003e commands. Add type-conditional starting guidance. Rename land_the_work.md back to start.md.",
   "id": "bw-9fg",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Expand start.md into full point-of-action briefing",
   "type": "task",
-  "updated_at": "2026-02-22T22:31:28Z"
+  "updated_at": "2026-02-22T22:37:40Z"
 }
