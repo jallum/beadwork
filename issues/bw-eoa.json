@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-22T17:08:23Z",
+  "description": "bw start currently prints a minimal 'started \u003cid\u003e' line. Enhance it to show full issue context (summary, description, children, dependency map, comments) plus a 'LANDING THE WORK' section rendered from a new start.md template. This moves per-task conditional workflow hints (PR review, etc.) out of prime.md and into the point-of-action briefing where they're most useful. Prime.md gets slimmed and restructured to focus on the mental model rather than procedure.",
+  "id": "bw-eoa",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Enhance bw start with rich context and landing instructions",
+  "type": "task",
+  "updated_at": "2026-02-22T17:08:23Z"
+}
