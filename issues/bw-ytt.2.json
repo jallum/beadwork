@@ -1,8 +1,6 @@
 {
   "assignee": "",
-  "blocked_by": [
-    "bw-ytt.1"
-  ],
+  "blocked_by": [],
   "blocks": [
     "bw-ytt.3"
   ],
@@ -15,5 +13,5 @@
   "status": "open",
   "title": "Render grouped output with indented children",
   "type": "task",
-  "updated_at": "2026-02-22T14:06:14Z"
+  "updated_at": "2026-02-22T14:06:36Z"
 }
