@@ -168,11 +168,12 @@ func TestCmdReadyGroupsChildrenUnderParent(t *testing.T) {
 	lines := strings.Split(out, "\n")
 
 	// Find the epic line and verify children appear indented after it.
+	// Match " epic.ID " with spaces to avoid substring matches on child IDs.
 	epicIdx := -1
 	child1Idx := -1
 	child2Idx := -1
 	for i, line := range lines {
-		if strings.Contains(line, epic.ID) {
+		if strings.Contains(line, " "+epic.ID+" ") {
 			epicIdx = i
 		}
 		if strings.Contains(line, child1.ID) {
