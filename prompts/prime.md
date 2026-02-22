@@ -90,7 +90,7 @@ Every task gets a ticket (`bw create "Title" --description "..." -p 2 -t task`) 
 
 When working solo as the main agent, `bw start <id>` claims it — sets status, assigns the current user, shows the full issue context, and tells you how to land it when done.
 
-When delegating the work to another agent, remember that they don't inherit your context. Each worker will need to run `bw start <id> --assignee <delegate-agent-id>` itself -- this will explain the issue context and how to land the work, while signalling to other agents _who_ is doing _what_.
+When delegating the work to another agent, remember that they don't inherit your context. Each worker will need to run `bw start <id> --assignee <delegate-agent-id>` itself -- this will explain the issue context and how to land the work, while signalling to other agents _who_ is doing _what_. It's important to close the ticket after you've verified that the agent has completed the work.
 
 Work that isn't committed, closed, and synced doesn't exist to the next session or to other workers. `bw start` tells you the specific steps when you claim an issue.
 
