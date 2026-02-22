@@ -2,6 +2,7 @@
   "assignee": "agent-u9r",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-22T17:48:54Z",
   "created": "2026-02-22T17:39:56Z",
   "description": "The --id flag on bw create exists for test determinism but was visible in --help, which caused agents to discover and use it for human-readable IDs. The flag has been removed from the Flags slice in command.go (hidden from help) while remaining functional in create.go parsing. This ticket tracks that change.",
   "id": "bw-u9r",
@@ -13,8 +14,8 @@
     }
   ],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Hide --id flag from help output",
   "type": "task",
-  "updated_at": "2026-02-22T17:46:01Z"
+  "updated_at": "2026-02-22T17:48:54Z"
 }
