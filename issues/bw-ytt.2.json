@@ -4,14 +4,15 @@
     "bw-ytt.1"
   ],
   "blocks": [],
+  "closed_at": "2026-02-22T14:10:55Z",
   "created": "2026-02-22T14:06:07Z",
   "description": "Update the text rendering loop in cmdReady to print grouped output. For each group: print the parent issue as a normal issue line, then print each child issue indented by two spaces. Separate groups with a blank line. Standalone issues (no parent) print at the top level without indentation. The summary line and status legend remain unchanged.",
   "id": "bw-ytt.2",
   "labels": [],
   "parent": "bw-ytt",
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Render grouped output with indented children",
   "type": "task",
-  "updated_at": "2026-02-22T14:06:40Z"
+  "updated_at": "2026-02-22T14:10:55Z"
 }
