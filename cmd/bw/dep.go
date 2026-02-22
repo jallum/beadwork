@@ -106,6 +106,10 @@ func cmdDepRemove(store *issue.Store, args []string, w Writer) error {
 		return err
 	}
 
+	if !store.DepExists(ua.BlockerID, ua.BlockedID) {
+		return fmt.Errorf("no dependency: %s does not block %s", ua.BlockerID, ua.BlockedID)
+	}
+
 	if err := store.Unlink(ua.BlockerID, ua.BlockedID); err != nil {
 		return err
 	}

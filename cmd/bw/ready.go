@@ -66,7 +66,7 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 
 	// Print standalone issues.
 	for _, iss := range filteredStandalone {
-		fprintReadyLine(w, iss)
+		fprintReadyLine(w, iss, store)
 	}
 
 	// Print groups.
@@ -74,12 +74,12 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 		// Print parent as group header.
 		parent, err := store.Get(parentID)
 		if err == nil {
-			fprintReadyLine(w, parent)
+			fprintReadyLine(w, parent, store)
 		}
 		// Print children indented.
 		w.Push(2)
 		for _, child := range groups[parentID] {
-			fprintReadyLine(w, child)
+			fprintReadyLine(w, child, store)
 		}
 		w.Pop()
 	}
@@ -97,7 +97,7 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 	return nil
 }
 
-func fprintReadyLine(w Writer, iss *issue.Issue) {
+func fprintReadyLine(w Writer, iss *issue.Issue, store *issue.Store) {
 	ps := PriorityStyle(iss.Priority)
 	fmt.Fprintf(w, "%s %s %s %s %s%s\n",
 		issue.StatusIcon(iss.Status),
@@ -105,6 +105,6 @@ func fprintReadyLine(w Writer, iss *issue.Issue) {
 		w.Style("●", ps),
 		w.Style(fmt.Sprintf("P%d", iss.Priority), ps),
 		iss.Title,
-		formatDeps(w, iss),
+		formatDeps(w, iss, store),
 	)
 }

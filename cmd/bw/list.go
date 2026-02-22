@@ -110,7 +110,7 @@ func cmdList(store *issue.Store, args []string, w Writer) error {
 				w.Style(fmt.Sprintf("P%d", iss.Priority), ps),
 				iss.Type,
 				iss.Title,
-				formatDeps(w, iss),
+				formatDeps(w, iss, store),
 			)
 		}
 		if limit > 0 && len(issues) > limit {

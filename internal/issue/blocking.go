@@ -108,6 +108,20 @@ func (s *Store) Unlink(blockerID, blockedID string) error {
 	return nil
 }
 
+// DepExists reports whether blockerID currently blocks blockedID.
+func (s *Store) DepExists(blockerID, blockedID string) bool {
+	blockerID, err := s.resolveID(blockerID)
+	if err != nil {
+		return false
+	}
+	blockedID, err = s.resolveID(blockedID)
+	if err != nil {
+		return false
+	}
+	_, err = s.FS.Stat("blocks/" + blockerID + "/" + blockedID)
+	return err == nil
+}
+
 // LoadEdges reads the blocks/ directory and returns forward and reverse
 // adjacency maps. Forward maps blocker → []blocked; reverse maps
 // blocked → []blocker.
