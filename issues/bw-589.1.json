@@ -4,14 +4,15 @@
   "blocks": [
     "bw-589.3"
   ],
+  "closed_at": "2026-02-22T16:30:10Z",
   "created": "2026-02-22T13:45:34Z",
   "description": "Accept an explicit issue ID via --id on bw create. Thread it through CreateOpts into generateID's path — if provided, skip random generation but run the same validation (uniqueness check, format check). Also useful for scripting and migration beyond testing.",
   "id": "bw-589.1",
   "labels": [],
   "parent": "bw-589",
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add --id flag to bw create",
   "type": "task",
-  "updated_at": "2026-02-22T16:26:10Z"
+  "updated_at": "2026-02-22T16:30:10Z"
 }
