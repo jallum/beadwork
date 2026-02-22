@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-u24.5"
+  ],
   "blocks": [],
   "created": "2026-02-22T13:47:43Z",
   "description": "cmdUpdate encodes title=My New Title (no quoting), but ParseIntent splits on spaces, so replayUpdate sees title=My as one token and New, Title as orphans. Same problem for assignee with spaces. Either quote values containing spaces in the intent (title=\"My New Title\") or switch update intents to a format that handles spaces (e.g. key=%q). Also fix ExtractQuoted / ParseIntent to handle Go %q escape sequences (backslash-quote) so round-tripping works.",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Fix multi-word values in update intent format",
   "type": "task",
-  "updated_at": "2026-02-22T13:47:43Z"
+  "updated_at": "2026-02-22T13:47:53Z"
 }
