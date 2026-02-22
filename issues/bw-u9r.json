@@ -6,9 +6,15 @@
   "description": "The --id flag on bw create exists for test determinism but was visible in --help, which caused agents to discover and use it for human-readable IDs. The flag has been removed from the Flags slice in command.go (hidden from help) while remaining functional in create.go parsing. This ticket tracks that change.",
   "id": "bw-u9r",
   "labels": [],
+  "comments": [
+    {
+      "text": "We could have a flag in the data structure to suppress printing out something in the help.",
+      "timestamp": "2026-02-22T17:42:47Z"
+    }
+  ],
   "priority": 3,
   "status": "open",
   "title": "Hide --id flag from help output",
   "type": "task",
-  "updated_at": "2026-02-22T17:39:56Z"
+  "updated_at": "2026-02-22T17:42:47Z"
 }
