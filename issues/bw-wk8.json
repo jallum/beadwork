@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-22T21:12:51Z",
   "created": "2026-02-22T21:09:19Z",
   "description": "Replace config map[string]string with resolve func(string) string in the template processor. Rename start.md to land_the_work.md. Add type-conditional landing steps (epic vs task/bug). Collapse consecutive blank lines in template output.",
   "id": "bw-wk8",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Resolver-based template processor + rename start.md to land_the_work.md",
   "type": "task",
-  "updated_at": "2026-02-22T21:09:22Z"
+  "updated_at": "2026-02-22T21:12:51Z"
 }
