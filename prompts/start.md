@@ -25,7 +25,7 @@ This is the point-of-action briefing shown when an agent claims work with
 -->
 - Commit referencing {id}
 <!-- IF workflow.review == pr -->
-- Push the branch and open a PR referencing {id}. Open it as a draft if work remains; as a regular PR if it's ready for review. If a draft PR already exists for this branch, convert it to ready for review when done.
+- Push the branch for this worktree, and open a PR referencing it. Open it as a draft if work remains; as a regular PR if it's ready for review. If a draft PR already exists for this branch, convert it to ready for review when done.
 <!-- END -->
 - Close the ticket (`bw close {id}`); It will tell you if work is newly unblocked
 - `bw sync`.
