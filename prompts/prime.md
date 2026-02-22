@@ -80,7 +80,7 @@ A plan in your context window is fragile — one compaction and it's gone. Make 
 
 All data lives on the `beadwork` git branch — deleting it permanently destroys everything.
 
-Issues have **status** (open → in_progress → closed, or deferred), **priority** (P0-P4: P0 critical → P4 backlog, default P2), and optionally **dependencies**, **labels**, **comments**, and **parent** relationships. Issues can form hierarchies: an epic with child tasks (`--parent <epic>`), wired with dependencies (`bw dep add <blocker> blocks <blocked>`). Blocked issues can't be started; when a dependency closes (`bw close <id>`), newly unblocked work surfaces. To find more work, use `bw ready`.
+Issues have **status** (open → in_progress → closed, or deferred), **priority** (P0-P4: P0 critical → P4 backlog, default P2), and optionally **dependencies**, **labels**, **comments**, and **parent** relationships. Issues can form hierarchies: an epic with child tasks (`--parent <epic>`), wired with dependencies (`bw dep add <blocker> blocks <blocked>`). Blocked issues can't be started; when a dependency closes (`bw close <id>`), newly unblocked work surfaces. To find more work, use `bw ready`. `bd show <id>` will give you the description, assignee, comments, blockers and the tickets that _that_ ticket will unblock, all in one go.
 
 ## Tickets are Cheap Insurance
 
@@ -94,7 +94,9 @@ When delegating the work to another agent, remember that they don't inherit your
 
 Work that isn't committed, closed, and synced doesn't exist to the next session or to other workers. `bw start` tells you the specific steps when you claim an issue.
 
-Comments (`bw comments add <id> "..."`) are durable context — breadcrumbs for your future self after compaction, and messages to anyone else working in the project. This is useful for leaving implementation notes when deviations or adjustments are necessary.
+## Leaving Notes
+
+Comments (`bw comment <id> "..."`) are durable context — breadcrumbs for your future self after compaction, and messages to anyone else working in the project. This is especially useful for leaving implementation notes when deviations or adjustments are necessary. 
 
 ## Worktrees
 
