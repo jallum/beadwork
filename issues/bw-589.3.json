@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-22T13:45:41Z",
+  "description": "Create the test infrastructure for binary-level tests. Build the bw binary, create a temp git repo with fixed config (user.name, user.email), set BW_CLOCK and GIT_AUTHOR_DATE/GIT_COMMITTER_DATE for full determinism. Run bw commands via exec, capture output. Compare bw export output against golden files. A failing test is a diff. Updating after intentional changes is a file copy. This can be a Go test in a new test/ directory or a dedicated _test.go in cmd/bw/.",
+  "id": "bw-589.3",
+  "labels": [],
+  "parent": "bw-589",
+  "priority": 1,
+  "status": "open",
+  "title": "Build acceptance test harness",
+  "type": "task",
+  "updated_at": "2026-02-22T13:45:41Z"
+}
