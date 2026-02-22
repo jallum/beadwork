@@ -80,7 +80,7 @@ A plan in your context window is fragile — one compaction and it's gone. Make 
 
 All data lives on the `beadwork` git branch — deleting it permanently destroys everything.
 
-Issues have **status** (open → in_progress → closed, or deferred), **priority** (P0-P4: P0 critical → P4 backlog, default P2), and optionally **dependencies**, **labels**, **comments**, and **parent** relationships. Issues can form hierarchies: an epic with child tasks (`--parent <epic>`), wired with dependencies (`bw dep add <blocker> blocks <blocked>`). Blocked issues can't be started; when a dependency closes (`bw close <id>`), newly unblocked work surfaces. To find more work, use `bw ready`. `bd show <id>` will give you the description, assignee, comments, blockers and the tickets that _that_ ticket will unblock, all in one go.
+Issues have **status** (open → in_progress → closed, or deferred), **priority** (P0-P4: P0 critical → P4 backlog, default P2), and optionally **dependencies**, **labels**, **comments**, and **parent** relationships. Issues can form hierarchies: an epic with child tasks (`--parent <epic>`), wired with dependencies (`bw dep add <blocker> blocks <blocked>`). Blocked issues can't be started; when a dependency closes (`bw close <id>`), newly unblocked work surfaces. To find more work, use `bw ready`. `bw show <id>` will give you the description, assignee, comments, blockers and the tickets that _that_ ticket will unblock, all in one go.
 
 ## Tickets are Cheap Insurance
 
@@ -92,7 +92,7 @@ When working solo as the main agent, `bw start <id>` claims it — sets status, 
 
 When delegating the work to another agent, remember that they don't inherit your context. Each worker will need to run `bw start <id> --assignee <delegate-agent-id>` itself -- this will explain the issue context and how to land the work, while signalling to other agents _who_ is doing _what_. It's important to close the ticket after you've verified that the agent has completed the work.
 
-Work that isn't committed, closed, and synced doesn't exist to the next session or to other workers. `bw start` tells you the specific steps when you claim an issue.
+Work that isn't committed, closed, and synced doesn't exist to the next session or to other workers. Landing instructions are delivered by `bw start` — they aren't embedded in tickets or stored in context. A plan that skips these steps leaves the worker without a path to land.
 
 ## Leaving Notes
 
