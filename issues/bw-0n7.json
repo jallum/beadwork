@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-02-22T19:38:40Z",
@@ -7,8 +7,8 @@
   "id": "bw-0n7",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "in_progress",
   "title": "bw show displays wrong blocker in human-readable output",
   "type": "bug",
-  "updated_at": "2026-02-22T19:38:40Z"
+  "updated_at": "2026-02-22T19:39:17Z"
 }
