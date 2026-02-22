@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-22T17:27:24Z",
   "created": "2026-02-22T13:30:14Z",
   "description": "Epic: eliminate exec.Command(\"git\") calls that slow down every bw invocation. The two on the hot path are findGitDir() (rev-parse --git-common-dir) and gitUserName() (config user.name). Secondary: remove legacy worktree cleanup, fix stale execGit comment. Network operations (fetch/push/ls-remote) stay on git CLI due to macOS SSH/Keychain limitations.",
   "id": "bw-i9g",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Remove git binary from startup path",
   "type": "epic",
-  "updated_at": "2026-02-22T13:30:14Z"
+  "updated_at": "2026-02-22T17:27:24Z"
 }
