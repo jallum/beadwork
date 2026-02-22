@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-22T19:50:05Z",
   "created": "2026-02-22T19:38:40Z",
   "description": "bw show \u003cid\u003e renders the wrong issue ID in the BLOCKED BY section. For bw-u24.1, the JSON (--json) correctly shows blocked_by: [\"bw-u24.5\"], but the human-readable display shows \"BLOCKED BY → ○ bw-u24.2\" — a completely different issue. This is the most dangerous of the three because it gives confidently wrong information and can send someone chasing problems that don't exist (e.g., a circular dependency that wasn't real).",
   "id": "bw-0n7",
   "labels": [],
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "bw show displays wrong blocker in human-readable output",
   "type": "bug",
-  "updated_at": "2026-02-22T19:39:17Z"
+  "updated_at": "2026-02-22T19:50:05Z"
 }
