@@ -73,7 +73,7 @@ func TestCmdPrimeTemplateProcessing(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	// Prime no longer has conditional sections (moved to start.md).
+	// Prime no longer has conditional sections (moved to land_the_work.md).
 	// Verify it renders core sections cleanly.
 	var buf bytes.Buffer
 	err := cmdPrime(env.Store, nil, PlainWriter(&buf))

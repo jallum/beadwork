@@ -6,17 +6,24 @@ import (
 	"testing"
 )
 
+func mapResolver(m map[string]string) func(string) string {
+	if m == nil {
+		return nil
+	}
+	return func(key string) string { return m[key] }
+}
+
 func process(t *testing.T, input string, config map[string]string, sections map[string]func(io.Writer)) string {
 	t.Helper()
 	var buf bytes.Buffer
-	Process(&buf, input, config, sections)
+	Process(&buf, input, mapResolver(config), sections)
 	return buf.String()
 }
 
 func processWithCommands(t *testing.T, input string, config map[string]string, sections map[string]func(io.Writer), cmdFn func([]string, io.Writer)) string {
 	t.Helper()
 	var buf bytes.Buffer
-	ProcessWithCommands(&buf, input, config, sections, cmdFn)
+	ProcessWithCommands(&buf, input, mapResolver(config), sections, cmdFn)
 	return buf.String()
 }
 
@@ -239,6 +246,26 @@ func TestProcessMultipleSections(t *testing.T) {
 	}
 	got := process(t, input, nil, sections)
 	want := "top\n=head=\nmiddle\n=foot=\nbottom"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+// Blank line collapsing tests
+
+func TestProcessCollapsesConsecutiveBlanks(t *testing.T) {
+	input := "before\n\n\n\nafter"
+	got := process(t, input, nil, nil)
+	want := "before\n\nafter"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestProcessCollapsesBlanksBetweenFalseBlocks(t *testing.T) {
+	input := "header\n<!-- IF type == epic -->\nepic\n<!-- END -->\n\n<!-- IF type == task -->\ntask\n<!-- END -->\nfooter"
+	got := process(t, input, map[string]string{"type": "bug"}, nil)
+	want := "header\n\nfooter"
 	if got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}

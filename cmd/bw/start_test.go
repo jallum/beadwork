@@ -155,6 +155,50 @@ func TestCmdStartNoPRHintByDefault(t *testing.T) {
 	}
 }
 
+func TestCmdStartEpicLanding(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Epic issue", issue.CreateOpts{Type: "epic"})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdStart: %v", err)
+	}
+	out := buf.String()
+
+	if !strings.Contains(out, "children") {
+		t.Errorf("epic output should mention children: %q", out)
+	}
+	if strings.Contains(out, "Commit only") {
+		t.Errorf("epic output should not mention committing changes: %q", out)
+	}
+}
+
+func TestCmdStartTaskLanding(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Task issue", issue.CreateOpts{Type: "task"})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdStart: %v", err)
+	}
+	out := buf.String()
+
+	if !strings.Contains(out, "Commit only") {
+		t.Errorf("task output should mention committing: %q", out)
+	}
+	if !strings.Contains(out, "Land this ticket") {
+		t.Errorf("task output should say land this ticket: %q", out)
+	}
+}
+
 func TestCmdStartBlocked(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()

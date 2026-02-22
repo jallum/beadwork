@@ -38,7 +38,7 @@ Design requirements for this prompt:
    filler.
 
 8. Adapt to project configuration. Per-task conditionals (PR review, etc.)
-   now live in start.md and render at point of action. Prime shows the full
+   now live in land_the_work.md and render at point of action. Prime shows the full
    mental model to all agents regardless of configuration.
 
 9. Be the canonical reference. AGENTS.md is deliberately minimal — just a
@@ -47,7 +47,7 @@ Design requirements for this prompt:
 
 10. Land the work. Prime establishes the principle (unfinished bookkeeping
     is invisible progress); `bw start` delivers the concrete steps via
-    start.md. Prime should reinforce that landing matters without
+    land_the_work.md. Prime should reinforce that landing matters without
     duplicating the procedure.
 
 11. Every task gets a ticket. Agents skip ticket creation for small tasks,

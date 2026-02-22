@@ -11,5 +11,5 @@ var Onboard string
 //go:embed prime.md
 var Prime string
 
-//go:embed start.md
-var Start string
+//go:embed land_the_work.md
+var LandTheWork string
