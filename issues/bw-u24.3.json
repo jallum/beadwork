@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-u24.5"
+  ],
   "blocks": [],
   "created": "2026-02-22T13:47:36Z",
   "description": "Three format mismatches between generation and replay: (1) close reason is formatted as reason=%q but replayClose always passes empty string — parse and forward it. (2) update description is encoded as literal 'description=...' — encode the actual value (quoted) and add case 'description' to replayUpdate. (3) update defer is encoded as 'defer=\u003cdate\u003e' but replayUpdate has no case for it — add handling for defer key. Also handle DeferUntil in create intent for issues created with --defer.",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Fix close reason, description, and defer in intent encoding/parsing",
   "type": "task",
-  "updated_at": "2026-02-22T13:47:36Z"
+  "updated_at": "2026-02-22T13:47:53Z"
 }
