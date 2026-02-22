@@ -228,7 +228,7 @@ var commands = []Command{
 	},
 	{
 		Name:    "reopen",
-		Summary: "Reopen a closed issue",
+		Summary: "Reopen a closed or in-progress issue",
 		Positionals: []Positional{
 			{Name: "<id>", Required: true, Help: "Issue ID"},
 		},
