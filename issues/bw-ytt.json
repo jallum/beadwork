@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-22T14:05:57Z",
+  "description": "The flat list from bw ready doesn't distinguish epics from their children. When an agent is asked to work on an epic, they have to cross-reference with bw show to understand which ready items belong to it. Change the text output to indent child issues (those with a Parent field) under their parent, with a blank line between groups. Standalone issues (no parent) appear at the top level. JSON output is unchanged — it stays a flat array since each issue already carries its parent field.",
+  "id": "bw-ytt",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Group child issues under parents in bw ready output",
+  "type": "epic",
+  "updated_at": "2026-02-22T14:05:57Z"
+}
