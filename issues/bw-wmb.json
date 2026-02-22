@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-02-22T15:11:06Z",
@@ -7,8 +7,8 @@
   "id": "bw-wmb",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Add global --dry-run flag for repo-modifying commands",
   "type": "task",
-  "updated_at": "2026-02-22T15:11:06Z"
+  "updated_at": "2026-02-22T15:13:59Z"
 }
