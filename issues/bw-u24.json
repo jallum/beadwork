@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-22T13:47:17Z",
+  "description": "Intent-based commit messages lose data during conflict replay. The critical issue is ID divergence on create (replay generates a new ID, so subsequent intents referencing the original ID fail). Secondary issues: start/defer/undefer verbs silently dropped, close reason lost, description not encoded, multi-word title in update breaks on spaces, escaped quotes in titles corrupt parsing. Add tests that expose each gap, then fix the generation and replay code.",
+  "id": "bw-u24",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Fix intent replay fidelity",
+  "type": "epic",
+  "updated_at": "2026-02-22T13:47:17Z"
+}
