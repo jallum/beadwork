@@ -303,7 +303,7 @@ func TestCmdReadyJSONFlatWithParents(t *testing.T) {
 	}
 }
 
-func TestCmdReadyGroupsSeparatedByBlankLine(t *testing.T) {
+func TestCmdReadyGroupsNotSeparatedByBlankLine(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
@@ -320,21 +320,17 @@ func TestCmdReadyGroupsSeparatedByBlankLine(t *testing.T) {
 	}
 	out := buf.String()
 
-	// Find positions of both epics in the output.
-	epic1Idx := strings.Index(out, epic1.ID)
-	epic2Idx := strings.Index(out, epic2.ID)
-	if epic1Idx < 0 || epic2Idx < 0 {
-		t.Fatalf("both epics should appear in output:\n%s", out)
+	// Find the issue lines (before the separator).
+	sepIdx := strings.Index(out, "---")
+	if sepIdx < 0 {
+		t.Fatalf("separator not found in output:\n%s", out)
 	}
+	issueSection := out[:sepIdx]
 
-	// There should be a blank line (two consecutive newlines) between groups.
-	var between string
-	if epic1Idx < epic2Idx {
-		between = out[epic1Idx:epic2Idx]
-	} else {
-		between = out[epic2Idx:epic1Idx]
-	}
-	if !strings.Contains(between, "\n\n") {
-		t.Errorf("groups should be separated by blank line, got:\n%s", out)
+	// No blank lines between groups in the issue section
+	// (trim trailing whitespace to exclude the blank line before the separator).
+	issueSection = strings.TrimRight(issueSection, " \n")
+	if strings.Contains(issueSection, "\n\n") {
+		t.Errorf("groups should not be separated by blank lines, got:\n%s", issueSection)
 	}
 }

@@ -69,11 +69,8 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 		fprintReadyLine(w, iss)
 	}
 
-	// Print groups, separated by blank lines.
-	for i, parentID := range parentOrder {
-		if len(filteredStandalone) > 0 || i > 0 {
-			fmt.Fprintln(w)
-		}
+	// Print groups.
+	for _, parentID := range parentOrder {
 		// Print parent as group header.
 		parent, err := store.Get(parentID)
 		if err == nil {
