@@ -10,3 +10,6 @@ var Onboard string
 
 //go:embed prime.md
 var Prime string
+
+//go:embed start.md
+var Start string

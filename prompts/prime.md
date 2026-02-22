@@ -39,20 +39,18 @@ Design requirements for this prompt:
    sentence is a tax on the agent's attention budget. Dense, scannable, no
    filler.
 
-8. Adapt to project configuration. Conditional sections (multi-agent, PR
-   review, etc.) should only show what's relevant to how this repo is actually
-   configured. Don't burden the agent with information about modes it isn't
-   using.
+8. Adapt to project configuration. Per-task conditionals (PR review, etc.)
+   now live in start.md and render at point of action. Prime shows the full
+   mental model to all agents regardless of configuration.
 
 9. Be the canonical reference. AGENTS.md is deliberately minimal — just a
    pointer to `bw prime`. This prompt is the single source of truth for how
    to use beadwork in this project.
 
-10. Land the work. Agents tend to stop after the code is written, leaving
-    issues open, changes uncommitted, and state unsynced. The prompt should
-    help agents understand that unfinished bookkeeping is invisible progress
-    — if it's not committed, closed, and synced, it doesn't exist to the
-    next session or to other workers.
+10. Land the work. Prime establishes the principle (unfinished bookkeeping
+    is invisible progress); `bw start` delivers the concrete steps via
+    start.md. Prime should reinforce that landing matters without
+    duplicating the procedure.
 
 11. Every task gets a ticket. Agents skip ticket creation for small tasks,
     treating it as overhead. But tickets are cheap and capture intent —
@@ -72,53 +70,44 @@ Design requirements for this prompt:
 
 # Beadwork
 
+Beadwork is a state-management tool designed specifically to help you get things done more efficiently.
+
 Your built-in planning tools work well for small tasks. Beadwork extends them with durable state in git — plans, progress, and decisions that survive compaction, session boundaries, and context loss. This makes ambitious work safe to attempt: checkpoint progress, record decisions, and pick up where you left off even after losing your entire context.
 
 A plan in your context window is fragile — one compaction and it's gone. Make it durable: a comment on the issue preserves a simple plan; an epic with children and dependencies preserves a complex one. Either way, the plan survives across sessions and `bw ready` feeds you the next step.
 
 ## The Model
 
-Issues have **status** (open → in_progress → closed, or deferred), **priority** (P0-P4: P0 critical → P4 backlog, default P2), and optionally **dependencies**, **labels**, **comments**, and **parent** relationships.
+All data lives on the `beadwork` git branch — deleting it permanently destroys everything.
 
-Issues can form hierarchies: an epic with child tasks (`--parent <epic>`), wired with dependencies (`bw dep add <blocker> blocks <blocked>`). Blocked issues can't be started. When a dependency closes, newly unblocked work surfaces via `bw ready`.
+Issues have **status** (open → in_progress → closed, or deferred), **priority** (P0-P4: P0 critical → P4 backlog, default P2), and optionally **dependencies**, **labels**, **comments**, and **parent** relationships. Issues can form hierarchies: an epic with child tasks (`--parent <epic>`), wired with dependencies (`bw dep add <blocker> blocks <blocked>`). Blocked issues can't be started; when a dependency closes (`bw close <id>`), newly unblocked work surfaces. To find more work, use `bw ready`.
 
-Comments (`bw comment <id> "..."`) are durable context — breadcrumbs for your future self after compaction, and messages to anyone else working in the project.
+## Tickets are Cheap Insurance
 
-All data lives on the `beadwork` git branch. Deleting it destroys every issue, comment, and dependency in the project.
+Every task gets a ticket (`bw create "Title" --description "..." -p 2 -t task`) to capture _why_ a change was made — commit messages record the what, tickets record the intent. Larger efforts: structure as an epic with children and dependencies so `bw ready` feeds you the next step -- you don't need to remember it all.
 
-## Finding and Doing Work
+## Starting the Work
 
-<!-- STATE -->
+When working solo as the main agent, `bw start <id>` claims it — sets status, assigns the current user, shows the full issue context, and tells you how to land it when done.
 
-`bw ready` refreshes this view between sessions. `bw blocked` shows what's waiting. `bw show <id>` for detail. `bw history <id>` for previous sessions.
+When delegating the work to another agent, remember that they don't inherit your context. Each worker will need to run `bw start <id> --assignee <delegate-agent-id>` itself -- this will explain the issue context and how to land the work, while signalling to other agents _who_ is doing _what_.
 
-`bw show <id>` is the natural first step when picking up work — the issue may already have a description, comments, or plans from a previous session. `bw start <id>` claims it (sets status, assigns you, refuses blocked work). `--assignee <agent-id>` claims on behalf of a specific agent. `bw close <id>` marks it done. `bw sync` pushes to the remote.
+Work that isn't committed, closed, and synced doesn't exist to the next session or to other workers. `bw start` tells you the specific steps when you claim an issue.
 
-Every task gets a ticket — even small ones. Tickets are cheap (`bw create "Title" --description "..." -p 2 -t task`), and they capture _why_ a change was made, not just what changed. Commit messages record the what; tickets record the intent. Without them, changelogs and release notes require reverse-engineering from diffs. Capture the plan at creation time with `--description`; use comments for what emerges later. Larger efforts: structure as an epic with children and dependencies so `bw ready` feeds you the next step automatically.
+Comments (`bw comments add <id> "..."`) are durable context — breadcrumbs for your future self after compaction, and messages to anyone else working in the project. This is useful for leaving implementation notes when deviations or adjustments are necessary.
 
-<!-- IF workflow.agents == multi -->
+## Worktrees
 
-## Working in Parallel
+Beadwork's issue state is concurrency-safe; the main working tree is not.
 
-Beadwork's issue state is concurrency-safe — multiple workers can update issues simultaneously. The working tree is not. Working on two tasks in the same worktree is like cooking two meals with the same unwashed pans. Each logical block of work (a single issue, or an epic with its children) gets its own worktree, named after the ticket or epic it serves. The worktree's branch is where the work lives — perform analysis and commit **there**. The name signals purpose and lifecycle — a worktree has a beginning, a middle, and an end.
-
-Sub-agents don't inherit your context. When delegating work, include the beadwork steps in each task description: claim the issue (`bw start <id> --assignee <agent-id>`), do the work, then land it — commit referencing the issue ID, `bw close <id>`, `bw sync`. Verify that delegated work has landed before reporting it complete.
-
-Comments and issues are the shared communication layer — leave implementation notes, flag constraints, record decisions other workers need.
-
-<!-- END -->
-<!-- IF workflow.review == pr -->
-
-## Code Review
-
-Work on a feature branch, push when ready, open a PR. Reference the beadwork issue ID in the description.
-
-<!-- END -->
-
-## Landing Work
-
-A task is done when the code is committed (referencing the issue ID), the issue is closed (`bw close <id>`), and state is synced (`bw sync`). Until then, the progress is invisible — to the next session, to other workers, and to `bw ready`. Committing, closing, and syncing are part of completing a task in this project, not separate actions that require permission.
+Each logical block of work should be done within its own git worktree, named after the ticket it serves (`<ticket-id>`). This includes analysis — the main worktree may be on the wrong branch or dirty with someone else's changes, so plans formed there can start from false assumptions. Skipping this seems faster, but mixing two or more tasks in one worktree creates messes that are hard to untangle. Worse, a dirty main worktree blocks the user from starting other tasks, switching branches, or working on anything else. Keeping our work entirely inside a purpose-driven worktree makes us better neighbors. When we're all done with a worktree we've created, we should remove it and leave things as we found them -- the local branch preserves all of the work.
 
 ## Commands
 
 Every command supports `--help`. Read commands accept `--json`. `bw --help` lists everything. Common operations: `bw list --grep "auth"` or filter by `--status`, `--label`, `--assignee`. `bw label <id> +bug -wontfix`. `bw defer <id> 2026-03-01`. `bw dep remove <id> blocks <id>`. `bw delete <id>` (previews first; `--force` to confirm).
+
+## Currently available work:
+
+```text
+<!-- STATE -->
+```
