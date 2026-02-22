@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -469,6 +470,61 @@ func TestWriteFileCreatesParentDirs(t *testing.T) {
 	}
 	if !fi.IsDir() {
 		t.Error("expected parent to be a directory")
+	}
+}
+
+func TestCommitRespectsClockField(t *testing.T) {
+	dir := initTestRepo(t)
+	tfs, err := Open(dir, "refs/heads/beadwork")
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+
+	fixedTime := time.Date(2025, 6, 15, 10, 30, 0, 0, time.UTC)
+	tfs.Clock = func() time.Time { return fixedTime }
+
+	tfs.WriteFile("clock-test.txt", []byte("hello"))
+	if err := tfs.Commit("clock test"); err != nil {
+		t.Fatalf("Commit: %v", err)
+	}
+
+	commits, err := tfs.AllCommits()
+	if err != nil {
+		t.Fatalf("AllCommits: %v", err)
+	}
+	if len(commits) == 0 {
+		t.Fatal("no commits found")
+	}
+	// Most recent commit should have our fixed time
+	if !commits[0].Time.Equal(fixedTime) {
+		t.Errorf("commit time = %v, want %v", commits[0].Time, fixedTime)
+	}
+}
+
+func TestCommitRespectsBWClockEnv(t *testing.T) {
+	dir := initTestRepo(t)
+	tfs, err := Open(dir, "refs/heads/beadwork")
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+
+	t.Setenv("BW_CLOCK", "2025-06-15T10:30:00Z")
+
+	tfs.WriteFile("env-clock-test.txt", []byte("hello"))
+	if err := tfs.Commit("env clock test"); err != nil {
+		t.Fatalf("Commit: %v", err)
+	}
+
+	commits, err := tfs.AllCommits()
+	if err != nil {
+		t.Fatalf("AllCommits: %v", err)
+	}
+	if len(commits) == 0 {
+		t.Fatal("no commits found")
+	}
+	expected := time.Date(2025, 6, 15, 10, 30, 0, 0, time.UTC)
+	if !commits[0].Time.Equal(expected) {
+		t.Errorf("commit time = %v, want %v", commits[0].Time, expected)
 	}
 }
 

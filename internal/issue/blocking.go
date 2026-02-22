@@ -3,7 +3,6 @@ package issue
 import (
 	"fmt"
 	"sort"
-	"time"
 )
 
 func (s *Store) Link(blockerID, blockedID string) error {
@@ -26,7 +25,7 @@ func (s *Store) Link(blockerID, blockedID string) error {
 	}
 
 	// Update blocker's JSON
-	now := time.Now().UTC().Format(time.RFC3339)
+	now := s.nowRFC3339()
 	blocker, err := s.readIssue(blockerID)
 	if err != nil {
 		return err
@@ -84,7 +83,7 @@ func (s *Store) Unlink(blockerID, blockedID string) error {
 	}
 
 	// Update blocker's JSON
-	now := time.Now().UTC().Format(time.RFC3339)
+	now := s.nowRFC3339()
 	blocker, err := s.readIssue(blockerID)
 	if err != nil {
 		return err

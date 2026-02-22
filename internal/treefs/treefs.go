@@ -6,6 +6,7 @@ package treefs
 import (
 	"fmt"
 	"io"
+	"os"
 	"path"
 	"sort"
 	"strings"
@@ -45,10 +46,29 @@ type TreeFS struct {
 	baseRef plumbing.Hash // commit hash at Open time, used for CAS
 	base    *object.Tree  // nil if branch doesn't exist yet
 
+	// Clock returns the current time for commit signatures.
+	// If nil, time.Now() is used.
+	Clock func() time.Time
+
 	// overlay tracks pending mutations: path → content (nil means delete)
 	overlay map[string][]byte
 	// dirs tracks explicitly created directories (for MkdirAll)
 	dirs map[string]bool
+}
+
+// now returns the time to use for commit signatures.
+// Checks the Clock field first, then the BW_CLOCK env var (RFC3339),
+// then falls back to time.Now().
+func (t *TreeFS) now() time.Time {
+	if t.Clock != nil {
+		return t.Clock()
+	}
+	if v := os.Getenv("BW_CLOCK"); v != "" {
+		if parsed, err := time.Parse(time.RFC3339, v); err == nil {
+			return parsed.UTC()
+		}
+	}
+	return time.Now()
 }
 
 // Open opens a git repository and loads the tree from the given ref.
@@ -407,12 +427,12 @@ func (t *TreeFS) Commit(msg string) error {
 		Author: object.Signature{
 			Name:  "beadwork",
 			Email: "beadwork@localhost",
-			When:  time.Now(),
+			When:  t.now(),
 		},
 		Committer: object.Signature{
 			Name:  "beadwork",
 			Email: "beadwork@localhost",
-			When:  time.Now(),
+			When:  t.now(),
 		},
 		Message:  msg,
 		TreeHash: newTree,
@@ -890,10 +910,10 @@ func (t *TreeFS) MergeCommit(localHash, remoteHash plumbing.Hash, localCommitMsg
 	for _, msg := range localCommitMsgs {
 		commit := &object.Commit{
 			Author: object.Signature{
-				Name: "beadwork", Email: "beadwork@localhost", When: time.Now(),
+				Name: "beadwork", Email: "beadwork@localhost", When: t.now(),
 			},
 			Committer: object.Signature{
-				Name: "beadwork", Email: "beadwork@localhost", When: time.Now(),
+				Name: "beadwork", Email: "beadwork@localhost", When: t.now(),
 			},
 			Message:      msg,
 			TreeHash:     treeHash,

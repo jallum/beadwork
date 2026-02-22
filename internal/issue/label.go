@@ -1,9 +1,6 @@
 package issue
 
-import (
-	"sort"
-	"time"
-)
+import "sort"
 
 func (s *Store) Label(id string, add, remove []string) (*Issue, error) {
 	id, err := s.resolveID(id)
@@ -45,7 +42,7 @@ func (s *Store) Label(id string, add, remove []string) (*Issue, error) {
 	}
 
 	sort.Strings(issue.Labels)
-	issue.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	issue.UpdatedAt = s.nowRFC3339()
 	if err := s.writeIssue(issue); err != nil {
 		return nil, err
 	}

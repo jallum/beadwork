@@ -2,7 +2,6 @@ package issue
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/jallum/beadwork/internal/treefs"
 )
@@ -35,7 +34,7 @@ func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
 		return nil, err
 	}
 
-	now := time.Now().UTC().Format(time.RFC3339)
+	now := s.nowRFC3339()
 	status := "open"
 	if opts.DeferUntil != "" {
 		status = "deferred"

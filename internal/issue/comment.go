@@ -1,7 +1,5 @@
 package issue
 
-import "time"
-
 func (s *Store) Comment(id, text, author string) (*Issue, error) {
 	id, err := s.resolveID(id)
 	if err != nil {
@@ -11,7 +9,7 @@ func (s *Store) Comment(id, text, author string) (*Issue, error) {
 	if err != nil {
 		return nil, err
 	}
-	now := time.Now().UTC().Format(time.RFC3339)
+	now := s.nowRFC3339()
 	issue.Comments = append(issue.Comments, Comment{
 		Text:      text,
 		Author:    author,
