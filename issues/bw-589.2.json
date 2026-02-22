@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-22T13:45:37Z",
+  "description": "Replace direct time.Now() calls in internal/issue/ with a Store.Now() method that checks for a BW_CLOCK env var. If set (RFC3339 value), all timestamp generation uses that fixed time instead of the real clock. Affects: create.go, update.go, blocking.go, label.go, comment.go. The treefs layer (git commit signatures) should also respect this — either through the same env var or by threading a clock into TreeFS.Commit/MergeCommit.",
+  "id": "bw-589.2",
+  "labels": [],
+  "parent": "bw-589",
+  "priority": 1,
+  "status": "open",
+  "title": "Add BW_CLOCK env var for timestamp override",
+  "type": "task",
+  "updated_at": "2026-02-22T13:45:37Z"
+}
