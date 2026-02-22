@@ -62,6 +62,12 @@ Design requirements for this prompt:
 
 12. No implementation details or setup instructions. Keep the focus on usage
     and mental model.
+
+13. Teach delegation. When orchestrating sub-agents, the orchestrator has
+    beadwork context but the workers don't. The prompt should make clear
+    that delegated tasks must include the workflow steps — claim, do, land
+    — or the workers will skip them. The orchestrator is responsible for
+    including the workflow and verifying the work landed.
 -->
 
 # Beadwork
@@ -78,6 +84,8 @@ Issues can form hierarchies: an epic with child tasks (`--parent <epic>`), wired
 
 Comments (`bw comment <id> "..."`) are durable context — breadcrumbs for your future self after compaction, and messages to anyone else working in the project.
 
+All data lives on the `beadwork` git branch. Deleting it destroys every issue, comment, and dependency in the project.
+
 ## Finding and Doing Work
 
 <!-- STATE -->
@@ -86,8 +94,6 @@ Comments (`bw comment <id> "..."`) are durable context — breadcrumbs for your 
 
 `bw show <id>` is the natural first step when picking up work — the issue may already have a description, comments, or plans from a previous session. `bw start <id>` claims it (sets status, assigns you, refuses blocked work). `--assignee <agent-id>` claims on behalf of a specific agent. `bw close <id>` marks it done. `bw sync` pushes to the remote.
 
-Land the work: code that isn't committed, issues that aren't closed, and state that isn't synced don't exist to the next session or to other workers. Committing and closing are part of completing a task in this project — not a separate action that requires additional permission. Reference the issue ID in commit messages to connect the code change to its context.
-
 Every task gets a ticket — even small ones. Tickets are cheap (`bw create "Title" --description "..." -p 2 -t task`), and they capture _why_ a change was made, not just what changed. Commit messages record the what; tickets record the intent. Without them, changelogs and release notes require reverse-engineering from diffs. Capture the plan at creation time with `--description`; use comments for what emerges later. Larger efforts: structure as an epic with children and dependencies so `bw ready` feeds you the next step automatically.
 
 <!-- IF workflow.agents == multi -->
@@ -95,6 +101,8 @@ Every task gets a ticket — even small ones. Tickets are cheap (`bw create "Tit
 ## Working in Parallel
 
 Beadwork's issue state is concurrency-safe — multiple workers can update issues simultaneously. The working tree is not. Working on two tasks in the same worktree is like cooking two meals with the same unwashed pans. Each logical block of work (a single issue, or an epic with its children) gets its own worktree, named after the ticket or epic it serves. The worktree's branch is where the work lives — perform analysis and commit **there**. The name signals purpose and lifecycle — a worktree has a beginning, a middle, and an end.
+
+Sub-agents don't inherit your context. When delegating work, include the beadwork steps in each task description: claim the issue (`bw start <id> --assignee <agent-id>`), do the work, then land it — commit referencing the issue ID, `bw close <id>`, `bw sync`. Verify that delegated work has landed before reporting it complete.
 
 Comments and issues are the shared communication layer — leave implementation notes, flag constraints, record decisions other workers need.
 
@@ -106,6 +114,10 @@ Comments and issues are the shared communication layer — leave implementation 
 Work on a feature branch, push when ready, open a PR. Reference the beadwork issue ID in the description.
 
 <!-- END -->
+
+## Landing Work
+
+A task is done when the code is committed (referencing the issue ID), the issue is closed (`bw close <id>`), and state is synced (`bw sync`). Until then, the progress is invisible — to the next session, to other workers, and to `bw ready`. Committing, closing, and syncing are part of completing a task in this project, not separate actions that require permission.
 
 ## Commands
 

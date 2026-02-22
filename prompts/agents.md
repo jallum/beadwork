@@ -43,8 +43,8 @@ has any other context about the project's workflow.
 
 This project tracks work with `bw` (beadwork), which persists to git — it survives compaction, session boundaries, and context loss.
 
-Run `bw prime` at the start of every session. It shows the workflow, current issues, and where things left off.
+Run `bw prime` at the start of every session. It covers finding work, landing it, and syncing state.
 
-Completing a task means committing code, closing the issue (`bw close`), and syncing (`bw sync`). These are part of the work, not separate actions requiring additional permission.
+Committing, closing issues, and syncing are part of completing a task — not separate actions requiring additional permission.
 
-Every code change gets a ticket — whether it came from the backlog or from a direct request. Start with `bw ready` to find available work.
+Every code change gets a ticket. Start with `bw ready` to find available work.
