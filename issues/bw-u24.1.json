@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-22T13:47:22Z",
+  "description": "Add an optional ID field to CreateOpts. When set, store.Create uses it instead of generating a new one. replayCreate passes the ID from the intent (parts[0]) into this field. This fixes the critical bug where replay generates a different ID than the original, causing all subsequent intents (close, update, link, label, comment) referencing that ID to fail.",
+  "id": "bw-u24.1",
+  "labels": [],
+  "parent": "bw-u24",
+  "priority": 1,
+  "status": "open",
+  "title": "Add CreateOpts.ID for deterministic create replay",
+  "type": "task",
+  "updated_at": "2026-02-22T13:47:22Z"
+}
