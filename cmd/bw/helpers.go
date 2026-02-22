@@ -233,7 +233,14 @@ func fprintIssue(w Writer, iss *issue.Issue) {
 		typeTag = " [" + strings.ToUpper(iss.Type) + "]"
 	}
 	ps := PriorityStyle(iss.Priority)
-	fmt.Fprintf(w, "%s %s%s · %s   [%s %s · %s]\n",
+	commentTag := " · NO COMMENTS"
+	if n := len(iss.Comments); n > 0 {
+		commentTag = fmt.Sprintf(" · %d comment", n)
+		if n > 1 {
+			commentTag += "s"
+		}
+	}
+	fmt.Fprintf(w, "%s %s%s · %s   [%s %s · %s%s]\n",
 		issue.StatusIcon(iss.Status),
 		w.Style(iss.ID, Cyan),
 		typeTag,
@@ -241,6 +248,7 @@ func fprintIssue(w Writer, iss *issue.Issue) {
 		w.Style("●", ps),
 		w.Style(fmt.Sprintf("P%d", iss.Priority), ps),
 		strings.ToUpper(iss.Status),
+		commentTag,
 	)
 
 	// Metadata line: Assignee · Type
