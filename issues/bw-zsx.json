@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-22T19:01:05Z",
   "created": "2026-02-22T18:56:09Z",
   "description": "Currently bw reopen only works on closed/deferred issues. Extend it to accept in_progress tickets: clear the assignee and set status back to open. This lets you unclaim work and return it to the ready queue without closing it first.",
   "id": "bw-zsx",
   "labels": [],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Allow reopen to reset in-progress tickets to open",
   "type": "task",
-  "updated_at": "2026-02-22T18:57:01Z"
+  "updated_at": "2026-02-22T19:01:05Z"
 }
