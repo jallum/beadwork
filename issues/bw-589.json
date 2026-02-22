@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-22T13:45:28Z",
+  "description": "Add a new testing layer that exercises the built bw binary end-to-end. Create a git repo, run CLI commands, and diff bw export against golden files. Requires two tool changes to make state fully deterministic: explicit --id on create, and a clock override for timestamps. With IDs and timestamps fixed, git hashes become deterministic too (given controlled git config and GIT_AUTHOR_DATE/GIT_COMMITTER_DATE).",
+  "id": "bw-589",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Binary-level acceptance testing with deterministic state",
+  "type": "epic",
+  "updated_at": "2026-02-22T13:45:28Z"
+}
