@@ -2,6 +2,7 @@ package issue_test
 
 import (
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/jallum/beadwork/internal/issue"
@@ -366,6 +367,239 @@ func TestUpdatedAtOnCreate(t *testing.T) {
 	}
 	if iss.UpdatedAt != iss.Created {
 		t.Errorf("updated_at = %q, want same as created %q", iss.UpdatedAt, iss.Created)
+	}
+}
+
+func TestCreateWithExplicitID(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, err := env.Store.Create("Explicit ID issue", issue.CreateOpts{
+		ID: "test-myid",
+	})
+	if err != nil {
+		t.Fatalf("Create with explicit ID: %v", err)
+	}
+	env.CommitIntent("create " + iss.ID)
+
+	if iss.ID != "test-myid" {
+		t.Errorf("ID = %q, want %q", iss.ID, "test-myid")
+	}
+
+	got, err := env.Store.Get("test-myid")
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.Title != "Explicit ID issue" {
+		t.Errorf("title = %q, want %q", got.Title, "Explicit ID issue")
+	}
+}
+
+func TestCreateWithExplicitIDDuplicate(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	_, err := env.Store.Create("First", issue.CreateOpts{
+		ID: "test-dup",
+	})
+	if err != nil {
+		t.Fatalf("First create: %v", err)
+	}
+	env.CommitIntent("create test-dup")
+
+	_, err = env.Store.Create("Second", issue.CreateOpts{
+		ID: "test-dup",
+	})
+	if err == nil {
+		t.Fatal("expected error for duplicate explicit ID")
+	}
+	if !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("error = %q, want 'already exists'", err)
+	}
+}
+
+func TestCreateWithExplicitIDInvalidFormat(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// ID with spaces should be rejected
+	_, err := env.Store.Create("Bad ID", issue.CreateOpts{
+		ID: "test bad id",
+	})
+	if err == nil {
+		t.Fatal("expected error for ID with spaces")
+	}
+
+	// Empty suffix should be rejected
+	_, err = env.Store.Create("Bad ID", issue.CreateOpts{
+		ID: "",
+	})
+	if err != nil {
+		t.Fatal("empty ID should fall through to random generation")
+	}
+}
+
+func TestCreateWithExplicitIDAndParent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	parent, err := env.Store.Create("Parent", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create parent: %v", err)
+	}
+	env.CommitIntent("create " + parent.ID)
+
+	// Explicit ID should take precedence even when parent is specified
+	child, err := env.Store.Create("Child", issue.CreateOpts{
+		Parent: parent.ID,
+		ID:     "test-custom-child",
+	})
+	if err != nil {
+		t.Fatalf("Create child with explicit ID: %v", err)
+	}
+	env.CommitIntent("create " + child.ID)
+
+	if child.ID != "test-custom-child" {
+		t.Errorf("ID = %q, want %q", child.ID, "test-custom-child")
+	}
+	if child.Parent != parent.ID {
+		t.Errorf("Parent = %q, want %q", child.Parent, parent.ID)
+	}
+}
+
+func TestBWClockCreate(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	t.Setenv("BW_CLOCK", "2025-06-15T10:30:00Z")
+
+	iss, err := env.Store.Create("Clock test", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	env.CommitIntent("create " + iss.ID)
+
+	if iss.Created != "2025-06-15T10:30:00Z" {
+		t.Errorf("Created = %q, want %q", iss.Created, "2025-06-15T10:30:00Z")
+	}
+	if iss.UpdatedAt != "2025-06-15T10:30:00Z" {
+		t.Errorf("UpdatedAt = %q, want %q", iss.UpdatedAt, "2025-06-15T10:30:00Z")
+	}
+}
+
+func TestBWClockComment(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, err := env.Store.Create("Comment clock test", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	env.CommitIntent("create " + iss.ID)
+
+	t.Setenv("BW_CLOCK", "2025-07-01T12:00:00Z")
+
+	iss, err = env.Store.Comment(iss.ID, "test comment", "agent")
+	if err != nil {
+		t.Fatalf("Comment: %v", err)
+	}
+	env.CommitIntent("comment " + iss.ID)
+
+	if len(iss.Comments) != 1 {
+		t.Fatalf("expected 1 comment, got %d", len(iss.Comments))
+	}
+	if iss.Comments[0].Timestamp != "2025-07-01T12:00:00Z" {
+		t.Errorf("comment timestamp = %q, want %q", iss.Comments[0].Timestamp, "2025-07-01T12:00:00Z")
+	}
+	if iss.UpdatedAt != "2025-07-01T12:00:00Z" {
+		t.Errorf("UpdatedAt = %q, want %q", iss.UpdatedAt, "2025-07-01T12:00:00Z")
+	}
+}
+
+func TestBWClockClose(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, err := env.Store.Create("Close clock test", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	env.CommitIntent("create " + iss.ID)
+
+	t.Setenv("BW_CLOCK", "2025-08-15T09:00:00Z")
+
+	iss, err = env.Store.Close(iss.ID, "done")
+	if err != nil {
+		t.Fatalf("Close: %v", err)
+	}
+	env.CommitIntent("close " + iss.ID)
+
+	if iss.ClosedAt != "2025-08-15T09:00:00Z" {
+		t.Errorf("ClosedAt = %q, want %q", iss.ClosedAt, "2025-08-15T09:00:00Z")
+	}
+	if iss.UpdatedAt != "2025-08-15T09:00:00Z" {
+		t.Errorf("UpdatedAt = %q, want %q", iss.UpdatedAt, "2025-08-15T09:00:00Z")
+	}
+}
+
+func TestBWClockUpdate(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, err := env.Store.Create("Update clock test", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	env.CommitIntent("create " + iss.ID)
+
+	t.Setenv("BW_CLOCK", "2025-09-01T14:00:00Z")
+
+	newTitle := "Updated title"
+	iss, err = env.Store.Update(iss.ID, issue.UpdateOpts{Title: &newTitle})
+	if err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+	env.CommitIntent("update " + iss.ID)
+
+	if iss.UpdatedAt != "2025-09-01T14:00:00Z" {
+		t.Errorf("UpdatedAt = %q, want %q", iss.UpdatedAt, "2025-09-01T14:00:00Z")
+	}
+}
+
+func TestBWClockInvalidIgnored(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	t.Setenv("BW_CLOCK", "not-a-date")
+
+	iss, err := env.Store.Create("Invalid clock test", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	// Should use real clock when BW_CLOCK is invalid
+	if iss.Created == "" {
+		t.Error("Created should not be empty")
+	}
+	if iss.Created == "not-a-date" {
+		t.Error("Created should not be the invalid BW_CLOCK value")
+	}
+}
+
+func TestBWClockUnsetUsesRealClock(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Explicitly unset BW_CLOCK
+	t.Setenv("BW_CLOCK", "")
+
+	iss, err := env.Store.Create("Real clock test", issue.CreateOpts{})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	if iss.Created == "" {
+		t.Error("Created should not be empty")
 	}
 }
 

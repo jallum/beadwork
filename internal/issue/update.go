@@ -3,7 +3,6 @@ package issue
 import (
 	"fmt"
 	"strings"
-	"time"
 )
 
 func (s *Store) Update(id string, opts UpdateOpts) (*Issue, error) {
@@ -71,7 +70,7 @@ func (s *Store) Update(id string, opts UpdateOpts) (*Issue, error) {
 		}
 	}
 
-	issue.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	issue.UpdatedAt = s.nowRFC3339()
 	if err := s.writeIssue(issue); err != nil {
 		return nil, err
 	}
@@ -94,7 +93,7 @@ func (s *Store) Close(id, reason string) (*Issue, error) {
 	if err := s.moveStatus(id, issue.Status, "closed"); err != nil {
 		return nil, err
 	}
-	now := time.Now().UTC().Format(time.RFC3339)
+	now := s.nowRFC3339()
 	issue.Status = "closed"
 	issue.ClosedAt = now
 	issue.CloseReason = reason
@@ -124,7 +123,7 @@ func (s *Store) Reopen(id string) (*Issue, error) {
 	issue.Status = "open"
 	issue.ClosedAt = ""
 	issue.CloseReason = ""
-	issue.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	issue.UpdatedAt = s.nowRFC3339()
 	if err := s.writeIssue(issue); err != nil {
 		return nil, err
 	}
@@ -179,7 +178,7 @@ func (s *Store) Start(id, assignee string) (*Issue, error) {
 	}
 	iss.Status = "in_progress"
 	iss.Assignee = assignee
-	iss.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	iss.UpdatedAt = s.nowRFC3339()
 	if err := s.writeIssue(iss); err != nil {
 		return nil, err
 	}

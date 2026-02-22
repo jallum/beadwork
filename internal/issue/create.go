@@ -2,7 +2,6 @@ package issue
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/jallum/beadwork/internal/treefs"
 )
@@ -24,7 +23,9 @@ func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
 
 	var id string
 	var err error
-	if parentID != "" {
+	if opts.ID != "" {
+		id, err = s.validateExplicitID(opts.ID)
+	} else if parentID != "" {
 		id, err = s.generateChildID(parentID)
 	} else {
 		id, err = s.generateID()
@@ -33,7 +34,7 @@ func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
 		return nil, err
 	}
 
-	now := time.Now().UTC().Format(time.RFC3339)
+	now := s.nowRFC3339()
 	status := "open"
 	if opts.DeferUntil != "" {
 		status = "deferred"

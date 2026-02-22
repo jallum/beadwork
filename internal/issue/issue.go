@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"github.com/jallum/beadwork/internal/treefs"
 )
@@ -72,7 +73,25 @@ func (s *Store) ClearCache() {
 	s.idSet = nil
 }
 
+// Now returns the current time in UTC. If the BW_CLOCK environment variable
+// is set to an RFC3339 value, that fixed time is used instead of the real
+// clock. This enables deterministic timestamps for testing and migration.
+func (s *Store) Now() time.Time {
+	if v := os.Getenv("BW_CLOCK"); v != "" {
+		if t, err := time.Parse(time.RFC3339, v); err == nil {
+			return t.UTC()
+		}
+	}
+	return time.Now().UTC()
+}
+
+// nowRFC3339 returns s.Now() formatted as an RFC3339 string.
+func (s *Store) nowRFC3339() string {
+	return s.Now().Format(time.RFC3339)
+}
+
 type CreateOpts struct {
+	ID          string // explicit ID; skips random generation but still validates
 	Parent      string
 	Description string
 	Priority    *int
