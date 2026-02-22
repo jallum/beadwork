@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-22T00:13:02Z",
   "created": "2026-02-21T23:24:25Z",
   "description": "Replace 'bw comments add \u003cid\u003e \"text\"' with 'bw comment \u003cid\u003e \"text\"'. The subcommand structure adds nothing — 'add' is the only action, and listing comments is already covered by 'bw show'. Three tokens for a single action, and agents reliably get the plural wrong ('bw comment' instead of 'bw comments'). Drop the subcommand, promote to top-level. Update: prompts/prime.md (line 79), prompts/agents.md if applicable, README, and command help text.",
   "id": "bw-626",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Simplify comments to top-level bw comment command",
   "type": "task",
-  "updated_at": "2026-02-22T00:08:43Z"
+  "updated_at": "2026-02-22T00:13:02Z"
 }
