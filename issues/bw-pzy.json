@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-22T22:51:12Z",
+  "description": "start.go uses an isAllCaps heuristic to bold section headers from template text (STARTING THE WORK, LANDING THE WORK), while show.go/helpers.go apply w.Style(name, Bold) directly. This works but is fragile — the styling convention is split between two mechanisms. Consider a unified approach: e.g. the template processor could support a header marker, or flush could use styleMD, or section headers could come through a callback. The goal is one mechanism for all section headers.",
+  "id": "bw-pzy",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Unify section-header styling across template and show output",
+  "type": "task",
+  "updated_at": "2026-02-22T22:51:12Z"
+}
