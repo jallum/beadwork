@@ -525,3 +525,28 @@ func TestRelativeTimeInvalidTimestamp(t *testing.T) {
 		t.Errorf("relativeTime(invalid) = %q, want raw string", got)
 	}
 }
+
+func TestRemoveFlag(t *testing.T) {
+	tests := []struct {
+		args []string
+		flag string
+		want []string
+	}{
+		{[]string{"create", "title", "--dry-run"}, "--dry-run", []string{"create", "title"}},
+		{[]string{"--dry-run", "create"}, "--dry-run", []string{"create"}},
+		{[]string{"create", "title"}, "--dry-run", []string{"create", "title"}},
+		{[]string{}, "--dry-run", []string{}},
+	}
+	for _, tt := range tests {
+		got := removeFlag(tt.args, tt.flag)
+		if len(got) != len(tt.want) {
+			t.Errorf("removeFlag(%v, %q) = %v, want %v", tt.args, tt.flag, got, tt.want)
+			continue
+		}
+		for i := range got {
+			if got[i] != tt.want[i] {
+				t.Errorf("removeFlag(%v, %q)[%d] = %q, want %q", tt.args, tt.flag, i, got[i], tt.want[i])
+			}
+		}
+	}
+}

@@ -684,7 +684,7 @@ func TestImportDryRun(t *testing.T) {
 	f := writeTemp(t, env.Dir, jsonl)
 
 	out := bw(t, env.Dir, "import", f, "--dry-run")
-	assertContains(t, out, "dry run")
+	assertContains(t, out, "dry-run")
 
 	// Issue should NOT have been created
 	bwFail(t, env.Dir, "show", "dry-001")
@@ -775,6 +775,50 @@ func assertNotListedIssue(t *testing.T, output, id string) {
 			return
 		}
 	}
+}
+
+// --- Dry Run ---
+
+func TestDryRunCreate(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	out := bw(t, env.Dir, "create", "Ghost issue", "--dry-run")
+	assertContains(t, out, "created test-")
+	assertContains(t, out, "Ghost issue")
+	assertContains(t, out, "[dry-run]")
+
+	// Issue should NOT have been persisted
+	listOut := bw(t, env.Dir, "list", "--all")
+	assertNotContains(t, listOut, "Ghost issue")
+}
+
+func TestDryRunClose(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Closeable", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	out := bw(t, env.Dir, "close", iss.ID, "--dry-run")
+	assertContains(t, out, "closed "+iss.ID)
+	assertContains(t, out, "[dry-run]")
+
+	// Issue should still be open
+	show := bw(t, env.Dir, "show", iss.ID, "--json")
+	assertContains(t, show, `"status": "open"`)
+}
+
+func TestDryRunReadOnly(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Listed task", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	// --dry-run on read-only commands should be harmless
+	out := bw(t, env.Dir, "list", "--dry-run")
+	assertContains(t, out, "Listed task")
 }
 
 // --- Close/Reopen ---
