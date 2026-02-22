@@ -32,7 +32,10 @@ func TestCmdStartBasic(t *testing.T) {
 		t.Errorf("output missing assignee: %q", out)
 	}
 
-	// Should show landing instructions
+	// Should show starting and landing instructions
+	if !strings.Contains(out, "STARTING THE WORK") {
+		t.Errorf("output missing STARTING THE WORK: %q", out)
+	}
 	if !strings.Contains(out, "LANDING THE WORK") {
 		t.Errorf("output missing LANDING THE WORK: %q", out)
 	}
@@ -271,5 +274,54 @@ func TestCmdStartNoArgs(t *testing.T) {
 	err := cmdStart(env.Store, nil, PlainWriter(&buf))
 	if err == nil {
 		t.Error("expected error for missing args")
+	}
+}
+
+func TestCmdStartEpicShowsChildren(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic parent", issue.CreateOpts{Type: "epic"})
+	env.Store.Create("Child task A", issue.CreateOpts{Type: "task", Parent: epic.ID})
+	env.Store.Create("Child task B", issue.CreateOpts{Type: "task", Parent: epic.ID})
+	env.Repo.Commit("setup")
+
+	var buf bytes.Buffer
+	err := cmdStart(env.Store, []string{epic.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdStart: %v", err)
+	}
+	out := buf.String()
+
+	if !strings.Contains(out, "Child task A") {
+		t.Errorf("epic output missing child A: %q", out)
+	}
+	if !strings.Contains(out, "Child task B") {
+		t.Errorf("epic output missing child B: %q", out)
+	}
+}
+
+func TestCmdStartTaskShowsMap(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("First task", issue.CreateOpts{})
+	b, _ := env.Store.Create("Second task", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID) // a blocks b
+	env.Repo.Commit("setup")
+
+	// Start "a" — it unblocks "b", so the map should mention "b".
+	var buf bytes.Buffer
+	err := cmdStart(env.Store, []string{a.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdStart: %v", err)
+	}
+	out := buf.String()
+
+	if !strings.Contains(out, b.ID) {
+		t.Errorf("task output missing unblocked issue %s: %q", b.ID, out)
+	}
+	if !strings.Contains(out, "Second task") {
+		t.Errorf("task output missing unblocked title: %q", out)
 	}
 }

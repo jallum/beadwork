@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
@@ -76,17 +77,13 @@ func cmdStart(store *issue.Store, args []string, w Writer) error {
 		return nil
 	}
 
-	// -- Rich output: issue context + workflow hints --
+	// -- Rich output: issue context + template-driven briefing --
 
-	// Summary (reuse show's display)
 	fprintIssueSummary(w, iss)
 	fprintDescription(w, iss)
-	fprintChildren(w, iss, store)
-	fprintMap(w, iss, store)
-	fprintComments(w, iss)
 
-	// Next steps from land_the_work.md template
-	tmpl := strings.ReplaceAll(prompts.LandTheWork, "{id}", iss.ID)
+	// Template controls everything after summary+description.
+	tmpl := strings.ReplaceAll(prompts.Start, "{id}", iss.ID)
 	cfg := r.ListConfig()
 	resolve := func(key string) string {
 		switch key {
@@ -100,17 +97,47 @@ func cmdStart(store *issue.Store, args []string, w Writer) error {
 			return cfg[key]
 		}
 	}
-	var buf bytes.Buffer
-	template.Process(&buf, tmpl, resolve, nil)
 
-	text := strings.TrimSpace(buf.String())
-	if text != "" {
+	var buf bytes.Buffer
+	flush := func() {
+		s := strings.Trim(buf.String(), "\n")
+		buf.Reset()
+		if s == "" {
+			return
+		}
 		fmt.Fprintln(w)
-		fmt.Fprintln(w, w.Style("LANDING THE WORK", Bold))
-		w.Push(2)
-		fmt.Fprintln(w, text)
-		w.Pop()
+		for _, line := range strings.Split(s, "\n") {
+			if isAllCaps(line) {
+				fmt.Fprintln(w, w.Style(line, Bold))
+			} else {
+				fmt.Fprintln(w, line)
+			}
+		}
 	}
 
+	cmdFn := func(args []string, _ io.Writer) {
+		if cmd := commandMap[args[0]]; cmd != nil {
+			flush()
+			cmd.Run(store, args[1:], w)
+		}
+	}
+
+	template.ProcessWithCommands(&buf, tmpl, resolve, nil, cmdFn)
+	flush()
+
 	return nil
+}
+
+// isAllCaps reports whether s is non-empty and contains only uppercase
+// letters and spaces (matching section headers like "STARTING THE WORK").
+func isAllCaps(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, r := range s {
+		if r != ' ' && (r < 'A' || r > 'Z') {
+			return false
+		}
+	}
+	return true
 }
