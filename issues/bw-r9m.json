@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-22T17:43:35Z",
+  "description": "Currently bw show displays comment timestamps in a compact or relative format. Update it to use the full, formatted date-time (e.g. 2026-02-22 14:30:05) so comment timestamps are unambiguous and complete.",
+  "id": "bw-r9m",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Use full formatted date-time in bw show for comments",
+  "type": "task",
+  "updated_at": "2026-02-22T17:43:35Z"
+}
