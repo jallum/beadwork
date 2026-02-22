@@ -40,16 +40,48 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 		return nil
 	}
 
+	// Partition into standalone issues and groups keyed by parent ID.
+	// Preserve insertion order for parents.
+	var standalone []*issue.Issue
+	groups := make(map[string][]*issue.Issue)
+	var parentOrder []string
 	for _, iss := range issues {
-		ps := PriorityStyle(iss.Priority)
-		fmt.Fprintf(w, "%s %s %s %s %s%s\n",
-			issue.StatusIcon(iss.Status),
-			iss.ID,
-			w.Style("●", ps),
-			w.Style(fmt.Sprintf("P%d", iss.Priority), ps),
-			iss.Title,
-			formatDeps(w, iss),
-		)
+		if iss.Parent == "" {
+			standalone = append(standalone, iss)
+			continue
+		}
+		if _, seen := groups[iss.Parent]; !seen {
+			parentOrder = append(parentOrder, iss.Parent)
+		}
+		groups[iss.Parent] = append(groups[iss.Parent], iss)
+	}
+
+	// Remove parents from standalone — they'll be printed as group headers.
+	var filteredStandalone []*issue.Issue
+	for _, iss := range standalone {
+		if _, isParent := groups[iss.ID]; !isParent {
+			filteredStandalone = append(filteredStandalone, iss)
+		}
+	}
+
+	// Print standalone issues.
+	for _, iss := range filteredStandalone {
+		fprintReadyLine(w, iss)
+	}
+
+	// Print groups.
+	for _, parentID := range parentOrder {
+		// Print parent as group header.
+		parent, err := store.Get(parentID)
+		if err == nil {
+			fprintReadyLine(w, parent)
+		}
+		// Print children indented.
+		w.Push(2)
+		for _, child := range groups[parentID] {
+			fprintReadyLine(w, child)
+		}
+		w.Pop()
 	}
 
 	fmt.Fprintln(w)
@@ -63,4 +95,16 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 	}
 	fmt.Fprintf(w, "Status: %s\n", strings.Join(legend, "  "))
 	return nil
+}
+
+func fprintReadyLine(w Writer, iss *issue.Issue) {
+	ps := PriorityStyle(iss.Priority)
+	fmt.Fprintf(w, "%s %s %s %s %s%s\n",
+		issue.StatusIcon(iss.Status),
+		iss.ID,
+		w.Style("●", ps),
+		w.Style(fmt.Sprintf("P%d", iss.Priority), ps),
+		iss.Title,
+		formatDeps(w, iss),
+	)
 }
