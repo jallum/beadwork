@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [
     "bw-ytt.1"
@@ -10,8 +10,8 @@
   "labels": [],
   "parent": "bw-ytt",
   "priority": 1,
-  "status": "open",
+  "status": "in_progress",
   "title": "Add tests for grouped ready output",
   "type": "task",
-  "updated_at": "2026-02-22T14:06:40Z"
+  "updated_at": "2026-02-22T14:07:09Z"
 }
