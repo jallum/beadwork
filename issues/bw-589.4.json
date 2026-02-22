@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-22T13:45:45Z",
+  "description": "Write the first end-to-end scenario: create issues with --id, wire dependencies, add labels, progress through statuses (start, close, defer), add comments, then bw export and diff against a golden .jsonl file. Second phase: import the export into a fresh repo and verify round-trip. This proves the full CLI pipeline — flag parsing, command dispatch, storage, and export formatting — against a known-good baseline.",
+  "id": "bw-589.4",
+  "labels": [],
+  "parent": "bw-589",
+  "priority": 2,
+  "status": "open",
+  "title": "Write first golden-file acceptance test",
+  "type": "task",
+  "updated_at": "2026-02-22T13:45:45Z"
+}
