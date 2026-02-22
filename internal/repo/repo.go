@@ -415,15 +415,68 @@ func (r *Repo) gitPush(remoteName string, refSpec config.RefSpec) error {
 }
 
 // findGitDir returns the common .git directory for the repository.
-// Using --git-common-dir instead of --git-dir ensures correct behavior
-// in worktrees, where --git-dir returns a worktree-specific path.
+// It walks up from the current working directory looking for .git (file or
+// directory). If .git is a file (worktree), it reads the gitdir path and
+// then reads commondir to resolve the shared .git directory.
 func findGitDir() (string, error) {
-	cmd := exec.Command("git", "rev-parse", "--git-common-dir")
-	out, err := cmd.CombinedOutput()
+	dir, err := os.Getwd()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Abs(strings.TrimSpace(string(out)))
+
+	for {
+		dotGit := filepath.Join(dir, ".git")
+		fi, err := os.Stat(dotGit)
+		if err == nil {
+			if fi.IsDir() {
+				// Normal repo — .git is the git dir
+				return dotGit, nil
+			}
+			// Worktree — .git is a file containing "gitdir: <path>"
+			return resolveWorktreeGitDir(dotGit)
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			// Reached filesystem root without finding .git
+			return "", fmt.Errorf("not a git repository")
+		}
+		dir = parent
+	}
+}
+
+// resolveWorktreeGitDir reads a .git file (as found in worktrees),
+// extracts the gitdir path, then reads commondir to find the shared
+// .git directory.
+func resolveWorktreeGitDir(dotGitFile string) (string, error) {
+	data, err := os.ReadFile(dotGitFile)
+	if err != nil {
+		return "", err
+	}
+	line := strings.TrimSpace(string(data))
+	if !strings.HasPrefix(line, "gitdir: ") {
+		return "", fmt.Errorf("invalid .git file: %s", dotGitFile)
+	}
+
+	gitdir := strings.TrimPrefix(line, "gitdir: ")
+	if !filepath.IsAbs(gitdir) {
+		gitdir = filepath.Join(filepath.Dir(dotGitFile), gitdir)
+	}
+	gitdir = filepath.Clean(gitdir)
+
+	// Read commondir to find the shared .git directory
+	commondirFile := filepath.Join(gitdir, "commondir")
+	cdData, err := os.ReadFile(commondirFile)
+	if err != nil {
+		// No commondir file — gitdir itself is the common dir
+		return gitdir, nil
+	}
+
+	commondir := strings.TrimSpace(string(cdData))
+	if !filepath.IsAbs(commondir) {
+		commondir = filepath.Join(gitdir, commondir)
+	}
+	return filepath.Abs(commondir)
 }
 
 // execGit is kept only for ls-remote in remoteBranchExists and legacy cleanup.
