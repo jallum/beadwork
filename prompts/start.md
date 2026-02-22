@@ -22,8 +22,14 @@ This is the point-of-action briefing shown when an agent claims work with
 5. Stay brief. This follows the full issue context (description, comments,
    deps). The agent's attention is on the work ahead; the landing steps
    should be scannable, not a wall of text.
+
+6. One ticket, one commit. Agents batch multiple tickets into one commit,
+   which muddles code review and makes interrupted work hard to untangle.
+   The steps should make clear that landing is scoped to this ticket and
+   happens before moving on to the next one.
 -->
-- Commit referencing {id}
+Land this ticket before starting the next one:
+- Commit only the changes for this ticket, referencing {id}
 <!-- IF workflow.review == pr -->
 - Push the branch and open a PR referencing {id}. Open it as a draft if work remains; as a regular PR if it's ready for review. If a draft PR already exists for this branch, convert it to ready for review when done.
 <!-- END -->
