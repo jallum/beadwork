@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-22T16:07:01Z",
   "created": "2026-02-22T15:54:45Z",
   "description": "cmdPrime currently builds its own ready-work listing and injects it via a STATE template variable. It should call into the same code path as cmdReady (or invoke it directly) and replace the STATE template variable with the output of bw ready. This keeps the two consistent, eliminates duplicated logic, and makes the template variable reusable for future needs.",
   "id": "bw-g58",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "bw prime should reuse bw ready output for available work",
   "type": "task",
-  "updated_at": "2026-02-22T16:02:27Z"
+  "updated_at": "2026-02-22T16:07:01Z"
 }
