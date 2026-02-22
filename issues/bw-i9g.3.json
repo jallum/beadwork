@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "agent-i9g",
   "blocked_by": [],
   "blocks": [
     "bw-i9g.4"
@@ -10,8 +10,8 @@
   "labels": [],
   "parent": "bw-i9g",
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Remove legacy worktree cleanup from ForceReinit",
   "type": "task",
-  "updated_at": "2026-02-22T13:30:51Z"
+  "updated_at": "2026-02-22T16:32:24Z"
 }
