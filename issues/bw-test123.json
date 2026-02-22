@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-22T20:40:42Z",
   "created": "2026-02-22T17:47:31Z",
   "description": "",
   "id": "bw-test123",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "Test hidden flag",
   "type": "task",
-  "updated_at": "2026-02-22T17:47:31Z"
+  "updated_at": "2026-02-22T20:40:42Z"
 }
