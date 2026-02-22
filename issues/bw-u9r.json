@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "agent-u9r",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-02-22T17:39:56Z",
@@ -13,8 +13,8 @@
     }
   ],
   "priority": 3,
-  "status": "open",
+  "status": "in_progress",
   "title": "Hide --id flag from help output",
   "type": "task",
-  "updated_at": "2026-02-22T17:42:47Z"
+  "updated_at": "2026-02-22T17:46:01Z"
 }
