@@ -49,26 +49,22 @@ func TestCmdPrimeTemplateProcessing(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	// Without config: no conditional section
+	// Prime no longer has conditional sections (moved to start.md).
+	// Verify it renders core sections cleanly.
 	var buf bytes.Buffer
 	err := cmdPrime(env.Store, nil, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}
-	if strings.Contains(buf.String(), "Working in Parallel") {
-		t.Error("should not contain 'Working in Parallel' without config")
+	out := buf.String()
+	if !strings.Contains(out, "Beadwork") {
+		t.Errorf("output missing 'Beadwork' header: %q", out)
 	}
-
-	// With config: conditional section appears
-	env.Repo.SetConfig("workflow.agents", "multi")
-	env.Repo.Commit("set config")
-
-	buf.Reset()
-	err = cmdPrime(env.Store, nil, PlainWriter(&buf))
-	if err != nil {
-		t.Fatalf("cmdPrime: %v", err)
+	if !strings.Contains(out, "Starting the Work") {
+		t.Errorf("output missing 'Starting the Work' section: %q", out)
 	}
-	if !strings.Contains(buf.String(), "Working in Parallel") {
-		t.Errorf("output missing 'Working in Parallel': %q", buf.String())
+	// No IF/END template artifacts should leak through
+	if strings.Contains(out, "<!-- IF") || strings.Contains(out, "<!-- END") {
+		t.Errorf("output contains unprocessed template directives: %q", out)
 	}
 }

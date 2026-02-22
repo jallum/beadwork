@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/repo"
+	"github.com/jallum/beadwork/internal/template"
+	"github.com/jallum/beadwork/prompts"
 )
 
 type StartArgs struct {
@@ -70,8 +73,31 @@ func cmdStart(store *issue.Store, args []string, w Writer) error {
 
 	if sa.JSON {
 		fprintJSON(w, iss)
-	} else {
-		fmt.Fprintf(w, "started %s: %s (%s)\n", iss.ID, iss.Title, assignee)
+		return nil
 	}
+
+	// -- Rich output: issue context + workflow hints --
+
+	// Summary (reuse show's display)
+	fprintIssueSummary(w, iss)
+	fprintDescription(w, iss)
+	fprintChildren(w, iss, store)
+	fprintMap(w, iss, store)
+	fprintComments(w, iss)
+
+	// Next steps from start.md template
+	tmpl := strings.ReplaceAll(prompts.Start, "{id}", iss.ID)
+	var buf bytes.Buffer
+	template.Process(&buf, tmpl, r.ListConfig(), nil)
+
+	text := strings.TrimSpace(buf.String())
+	if text != "" {
+		fmt.Fprintln(w)
+		fmt.Fprintln(w, w.Style("LANDING THE WORK", Bold))
+		w.Push(2)
+		fmt.Fprintln(w, text)
+		w.Pop()
+	}
+
 	return nil
 }

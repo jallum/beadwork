@@ -22,11 +22,28 @@ func TestCmdStartBasic(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cmdStart: %v", err)
 	}
-	if !strings.Contains(buf.String(), "started") {
-		t.Errorf("output = %q", buf.String())
+	out := buf.String()
+
+	// Should show issue context (like show)
+	if !strings.Contains(out, "Start me") {
+		t.Errorf("output missing title: %q", out)
 	}
-	if !strings.Contains(buf.String(), "alice") {
-		t.Errorf("output missing assignee: %q", buf.String())
+	if !strings.Contains(out, "alice") {
+		t.Errorf("output missing assignee: %q", out)
+	}
+
+	// Should show landing instructions
+	if !strings.Contains(out, "LANDING THE WORK") {
+		t.Errorf("output missing LANDING THE WORK: %q", out)
+	}
+	if !strings.Contains(out, "bw close") {
+		t.Errorf("output missing close instruction: %q", out)
+	}
+	if !strings.Contains(out, "bw sync") {
+		t.Errorf("output missing sync instruction: %q", out)
+	}
+	if !strings.Contains(out, iss.ID) {
+		t.Errorf("output missing issue ID in instructions: %q", out)
 	}
 
 	got, _ := env.Store.Get(iss.ID)
@@ -60,6 +77,81 @@ func TestCmdStartJSON(t *testing.T) {
 	}
 	if got.Assignee != "bob" {
 		t.Errorf("assignee = %q, want bob", got.Assignee)
+	}
+}
+
+func TestCmdStartShowsDescription(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Described issue", issue.CreateOpts{
+		Description: "This is the full description of the work.",
+	})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdStart: %v", err)
+	}
+	if !strings.Contains(buf.String(), "full description") {
+		t.Errorf("output missing description: %q", buf.String())
+	}
+}
+
+func TestCmdStartShowsComments(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Commented issue", issue.CreateOpts{})
+	env.Store.Comment(iss.ID, "Previous session note", "bot")
+	env.Repo.Commit("setup")
+
+	var buf bytes.Buffer
+	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdStart: %v", err)
+	}
+	if !strings.Contains(buf.String(), "Previous session note") {
+		t.Errorf("output missing comment: %q", buf.String())
+	}
+}
+
+func TestCmdStartPRHint(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Configure PR review workflow
+	env.Repo.SetConfig("workflow.review", "pr")
+	env.Repo.Commit("config workflow.review=pr")
+
+	iss, _ := env.Store.Create("PR issue", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdStart: %v", err)
+	}
+	if !strings.Contains(buf.String(), "PR") {
+		t.Errorf("output missing PR hint: %q", buf.String())
+	}
+}
+
+func TestCmdStartNoPRHintByDefault(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Simple issue", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	var buf bytes.Buffer
+	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdStart: %v", err)
+	}
+	if strings.Contains(buf.String(), "open a PR") {
+		t.Errorf("output should not mention PR without config: %q", buf.String())
 	}
 }
 
