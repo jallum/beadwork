@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-ytt.1"
+  ],
   "blocks": [],
   "created": "2026-02-22T14:06:07Z",
   "description": "Update the text rendering loop in cmdReady to print grouped output. For each group: print the parent issue as a normal issue line, then print each child issue indented by two spaces. Separate groups with a blank line. Standalone issues (no parent) print at the top level without indentation. The summary line and status legend remain unchanged.",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Render grouped output with indented children",
   "type": "task",
-  "updated_at": "2026-02-22T14:06:37Z"
+  "updated_at": "2026-02-22T14:06:40Z"
 }
