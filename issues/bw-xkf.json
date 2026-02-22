@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-22T19:38:48Z",
+  "description": "bw dep remove reports success (\"removed dep ...\") even when the dependency doesn't exist. Should either error or warn so the caller knows nothing was actually changed. This made debugging the other two issues harder — appeared to be making progress when nothing was happening.",
+  "id": "bw-xkf",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "bw dep remove silently succeeds on non-existent deps",
+  "type": "bug",
+  "updated_at": "2026-02-22T19:38:48Z"
+}
