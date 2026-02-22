@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-22T20:12:08Z",
+  "description": "bw ready returns issues in directory enumeration order instead of sorting by priority then creation date like bw list does. Apply the same sort.Slice (priority ascending, then created ascending) to ready results.",
+  "id": "bw-64e",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Sort bw ready output by priority",
+  "type": "bug",
+  "updated_at": "2026-02-22T20:12:08Z"
+}
