@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-22T13:47:48Z",
+  "description": "Add tests covering each identified gap: (1) create-then-close by intent ID (proves ID round-trips), (2) create-then-update by intent ID, (3) create pair and link by intent IDs, (4) start intent replay preserves status+assignee, (5) defer intent replay preserves status+date, (6) close with reason round-trips, (7) update description round-trips, (8) multi-word title in update, (9) escaped quotes in title, (10) end-to-end sync replay preserves start/defer state. Tests should fail before fixes and pass after.",
+  "id": "bw-u24.5",
+  "labels": [],
+  "parent": "bw-u24",
+  "priority": 1,
+  "status": "open",
+  "title": "Add regression tests for intent replay fidelity",
+  "type": "task",
+  "updated_at": "2026-02-22T13:47:48Z"
+}
