@@ -737,6 +737,36 @@ func TestTipsMultipleRoots(t *testing.T) {
 	}
 }
 
+// TestReadySortedByPriority verifies that Ready() returns issues sorted by
+// priority (ascending) then creation date.
+func TestReadySortedByPriority(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Create in reverse priority order so directory order != priority order.
+	p3 := 3
+	env.Store.Create("Low priority", issue.CreateOpts{Priority: &p3})
+	env.CommitIntent("create low")
+	p1 := 1
+	env.Store.Create("High priority", issue.CreateOpts{Priority: &p1})
+	env.CommitIntent("create high")
+	p2 := 2
+	env.Store.Create("Medium priority", issue.CreateOpts{Priority: &p2})
+	env.CommitIntent("create medium")
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	if len(ready) != 3 {
+		t.Fatalf("got %d ready, want 3", len(ready))
+	}
+	if ready[0].Priority != 1 || ready[1].Priority != 2 || ready[2].Priority != 3 {
+		t.Errorf("priorities = [%d, %d, %d], want [1, 2, 3]",
+			ready[0].Priority, ready[1].Priority, ready[2].Priority)
+	}
+}
+
 // TestReadyTipsChain verifies that in A←B←C (all open), only C (the tip) is ready.
 func TestReadyTipsChain(t *testing.T) {
 	env := testutil.NewEnv(t)
