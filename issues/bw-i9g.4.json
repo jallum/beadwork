@@ -6,14 +6,15 @@
     "bw-i9g.3"
   ],
   "blocks": [],
+  "closed_at": "2026-02-22T17:27:24Z",
   "created": "2026-02-22T13:30:46Z",
   "description": "After the other tasks land: 1) execGit comment on line 429 says it's 'kept only for ls-remote and legacy cleanup' — update to reflect actual usage (fetch, push, ls-remote). 2) helpers.go should no longer import os/exec once gitUserName is moved to Repo. Clean up the import. 3) Verify no exec.Command(\"git\") calls remain outside repo.go (network ops are the only acceptable remaining usage).",
   "id": "bw-i9g.4",
   "labels": [],
   "parent": "bw-i9g",
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Update execGit comment and remove os/exec from helpers.go",
   "type": "task",
-  "updated_at": "2026-02-22T13:30:51Z"
+  "updated_at": "2026-02-22T17:27:24Z"
 }
