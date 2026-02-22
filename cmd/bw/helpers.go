@@ -72,6 +72,16 @@ func hasFlag(args []string, flag string) bool {
 	return false
 }
 
+func removeFlag(args []string, flag string) []string {
+	out := make([]string, 0, len(args))
+	for _, a := range args {
+		if a != flag {
+			out = append(out, a)
+		}
+	}
+	return out
+}
+
 // aliases maps short flags to their long forms.
 var aliases = map[string]string{
 	"-p": "--priority",

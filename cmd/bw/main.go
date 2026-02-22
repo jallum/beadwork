@@ -27,6 +27,11 @@ func main() {
 	cmd := os.Args[1]
 	args := os.Args[2:]
 
+	dryRun := hasFlag(args, "--dry-run")
+	if dryRun {
+		args = removeFlag(args, "--dry-run")
+	}
+
 	switch cmd {
 	case "--version", "-v":
 		fmt.Fprintln(w, "bw "+version)
@@ -55,6 +60,7 @@ func main() {
 		if err != nil {
 			fatal(err.Error())
 		}
+		store.DryRun = dryRun
 	}
 
 	if err := c.Run(store, args, w); err != nil {

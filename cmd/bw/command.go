@@ -511,6 +511,11 @@ func printUsage(w Writer) {
 		w.Pop()
 	}
 
+	fmt.Fprintf(w, "\n%s\n", w.Style("Global Flags:", Cyan))
+	w.Push(2)
+	fmt.Fprintf(w, "%-28s %s\n", "--dry-run", "Run without committing changes")
+	w.Pop()
+
 	fmt.Fprintln(w, "\nUse \"bw <command> --help\" for more information about a command.")
 }
 

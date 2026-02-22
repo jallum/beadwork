@@ -3,6 +3,7 @@ package issue
 import (
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/jallum/beadwork/internal/treefs"
 )
@@ -42,6 +43,7 @@ type Store struct {
 	FS              *treefs.TreeFS
 	Prefix          string
 	Committer       Committer // nil for read-only use
+	DryRun          bool      // when true, Commit logs the intent but skips persistence
 	DefaultPriority *int
 	IDRetries       int       // retries per length before bumping; 0 means 10
 	RandReader      io.Reader // random source; nil means crypto/rand.Reader
@@ -50,9 +52,14 @@ type Store struct {
 }
 
 // Commit persists pending mutations with the given intent message.
+// When DryRun is true, the intent is logged to stderr and no commit is made.
 func (s *Store) Commit(intent string) error {
 	if s.Committer == nil {
 		return fmt.Errorf("store is read-only: no committer configured")
+	}
+	if s.DryRun {
+		fmt.Fprintf(os.Stderr, "[dry-run] would commit: %s\n", intent)
+		return nil
 	}
 	return s.Committer.Commit(intent)
 }
