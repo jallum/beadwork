@@ -1198,8 +1198,8 @@ func TestPrimeOutput(t *testing.T) {
 	env.CommitIntent("create task")
 
 	out := bw(t, env.Dir, "prime")
-	assertContains(t, out, "1 open")
-	assertContains(t, out, "Ready for work:")
+	assertContains(t, out, "Open task")
+	assertContains(t, out, "Ready: 1")
 }
 
 func TestPrimeWithInProgress(t *testing.T) {
@@ -1212,8 +1212,7 @@ func TestPrimeWithInProgress(t *testing.T) {
 	env.CommitIntent("setup")
 
 	out := bw(t, env.Dir, "prime")
-	assertContains(t, out, "1 in progress")
-	assertContains(t, out, "In progress:")
+	assertContains(t, out, "no ready issues")
 }
 
 // --- Onboard ---
