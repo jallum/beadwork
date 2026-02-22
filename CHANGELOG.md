@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.8.0 — 2026-02-22
+
+- **`bw start` now shows full issue context** — starting an issue prints the description, children, dependencies, comments, and a "Landing the Work" section with next steps. Delegates get the full picture without needing a separate `bw show`.
+
+- **`bw ready` groups child issues under their parent** — epics and their children are visually grouped with indentation instead of appearing as a flat list. Standalone issues print first, followed by parent/child groups.
+
+- **`bw show` displays children for epics** — a new CHILDREN section lists each child with status, priority, and inline dependency annotations. Use `--only children` to show just the children.
+
+- **`bw comment` replaces `bw comments`** — simplified to a single verb: `bw comment <id> "text"`. The old `bw comments` still works as an alias. Listing comments has moved to `bw show` (which already displayed them).
+
+- **`--dry-run` global flag** — run any command without committing changes to the beadwork branch. Shown in `bw --help` under Global Flags. Useful for previewing what a command would do.
+
+- **Deterministic state for testing** — `bw create --id <ID>` pins the issue ID, and `BW_CLOCK=<RFC3339>` freezes timestamps. Together they make `bw export` output fully reproducible, enabling golden-file acceptance tests.
+
+- **Faster startup** — removed `git` subprocess calls from the hot path (`findGitDir` and `gitUserName` replaced with pure-Go equivalents). Every `bw` invocation is faster, especially on macOS where subprocess startup carries SSH agent overhead.
+
+- **Improved prompts** — `bw prime` and `bw onboard` now include guidance on delegating work to sub-agents, using worktrees, and closing out tickets after verification. If you've customized agent configuration, re-run `bw onboard` to pick up the new prompts.
+
 ## 0.7.0 — 2026-02-21
 
 - **New `bw start` command** — claims and begins work on an issue in one step. Validates the issue is open and unblocked, moves it to `in_progress`, and assigns from `git config user.name` (or `--assignee`). If the issue has unresolved blockers, it shows the blocker titles and suggests `bw ready`. The `--assignee` flag has been removed from `bw create` — assignment now means active work, not planning.
