@@ -22,13 +22,11 @@ Design requirements for this prompt:
    plan should be materialized as issues. An epic with children *is* the plan,
    and `bw ready` *is* the execution loop.
 
-5. Teach worktree hygiene. Concurrent work in a single worktree causes
-   contamination — like cooking two meals with the same unwashed pans. The
-   natural unit is one worktree per logical block of related work (a single
-   bead or an epic with children), named after the ticket or epic it serves.
-   The name signals purpose and lifecycle — a worktree has a beginning, a
-   middle, and an end. Beadwork's issue state is concurrency-safe by design;
-   the repo's working tree is not.
+5. Teach worktree hygiene as part of starting work. Agents treat worktrees
+   as optional hygiene — a separate concern they can evaluate independently.
+   But the main working tree belongs to the user; agent work belongs in a
+   worktree. Presenting this as inseparable from claiming work (not a
+   standalone section) makes the connection harder to skip.
 
 6. Frame beadwork as shared state. In multi-agent setups, beadwork is the
    durable communication layer between workers. Comments and issues serve
@@ -88,21 +86,19 @@ Every task gets a ticket (`bw create "Title" --description "..." -p 2 -t task`) 
 
 ## Starting the Work
 
-When working solo as the main agent, `bw start <id>` claims it — sets status, assigns the current user, shows the full issue context, and tells you how to land it when done.
+The main working tree belongs to the user. Your work happens in a worktree named after the ticket it serves — this isolates your changes, keeps main clean for the user or other agents, and gives the work a clear lifecycle with a beginning and an end.
 
-When delegating the work to another agent, remember that they don't inherit your context. Each worker will need to run `bw start <id> --assignee <delegate-agent-id>` itself -- this will explain the issue context and how to land the work, while signalling to other agents _who_ is doing _what_. It's important to close the ticket after you've verified that the agent has completed the work.
+Create the worktree, then claim the ticket inside it. When working solo as the main agent, `bw start <id>` claims it — sets status, assigns the current user, shows the full issue context, and tells you how to land it when done.
+
+When delegating the work to another agent, remember that they don't inherit your context. Each worker will need to run `bw start <id> --assignee <delegate-agent-id>` itself — this will explain the issue context and how to land the work, while signalling to other agents _who_ is doing _what_. It's important to close the ticket after you've verified that the agent has completed the work.
+
+Beadwork's issue state is concurrency-safe; the repo's working tree is not. Skipping the worktree seems faster — especially when you spot a related fix along the way — but a dirty main worktree blocks the user from starting other tasks, switching branches, or working on anything else. That related fix is a new ticket, not an expansion of the current one. When we're done with a worktree we've created, we remove it and leave things as we found them — the local branch preserves all of the work.
 
 Work that isn't committed, closed, and synced doesn't exist to the next session or to other workers. Landing instructions are delivered by `bw start` — they aren't embedded in tickets or stored in context. A plan that skips these steps leaves the worker without a path to land.
 
 ## Leaving Notes
 
-Comments (`bw comment <id> "..."`) are durable context — breadcrumbs for your future self after compaction, and messages to anyone else working in the project. This is especially useful for leaving implementation notes when deviations or adjustments are necessary. 
-
-## Worktrees
-
-Beadwork's issue state is concurrency-safe; the main working tree is not.
-
-Each logical block of work should be done within its own git worktree, named after the ticket it serves (`<ticket-id>`). This includes analysis — the main worktree may be on the wrong branch or dirty with someone else's changes, so plans formed there can start from false assumptions. Skipping this seems faster — especially when you spot a related fix along the way — but mixing two or more tasks in one worktree creates messes that are hard to untangle. That related fix is a new ticket, not an expansion of the current one. Worse, a dirty main worktree blocks the user from starting other tasks, switching branches, or working on anything else. Keeping our work entirely inside a purpose-driven worktree makes us better neighbors. When we're all done with a worktree we've created, we should remove it and leave things as we found them -- the local branch preserves all of the work.
+Comments (`bw comment <id> "..."`) are durable context — breadcrumbs for your future self after compaction, and messages to anyone else working in the project. This is especially useful for leaving implementation notes when deviations or adjustments are necessary.
 
 ## Commands
 
