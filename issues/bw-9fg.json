@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-02-22T22:31:24Z",
@@ -7,8 +7,8 @@
   "id": "bw-9fg",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Expand start.md into full point-of-action briefing",
   "type": "task",
-  "updated_at": "2026-02-22T22:31:24Z"
+  "updated_at": "2026-02-22T22:31:28Z"
 }
