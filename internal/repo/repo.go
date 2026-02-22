@@ -92,7 +92,7 @@ func (r *Repo) ForceReinit(prefix string) error {
 	// Clean up any legacy worktree at .git/beadwork/
 	legacyWt := filepath.Join(r.GitDir, BranchName)
 	if _, err := os.Stat(legacyWt); err == nil {
-		execGit(filepath.Dir(r.GitDir), "worktree", "remove", "--force", legacyWt)
+		execGit(r.RepoDir(), "worktree", "remove", "--force", legacyWt)
 		os.RemoveAll(legacyWt)
 	}
 
@@ -206,7 +206,7 @@ func (r *Repo) remoteBranchExists() bool {
 		return false
 	}
 	// Use git CLI for ls-remote since go-git remote.List requires network
-	out, err := execGit(filepath.Dir(r.GitDir), "ls-remote", "--heads", "origin", BranchName)
+	out, err := execGit(r.RepoDir(), "ls-remote", "--heads", "origin", BranchName)
 	if err != nil {
 		return false
 	}
@@ -227,8 +227,7 @@ func (r *Repo) hasRemote() bool {
 }
 
 func (r *Repo) derivePrefix() string {
-	parent := filepath.Dir(r.GitDir)
-	name := filepath.Base(parent)
+	name := filepath.Base(r.RepoDir())
 	var clean []byte
 	for i := range name {
 		c := name[i]
@@ -400,24 +399,26 @@ func (r *Repo) push() error {
 	return r.gitPush("origin", refSpec)
 }
 
-func (r *Repo) repoDir() string {
+// RepoDir returns the repository root (the parent of the .git directory).
+func (r *Repo) RepoDir() string {
 	return filepath.Dir(r.GitDir)
 }
 
 func (r *Repo) fetch(remoteName string, refSpec config.RefSpec) error {
-	_, err := execGit(r.repoDir(), "fetch", remoteName, string(refSpec))
+	_, err := execGit(r.RepoDir(), "fetch", remoteName, string(refSpec))
 	return err
 }
 
 func (r *Repo) gitPush(remoteName string, refSpec config.RefSpec) error {
-	_, err := execGit(r.repoDir(), "push", remoteName, string(refSpec))
+	_, err := execGit(r.RepoDir(), "push", remoteName, string(refSpec))
 	return err
 }
 
-// findGitDir walks up from cwd to find the .git directory.
+// findGitDir returns the common .git directory for the repository.
+// Using --git-common-dir instead of --git-dir ensures correct behavior
+// in worktrees, where --git-dir returns a worktree-specific path.
 func findGitDir() (string, error) {
-	// Use git CLI for reliable detection (handles worktrees, submodules, etc.)
-	cmd := exec.Command("git", "rev-parse", "--git-dir")
+	cmd := exec.Command("git", "rev-parse", "--git-common-dir")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return "", err
