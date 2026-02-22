@@ -76,7 +76,7 @@ Issues have **status** (open → in_progress → closed, or deferred), **priorit
 
 Issues can form hierarchies: an epic with child tasks (`--parent <epic>`), wired with dependencies (`bw dep add <blocker> blocks <blocked>`). Blocked issues can't be started. When a dependency closes, newly unblocked work surfaces via `bw ready`.
 
-Comments (`bw comments add <id> "..."`) are durable context — breadcrumbs for your future self after compaction, and messages to anyone else working in the project.
+Comments (`bw comment <id> "..."`) are durable context — breadcrumbs for your future self after compaction, and messages to anyone else working in the project.
 
 ## Finding and Doing Work
 
