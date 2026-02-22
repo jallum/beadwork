@@ -28,6 +28,9 @@ func TestCmdPrimeBasic(t *testing.T) {
 	if !strings.Contains(out, "Ready: 1") {
 		t.Errorf("output missing ready count: %q", out)
 	}
+	if !strings.Contains(out, "Work In Progress") {
+		t.Errorf("output missing 'Work In Progress' section header: %q", out)
+	}
 }
 
 func TestCmdPrimeEmpty(t *testing.T) {
@@ -42,6 +45,27 @@ func TestCmdPrimeEmpty(t *testing.T) {
 	out := buf.String()
 	if !strings.Contains(out, "no ready issues") {
 		t.Errorf("output missing 'no ready issues': %q", out)
+	}
+}
+
+func TestCmdPrimeInProgress(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("WIP task", issue.CreateOpts{})
+	env.Repo.Commit("create issue")
+	status := "in_progress"
+	env.Store.Update(iss.ID, issue.UpdateOpts{Status: &status})
+	env.Repo.Commit("start issue")
+
+	var buf bytes.Buffer
+	err := cmdPrime(env.Store, nil, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdPrime: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "WIP task") {
+		t.Errorf("output missing in-progress issue: %q", out)
 	}
 }
 

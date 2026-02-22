@@ -11,6 +11,13 @@ import (
 // sections; unregistered markers are stripped. Plain HTML comments are
 // stripped entirely.
 func Process(w io.Writer, text string, config map[string]string, sections map[string]func(io.Writer)) {
+	ProcessWithCommands(w, text, config, sections, nil)
+}
+
+// ProcessWithCommands is like Process but also supports inline command
+// markers of the form <!-- bw arg1 arg2 ... -->. When cmdFn is non-nil,
+// it is invoked with the parsed argument tokens for each command marker.
+func ProcessWithCommands(w io.Writer, text string, config map[string]string, sections map[string]func(io.Writer), cmdFn func(args []string, w io.Writer)) {
 	lines := strings.Split(text, "\n")
 	skipDepth := 0
 	inComment := false
@@ -69,6 +76,18 @@ func Process(w io.Writer, text string, config map[string]string, sections map[st
 			continue
 		}
 
+		// Command marker (<!-- bw args... -->).
+		if args, ok := parseCommand(trimmed); ok {
+			if skipDepth == 0 && cmdFn != nil {
+				if !first {
+					io.WriteString(w, "\n")
+				}
+				cmdFn(args, w)
+				first = false
+			}
+			continue
+		}
+
 		// Plain HTML comment (single or multi-line).
 		if strings.HasPrefix(trimmed, "<!--") {
 			if !strings.Contains(trimmed, "-->") {
@@ -112,6 +131,24 @@ func parseSection(trimmed string) (string, bool) {
 		return "", false
 	}
 	return name, true
+}
+
+// parseCommand checks if a line is a command marker (<!-- bw arg1 arg2 ... -->)
+// and returns the arguments after "bw" as a string slice.
+func parseCommand(trimmed string) ([]string, bool) {
+	after, ok := strings.CutPrefix(trimmed, "<!-- bw ")
+	if !ok {
+		return nil, false
+	}
+	body, ok := strings.CutSuffix(after, " -->")
+	if !ok {
+		return nil, false
+	}
+	args := strings.Fields(body)
+	if len(args) == 0 {
+		return nil, false
+	}
+	return args, true
 }
 
 // evalCondition checks "key == value" against the config map.

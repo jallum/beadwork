@@ -32,14 +32,14 @@ func cmdPrime(store *issue.Store, _ []string, w Writer) error {
 		firstFlush = false
 	}
 
-	sections := map[string]func(io.Writer){
-		"STATE": func(_ io.Writer) {
+	cmdFn := func(args []string, _ io.Writer) {
+		if cmd := commandMap[args[0]]; cmd != nil {
 			flush()
-			cmdReady(store, nil, w)
-		},
+			cmd.Run(store, args[1:], w)
+		}
 	}
 
-	template.Process(&buf, prompts.Prime, r.ListConfig(), sections)
+	template.ProcessWithCommands(&buf, prompts.Prime, r.ListConfig(), nil, cmdFn)
 	flush()
 
 	return nil

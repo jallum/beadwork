@@ -111,5 +111,11 @@ Every command supports `--help`. Read commands accept `--json`. `bw --help` list
 ## Currently available work:
 
 ```text
-<!-- STATE -->
+<!-- bw ready -->
+```
+
+## Work In Progress
+
+``` text
+<!-- bw list --status in_progress -->
 ```

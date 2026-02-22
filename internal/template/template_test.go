@@ -13,6 +13,13 @@ func process(t *testing.T, input string, config map[string]string, sections map[
 	return buf.String()
 }
 
+func processWithCommands(t *testing.T, input string, config map[string]string, sections map[string]func(io.Writer), cmdFn func([]string, io.Writer)) string {
+	t.Helper()
+	var buf bytes.Buffer
+	ProcessWithCommands(&buf, input, config, sections, cmdFn)
+	return buf.String()
+}
+
 func TestProcessNoDirectives(t *testing.T) {
 	input := "line one\nline two\nline three"
 	got := process(t, input, nil, nil)
@@ -232,6 +239,73 @@ func TestProcessMultipleSections(t *testing.T) {
 	}
 	got := process(t, input, nil, sections)
 	want := "top\n=head=\nmiddle\n=foot=\nbottom"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+// Command marker tests
+
+func TestProcessCommand(t *testing.T) {
+	input := "before\n<!-- bw ready -->\nafter"
+	var gotArgs []string
+	cmdFn := func(args []string, w io.Writer) {
+		gotArgs = args
+		io.WriteString(w, "ready-output")
+	}
+	got := processWithCommands(t, input, nil, nil, cmdFn)
+	want := "before\nready-output\nafter"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+	if len(gotArgs) != 1 || gotArgs[0] != "ready" {
+		t.Errorf("args = %v, want [ready]", gotArgs)
+	}
+}
+
+func TestProcessCommandWithArgs(t *testing.T) {
+	input := "before\n<!-- bw list --status in_progress -->\nafter"
+	var gotArgs []string
+	cmdFn := func(args []string, w io.Writer) {
+		gotArgs = args
+		io.WriteString(w, "list-output")
+	}
+	got := processWithCommands(t, input, nil, nil, cmdFn)
+	want := "before\nlist-output\nafter"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+	wantArgs := []string{"list", "--status", "in_progress"}
+	if len(gotArgs) != len(wantArgs) {
+		t.Fatalf("args = %v, want %v", gotArgs, wantArgs)
+	}
+	for i, a := range wantArgs {
+		if gotArgs[i] != a {
+			t.Errorf("args[%d] = %q, want %q", i, gotArgs[i], a)
+		}
+	}
+}
+
+func TestProcessCommandSkippedInFalseBlock(t *testing.T) {
+	input := "before\n<!-- IF x == y -->\n<!-- bw ready -->\n<!-- END -->\nafter"
+	called := false
+	cmdFn := func(args []string, w io.Writer) {
+		called = true
+	}
+	got := processWithCommands(t, input, nil, nil, cmdFn)
+	want := "before\nafter"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+	if called {
+		t.Error("command callback should not be called inside skipped block")
+	}
+}
+
+func TestProcessCommandNilCallback(t *testing.T) {
+	input := "before\n<!-- bw ready -->\nafter"
+	got := processWithCommands(t, input, nil, nil, nil)
+	want := "before\nafter"
 	if got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}
