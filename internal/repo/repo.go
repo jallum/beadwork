@@ -64,6 +64,16 @@ func (r *Repo) TreeFS() *treefs.TreeFS {
 	return r.tfs
 }
 
+// UserName reads user.name from the git config (local, then global, then
+// system) using go-git's ConfigScoped. Returns "unknown" if unset.
+func (r *Repo) UserName() string {
+	cfg, err := r.tfs.Repo().ConfigScoped(config.GlobalScope)
+	if err == nil && cfg.User.Name != "" {
+		return cfg.User.Name
+	}
+	return "unknown"
+}
+
 func (r *Repo) IsInitialized() bool {
 	return r.initialized
 }
