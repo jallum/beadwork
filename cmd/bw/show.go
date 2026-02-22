@@ -149,7 +149,7 @@ func fprintChildren(w Writer, iss *issue.Issue, store *issue.Store) {
 			w.Style(fmt.Sprintf("P%d", child.Priority), ps),
 			child.Title,
 		)
-		line += formatDeps(w, child)
+		line += formatDeps(w, child, store)
 		fmt.Fprintln(w, line)
 	}
 	w.Pop()

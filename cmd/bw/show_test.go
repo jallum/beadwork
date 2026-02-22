@@ -360,6 +360,34 @@ func TestCmdShowBlockedByClosedTipsDedup(t *testing.T) {
 	}
 }
 
+// Regression: a closed blocker with multiple dependents must not cause
+// siblings to appear in the BLOCKED BY section.
+func TestCmdShowBlockedByClosedSiblings(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// D blocks both A and B. D is closed.
+	a, _ := env.Store.Create("Target", issue.CreateOpts{})
+	b, _ := env.Store.Create("Sibling", issue.CreateOpts{})
+	d, _ := env.Store.Create("Closed blocker", issue.CreateOpts{})
+	env.Store.Link(d.ID, a.ID)
+	env.Store.Link(d.ID, b.ID)
+	env.Store.Close(d.ID, "")
+	env.Repo.Commit("setup")
+
+	var buf bytes.Buffer
+	err := cmdShow(env.Store, []string{a.ID}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdShow: %v", err)
+	}
+	out := buf.String()
+
+	// D is closed, so A is unblocked — no BLOCKED BY section
+	if strings.Contains(out, "BLOCKED BY") {
+		t.Errorf("closed blocker should not show BLOCKED BY, but sibling %s appeared: %q", b.ID, out)
+	}
+}
+
 func TestCmdShowBlockedByAllResolved(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()

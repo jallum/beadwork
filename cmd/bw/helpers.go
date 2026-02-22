@@ -199,7 +199,13 @@ func parsePriority(s string) (int, error) {
 // Example: " [blocks: bw-abc, bw-def] [blocked by: bw-xyz]"
 // Returns "" when there are no dependencies.
 // Ticket IDs are styled Red; labels and brackets are styled Dim.
-func formatDeps(w Writer, iss *issue.Issue) string {
+// When store is non-nil, closed blockers are filtered from the display.
+func formatDeps(w Writer, iss *issue.Issue, store ...*issue.Store) string {
+	var s *issue.Store
+	if len(store) > 0 {
+		s = store[0]
+	}
+
 	var parts []string
 	if len(iss.Blocks) > 0 {
 		ids := make([]string, len(iss.Blocks))
@@ -209,11 +215,16 @@ func formatDeps(w Writer, iss *issue.Issue) string {
 		parts = append(parts, w.Style("[blocks: ", Dim)+strings.Join(ids, w.Style(", ", Dim))+w.Style("]", Dim))
 	}
 	if len(iss.BlockedBy) > 0 {
-		ids := make([]string, len(iss.BlockedBy))
-		for i, id := range iss.BlockedBy {
-			ids[i] = w.Style(id, Red)
+		var active []string
+		for _, id := range iss.BlockedBy {
+			if s != nil && s.IsClosed(id) {
+				continue
+			}
+			active = append(active, w.Style(id, Red))
 		}
-		parts = append(parts, w.Style("[blocked by: ", Dim)+strings.Join(ids, w.Style(", ", Dim))+w.Style("]", Dim))
+		if len(active) > 0 {
+			parts = append(parts, w.Style("[blocked by: ", Dim)+strings.Join(active, w.Style(", ", Dim))+w.Style("]", Dim))
+		}
 	}
 	if len(parts) == 0 {
 		return ""
@@ -363,35 +374,58 @@ func fprintMap(w Writer, iss *issue.Issue, store *issue.Store) {
 }
 
 // nearestOpen takes tips from the blocker chain and, for each closed tip,
-// walks back via its Blocks field to find the nearest open ancestor.
-// Returns the deduped set of open issues that actually need work.
+// walks back via Blocks toward currentID to find the nearest open ancestor.
+// Only follows edges that lie on the transitive blocker path of currentID,
+// preventing siblings (other issues blocked by the same closed blocker) from
+// being returned incorrectly.
 func nearestOpen(tips []*issue.Issue, currentID string, store *issue.Store) []*issue.Issue {
+	// Build the set of all transitive blockers of currentID so the
+	// walk-back only follows edges on paths leading to currentID.
+	blockers := make(map[string]bool)
+	var gather func(string)
+	gather = func(id string) {
+		if blockers[id] {
+			return
+		}
+		blockers[id] = true
+		if iss, err := store.Get(id); err == nil {
+			for _, bid := range iss.BlockedBy {
+				gather(bid)
+			}
+		}
+	}
+	if iss, err := store.Get(currentID); err == nil {
+		for _, bid := range iss.BlockedBy {
+			gather(bid)
+		}
+	}
+
 	seen := make(map[string]bool)
 	var result []*issue.Issue
-	for _, tip := range tips {
-		t := tip
-		for t.Status == "closed" {
-			var next *issue.Issue
-			for _, id := range t.Blocks {
-				if id == currentID {
-					continue
-				}
-				candidate, err := store.Get(id)
-				if err != nil {
-					continue
-				}
-				next = candidate
-				break
-			}
-			if next == nil {
-				break
-			}
-			t = next
+
+	var walk func(*issue.Issue)
+	walk = func(t *issue.Issue) {
+		if t.ID == currentID || seen[t.ID] {
+			return
 		}
-		if t.Status != "closed" && t.ID != currentID && !seen[t.ID] {
-			seen[t.ID] = true
+		seen[t.ID] = true
+		if t.Status != "closed" {
 			result = append(result, t)
+			return
 		}
+		// Closed: follow Blocks entries that lie on the path to currentID.
+		for _, id := range t.Blocks {
+			if !blockers[id] {
+				continue
+			}
+			if next, err := store.Get(id); err == nil {
+				walk(next)
+			}
+		}
+	}
+
+	for _, tip := range tips {
+		walk(tip)
 	}
 	return result
 }

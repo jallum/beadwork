@@ -1022,6 +1022,37 @@ func TestDepAddSelfBlockingCLI(t *testing.T) {
 	assertContains(t, out, "cannot block itself")
 }
 
+func TestDepRemoveNonExistentDep(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("A", issue.CreateOpts{})
+	b, _ := env.Store.Create("B", issue.CreateOpts{})
+	env.CommitIntent("setup")
+
+	// No link exists — dep remove should fail
+	out := bwFail(t, env.Dir, "dep", "remove", a.ID, "blocks", b.ID)
+	assertContains(t, out, "no dependency")
+}
+
+func TestReadyClosedBlockerHidden(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{Priority: intPtr(1)})
+	b, _ := env.Store.Create("Unblocked task", issue.CreateOpts{Priority: intPtr(2)})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Close(a.ID, "done")
+	env.CommitIntent("setup")
+
+	out := bw(t, env.Dir, "ready")
+
+	// B should appear as ready (blocker is closed)
+	assertContains(t, out, b.ID)
+	// The closed blocker should NOT appear in the [blocked by: ...] annotation
+	assertNotContains(t, out, "blocked by")
+}
+
 // --- Update ---
 
 func TestUpdateTitleOutput(t *testing.T) {
