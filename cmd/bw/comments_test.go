@@ -11,9 +11,9 @@ import (
 	"github.com/jallum/beadwork/internal/testutil"
 )
 
-// --- Comments Add ---
+// --- Comment Add ---
 
-func TestCmdCommentsAddBasic(t *testing.T) {
+func TestCmdCommentBasic(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
@@ -21,9 +21,9 @@ func TestCmdCommentsAddBasic(t *testing.T) {
 	env.CommitIntent("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdComments(env.Store, []string{"add", iss.ID, "This is a comment"}, PlainWriter(&buf))
+	err := cmdComment(env.Store, []string{iss.ID, "This is a comment"}, PlainWriter(&buf))
 	if err != nil {
-		t.Fatalf("cmdComments add: %v", err)
+		t.Fatalf("cmdComment: %v", err)
 	}
 
 	output := buf.String()
@@ -41,7 +41,7 @@ func TestCmdCommentsAddBasic(t *testing.T) {
 	}
 }
 
-func TestCmdCommentsAddNoText(t *testing.T) {
+func TestCmdCommentNoText(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
@@ -49,13 +49,13 @@ func TestCmdCommentsAddNoText(t *testing.T) {
 	env.CommitIntent("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdComments(env.Store, []string{"add", iss.ID}, PlainWriter(&buf))
+	err := cmdComment(env.Store, []string{iss.ID}, PlainWriter(&buf))
 	if err == nil {
 		t.Fatal("expected error when no text provided")
 	}
 }
 
-func TestCmdCommentsAddWithAuthor(t *testing.T) {
+func TestCmdCommentWithAuthor(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
@@ -63,9 +63,9 @@ func TestCmdCommentsAddWithAuthor(t *testing.T) {
 	env.CommitIntent("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdComments(env.Store, []string{"add", iss.ID, "Authored comment", "--author", "alice"}, PlainWriter(&buf))
+	err := cmdComment(env.Store, []string{iss.ID, "Authored comment", "--author", "alice"}, PlainWriter(&buf))
 	if err != nil {
-		t.Fatalf("cmdComments add: %v", err)
+		t.Fatalf("cmdComment: %v", err)
 	}
 
 	got, _ := env.Store.Get(iss.ID)
@@ -74,7 +74,7 @@ func TestCmdCommentsAddWithAuthor(t *testing.T) {
 	}
 }
 
-func TestCmdCommentsAddWithShortAuthor(t *testing.T) {
+func TestCmdCommentWithShortAuthor(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
@@ -82,104 +82,14 @@ func TestCmdCommentsAddWithShortAuthor(t *testing.T) {
 	env.CommitIntent("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdComments(env.Store, []string{"add", iss.ID, "Short flag", "-a", "bob"}, PlainWriter(&buf))
+	err := cmdComment(env.Store, []string{iss.ID, "Short flag", "-a", "bob"}, PlainWriter(&buf))
 	if err != nil {
-		t.Fatalf("cmdComments add: %v", err)
+		t.Fatalf("cmdComment: %v", err)
 	}
 
 	got, _ := env.Store.Get(iss.ID)
 	if got.Comments[0].Author != "bob" {
 		t.Errorf("author = %q, want %q", got.Comments[0].Author, "bob")
-	}
-}
-
-// --- Comments List ---
-
-func TestCmdCommentsListPlain(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	iss, _ := env.Store.Create("Test issue", issue.CreateOpts{})
-	env.CommitIntent("create " + iss.ID)
-
-	env.Store.Comment(iss.ID, "First comment", "alice")
-	env.CommitIntent("comment 1")
-	env.Store.Comment(iss.ID, "Second comment", "")
-	env.CommitIntent("comment 2")
-
-	var buf bytes.Buffer
-	err := cmdComments(env.Store, []string{iss.ID}, PlainWriter(&buf))
-	if err != nil {
-		t.Fatalf("cmdComments list: %v", err)
-	}
-
-	output := buf.String()
-	if !strings.Contains(output, "First comment") {
-		t.Errorf("output missing 'First comment': %q", output)
-	}
-	if !strings.Contains(output, "Second comment") {
-		t.Errorf("output missing 'Second comment': %q", output)
-	}
-	if !strings.Contains(output, "alice") {
-		t.Errorf("output missing author 'alice': %q", output)
-	}
-}
-
-func TestCmdCommentsListJSON(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	iss, _ := env.Store.Create("Test issue", issue.CreateOpts{})
-	env.CommitIntent("create " + iss.ID)
-
-	env.Store.Comment(iss.ID, "JSON comment", "alice")
-	env.CommitIntent("comment")
-
-	var buf bytes.Buffer
-	err := cmdComments(env.Store, []string{iss.ID, "--json"}, PlainWriter(&buf))
-	if err != nil {
-		t.Fatalf("cmdComments list --json: %v", err)
-	}
-
-	var comments []issue.Comment
-	if err := json.Unmarshal(buf.Bytes(), &comments); err != nil {
-		t.Fatalf("JSON parse: %v", err)
-	}
-	if len(comments) != 1 {
-		t.Fatalf("expected 1 comment, got %d", len(comments))
-	}
-	if comments[0].Text != "JSON comment" {
-		t.Errorf("text = %q, want %q", comments[0].Text, "JSON comment")
-	}
-}
-
-func TestCmdCommentsListNonexistent(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	var buf bytes.Buffer
-	err := cmdComments(env.Store, []string{"test-nonexistent"}, PlainWriter(&buf))
-	if err == nil {
-		t.Fatal("expected error for nonexistent issue")
-	}
-}
-
-func TestCmdCommentsListEmpty(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	iss, _ := env.Store.Create("Test issue", issue.CreateOpts{})
-	env.CommitIntent("create " + iss.ID)
-
-	var buf bytes.Buffer
-	err := cmdComments(env.Store, []string{iss.ID}, PlainWriter(&buf))
-	if err != nil {
-		t.Fatalf("cmdComments list: %v", err)
-	}
-
-	output := buf.String()
-	if !strings.Contains(output, "no comments") {
-		t.Errorf("output for empty comments = %q, want 'no comments'", output)
 	}
 }
 

@@ -19,7 +19,7 @@ Or download a binary from [releases](https://github.com/jallum/beadwork/releases
 bw init                                           # initialize in any git repo
 bw create "Fix auth bug" --type bug -p 1          # create an issue
 bw ready                                          # list unblocked work
-bw comments add bw-a1b2 "Fixed in latest deploy"  # add a comment
+bw comment bw-a1b2 "Fixed in latest deploy"        # add a comment
 bw close bw-a1b2                                  # close it
 bw sync                                           # push to remote
 ```
@@ -35,8 +35,7 @@ bw update <id> [flags]              Update an issue (--parent to set/clear)
 bw close <id> [--reason <r>]        Close an issue
 bw reopen <id>                      Reopen a closed issue
 bw delete <id> [--force]            Delete an issue (preview by default)
-bw comments <id>                    List comments on an issue
-bw comments add <id> <text>         Add a comment (--author)
+bw comment <id> <text>              Add a comment (--author; use bw show to view)
 bw label <id> +lab [-lab] ...       Add/remove labels
 bw defer <id> <date>                Defer until a date
 bw undefer <id>                     Restore a deferred issue

@@ -206,22 +206,23 @@ var commands = []Command{
 		Run: cmdStart,
 	},
 	{
-		Name:    "comments",
-		Summary: "View or add comments on an issue",
-		Description: "List comments or add a new comment.\nSubcommands: add.",
+		Name:        "comment",
+		Aliases:     []string{"comments"},
+		Summary:     "Add a comment to an issue",
+		Description: "Add a comment to an issue. Use bw show to view comments.",
 		Positionals: []Positional{
-			{Name: "[add] <id> [text]", Required: true, Help: "Issue ID (or 'add <id> <text>' to add)"},
+			{Name: "<id>", Required: true, Help: "Issue ID"},
+			{Name: "<text>", Required: true, Help: "Comment text"},
 		},
 		Flags: []Flag{
-			{Long: "--author", Short: "-a", Value: "NAME", Help: "Comment author (add mode)"},
+			{Long: "--author", Short: "-a", Value: "NAME", Help: "Comment author"},
 			{Long: "--json", Help: "Output as JSON"},
 		},
 		Examples: []Example{
-			{Cmd: `bw comments bw-a3f8`, Help: "List comments"},
-			{Cmd: `bw comments add bw-a3f8 "Fixed in latest deploy"`, Help: "Add a comment"},
+			{Cmd: `bw comment bw-a3f8 "Fixed in latest deploy"`},
 		},
 		NeedsStore: true,
-		Run:        cmdComments,
+		Run:        cmdComment,
 	},
 	{
 		Name:    "reopen",
@@ -475,7 +476,7 @@ var commandGroups = []struct {
 	name string
 	cmds []string
 }{
-	{"Working With Issues", []string{"create", "show", "list", "update", "start", "close", "reopen", "delete", "comments", "label", "defer", "undefer", "history"}},
+	{"Working With Issues", []string{"create", "show", "list", "update", "start", "close", "reopen", "delete", "comment", "label", "defer", "undefer", "history"}},
 	{"Finding Work", []string{"ready", "blocked"}},
 	{"Dependencies", []string{"dep"}},
 	{"Sync & Data", []string{"sync", "export", "import"}},
