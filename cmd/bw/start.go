@@ -44,7 +44,7 @@ func cmdStart(store *issue.Store, args []string, w Writer) error {
 	// Default assignee to git user.name
 	assignee := sa.Assignee
 	if assignee == "" {
-		assignee = gitUserName(r.RepoDir())
+		assignee = r.UserName()
 	}
 
 	iss, err := store.Start(sa.ID, assignee)
