@@ -55,6 +55,12 @@ func replayOne(store *issue.Store, raw string) error {
 		return replayConfig(store, parts[1:], raw)
 	case "comment":
 		return replayComment(store, parts[1:], raw)
+	case "start":
+		return replayStart(store, parts[1:], raw)
+	case "defer":
+		return replayDefer(store, parts[1:], raw)
+	case "undefer":
+		return replayUndefer(store, parts[1:], raw)
 	case "init":
 		return nil // skip init intents
 	default:
@@ -240,6 +246,64 @@ func replayComment(store *issue.Store, parts []string, raw string) error {
 	}
 	_, err := store.Comment(parts[0], text, "")
 	if err != nil {
+		return err
+	}
+	return store.Commit(raw)
+}
+
+func replayStart(store *issue.Store, parts []string, raw string) error {
+	// start <id> assignee="<name>"
+	if len(parts) < 1 {
+		return fmt.Errorf("malformed start intent")
+	}
+	id := parts[0]
+	var assignee string
+	for _, kv := range parts[1:] {
+		eqIdx := strings.Index(kv, "=")
+		if eqIdx == -1 {
+			continue
+		}
+		if kv[:eqIdx] == "assignee" {
+			assignee = kv[eqIdx+1:]
+		}
+	}
+	if _, err := store.Start(id, assignee); err != nil {
+		return err
+	}
+	return store.Commit(raw)
+}
+
+func replayDefer(store *issue.Store, parts []string, raw string) error {
+	// defer <id> until <date>
+	if len(parts) < 3 || parts[1] != "until" {
+		return fmt.Errorf("malformed defer intent")
+	}
+	id := parts[0]
+	date := parts[2]
+	status := "deferred"
+	opts := issue.UpdateOpts{
+		Status:     &status,
+		DeferUntil: &date,
+	}
+	if _, err := store.Update(id, opts); err != nil {
+		return err
+	}
+	return store.Commit(raw)
+}
+
+func replayUndefer(store *issue.Store, parts []string, raw string) error {
+	// undefer <id>
+	if len(parts) < 1 {
+		return fmt.Errorf("malformed undefer intent")
+	}
+	id := parts[0]
+	status := "open"
+	empty := ""
+	opts := issue.UpdateOpts{
+		Status:     &status,
+		DeferUntil: &empty,
+	}
+	if _, err := store.Update(id, opts); err != nil {
 		return err
 	}
 	return store.Commit(raw)

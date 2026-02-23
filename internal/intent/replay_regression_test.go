@@ -132,7 +132,7 @@ func TestReplayCreatePairAndLinkByIntentIDs(t *testing.T) {
 //    Fix: bw-u24.2
 // ---------------------------------------------------------------------------
 func TestReplayStartPreservesStatusAndAssignee(t *testing.T) {
-	t.Skip("BUG(bw-u24.2): 'start' verb is silently dropped by replayOne")
+	// Fixed by bw-u24.2: replayStart now handles start verb
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -166,7 +166,7 @@ func TestReplayStartPreservesStatusAndAssignee(t *testing.T) {
 //    Fix: bw-u24.2
 // ---------------------------------------------------------------------------
 func TestReplayDeferPreservesStatusAndDate(t *testing.T) {
-	t.Skip("BUG(bw-u24.2): 'defer' verb is silently dropped by replayOne")
+	// Fixed by bw-u24.2: replayDefer now handles defer verb
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -198,7 +198,7 @@ func TestReplayDeferPreservesStatusAndDate(t *testing.T) {
 //     Fix: bw-u24.2
 // ---------------------------------------------------------------------------
 func TestReplayUndeferRestoresOpenStatus(t *testing.T) {
-	t.Skip("BUG(bw-u24.2): 'undefer' verb is silently dropped by replayOne")
+	// Fixed by bw-u24.2: replayUndefer now handles undefer verb
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -551,33 +551,32 @@ func TestSyncReplayPreservesStartDeferState(t *testing.T) {
 // This documents the current behavior where unknown/unhandled verbs are
 // swallowed. Once the fix lands, these should produce actual state changes.
 // ---------------------------------------------------------------------------
-func TestStartVerbCurrentlySilentlyDropped(t *testing.T) {
+func TestStartVerbApplied(t *testing.T) {
+	// Fixed by bw-u24.2: start verb now handled by replayStart
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("Startable", issue.CreateOpts{})
 	env.CommitIntent("create " + iss.ID)
 
-	// "start" is handled by the default case in replayOne which returns nil.
 	errs := intent.Replay(env.Store, []string{
 		`start ` + iss.ID + ` assignee="agent-1"`,
 	})
-
-	// Currently: no error, but also no state change.
 	if len(errs) != 0 {
-		t.Errorf("expected 0 errors (silently dropped), got %d: %v", len(errs), errs)
+		t.Fatalf("Replay errors: %v", errs)
 	}
 
 	got, _ := env.Store.Get(iss.ID)
-	if got.Status != "open" {
-		t.Errorf("status = %q, want open (start was silently dropped)", got.Status)
+	if got.Status != "in_progress" {
+		t.Errorf("status = %q, want in_progress", got.Status)
 	}
-	if got.Assignee != "" {
-		t.Errorf("assignee = %q, want empty (start was silently dropped)", got.Assignee)
+	if got.Assignee != "agent-1" {
+		t.Errorf("assignee = %q, want agent-1", got.Assignee)
 	}
 }
 
-func TestDeferVerbCurrentlySilentlyDropped(t *testing.T) {
+func TestDeferVerbApplied(t *testing.T) {
+	// Fixed by bw-u24.2: defer verb now handled by replayDefer
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
@@ -587,21 +586,21 @@ func TestDeferVerbCurrentlySilentlyDropped(t *testing.T) {
 	errs := intent.Replay(env.Store, []string{
 		`defer ` + iss.ID + ` until 2026-06-01`,
 	})
-
 	if len(errs) != 0 {
-		t.Errorf("expected 0 errors (silently dropped), got %d: %v", len(errs), errs)
+		t.Fatalf("Replay errors: %v", errs)
 	}
 
 	got, _ := env.Store.Get(iss.ID)
-	if got.Status != "open" {
-		t.Errorf("status = %q, want open (defer was silently dropped)", got.Status)
+	if got.Status != "deferred" {
+		t.Errorf("status = %q, want deferred", got.Status)
 	}
-	if got.DeferUntil != "" {
-		t.Errorf("defer_until = %q, want empty (defer was silently dropped)", got.DeferUntil)
+	if got.DeferUntil != "2026-06-01" {
+		t.Errorf("defer_until = %q, want 2026-06-01", got.DeferUntil)
 	}
 }
 
-func TestUndeferVerbCurrentlySilentlyDropped(t *testing.T) {
+func TestUndeferVerbApplied(t *testing.T) {
+	// Fixed by bw-u24.2: undefer verb now handled by replayUndefer
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
@@ -611,14 +610,16 @@ func TestUndeferVerbCurrentlySilentlyDropped(t *testing.T) {
 	errs := intent.Replay(env.Store, []string{
 		`undefer ` + iss.ID,
 	})
-
 	if len(errs) != 0 {
-		t.Errorf("expected 0 errors (silently dropped), got %d: %v", len(errs), errs)
+		t.Fatalf("Replay errors: %v", errs)
 	}
 
 	got, _ := env.Store.Get(iss.ID)
-	if got.Status != "deferred" {
-		t.Errorf("status = %q, want deferred (undefer was silently dropped)", got.Status)
+	if got.Status != "open" {
+		t.Errorf("status = %q, want open", got.Status)
+	}
+	if got.DeferUntil != "" {
+		t.Errorf("defer_until = %q, want empty", got.DeferUntil)
 	}
 }
 
