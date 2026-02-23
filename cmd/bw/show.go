@@ -118,7 +118,7 @@ func fprintIssueSummary(w Writer, iss *issue.Issue) {
 // fprintDescription renders just the DESCRIPTION section.
 func fprintDescription(w Writer, iss *issue.Issue) {
 	if iss.Description != "" {
-		fmt.Fprintf(w, "\n%s\n\n", w.Style("DESCRIPTION", Bold))
+		fmt.Fprintf(w, "\n%s\n\n", sectionHeader(w, "DESCRIPTION"))
 		w.Push(2)
 		desc := iss.Description
 		if ww := w.Width(); ww > 0 {
@@ -138,7 +138,7 @@ func fprintChildren(w Writer, iss *issue.Issue, store *issue.Store) {
 		return
 	}
 
-	fmt.Fprintf(w, "\n%s\n", w.Style("CHILDREN", Bold))
+	fmt.Fprintf(w, "\n%s\n", sectionHeader(w, "CHILDREN"))
 	w.Push(2)
 	for _, child := range children {
 		ps := PriorityStyle(child.Priority)

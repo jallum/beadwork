@@ -109,7 +109,7 @@ func cmdUpgrade(_ *issue.Store, args []string, w Writer) error {
 			w.Push(2)
 			for _, line := range strings.Split(parsed, "\n") {
 				if strings.HasPrefix(line, "## ") {
-					fmt.Fprintln(w, w.Style(strings.TrimPrefix(line, "## "), Bold))
+					fmt.Fprintln(w, sectionHeader(w, strings.TrimPrefix(line, "## ")))
 				} else {
 					fmt.Fprintln(w, line)
 				}

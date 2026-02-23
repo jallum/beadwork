@@ -46,7 +46,7 @@ func cmdDelete(store *issue.Store, args []string, w Writer) error {
 			fprintJSON(w, plan)
 			return nil
 		}
-		fmt.Fprintln(w, w.Style("DELETE PREVIEW", Bold))
+		fmt.Fprintln(w, sectionHeader(w, "DELETE PREVIEW"))
 		fmt.Fprintln(w)
 		fmt.Fprintln(w, "Issue to delete:")
 		w.Push(2)

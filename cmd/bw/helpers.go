@@ -298,7 +298,7 @@ func fprintIssue(w Writer, iss *issue.Issue) {
 func fprintComments(w Writer, iss *issue.Issue) {
 	if len(iss.Comments) > 0 {
 		fmt.Fprintln(w)
-		fmt.Fprintln(w, w.Style("COMMENTS", Bold))
+		fmt.Fprintln(w, sectionHeader(w, "COMMENTS"))
 		w.Push(2)
 		for _, c := range iss.Comments {
 			fmt.Fprintln(w)
@@ -332,7 +332,7 @@ func fprintMap(w Writer, iss *issue.Issue, store *issue.Store) {
 		actionable := nearestOpen(tips, iss.ID, store)
 		if len(actionable) > 0 {
 			fmt.Fprintln(w)
-			fmt.Fprintln(w, w.Style("BLOCKED BY", Bold))
+			fmt.Fprintln(w, sectionHeader(w, "BLOCKED BY"))
 			w.Push(2)
 			for _, tip := range actionable {
 				ps := PriorityStyle(tip.Priority)
@@ -357,7 +357,7 @@ func fprintMap(w Writer, iss *issue.Issue, store *issue.Store) {
 
 	if len(iss.Blocks) > 0 {
 		fmt.Fprintln(w)
-		fmt.Fprintln(w, w.Style("UNBLOCKS", Bold))
+		fmt.Fprintln(w, sectionHeader(w, "UNBLOCKS"))
 		w.Push(2)
 		for _, id := range iss.Blocks {
 			dep, err := store.Get(id)
@@ -428,6 +428,13 @@ func nearestOpen(tips []*issue.Issue, currentID string, store *issue.Store) []*i
 		walk(tip)
 	}
 	return result
+}
+
+// sectionHeader returns name styled as a section header (Bold).
+// All section headers — both template-driven and code-driven — route
+// through this function so the convention lives in one place.
+func sectionHeader(w Writer, name string) string {
+	return w.Style(name, Bold)
 }
 
 // styleMD adds ANSI color to markdown text without altering it.

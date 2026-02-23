@@ -34,13 +34,13 @@ This is the point-of-action briefing shown when an agent claims work with
 <!-- bw show {id} --only children -->
 <!-- bw show {id} --only comments -->
 
-STARTING THE WORK
+## STARTING THE WORK
 <!-- IF workflow.review == pr -->
   - Push the branch for this worktree, and open a draft PR referencing it to preserve progress.
 <!-- END -->
   - Work through this epic's children — use `bw ready` to find the next one.
 
-LANDING THE WORK
+## LANDING THE WORK
   - Push the branch for this worktree, and convert it to ready for review.
   - Close the epic (`bw close {id}`) when all children are done
   - `bw sync`.
@@ -50,11 +50,11 @@ LANDING THE WORK
 <!-- bw show {id} --only comments -->
 
 <!-- IF workflow.review == pr -->
-STARTING THE WORK
+## STARTING THE WORK
   If this will take multiple sessions, open a draft PR early to preserve progress.
 <!-- END -->
 
-LANDING THE WORK
+## LANDING THE WORK
   Land this ticket before starting the next one:
   - Commit only the changes for this ticket, referencing {id}
   - Close the ticket (`bw close {id}`); It will tell you if work is newly unblocked
@@ -64,11 +64,11 @@ LANDING THE WORK
 <!-- bw show {id} --only comments -->
 
 <!-- IF workflow.review == pr -->
-STARTING THE WORK
+## STARTING THE WORK
   If this will take multiple sessions, open a draft PR early to preserve progress.
 <!-- END -->
 
-LANDING THE WORK
+## LANDING THE WORK
   Land this ticket before starting the next one:
   - Commit only the changes for this ticket, referencing {id}
 <!-- IF workflow.review == pr -->
