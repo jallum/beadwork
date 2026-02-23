@@ -96,7 +96,7 @@ func cmdUpdate(store *issue.Store, args []string, w Writer) error {
 	}
 	if ua.DescSet {
 		opts.Description = &ua.Description
-		changes = append(changes, "description=...")
+		changes = append(changes, fmt.Sprintf("description=%q", ua.Description))
 	}
 	if ua.Priority != nil {
 		opts.Priority = ua.Priority

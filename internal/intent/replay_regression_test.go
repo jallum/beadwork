@@ -14,7 +14,6 @@ package intent_test
 //   bw-u24.4: end-to-end sync replay
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/jallum/beadwork/internal/intent"
@@ -234,7 +233,7 @@ func TestReplayUndeferRestoresOpenStatus(t *testing.T) {
 //    Fix: bw-u24.3
 // ---------------------------------------------------------------------------
 func TestReplayCloseWithReasonRoundTrips(t *testing.T) {
-	t.Skip("BUG(bw-u24.3): replayClose always passes empty reason to store.Close()")
+	// Fixed by bw-u24.3: replayClose now parses reason= from the intent
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -268,7 +267,7 @@ func TestReplayCloseWithReasonRoundTrips(t *testing.T) {
 //    Fix: bw-u24.3
 // ---------------------------------------------------------------------------
 func TestReplayUpdateDescriptionRoundTrips(t *testing.T) {
-	t.Skip("BUG(bw-u24.3): cmdUpdate encodes description as 'description=...' losing actual text")
+	// Fixed by bw-u24.3: cmdUpdate now encodes actual description value
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -298,7 +297,7 @@ func TestReplayUpdateDescriptionRoundTrips(t *testing.T) {
 //     Fix: bw-u24.3
 // ---------------------------------------------------------------------------
 func TestReplayCreateWithDescriptionRoundTrips(t *testing.T) {
-	t.Skip("BUG(bw-u24.3): create intent does not encode description")
+	// Fixed by bw-u24.3: create intent now encodes description
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -624,17 +623,16 @@ func TestUndeferVerbApplied(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// Verify close reason is lost in current behavior.
+// Verify close reason is preserved.
 // ---------------------------------------------------------------------------
-func TestCloseReasonCurrentlyLost(t *testing.T) {
+func TestCloseReasonPreserved(t *testing.T) {
+	// Fixed by bw-u24.3: replayClose now parses reason= from the intent
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("Close me with reason", issue.CreateOpts{})
 	env.CommitIntent("create " + iss.ID)
 
-	// The intent format from cmdClose includes reason="duplicate"
-	// but replayClose ignores it, always passing "" to store.Close().
 	errs := intent.Replay(env.Store, []string{
 		`close ` + iss.ID + ` reason="duplicate"`,
 	})
@@ -646,11 +644,8 @@ func TestCloseReasonCurrentlyLost(t *testing.T) {
 	if got.Status != "closed" {
 		t.Fatalf("status = %q, want closed", got.Status)
 	}
-	// BUG: reason is empty because replayClose passes "" to store.Close()
-	if got.CloseReason != "" {
-		t.Logf("close_reason = %q — if non-empty, the bug may be fixed", got.CloseReason)
-	} else {
-		t.Log("Confirmed: close reason is lost during replay (known bug bw-u24.3)")
+	if got.CloseReason != "duplicate" {
+		t.Errorf("close_reason = %q, want duplicate", got.CloseReason)
 	}
 }
 
@@ -684,14 +679,13 @@ func TestCreateIDPreserved(t *testing.T) {
 // work for single-word descriptions since replayUpdate handles key=value).
 // ---------------------------------------------------------------------------
 func TestReplayUpdateDescriptionSingleWord(t *testing.T) {
+	// Fixed by bw-u24.3: replayUpdate now handles description key
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("Test", issue.CreateOpts{})
 	env.CommitIntent("create " + iss.ID)
 
-	// replayUpdate supports "description" in its key=value parser,
-	// so a single-word description should work.
 	errs := intent.Replay(env.Store, []string{
 		`update ` + iss.ID + ` description=fixed`,
 	})
@@ -700,49 +694,22 @@ func TestReplayUpdateDescriptionSingleWord(t *testing.T) {
 	}
 
 	got, _ := env.Store.Get(iss.ID)
-	// replayUpdate currently doesn't have a "description" case in the switch,
-	// so it will be silently ignored.
-	if got.Description == "fixed" {
-		t.Log("description was set — replayUpdate may have been updated")
-	} else {
-		t.Log("Confirmed: replayUpdate does not handle 'description' key (known gap)")
+	if got.Description != "fixed" {
+		t.Errorf("description = %q, want fixed", got.Description)
 	}
 }
 
 // ---------------------------------------------------------------------------
-// Verify that cmdUpdate encodes description as "..." (literal ellipsis).
+// Verify that cmdUpdate encodes description with actual value.
 // ---------------------------------------------------------------------------
 func TestCmdUpdateDescriptionEncoding(t *testing.T) {
-	// The update command encodes description as "description=..." literally.
-	// This means the actual description text is lost in the intent string.
-	// We can verify this by examining the code: in update.go line 99:
-	//   changes = append(changes, "description=...")
-	// This is a documentation test, not a runtime test.
-	//
-	// When the fix lands, it should encode as:
-	//   changes = append(changes, fmt.Sprintf("description=%q", ua.Description))
-
-	// Verify the ParseIntent behavior for the current encoding
-	raw := `update test-1234 description=...`
+	// Fixed by bw-u24.3: cmdUpdate now encodes description=%q with actual value.
+	raw := `update test-1234 description="hello world"`
 	parts := intent.ParseIntent(raw)
 	if len(parts) != 3 {
 		t.Fatalf("ParseIntent parts = %v, want 3 parts", parts)
 	}
-	if parts[2] != "description=..." {
-		t.Errorf("parts[2] = %q, want 'description=...'", parts[2])
+	if parts[2] != "description=hello world" {
+		t.Errorf("parts[2] = %q, want 'description=hello world'", parts[2])
 	}
-
-	// The key is "description" and value is "..." — a literal ellipsis,
-	// not the actual description content.
-	kv := parts[2]
-	eqIdx := strings.Index(kv, "=")
-	key := kv[:eqIdx]
-	val := kv[eqIdx+1:]
-	if key != "description" {
-		t.Errorf("key = %q, want 'description'", key)
-	}
-	if val != "..." {
-		t.Errorf("val = %q, want '...'", val)
-	}
-	t.Log("Confirmed: cmdUpdate encodes description as literal '...' (known bug bw-u24.3)")
 }

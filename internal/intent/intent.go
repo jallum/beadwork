@@ -93,6 +93,19 @@ func replayCreate(store *issue.Store, parts []string, raw string) error {
 		Priority: priority,
 		Type:     issueType,
 	}
+
+	// Parse optional key=value pairs after the title.
+	for _, kv := range parts[3:] {
+		eqIdx := strings.Index(kv, "=")
+		if eqIdx == -1 {
+			continue
+		}
+		switch kv[:eqIdx] {
+		case "description":
+			opts.Description = kv[eqIdx+1:]
+		}
+	}
+
 	_, err := store.Create(title, opts)
 	if err != nil {
 		return err
@@ -104,7 +117,17 @@ func replayClose(store *issue.Store, parts []string, raw string) error {
 	if len(parts) < 1 {
 		return fmt.Errorf("malformed close intent")
 	}
-	_, err := store.Close(parts[0], "")
+	var reason string
+	for _, kv := range parts[1:] {
+		eqIdx := strings.Index(kv, "=")
+		if eqIdx == -1 {
+			continue
+		}
+		if kv[:eqIdx] == "reason" {
+			reason = kv[eqIdx+1:]
+		}
+	}
+	_, err := store.Close(parts[0], reason)
 	if err != nil {
 		return err
 	}
@@ -153,6 +176,10 @@ func replayUpdate(store *issue.Store, parts []string, raw string) error {
 			opts.Title = &val
 		case "parent":
 			opts.Parent = &val
+		case "description":
+			opts.Description = &val
+		case "defer":
+			opts.DeferUntil = &val
 		}
 	}
 
