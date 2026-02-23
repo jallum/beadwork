@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-02-23T22:20:27Z",
   "created": "2026-02-23T22:15:20Z",
   "description": "When running bw start, the output should include the issue's comments so the worker has full context (description, dependencies, and comments) without needing a separate bw show call.",
   "id": "bw-glp",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "bw start should include comments",
   "type": "task",
-  "updated_at": "2026-02-23T22:15:23Z"
+  "updated_at": "2026-02-23T22:20:27Z"
 }
