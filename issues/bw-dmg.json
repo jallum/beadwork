@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-23T19:45:34Z",
+  "description": "bw sync invokes git under the hood. It should pass --no-verify to avoid triggering user-configured git hooks (pre-commit, pre-push, etc.) that aren't relevant to beadwork's internal branch operations.",
+  "id": "bw-dmg",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "bw sync should use --no-verify when calling git",
+  "type": "bug",
+  "updated_at": "2026-02-23T19:45:34Z"
+}
