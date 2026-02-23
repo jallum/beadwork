@@ -81,6 +81,7 @@ func cmdStart(store *issue.Store, args []string, w Writer) error {
 
 	fprintIssueSummary(w, iss)
 	fprintDescription(w, iss)
+	fprintComments(w, iss)
 
 	// Template controls everything after summary+description.
 	tmpl := strings.ReplaceAll(prompts.Start, "{id}", iss.ID)

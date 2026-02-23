@@ -4,10 +4,10 @@ Design requirements for this prompt:
 This is the point-of-action briefing shown when an agent claims work with
 `bw start`. It may be the ONLY beadwork context a sub-agent ever sees.
 
-1. Full briefing. This template controls everything after the issue summary
-   and description. It orchestrates display sections (children, deps,
-   comments) via bw commands and provides type-conditional starting and
-   landing guidance.
+1. Full briefing. This template controls everything after the issue summary,
+   description, and comments. It orchestrates display sections (children,
+   deps) via bw commands and provides type-conditional starting and landing
+   guidance.
 
 2. Be self-contained. A sub-agent may see this with no other beadwork
    context. The steps must make sense without having read prime.
@@ -32,7 +32,6 @@ This is the point-of-action briefing shown when an agent claims work with
 -->
 <!-- IF type == epic -->
 <!-- bw show {id} --only children -->
-<!-- bw show {id} --only comments -->
 
 ## STARTING THE WORK
 <!-- IF workflow.review == pr -->
@@ -47,7 +46,6 @@ This is the point-of-action briefing shown when an agent claims work with
 <!-- END -->
 <!-- IF type == task -->
 <!-- bw show {id} --only blockedby,unblocks -->
-<!-- bw show {id} --only comments -->
 
 <!-- IF workflow.review == pr -->
 ## STARTING THE WORK
@@ -61,7 +59,6 @@ This is the point-of-action briefing shown when an agent claims work with
 <!-- END -->
 <!-- IF type == bug -->
 <!-- bw show {id} --only blockedby,unblocks -->
-<!-- bw show {id} --only comments -->
 
 <!-- IF workflow.review == pr -->
 ## STARTING THE WORK
