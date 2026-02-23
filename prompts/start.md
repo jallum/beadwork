@@ -36,7 +36,7 @@ This is the point-of-action briefing shown when an agent claims work with
 
 ## STARTING THE WORK
 <!-- IF workflow.review == pr -->
-  - Push the branch for this worktree, and open a draft PR referencing it to preserve progress.
+  - Push the branch for this worktree, and open a draft PR (`<id>: <title>`) to preserve progress.
 <!-- END -->
   - Work through this epic's children — use `bw ready` to find the next one.
 
