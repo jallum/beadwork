@@ -337,12 +337,21 @@ func replayUndefer(store *issue.Store, parts []string, raw string) error {
 }
 
 // ParseIntent splits an intent string respecting quoted strings.
+// Backslash-escaped quotes (\") inside quoted regions are treated as
+// literal quote characters, matching Go's %q output format.
 func ParseIntent(raw string) []string {
 	var parts []string
 	var current strings.Builder
 	inQuote := false
+	runes := []rune(raw)
 
-	for _, ch := range raw {
+	for i := 0; i < len(runes); i++ {
+		ch := runes[i]
+		if ch == '\\' && inQuote && i+1 < len(runes) && runes[i+1] == '"' {
+			current.WriteRune('"')
+			i++ // skip the escaped quote
+			continue
+		}
 		if ch == '"' {
 			inQuote = !inQuote
 			continue
@@ -363,14 +372,23 @@ func ParseIntent(raw string) []string {
 }
 
 // ExtractQuoted extracts the first quoted string from a raw intent.
+// Handles backslash-escaped quotes (\") inside the quoted region.
 func ExtractQuoted(raw string) string {
 	start := strings.Index(raw, "\"")
 	if start == -1 {
 		return ""
 	}
-	end := strings.Index(raw[start+1:], "\"")
-	if end == -1 {
-		return ""
+	var result strings.Builder
+	for i := start + 1; i < len(raw); i++ {
+		if raw[i] == '\\' && i+1 < len(raw) && raw[i+1] == '"' {
+			result.WriteByte('"')
+			i++ // skip the escaped quote
+			continue
+		}
+		if raw[i] == '"' {
+			return result.String()
+		}
+		result.WriteByte(raw[i])
 	}
-	return raw[start+1 : start+1+end]
+	return ""
 }

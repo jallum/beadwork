@@ -332,7 +332,7 @@ func TestReplayCreateWithDescriptionRoundTrips(t *testing.T) {
 //    Fix: bw-u24.3
 // ---------------------------------------------------------------------------
 func TestReplayUpdateMultiWordTitle(t *testing.T) {
-	t.Skip("BUG(bw-u24.3): multi-word title in update intent splits on spaces")
+	// Fixed by bw-u24.4: update intent now quotes values with %q
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -394,7 +394,7 @@ func TestReplayUpdateMultiWordTitleCurrentBehavior(t *testing.T) {
 //    Fix: bw-u24.3
 // ---------------------------------------------------------------------------
 func TestReplayEscapedQuotesInTitle(t *testing.T) {
-	t.Skip("BUG(bw-u24.3): ParseIntent has no escape handling for embedded quotes")
+	// Fixed by bw-u24.4: ParseIntent now handles backslash-escaped quotes
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -418,52 +418,32 @@ func TestReplayEscapedQuotesInTitle(t *testing.T) {
 	}
 }
 
-// Verify current broken behavior for escaped quotes.
-func TestParseIntentEscapedQuotesCurrentBehavior(t *testing.T) {
-	// Input: create test-ffff p2 task "He said \"hello\" to me"
+// Verify escaped quotes are handled correctly by ParseIntent.
+func TestParseIntentEscapedQuotes(t *testing.T) {
+	// Fixed by bw-u24.4: ParseIntent now handles backslash-escaped quotes
 	raw := `create test-ffff p2 task "He said \"hello\" to me"`
 	parts := intent.ParseIntent(raw)
 
-	// Document what actually happens with the current parser:
-	// The \" sequences cause the quote state to toggle incorrectly.
-	// Instead of getting "He said \"hello\" to me" as one token,
-	// the parser produces fragmented output.
-	t.Logf("ParseIntent(%q) = %v", raw, parts)
-
-	// The parser should ideally produce:
-	// ["create", "test-ffff", "p2", "task", `He said "hello" to me`]
-	// But currently it does not handle backslash escapes.
-
-	// Check that it does NOT produce the correct result (documenting the bug).
-	expected := `He said "hello" to me`
-	found := false
-	for _, p := range parts {
-		if p == expected {
-			found = true
-		}
+	expected := []string{"create", "test-ffff", "p2", "task", `He said "hello" to me`}
+	if len(parts) != len(expected) {
+		t.Fatalf("ParseIntent parts = %v, want %v", parts, expected)
 	}
-	if found {
-		t.Log("ParseIntent unexpectedly produced the correct escaped title; bug may be fixed")
-	} else {
-		t.Log("Confirmed: ParseIntent does not handle escaped quotes (known bug bw-u24.3)")
+	for i, want := range expected {
+		if parts[i] != want {
+			t.Errorf("parts[%d] = %q, want %q", i, parts[i], want)
+		}
 	}
 }
 
-// Verify current broken behavior for ExtractQuoted with escaped quotes.
-func TestExtractQuotedEscapedCurrentBehavior(t *testing.T) {
+// Verify escaped quotes are handled correctly by ExtractQuoted.
+func TestExtractQuotedEscaped(t *testing.T) {
+	// Fixed by bw-u24.4: ExtractQuoted now handles backslash-escaped quotes
 	raw := `create test-0000 p2 task "He said \"hello\" to me"`
 	got := intent.ExtractQuoted(raw)
 
-	// ExtractQuoted finds the first pair of " characters.
-	// With escaped quotes, it finds the opening " then the next " which is
-	// the \" before hello, so it returns a truncated string.
-	t.Logf("ExtractQuoted(%q) = %q", raw, got)
-
 	expected := `He said "hello" to me`
-	if got == expected {
-		t.Log("ExtractQuoted unexpectedly handled escaped quotes correctly; bug may be fixed")
-	} else {
-		t.Log("Confirmed: ExtractQuoted does not handle escaped quotes (known bug bw-u24.3)")
+	if got != expected {
+		t.Errorf("ExtractQuoted = %q, want %q", got, expected)
 	}
 }
 
@@ -476,7 +456,7 @@ func TestExtractQuotedEscapedCurrentBehavior(t *testing.T) {
 //     Fix: bw-u24.4 (depends on bw-u24.2 for verb handlers)
 // ---------------------------------------------------------------------------
 func TestSyncReplayPreservesStartDeferState(t *testing.T) {
-	t.Skip("BUG(bw-u24.2, bw-u24.4): start/defer verbs are silently dropped during sync replay")
+	// Fixed by bw-u24.2 + bw-u24.4: start/defer verbs now handled during replay
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()

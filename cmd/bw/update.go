@@ -92,7 +92,7 @@ func cmdUpdate(store *issue.Store, args []string, w Writer) error {
 
 	if ua.TitleSet {
 		opts.Title = &ua.Title
-		changes = append(changes, "title="+ua.Title)
+		changes = append(changes, fmt.Sprintf("title=%q", ua.Title))
 	}
 	if ua.DescSet {
 		opts.Description = &ua.Description
@@ -104,7 +104,7 @@ func cmdUpdate(store *issue.Store, args []string, w Writer) error {
 	}
 	if ua.AssigneeSet {
 		opts.Assignee = &ua.Assignee
-		changes = append(changes, "assignee="+ua.Assignee)
+		changes = append(changes, fmt.Sprintf("assignee=%q", ua.Assignee))
 	}
 	if ua.TypeSet {
 		opts.Type = &ua.Type
