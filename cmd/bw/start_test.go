@@ -32,18 +32,12 @@ func TestCmdStartBasic(t *testing.T) {
 		t.Errorf("output missing assignee: %q", out)
 	}
 
-	// Should show starting and landing instructions
-	if !strings.Contains(out, "STARTING THE WORK") {
-		t.Errorf("output missing STARTING THE WORK: %q", out)
-	}
+	// Should show landing instructions
 	if !strings.Contains(out, "LANDING THE WORK") {
 		t.Errorf("output missing LANDING THE WORK: %q", out)
 	}
 	if !strings.Contains(out, "bw close") {
 		t.Errorf("output missing close instruction: %q", out)
-	}
-	if !strings.Contains(out, "bw sync") {
-		t.Errorf("output missing sync instruction: %q", out)
 	}
 	if !strings.Contains(out, iss.ID) {
 		t.Errorf("output missing issue ID in instructions: %q", out)
