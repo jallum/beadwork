@@ -29,7 +29,7 @@ import (
 //    Fix: bw-u24.1
 // ---------------------------------------------------------------------------
 func TestReplayCreateThenCloseByIntentID(t *testing.T) {
-	t.Skip("BUG(bw-u24.1): replayCreate ignores the intent ID and generates a new one; close by intent ID fails")
+	// Fixed by bw-u24.1: replayCreate now passes intent ID into CreateOpts.ID
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -63,7 +63,7 @@ func TestReplayCreateThenCloseByIntentID(t *testing.T) {
 //    Fix: bw-u24.1
 // ---------------------------------------------------------------------------
 func TestReplayCreateThenUpdateByIntentID(t *testing.T) {
-	t.Skip("BUG(bw-u24.1): replayCreate ignores the intent ID; update by intent ID fails")
+	// Fixed by bw-u24.1: replayCreate now passes intent ID into CreateOpts.ID
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -93,7 +93,7 @@ func TestReplayCreateThenUpdateByIntentID(t *testing.T) {
 //    Fix: bw-u24.1
 // ---------------------------------------------------------------------------
 func TestReplayCreatePairAndLinkByIntentIDs(t *testing.T) {
-	t.Skip("BUG(bw-u24.1): replayCreate ignores intent IDs; link by intent IDs fails")
+	// Fixed by bw-u24.1: replayCreate now passes intent ID into CreateOpts.ID
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -656,36 +656,25 @@ func TestCloseReasonCurrentlyLost(t *testing.T) {
 // ---------------------------------------------------------------------------
 // Verify create ID divergence in current behavior.
 // ---------------------------------------------------------------------------
-func TestCreateIDDivergenceCurrentBehavior(t *testing.T) {
+func TestCreateIDPreserved(t *testing.T) {
+	// Fixed by bw-u24.1: replayCreate now passes intent ID into CreateOpts.ID
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
 	intents := []string{
-		`create test-aaaa p1 bug "Test ID divergence"`,
+		`create test-aaaa p1 bug "Test ID preservation"`,
 	}
 	errs := intent.Replay(env.Store, intents)
 	if len(errs) > 0 {
 		t.Fatalf("Replay errors: %v", errs)
 	}
 
-	// The issue should have been created, but with a different ID.
-	issues, _ := env.Store.List(issue.Filter{})
-	if len(issues) != 1 {
-		t.Fatalf("got %d issues, want 1", len(issues))
-	}
-
-	if issues[0].ID == "test-aaaa" {
-		t.Log("ID was preserved — bug may be fixed (bw-u24.1)")
-	} else {
-		t.Logf("Confirmed: ID divergence — intent said test-aaaa, got %s (known bug bw-u24.1)", issues[0].ID)
-	}
-
-	// Trying to get by intent ID should fail.
-	_, err := env.Store.Get("test-aaaa")
+	iss, err := env.Store.Get("test-aaaa")
 	if err != nil {
-		t.Logf("Confirmed: Get(test-aaaa) fails: %v", err)
-	} else {
-		t.Log("Get(test-aaaa) succeeded — bug may be fixed")
+		t.Fatalf("Get(test-aaaa): %v — ID was not preserved", err)
+	}
+	if iss.ID != "test-aaaa" {
+		t.Errorf("ID = %q, want test-aaaa", iss.ID)
 	}
 }
 

@@ -83,6 +83,7 @@ func replayCreate(store *issue.Store, parts []string, raw string) error {
 	}
 
 	opts := issue.CreateOpts{
+		ID:       parts[0],
 		Priority: priority,
 		Type:     issueType,
 	}
