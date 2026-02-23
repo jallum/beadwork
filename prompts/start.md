@@ -35,45 +35,45 @@ This is the point-of-action briefing shown when an agent claims work with
 <!-- bw show {id} --only comments -->
 
 STARTING THE WORK
-Work through this epic's children — use `bw ready` to find the next one.
+<!-- IF workflow.review == pr -->
+  - Push the branch for this worktree, and open a draft PR referencing it to preserve progress.
+<!-- END -->
+  - Work through this epic's children — use `bw ready` to find the next one.
 
 LANDING THE WORK
-- Close the epic (`bw close {id}`) when all children are done
-- `bw sync`.
+  - Push the branch for this worktree, and convert it to ready for review.
+  - Close the epic (`bw close {id}`) when all children are done
+  - `bw sync`.
 <!-- END -->
 <!-- IF type == task -->
 <!-- bw show {id} --only blockedby,unblocks -->
 <!-- bw show {id} --only comments -->
 
-STARTING THE WORK
 <!-- IF workflow.review == pr -->
-If this will take multiple sessions, open a draft PR early to preserve progress.
+STARTING THE WORK
+  If this will take multiple sessions, open a draft PR early to preserve progress.
 <!-- END -->
 
 LANDING THE WORK
-Land this ticket before starting the next one:
-- Commit only the changes for this ticket, referencing {id}
-<!-- IF workflow.review == pr -->
-- Push the branch for this worktree, and open a PR referencing it. If a draft PR already exists, convert it to ready for review.
-<!-- END -->
-- Close the ticket (`bw close {id}`); It will tell you if work is newly unblocked
-- `bw sync`.
+  Land this ticket before starting the next one:
+  - Commit only the changes for this ticket, referencing {id}
+  - Close the ticket (`bw close {id}`); It will tell you if work is newly unblocked
 <!-- END -->
 <!-- IF type == bug -->
 <!-- bw show {id} --only blockedby,unblocks -->
 <!-- bw show {id} --only comments -->
 
-STARTING THE WORK
 <!-- IF workflow.review == pr -->
-If this will take multiple sessions, open a draft PR early to preserve progress.
+STARTING THE WORK
+  If this will take multiple sessions, open a draft PR early to preserve progress.
 <!-- END -->
 
 LANDING THE WORK
-Land this ticket before starting the next one:
-- Commit only the changes for this ticket, referencing {id}
+  Land this ticket before starting the next one:
+  - Commit only the changes for this ticket, referencing {id}
 <!-- IF workflow.review == pr -->
-- Push the branch for this worktree, and open a PR referencing it. If a draft PR already exists, convert it to ready for review.
+  - Push the branch for this worktree, and open a PR referencing it. If a draft PR already exists, convert it to ready for review.
 <!-- END -->
-- Close the ticket (`bw close {id}`); It will tell you if work is newly unblocked
-- `bw sync`.
+  - Close the ticket (`bw close {id}`); It will tell you if work is newly unblocked
+  - `bw sync`.
 <!-- END -->
