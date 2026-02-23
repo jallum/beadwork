@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-23T22:15:20Z",
+  "description": "When running bw start, the output should include the issue's comments so the worker has full context (description, dependencies, and comments) without needing a separate bw show call.",
+  "id": "bw-glp",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "bw start should include comments",
+  "type": "task",
+  "updated_at": "2026-02-23T22:15:20Z"
+}
