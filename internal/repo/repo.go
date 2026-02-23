@@ -413,7 +413,7 @@ func (r *Repo) fetch(remoteName string, refSpec config.RefSpec) error {
 }
 
 func (r *Repo) gitPush(remoteName string, refSpec config.RefSpec) error {
-	_, err := execGit(r.RepoDir(), "push", remoteName, string(refSpec))
+	_, err := execGit(r.RepoDir(), "push", "--no-verify", remoteName, string(refSpec))
 	return err
 }
 
