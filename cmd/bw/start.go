@@ -107,8 +107,8 @@ func cmdStart(store *issue.Store, args []string, w Writer) error {
 		}
 		fmt.Fprintln(w)
 		for _, line := range strings.Split(s, "\n") {
-			if isAllCaps(line) {
-				fmt.Fprintln(w, w.Style(line, Bold))
+			if strings.HasPrefix(line, "## ") {
+				fmt.Fprintln(w, sectionHeader(w, strings.TrimPrefix(line, "## ")))
 			} else {
 				fmt.Fprintln(w, line)
 			}
@@ -126,18 +126,4 @@ func cmdStart(store *issue.Store, args []string, w Writer) error {
 	flush()
 
 	return nil
-}
-
-// isAllCaps reports whether s is non-empty and contains only uppercase
-// letters and spaces (matching section headers like "STARTING THE WORK").
-func isAllCaps(s string) bool {
-	if s == "" {
-		return false
-	}
-	for _, r := range s {
-		if r != ' ' && (r < 'A' || r > 'Z') {
-			return false
-		}
-	}
-	return true
 }
