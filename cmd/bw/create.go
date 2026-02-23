@@ -95,6 +95,9 @@ func cmdCreate(store *issue.Store, args []string, w Writer) error {
 	}
 
 	intent := fmt.Sprintf("create %s p%d %s %q", iss.ID, iss.Priority, iss.Type, iss.Title)
+	if iss.Description != "" {
+		intent += fmt.Sprintf(" description=%q", iss.Description)
+	}
 	if iss.Parent != "" {
 		intent += " parent=" + iss.Parent
 	}

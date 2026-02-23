@@ -281,8 +281,8 @@ func TestReplayMultipleIntents(t *testing.T) {
 	defer env.Cleanup()
 
 	intents := []string{
-		`create test-0000 p1 bug "First issue"`,
-		`create test-0000 p2 task "Second issue"`,
+		`create test-0001 p1 bug "First issue"`,
+		`create test-0002 p2 task "Second issue"`,
 	}
 	errs := intent.Replay(env.Store, intents)
 	if len(errs) > 0 {

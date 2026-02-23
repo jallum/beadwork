@@ -14,7 +14,6 @@ package intent_test
 //   bw-u24.4: end-to-end sync replay
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/jallum/beadwork/internal/intent"
@@ -29,7 +28,7 @@ import (
 //    Fix: bw-u24.1
 // ---------------------------------------------------------------------------
 func TestReplayCreateThenCloseByIntentID(t *testing.T) {
-	t.Skip("BUG(bw-u24.1): replayCreate ignores the intent ID and generates a new one; close by intent ID fails")
+	// Fixed by bw-u24.1: replayCreate now passes intent ID into CreateOpts.ID
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -63,7 +62,7 @@ func TestReplayCreateThenCloseByIntentID(t *testing.T) {
 //    Fix: bw-u24.1
 // ---------------------------------------------------------------------------
 func TestReplayCreateThenUpdateByIntentID(t *testing.T) {
-	t.Skip("BUG(bw-u24.1): replayCreate ignores the intent ID; update by intent ID fails")
+	// Fixed by bw-u24.1: replayCreate now passes intent ID into CreateOpts.ID
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -93,7 +92,7 @@ func TestReplayCreateThenUpdateByIntentID(t *testing.T) {
 //    Fix: bw-u24.1
 // ---------------------------------------------------------------------------
 func TestReplayCreatePairAndLinkByIntentIDs(t *testing.T) {
-	t.Skip("BUG(bw-u24.1): replayCreate ignores intent IDs; link by intent IDs fails")
+	// Fixed by bw-u24.1: replayCreate now passes intent ID into CreateOpts.ID
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -132,7 +131,7 @@ func TestReplayCreatePairAndLinkByIntentIDs(t *testing.T) {
 //    Fix: bw-u24.2
 // ---------------------------------------------------------------------------
 func TestReplayStartPreservesStatusAndAssignee(t *testing.T) {
-	t.Skip("BUG(bw-u24.2): 'start' verb is silently dropped by replayOne")
+	// Fixed by bw-u24.2: replayStart now handles start verb
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -166,7 +165,7 @@ func TestReplayStartPreservesStatusAndAssignee(t *testing.T) {
 //    Fix: bw-u24.2
 // ---------------------------------------------------------------------------
 func TestReplayDeferPreservesStatusAndDate(t *testing.T) {
-	t.Skip("BUG(bw-u24.2): 'defer' verb is silently dropped by replayOne")
+	// Fixed by bw-u24.2: replayDefer now handles defer verb
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -198,7 +197,7 @@ func TestReplayDeferPreservesStatusAndDate(t *testing.T) {
 //     Fix: bw-u24.2
 // ---------------------------------------------------------------------------
 func TestReplayUndeferRestoresOpenStatus(t *testing.T) {
-	t.Skip("BUG(bw-u24.2): 'undefer' verb is silently dropped by replayOne")
+	// Fixed by bw-u24.2: replayUndefer now handles undefer verb
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -234,7 +233,7 @@ func TestReplayUndeferRestoresOpenStatus(t *testing.T) {
 //    Fix: bw-u24.3
 // ---------------------------------------------------------------------------
 func TestReplayCloseWithReasonRoundTrips(t *testing.T) {
-	t.Skip("BUG(bw-u24.3): replayClose always passes empty reason to store.Close()")
+	// Fixed by bw-u24.3: replayClose now parses reason= from the intent
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -268,7 +267,7 @@ func TestReplayCloseWithReasonRoundTrips(t *testing.T) {
 //    Fix: bw-u24.3
 // ---------------------------------------------------------------------------
 func TestReplayUpdateDescriptionRoundTrips(t *testing.T) {
-	t.Skip("BUG(bw-u24.3): cmdUpdate encodes description as 'description=...' losing actual text")
+	// Fixed by bw-u24.3: cmdUpdate now encodes actual description value
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -298,7 +297,7 @@ func TestReplayUpdateDescriptionRoundTrips(t *testing.T) {
 //     Fix: bw-u24.3
 // ---------------------------------------------------------------------------
 func TestReplayCreateWithDescriptionRoundTrips(t *testing.T) {
-	t.Skip("BUG(bw-u24.3): create intent does not encode description")
+	// Fixed by bw-u24.3: create intent now encodes description
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -333,7 +332,7 @@ func TestReplayCreateWithDescriptionRoundTrips(t *testing.T) {
 //    Fix: bw-u24.3
 // ---------------------------------------------------------------------------
 func TestReplayUpdateMultiWordTitle(t *testing.T) {
-	t.Skip("BUG(bw-u24.3): multi-word title in update intent splits on spaces")
+	// Fixed by bw-u24.4: update intent now quotes values with %q
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -395,7 +394,7 @@ func TestReplayUpdateMultiWordTitleCurrentBehavior(t *testing.T) {
 //    Fix: bw-u24.3
 // ---------------------------------------------------------------------------
 func TestReplayEscapedQuotesInTitle(t *testing.T) {
-	t.Skip("BUG(bw-u24.3): ParseIntent has no escape handling for embedded quotes")
+	// Fixed by bw-u24.4: ParseIntent now handles backslash-escaped quotes
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -419,52 +418,32 @@ func TestReplayEscapedQuotesInTitle(t *testing.T) {
 	}
 }
 
-// Verify current broken behavior for escaped quotes.
-func TestParseIntentEscapedQuotesCurrentBehavior(t *testing.T) {
-	// Input: create test-ffff p2 task "He said \"hello\" to me"
+// Verify escaped quotes are handled correctly by ParseIntent.
+func TestParseIntentEscapedQuotes(t *testing.T) {
+	// Fixed by bw-u24.4: ParseIntent now handles backslash-escaped quotes
 	raw := `create test-ffff p2 task "He said \"hello\" to me"`
 	parts := intent.ParseIntent(raw)
 
-	// Document what actually happens with the current parser:
-	// The \" sequences cause the quote state to toggle incorrectly.
-	// Instead of getting "He said \"hello\" to me" as one token,
-	// the parser produces fragmented output.
-	t.Logf("ParseIntent(%q) = %v", raw, parts)
-
-	// The parser should ideally produce:
-	// ["create", "test-ffff", "p2", "task", `He said "hello" to me`]
-	// But currently it does not handle backslash escapes.
-
-	// Check that it does NOT produce the correct result (documenting the bug).
-	expected := `He said "hello" to me`
-	found := false
-	for _, p := range parts {
-		if p == expected {
-			found = true
-		}
+	expected := []string{"create", "test-ffff", "p2", "task", `He said "hello" to me`}
+	if len(parts) != len(expected) {
+		t.Fatalf("ParseIntent parts = %v, want %v", parts, expected)
 	}
-	if found {
-		t.Log("ParseIntent unexpectedly produced the correct escaped title; bug may be fixed")
-	} else {
-		t.Log("Confirmed: ParseIntent does not handle escaped quotes (known bug bw-u24.3)")
+	for i, want := range expected {
+		if parts[i] != want {
+			t.Errorf("parts[%d] = %q, want %q", i, parts[i], want)
+		}
 	}
 }
 
-// Verify current broken behavior for ExtractQuoted with escaped quotes.
-func TestExtractQuotedEscapedCurrentBehavior(t *testing.T) {
+// Verify escaped quotes are handled correctly by ExtractQuoted.
+func TestExtractQuotedEscaped(t *testing.T) {
+	// Fixed by bw-u24.4: ExtractQuoted now handles backslash-escaped quotes
 	raw := `create test-0000 p2 task "He said \"hello\" to me"`
 	got := intent.ExtractQuoted(raw)
 
-	// ExtractQuoted finds the first pair of " characters.
-	// With escaped quotes, it finds the opening " then the next " which is
-	// the \" before hello, so it returns a truncated string.
-	t.Logf("ExtractQuoted(%q) = %q", raw, got)
-
 	expected := `He said "hello" to me`
-	if got == expected {
-		t.Log("ExtractQuoted unexpectedly handled escaped quotes correctly; bug may be fixed")
-	} else {
-		t.Log("Confirmed: ExtractQuoted does not handle escaped quotes (known bug bw-u24.3)")
+	if got != expected {
+		t.Errorf("ExtractQuoted = %q, want %q", got, expected)
 	}
 }
 
@@ -477,7 +456,7 @@ func TestExtractQuotedEscapedCurrentBehavior(t *testing.T) {
 //     Fix: bw-u24.4 (depends on bw-u24.2 for verb handlers)
 // ---------------------------------------------------------------------------
 func TestSyncReplayPreservesStartDeferState(t *testing.T) {
-	t.Skip("BUG(bw-u24.2, bw-u24.4): start/defer verbs are silently dropped during sync replay")
+	// Fixed by bw-u24.2 + bw-u24.4: start/defer verbs now handled during replay
 
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -551,33 +530,32 @@ func TestSyncReplayPreservesStartDeferState(t *testing.T) {
 // This documents the current behavior where unknown/unhandled verbs are
 // swallowed. Once the fix lands, these should produce actual state changes.
 // ---------------------------------------------------------------------------
-func TestStartVerbCurrentlySilentlyDropped(t *testing.T) {
+func TestStartVerbApplied(t *testing.T) {
+	// Fixed by bw-u24.2: start verb now handled by replayStart
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("Startable", issue.CreateOpts{})
 	env.CommitIntent("create " + iss.ID)
 
-	// "start" is handled by the default case in replayOne which returns nil.
 	errs := intent.Replay(env.Store, []string{
 		`start ` + iss.ID + ` assignee="agent-1"`,
 	})
-
-	// Currently: no error, but also no state change.
 	if len(errs) != 0 {
-		t.Errorf("expected 0 errors (silently dropped), got %d: %v", len(errs), errs)
+		t.Fatalf("Replay errors: %v", errs)
 	}
 
 	got, _ := env.Store.Get(iss.ID)
-	if got.Status != "open" {
-		t.Errorf("status = %q, want open (start was silently dropped)", got.Status)
+	if got.Status != "in_progress" {
+		t.Errorf("status = %q, want in_progress", got.Status)
 	}
-	if got.Assignee != "" {
-		t.Errorf("assignee = %q, want empty (start was silently dropped)", got.Assignee)
+	if got.Assignee != "agent-1" {
+		t.Errorf("assignee = %q, want agent-1", got.Assignee)
 	}
 }
 
-func TestDeferVerbCurrentlySilentlyDropped(t *testing.T) {
+func TestDeferVerbApplied(t *testing.T) {
+	// Fixed by bw-u24.2: defer verb now handled by replayDefer
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
@@ -587,21 +565,21 @@ func TestDeferVerbCurrentlySilentlyDropped(t *testing.T) {
 	errs := intent.Replay(env.Store, []string{
 		`defer ` + iss.ID + ` until 2026-06-01`,
 	})
-
 	if len(errs) != 0 {
-		t.Errorf("expected 0 errors (silently dropped), got %d: %v", len(errs), errs)
+		t.Fatalf("Replay errors: %v", errs)
 	}
 
 	got, _ := env.Store.Get(iss.ID)
-	if got.Status != "open" {
-		t.Errorf("status = %q, want open (defer was silently dropped)", got.Status)
+	if got.Status != "deferred" {
+		t.Errorf("status = %q, want deferred", got.Status)
 	}
-	if got.DeferUntil != "" {
-		t.Errorf("defer_until = %q, want empty (defer was silently dropped)", got.DeferUntil)
+	if got.DeferUntil != "2026-06-01" {
+		t.Errorf("defer_until = %q, want 2026-06-01", got.DeferUntil)
 	}
 }
 
-func TestUndeferVerbCurrentlySilentlyDropped(t *testing.T) {
+func TestUndeferVerbApplied(t *testing.T) {
+	// Fixed by bw-u24.2: undefer verb now handled by replayUndefer
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
@@ -611,29 +589,30 @@ func TestUndeferVerbCurrentlySilentlyDropped(t *testing.T) {
 	errs := intent.Replay(env.Store, []string{
 		`undefer ` + iss.ID,
 	})
-
 	if len(errs) != 0 {
-		t.Errorf("expected 0 errors (silently dropped), got %d: %v", len(errs), errs)
+		t.Fatalf("Replay errors: %v", errs)
 	}
 
 	got, _ := env.Store.Get(iss.ID)
-	if got.Status != "deferred" {
-		t.Errorf("status = %q, want deferred (undefer was silently dropped)", got.Status)
+	if got.Status != "open" {
+		t.Errorf("status = %q, want open", got.Status)
+	}
+	if got.DeferUntil != "" {
+		t.Errorf("defer_until = %q, want empty", got.DeferUntil)
 	}
 }
 
 // ---------------------------------------------------------------------------
-// Verify close reason is lost in current behavior.
+// Verify close reason is preserved.
 // ---------------------------------------------------------------------------
-func TestCloseReasonCurrentlyLost(t *testing.T) {
+func TestCloseReasonPreserved(t *testing.T) {
+	// Fixed by bw-u24.3: replayClose now parses reason= from the intent
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("Close me with reason", issue.CreateOpts{})
 	env.CommitIntent("create " + iss.ID)
 
-	// The intent format from cmdClose includes reason="duplicate"
-	// but replayClose ignores it, always passing "" to store.Close().
 	errs := intent.Replay(env.Store, []string{
 		`close ` + iss.ID + ` reason="duplicate"`,
 	})
@@ -645,47 +624,33 @@ func TestCloseReasonCurrentlyLost(t *testing.T) {
 	if got.Status != "closed" {
 		t.Fatalf("status = %q, want closed", got.Status)
 	}
-	// BUG: reason is empty because replayClose passes "" to store.Close()
-	if got.CloseReason != "" {
-		t.Logf("close_reason = %q — if non-empty, the bug may be fixed", got.CloseReason)
-	} else {
-		t.Log("Confirmed: close reason is lost during replay (known bug bw-u24.3)")
+	if got.CloseReason != "duplicate" {
+		t.Errorf("close_reason = %q, want duplicate", got.CloseReason)
 	}
 }
 
 // ---------------------------------------------------------------------------
 // Verify create ID divergence in current behavior.
 // ---------------------------------------------------------------------------
-func TestCreateIDDivergenceCurrentBehavior(t *testing.T) {
+func TestCreateIDPreserved(t *testing.T) {
+	// Fixed by bw-u24.1: replayCreate now passes intent ID into CreateOpts.ID
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
 	intents := []string{
-		`create test-aaaa p1 bug "Test ID divergence"`,
+		`create test-aaaa p1 bug "Test ID preservation"`,
 	}
 	errs := intent.Replay(env.Store, intents)
 	if len(errs) > 0 {
 		t.Fatalf("Replay errors: %v", errs)
 	}
 
-	// The issue should have been created, but with a different ID.
-	issues, _ := env.Store.List(issue.Filter{})
-	if len(issues) != 1 {
-		t.Fatalf("got %d issues, want 1", len(issues))
-	}
-
-	if issues[0].ID == "test-aaaa" {
-		t.Log("ID was preserved — bug may be fixed (bw-u24.1)")
-	} else {
-		t.Logf("Confirmed: ID divergence — intent said test-aaaa, got %s (known bug bw-u24.1)", issues[0].ID)
-	}
-
-	// Trying to get by intent ID should fail.
-	_, err := env.Store.Get("test-aaaa")
+	iss, err := env.Store.Get("test-aaaa")
 	if err != nil {
-		t.Logf("Confirmed: Get(test-aaaa) fails: %v", err)
-	} else {
-		t.Log("Get(test-aaaa) succeeded — bug may be fixed")
+		t.Fatalf("Get(test-aaaa): %v — ID was not preserved", err)
+	}
+	if iss.ID != "test-aaaa" {
+		t.Errorf("ID = %q, want test-aaaa", iss.ID)
 	}
 }
 
@@ -694,14 +659,13 @@ func TestCreateIDDivergenceCurrentBehavior(t *testing.T) {
 // work for single-word descriptions since replayUpdate handles key=value).
 // ---------------------------------------------------------------------------
 func TestReplayUpdateDescriptionSingleWord(t *testing.T) {
+	// Fixed by bw-u24.3: replayUpdate now handles description key
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
 	iss, _ := env.Store.Create("Test", issue.CreateOpts{})
 	env.CommitIntent("create " + iss.ID)
 
-	// replayUpdate supports "description" in its key=value parser,
-	// so a single-word description should work.
 	errs := intent.Replay(env.Store, []string{
 		`update ` + iss.ID + ` description=fixed`,
 	})
@@ -710,49 +674,22 @@ func TestReplayUpdateDescriptionSingleWord(t *testing.T) {
 	}
 
 	got, _ := env.Store.Get(iss.ID)
-	// replayUpdate currently doesn't have a "description" case in the switch,
-	// so it will be silently ignored.
-	if got.Description == "fixed" {
-		t.Log("description was set — replayUpdate may have been updated")
-	} else {
-		t.Log("Confirmed: replayUpdate does not handle 'description' key (known gap)")
+	if got.Description != "fixed" {
+		t.Errorf("description = %q, want fixed", got.Description)
 	}
 }
 
 // ---------------------------------------------------------------------------
-// Verify that cmdUpdate encodes description as "..." (literal ellipsis).
+// Verify that cmdUpdate encodes description with actual value.
 // ---------------------------------------------------------------------------
 func TestCmdUpdateDescriptionEncoding(t *testing.T) {
-	// The update command encodes description as "description=..." literally.
-	// This means the actual description text is lost in the intent string.
-	// We can verify this by examining the code: in update.go line 99:
-	//   changes = append(changes, "description=...")
-	// This is a documentation test, not a runtime test.
-	//
-	// When the fix lands, it should encode as:
-	//   changes = append(changes, fmt.Sprintf("description=%q", ua.Description))
-
-	// Verify the ParseIntent behavior for the current encoding
-	raw := `update test-1234 description=...`
+	// Fixed by bw-u24.3: cmdUpdate now encodes description=%q with actual value.
+	raw := `update test-1234 description="hello world"`
 	parts := intent.ParseIntent(raw)
 	if len(parts) != 3 {
 		t.Fatalf("ParseIntent parts = %v, want 3 parts", parts)
 	}
-	if parts[2] != "description=..." {
-		t.Errorf("parts[2] = %q, want 'description=...'", parts[2])
+	if parts[2] != "description=hello world" {
+		t.Errorf("parts[2] = %q, want 'description=hello world'", parts[2])
 	}
-
-	// The key is "description" and value is "..." — a literal ellipsis,
-	// not the actual description content.
-	kv := parts[2]
-	eqIdx := strings.Index(kv, "=")
-	key := kv[:eqIdx]
-	val := kv[eqIdx+1:]
-	if key != "description" {
-		t.Errorf("key = %q, want 'description'", key)
-	}
-	if val != "..." {
-		t.Errorf("val = %q, want '...'", val)
-	}
-	t.Log("Confirmed: cmdUpdate encodes description as literal '...' (known bug bw-u24.3)")
 }
