@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-02-28T21:11:34Z",
+  "description": "The prime prompt should surface the repo's configured prefix so agents know what prefix is in use for issue IDs. This avoids confusion when referencing tickets.",
+  "id": "bw-5li",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Include prefix information in bw prime prompt",
+  "type": "task",
+  "updated_at": "2026-02-28T21:11:34Z"
+}
