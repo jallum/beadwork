@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.9.0 — 2026-02-28
+
+- **`bw start` is now a full point-of-action briefing** — starting an issue prints type-aware guidance for both beginning and landing the work. Epics get "work through children via `bw ready`" while tasks and bugs get scoped commit steps. Children, dependencies, and comments are rendered inline from the template, so the briefing adapts to each issue type. Comments now always appear regardless of issue type (previously they were missing for non-standard types like `feature`).
+
+- **`bw reopen` accepts in-progress issues** — you can now run `bw reopen` on an `in_progress` issue to reset it to `open` and clear the assignee, returning it to the ready queue without closing first. Useful when you need to unclaim work.
+
+- **`bw ready` sorts by priority** — output is now ordered by priority (P0 first) then creation date, matching `bw list`. Previously the order was arbitrary.
+
+- **`bw prime` shows work in progress** — the prime output now includes a "Work In Progress" section alongside ready work, so you can see what's already claimed at a glance.
+
+- **`bw sync` no longer blocked by pre-push hooks** — the internal push for the beadwork data branch now skips user-configured hooks, which are irrelevant to the data branch and could block syncing.
+
+- **`bw dep remove` errors on non-existent dependencies** — previously succeeded silently; now returns `"no dependency: A does not block B"`.
+
+- **Fixed dependency display bugs** — `bw show` could display sibling issues in the BLOCKED BY section instead of only transitive blockers. `bw ready` and `bw list` showed closed blockers in annotations. Both are fixed.
+
+- **Intent replay fixes** — `bw sync` conflict resolution now correctly replays `start`, `defer`, and `undefer` operations, preserves deterministic IDs during create replay, and encodes descriptions faithfully. These fixes improve reliability when syncing concurrent changes.
+
+- **Improved prompts** — `bw prime` worktree guidance now names the scope-creep temptation ("that related fix is a new ticket") and embeds worktree creation into the "Starting the Work" workflow. `bw start` landing instructions include PR workflow guidance when applicable. Re-run `bw onboard` to pick up the new prompts.
+
+- **Acceptance test harness** — golden-file acceptance tests verify end-to-end command sequences with deterministic state, including export/import round-trip fidelity.
+
 ## 0.8.1 — 2026-02-22
 
 - **`bw show` header includes comment count** — the header bracket now shows how many comments an issue has (e.g., `· 3 comments`) or `· NO COMMENTS` when empty, so you can tell at a glance whether there's discussion without scrolling to the bottom.
