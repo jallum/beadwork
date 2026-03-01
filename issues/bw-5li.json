@@ -3,12 +3,12 @@
   "blocked_by": [],
   "blocks": [],
   "created": "2026-02-28T21:11:34Z",
-  "description": "The prime prompt should surface the repo's configured prefix so agents know what prefix is in use for issue IDs. This avoids confusion when referencing tickets.",
+  "description": "The prime prompt should surface the repo's configured prefix so agents know what ID prefix is in use. Currently agents have no way of knowing the prefix until they see an issue ID.\n\nApproach: Add a line to prime.md in 'The Model' section referencing {prefix} via the existing template resolver. The config key 'prefix' is already available through r.ListConfig() in cmdPrime, so no Go changes are needed — just a one-line addition to the markdown template.\n\nExample: 'Issue IDs are prefixed with `{prefix}-` (e.g., `{prefix}-a1b`).'\n\nPlace it after the first sentence about the beadwork branch, where the data model is introduced.",
   "id": "bw-5li",
   "labels": [],
   "priority": 3,
   "status": "open",
   "title": "Include prefix information in bw prime prompt",
   "type": "task",
-  "updated_at": "2026-02-28T21:11:34Z"
+  "updated_at": "2026-03-01T13:31:26Z"
 }
