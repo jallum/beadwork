@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [
     "bw-zt5.2"
@@ -10,8 +10,8 @@
   "labels": [],
   "parent": "bw-zt5",
   "priority": 1,
-  "status": "open",
+  "status": "in_progress",
   "title": "Version check with cache",
   "type": "task",
-  "updated_at": "2026-03-06T12:35:25Z"
+  "updated_at": "2026-03-06T12:36:29Z"
 }
