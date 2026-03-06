@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-06T12:43:41Z",
+  "description": "The root AGENTS.md is currently a symlink to prompts/agents.md, which is the onboarding snippet template for other repos. These serve two different purposes: prompts/agents.md tells agents in *other* repos how to use beadwork, while root AGENTS.md should tell agents exploring *this* repo what the project is about. Break the symlink and write a new root AGENTS.md that describes what beadwork is.",
+  "id": "bw-t6r",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Replace AGENTS.md symlink with project-level description",
+  "type": "epic",
+  "updated_at": "2026-03-06T12:43:41Z"
+}
