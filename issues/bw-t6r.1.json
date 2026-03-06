@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "bw-t6r.2"
+  ],
   "created": "2026-03-06T12:43:45Z",
   "description": "Remove the symlink at AGENTS.md → prompts/agents.md. No changes to prompts/agents.md or prompts/prompts.go — the embedded template stays as-is.",
   "id": "bw-t6r.1",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Delete AGENTS.md symlink",
   "type": "task",
-  "updated_at": "2026-03-06T12:43:45Z"
+  "updated_at": "2026-03-06T12:43:54Z"
 }

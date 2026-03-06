@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-t6r.1"
+  ],
   "blocks": [],
   "created": "2026-03-06T12:43:50Z",
   "description": "Write a new AGENTS.md at the repo root that explains to a curious tool what beadwork is. Should cover: what it is (git-native issue tracker for AI agent workflows), why it exists (durability across context loss/compaction/session boundaries), repo structure (Go CLI in cmd/bw/, prompt templates in prompts/), how it's used in other projects (bw onboard injects the snippet from prompts/agents.md). Keep it concise — a tool should be able to read this and understand the project quickly.",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Write new root AGENTS.md describing the beadwork project",
   "type": "task",
-  "updated_at": "2026-03-06T12:43:50Z"
+  "updated_at": "2026-03-06T12:43:54Z"
 }
