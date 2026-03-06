@@ -1,0 +1,16 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-06T15:41:50Z",
+  "description": "bw 0.9.0 → 0.10.0 is available.\n\n## What's new\n\n## 0.10.0 — 2026-03-06\n\n- **Automatic upgrade notifications** — `bw` now checks for newer releases once per day (throttled via a local cache). When a new version is found, it creates a P1 upgrade bead with the changelog and instructions to run `bw upgrade`. The bead updates itself if further releases appear, and `bw upgrade` auto-closes it when complete. This runs silently in the background of any store-using command — no new flags or commands required.\n\n- **`bw prime` now includes issue ID prefix** — the prime output resolves `{prefix}` placeholders so agents see the project's actual prefix (e.g., `bw-XYZ`) in the model description, reducing ambiguity about issue ID format.\n\n- **Improved agent onboarding prompt** — the prime directive in `prompts/agents.md` now emphasizes that untracked/unlanded work is effectively void, better aligning with how agents actually lose context across sessions.\n\n- **Project-level AGENTS.md** — replaced the symlink to `prompts/agents.md` with a standalone file describing beadwork's purpose, architecture, and repo structure for agents working on beadwork itself.\n\n## To upgrade\n\nRun `bw upgrade --yes` or `bw upgrade` for interactive mode.\n",
+  "id": "bw-znf",
+  "labels": [
+    "beadwork-upgrade"
+  ],
+  "priority": 1,
+  "status": "open",
+  "title": "Upgrade bw to 0.10.0",
+  "type": "task",
+  "updated_at": "2026-03-06T15:41:50Z"
+}
