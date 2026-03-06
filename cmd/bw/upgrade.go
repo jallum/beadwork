@@ -187,7 +187,31 @@ func cmdUpgrade(_ *issue.Store, args []string, w Writer) error {
 		return fmt.Errorf("installed binary failed verification: %w", verr)
 	}
 	fmt.Fprintln(w, w.Style(verOut, Green))
+
+	// Auto-close the upgrade bead if one exists.
+	closeUpgradeBead(w)
+
 	return nil
+}
+
+// closeUpgradeBead finds and closes any open beadwork-upgrade bead.
+// Non-fatal: if the store isn't available or close fails, silently skip.
+func closeUpgradeBead(w Writer) {
+	store, err := getInitializedStore()
+	if err != nil {
+		return
+	}
+	existing := findUpgradeBead(store)
+	if existing == nil {
+		return
+	}
+	reason := "upgraded"
+	if _, err := store.Close(existing.ID, reason); err != nil {
+		return
+	}
+	intent := fmt.Sprintf("close %s reason=%q", existing.ID, reason)
+	store.Commit(intent)
+	fmt.Fprintf(w, "closed %s: %s\n", existing.ID, existing.Title)
 }
 
 // resolveBinary returns the executable path, whether it's a symlink, and
