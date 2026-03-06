@@ -76,7 +76,7 @@ A plan in your context window is fragile — one compaction and it's gone. Make 
 
 ## The Model
 
-All data lives on the `beadwork` git branch — deleting it permanently destroys everything.
+All data lives on the `beadwork` git branch — deleting it permanently destroys everything. Issue IDs are prefixed with `{prefix}-` (e.g., `{prefix}-XYZ`).
 
 Issues have **status** (open → in_progress → closed, or deferred), **priority** (P0-P4: P0 critical → P4 backlog, default P2), and optionally **dependencies**, **labels**, **comments**, and **parent** relationships. Issues can form hierarchies: an epic with child tasks (`--parent <epic>`), wired with dependencies (`bw dep add <blocker> blocks <blocked>`). Blocked issues can't be started; when a dependency closes (`bw close <id>`), newly unblocked work surfaces. To find more work, use `bw ready`. `bw show <id>` will give you the description, assignee, comments, blockers and the tickets that _that_ ticket will unblock, all in one go.
 

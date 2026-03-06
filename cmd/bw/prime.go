@@ -41,7 +41,8 @@ func cmdPrime(store *issue.Store, _ []string, w Writer) error {
 
 	cfg := r.ListConfig()
 	resolve := func(key string) string { return cfg[key] }
-	template.ProcessWithCommands(&buf, prompts.Prime, resolve, nil, cmdFn)
+	src := strings.ReplaceAll(prompts.Prime, "{prefix}", cfg["prefix"])
+	template.ProcessWithCommands(&buf, src, resolve, nil, cmdFn)
 	flush()
 
 	return nil
