@@ -6,14 +6,15 @@
   "blocks": [
     "bw-vf1.3"
   ],
+  "closed_at": "2026-03-06T20:49:11Z",
   "created": "2026-03-06T20:07:12Z",
   "description": "In cmdReady (ready.go), replace the inline loop at lines 44-52 with store.ClosedBlockerSet(issues). In cmdList (list.go), build closedBlockers via the same method and switch from md.IssueOneLiner to md.IssueOneLinerFiltered.",
   "id": "bw-vf1.2",
   "labels": [],
   "parent": "bw-vf1",
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Use shared ClosedBlockerSet in cmdReady and cmdList",
   "type": "task",
-  "updated_at": "2026-03-06T20:47:49Z"
+  "updated_at": "2026-03-06T20:49:11Z"
 }
