@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-zt5.3"
+  ],
   "blocks": [],
   "created": "2026-03-06T12:35:21Z",
   "description": "New file: cmd/bw/version_check_test.go\n\nTest cases:\n- Cache miss triggers API call\n- Cache hit within 24h skips API call\n- Failed API call still writes timestamp (no retry next command)\n- Newer version found creates upgrade bead\n- Newer version found updates existing upgrade bead (label match)\n- Same or older version found does nothing\n- Auto-close on upgrade success\n\nUse injectable dependencies for HTTP, clock, and store operations.",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Tests for version check",
   "type": "task",
-  "updated_at": "2026-03-06T12:35:21Z"
+  "updated_at": "2026-03-06T12:35:25Z"
 }
