@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
-	"github.com/jallum/beadwork/internal/wrap"
+	"github.com/jallum/beadwork/internal/md"
 )
 
 // validShowSections lists section names accepted by --only.
@@ -92,65 +92,87 @@ func cmdShow(store *issue.Store, args []string, w Writer) error {
 			fmt.Fprintln(w)
 		}
 		if sa.showSection("summary") {
-			fprintIssueSummary(w, iss)
+			emitln(w, md.IssueSummary(iss))
 		}
 		if sa.showSection("description") {
-			fprintDescription(w, iss)
+			showDescription(w, iss)
 		}
 		if sa.showSection("children") {
-			fprintChildren(w, iss, store)
+			showChildren(w, iss, store)
 		}
 		if sa.showSection("blockedby") || sa.showSection("unblocks") {
-			fprintMap(w, iss, store)
+			showMap(w, iss, store)
 		}
 		if sa.showSection("comments") {
-			fprintComments(w, iss)
+			showComments(w, iss)
 		}
 	}
 	return nil
 }
 
-// fprintIssueSummary renders the header, metadata, labels, and parent.
-func fprintIssueSummary(w Writer, iss *issue.Issue) {
-	fprintIssue(w, iss)
-}
-
-// fprintDescription renders just the DESCRIPTION section.
-func fprintDescription(w Writer, iss *issue.Issue) {
+func showDescription(w Writer, iss *issue.Issue) {
 	if iss.Description != "" {
-		fmt.Fprintf(w, "\n%s\n\n", sectionHeader(w, "DESCRIPTION"))
-		w.Push(2)
-		desc := iss.Description
-		if ww := w.Width(); ww > 0 {
-			desc = wrap.Text(desc, ww)
-		}
-		fmt.Fprintln(w, desc)
-		w.Pop()
+		fmt.Fprintln(w)
+		emitln(w, md.Description(iss.Description))
 	}
 }
 
-// fprintChildren renders the CHILDREN section for an epic.
-// Each child is shown with status icon, ID, priority, title, and
-// inline dependency annotations for intra-epic relationships.
-func fprintChildren(w Writer, iss *issue.Issue, store *issue.Store) {
+func showChildren(w Writer, iss *issue.Issue, store *issue.Store) {
 	children, err := store.Children(iss.ID)
 	if err != nil || len(children) == 0 {
 		return
 	}
+	fmt.Fprintln(w)
+	emitln(w, md.Children(children))
+}
 
-	fmt.Fprintf(w, "\n%s\n", sectionHeader(w, "CHILDREN"))
-	w.Push(2)
-	for _, child := range children {
-		ps := PriorityStyle(child.Priority)
-		line := fmt.Sprintf("%s %s  %s %s  %s",
-			issue.StatusIcon(child.Status),
-			w.Style(child.ID, Cyan),
-			w.Style("●", ps),
-			w.Style(fmt.Sprintf("P%d", child.Priority), ps),
-			child.Title,
-		)
-		line += formatDeps(w, child, store)
-		fmt.Fprintln(w, line)
+// showMap renders BLOCKED BY and UNBLOCKS sections using the md package.
+func showMap(w Writer, iss *issue.Issue, store *issue.Store) {
+	_, rev := store.LoadEdges()
+
+	if len(iss.BlockedBy) > 0 {
+		tips, _ := store.Tips(iss.BlockedBy, rev)
+		actionable := nearestOpen(tips, iss.ID, store)
+		if len(actionable) > 0 {
+			fmt.Fprintln(w)
+			emitln(w, md.BlockedBy(actionable))
+		}
 	}
-	w.Pop()
+
+	if len(iss.Blocks) > 0 {
+		var deps []*issue.Issue
+		for _, id := range iss.Blocks {
+			dep, err := store.Get(id)
+			if err != nil {
+				continue
+			}
+			deps = append(deps, dep)
+		}
+		if len(deps) > 0 {
+			fmt.Fprintln(w)
+			emitln(w, md.Unblocks(deps))
+		}
+	}
+}
+
+func showComments(w Writer, iss *issue.Issue) {
+	if len(iss.Comments) > 0 {
+		fmt.Fprintln(w)
+		emitln(w, md.Comments(iss.Comments))
+	}
+}
+
+// fprintIssueSummary renders the summary for use by start.go (Phase 3).
+func fprintIssueSummary(w Writer, iss *issue.Issue) {
+	emitln(w, md.IssueSummary(iss))
+}
+
+// fprintDescription renders description for use by start.go (Phase 3).
+func fprintDescription(w Writer, iss *issue.Issue) {
+	showDescription(w, iss)
+}
+
+// fprintComments renders comments for use by start.go (Phase 3).
+func fprintComments(w Writer, iss *issue.Issue) {
+	showComments(w, iss)
 }

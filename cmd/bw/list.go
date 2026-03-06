@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/md"
 )
 
 type ListArgs struct {
@@ -102,16 +103,7 @@ func cmdList(store *issue.Store, args []string, w Writer) error {
 			displayed = displayed[:limit]
 		}
 		for _, iss := range displayed {
-			ps := PriorityStyle(iss.Priority)
-			fmt.Fprintf(w, "%s %s [%s %s] [%s] - %s%s\n",
-				issue.StatusIcon(iss.Status),
-				iss.ID,
-				w.Style("●", ps),
-				w.Style(fmt.Sprintf("P%d", iss.Priority), ps),
-				iss.Type,
-				iss.Title,
-				formatDeps(w, iss, store),
-			)
+			emitln(w, md.IssueOneLiner(iss))
 		}
 		if limit > 0 && len(issues) > limit {
 			fmt.Fprintf(w, "... and %d more (use --limit or --all)\n", len(issues)-limit)

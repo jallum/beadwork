@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/md"
 )
 
 type BlockedArgs struct {
@@ -40,28 +41,22 @@ func cmdBlocked(store *issue.Store, args []string, w Writer) error {
 		return nil
 	}
 
-	fmt.Fprintf(w, "\n● Blocked (%d):\n", len(blocked))
+	fmt.Fprintf(w, "\nBlocked (%d):\n", len(blocked))
 
 	for _, bi := range blocked {
-		ps := PriorityStyle(bi.Priority)
-		fmt.Fprintf(w, "\n[%s %s] %s: %s\n",
-			w.Style("●", ps),
-			w.Style(fmt.Sprintf("P%d", bi.Priority), ps),
-			bi.ID,
-			bi.Title,
-		)
+		fmt.Fprintln(w)
+		emitln(w, fmt.Sprintf("{p:%d} {id:%s} %s",
+			bi.Priority, bi.ID, md.Escape(bi.Title)))
 		w.Push(2)
-		styledBlockers := make([]string, len(bi.OpenBlockers))
-		for i, id := range bi.OpenBlockers {
-			styledBlockers[i] = w.Style(id, Red)
-		}
-		fmt.Fprintf(w, "Blocked by: %s\n", strings.Join(styledBlockers, ", "))
+
+		blockerIDs := make([]string, len(bi.OpenBlockers))
+		copy(blockerIDs, bi.OpenBlockers)
+		fmt.Fprintf(w, "Blocked by: %s\n", strings.Join(blockerIDs, ", "))
+
 		if len(bi.Blocks) > 0 {
-			styledBlocks := make([]string, len(bi.Blocks))
-			for i, id := range bi.Blocks {
-				styledBlocks[i] = w.Style(id, Red)
-			}
-			fmt.Fprintf(w, "Blocks: %s\n", strings.Join(styledBlocks, ", "))
+			blockIDs := make([]string, len(bi.Blocks))
+			copy(blockIDs, bi.Blocks)
+			fmt.Fprintf(w, "Blocks: %s\n", strings.Join(blockIDs, ", "))
 		}
 		w.Pop()
 	}

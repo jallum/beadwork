@@ -318,19 +318,49 @@ func TestCmdReadyGroupsNotSeparatedByBlankLine(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
-	out := buf.String()
+	out := strings.TrimRight(buf.String(), " \n")
 
-	// Find the issue lines (before the separator).
-	sepIdx := strings.Index(out, "---")
-	if sepIdx < 0 {
-		t.Fatalf("separator not found in output:\n%s", out)
+	// No blank lines between groups (PlainWriter has no footer)
+	if strings.Contains(out, "\n\n") {
+		t.Errorf("groups should not be separated by blank lines, got:\n%s", out)
 	}
-	issueSection := out[:sepIdx]
+}
 
-	// No blank lines between groups in the issue section
-	// (trim trailing whitespace to exclude the blank line before the separator).
-	issueSection = strings.TrimRight(issueSection, " \n")
-	if strings.Contains(issueSection, "\n\n") {
-		t.Errorf("groups should not be separated by blank lines, got:\n%s", issueSection)
+func TestCmdReadyTTYHasFooter(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("Ready task", issue.CreateOpts{})
+	env.Repo.Commit("create")
+
+	var buf bytes.Buffer
+	err := cmdReady(env.Store, []string{}, ColorWriter(&buf, 80))
+	if err != nil {
+		t.Fatalf("cmdReady: %v", err)
+	}
+	out := stripANSI(buf.String())
+	if !strings.Contains(out, "---") {
+		t.Errorf("TTY output should have separator: %q", out)
+	}
+	if !strings.Contains(out, "Ready:") {
+		t.Errorf("TTY output should have count: %q", out)
+	}
+}
+
+func TestCmdReadyPlainNoFooter(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("Ready task", issue.CreateOpts{})
+	env.Repo.Commit("create")
+
+	var buf bytes.Buffer
+	err := cmdReady(env.Store, []string{}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdReady: %v", err)
+	}
+	out := buf.String()
+	if strings.Contains(out, "---") {
+		t.Errorf("PlainWriter output should NOT have separator: %q", out)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/md"
 )
 
 type CloseArgs struct {
@@ -61,13 +62,19 @@ func cmdClose(store *issue.Store, args []string, w Writer) error {
 		}
 		fprintJSON(w, result)
 	} else {
-		fmt.Fprintf(w, "closed %s: %s\n", iss.ID, w.Style(iss.Title, Strikethrough))
+		emitln(w, fmt.Sprintf("closed {id:%s}: ~~%s~~", iss.ID, md.Escape(iss.Title)))
 		if len(unblocked) > 0 {
 			w.Push(2)
 			for _, u := range unblocked {
-				fmt.Fprintf(w, "unblocked %s: %s\n", u.ID, u.Title)
+				emitln(w, fmt.Sprintf("unblocked {id:%s}: %s", u.ID, md.Escape(u.Title)))
 			}
 			w.Pop()
+			fmt.Fprintln(w)
+			if len(unblocked) == 1 {
+				emitln(w, fmt.Sprintf("Next: `bw start %s` to begin, or `bw ready` for all options.", unblocked[0].ID))
+			} else {
+				emitln(w, "Next: `bw ready` to see available work.")
+			}
 		}
 	}
 	return nil

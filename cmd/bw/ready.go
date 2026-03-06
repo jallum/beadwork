@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/md"
 )
 
 type ReadyArgs struct {
@@ -40,6 +41,16 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 		return nil
 	}
 
+	// Build set of closed blocker IDs so we can filter them from dep annotations.
+	closedBlockers := make(map[string]bool)
+	for _, iss := range issues {
+		for _, bid := range iss.BlockedBy {
+			if dep, err := store.Get(bid); err == nil && dep.Status == "closed" {
+				closedBlockers[bid] = true
+			}
+		}
+	}
+
 	// Partition into standalone issues and groups keyed by parent ID.
 	// Preserve insertion order for parents.
 	var standalone []*issue.Issue
@@ -66,7 +77,7 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 
 	// Print standalone issues.
 	for _, iss := range filteredStandalone {
-		fprintReadyLine(w, iss, store)
+		emitln(w, md.IssueOneLinerFiltered(iss, closedBlockers))
 	}
 
 	// Print groups.
@@ -74,37 +85,28 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 		// Print parent as group header.
 		parent, err := store.Get(parentID)
 		if err == nil {
-			fprintReadyLine(w, parent, store)
+			emitln(w, md.IssueOneLinerFiltered(parent, closedBlockers))
 		}
 		// Print children indented.
 		w.Push(2)
 		for _, child := range groups[parentID] {
-			fprintReadyLine(w, child, store)
+			emitln(w, md.IssueOneLinerFiltered(child, closedBlockers))
 		}
 		w.Pop()
 	}
 
-	fmt.Fprintln(w)
-	fmt.Fprintln(w, strings.Repeat("-", 80))
-	fmt.Fprintf(w, "Ready: %d issues with no blockers\n", len(issues))
-	fmt.Fprintln(w)
+	// TTY-only footer
+	if w.IsTTY() {
+		fmt.Fprintln(w)
+		fmt.Fprintln(w, strings.Repeat("-", 80))
+		fmt.Fprintf(w, "Ready: %d issues with no blockers\n", len(issues))
+		fmt.Fprintln(w)
 
-	var legend []string
-	for _, s := range issue.Statuses {
-		legend = append(legend, s.Icon+" "+s.Name)
+		var legend []string
+		for _, s := range issue.Statuses {
+			legend = append(legend, s.Icon+" "+s.Name)
+		}
+		fmt.Fprintf(w, "Status: %s\n", strings.Join(legend, "  "))
 	}
-	fmt.Fprintf(w, "Status: %s\n", strings.Join(legend, "  "))
 	return nil
-}
-
-func fprintReadyLine(w Writer, iss *issue.Issue, store *issue.Store) {
-	ps := PriorityStyle(iss.Priority)
-	fmt.Fprintf(w, "%s %s %s %s %s%s\n",
-		issue.StatusIcon(iss.Status),
-		iss.ID,
-		w.Style("●", ps),
-		w.Style(fmt.Sprintf("P%d", iss.Priority), ps),
-		iss.Title,
-		formatDeps(w, iss, store),
-	)
 }

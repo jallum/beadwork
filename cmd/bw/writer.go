@@ -65,12 +65,17 @@ type Writer interface {
 	// ClearLine returns a carriage return that also clears to end of line
 	// on color-capable terminals; plain writers return a bare "\r".
 	ClearLine() string
+	// IsTTY returns true if the writer targets a terminal (color-capable).
+	IsTTY() bool
+	// IsRaw returns true if the writer should emit tokenized text without resolution.
+	IsRaw() bool
 }
 
 // writer is the single concrete implementation of Writer.
 type writer struct {
 	out   io.Writer
 	color bool
+	raw   bool
 	width int    // terminal width, 0 = no wrapping
 	stack []int  // indent stack
 	pfx   string // cached prefix (sum of stack as spaces)
@@ -149,6 +154,9 @@ func (w *writer) ClearLine() string {
 	return "\r"
 }
 
+func (w *writer) IsTTY() bool { return w.color }
+func (w *writer) IsRaw() bool { return w.raw }
+
 func (w *writer) rebuildPrefix() {
 	total := 0
 	for _, n := range w.stack {
@@ -165,4 +173,9 @@ func PlainWriter(out io.Writer) Writer {
 // ColorWriter returns a Writer that applies ANSI styling with the given terminal width.
 func ColorWriter(out io.Writer, width int) Writer {
 	return &writer{out: out, color: true, width: width, bol: true}
+}
+
+// RawWriter returns a Writer that passes tokenized text through without resolution.
+func RawWriter(out io.Writer) Writer {
+	return &writer{out: out, raw: true, bol: true}
 }

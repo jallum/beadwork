@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/repo"
-	"github.com/jallum/beadwork/internal/template"
+	"github.com/jallum/beadwork/internal/tmpl"
 	"github.com/jallum/beadwork/prompts"
 )
 
@@ -32,6 +31,14 @@ func parseStartArgs(raw []string) (StartArgs, error) {
 		Assignee: a.String("--assignee"),
 		JSON:     a.JSON(),
 	}, nil
+}
+
+type StartData struct {
+	ID             string
+	Type           string
+	Status         string
+	Parent         string
+	WorkflowReview string
 }
 
 func cmdStart(store *issue.Store, args []string, w Writer) error {
@@ -83,48 +90,35 @@ func cmdStart(store *issue.Store, args []string, w Writer) error {
 	fprintDescription(w, iss)
 	fprintComments(w, iss)
 
-	// Template controls everything after summary+description.
-	tmpl := strings.ReplaceAll(prompts.Start, "{id}", iss.ID)
 	cfg := r.ListConfig()
-	resolve := func(key string) string {
-		switch key {
-		case "type":
-			return iss.Type
-		case "status":
-			return iss.Status
-		case "parent":
-			return iss.Parent
-		default:
-			return cfg[key]
+	data := StartData{
+		ID:             iss.ID,
+		Type:           iss.Type,
+		Status:         iss.Status,
+		Parent:         iss.Parent,
+		WorkflowReview: cfg["workflow.review"],
+	}
+
+	bwFn := func(args ...string) string {
+		if cmd := commandMap[args[0]]; cmd != nil {
+			var buf bytes.Buffer
+			cmd.Run(store, args[1:], PlainWriter(&buf))
+			return strings.TrimRight(buf.String(), "\n")
 		}
+		return ""
 	}
 
 	var buf bytes.Buffer
-	flush := func() {
-		s := strings.Trim(buf.String(), "\n")
-		buf.Reset()
-		if s == "" {
-			return
-		}
+	if err := tmpl.Execute(&buf, "start", prompts.Start, data, bwFn); err != nil {
+		return err
+	}
+
+	out := strings.Trim(buf.String(), "\n")
+	if out != "" {
 		fmt.Fprintln(w)
-		for _, line := range strings.Split(s, "\n") {
-			if strings.HasPrefix(line, "## ") {
-				fmt.Fprintln(w, sectionHeader(w, strings.TrimPrefix(line, "## ")))
-			} else {
-				fmt.Fprintln(w, line)
-			}
-		}
+		emit(w, out)
+		fmt.Fprintln(w)
 	}
-
-	cmdFn := func(args []string, _ io.Writer) {
-		if cmd := commandMap[args[0]]; cmd != nil {
-			flush()
-			cmd.Run(store, args[1:], w)
-		}
-	}
-
-	template.ProcessWithCommands(&buf, tmpl, resolve, nil, cmdFn)
-	flush()
 
 	return nil
 }

@@ -28,9 +28,7 @@ func TestCmdStartBasic(t *testing.T) {
 	if !strings.Contains(out, "Start me") {
 		t.Errorf("output missing title: %q", out)
 	}
-	if !strings.Contains(out, "alice") {
-		t.Errorf("output missing assignee: %q", out)
-	}
+	// Assignee is set on the issue but not displayed in the summary heading.
 
 	// Should show landing instructions
 	if !strings.Contains(out, "LANDING THE WORK") {

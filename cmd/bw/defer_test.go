@@ -213,8 +213,8 @@ func TestCmdShowDeferred(t *testing.T) {
 	if !strings.Contains(out, "Deferred: 2027-04-15") {
 		t.Errorf("output should contain 'Deferred: 2027-04-15': %q", out)
 	}
-	if !strings.Contains(out, "DEFERRED") {
-		t.Errorf("output should contain DEFERRED status: %q", out)
+	if !strings.Contains(out, "❄") {
+		t.Errorf("output should contain deferred icon: %q", out)
 	}
 }
 

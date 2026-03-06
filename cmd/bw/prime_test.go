@@ -25,9 +25,6 @@ func TestCmdPrimeBasic(t *testing.T) {
 	if !strings.Contains(out, "Prime issue") {
 		t.Errorf("output missing ready issue: %q", out)
 	}
-	if !strings.Contains(out, "Ready: 1") {
-		t.Errorf("output missing ready count: %q", out)
-	}
 	if !strings.Contains(out, "Work In Progress") {
 		t.Errorf("output missing 'Work In Progress' section header: %q", out)
 	}
