@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-06T18:29:59Z",
+  "description": "Move design comment blocks from prompt files into standalone docs.\n\nExtract from prompts:\n- docs/design-prime.md — from prompts/prime.md lines 1-67 (13 design requirements)\n- docs/design-start.md — from prompts/start.md lines 1-32 (7 design requirements)\n- docs/design-agents.md — from prompts/agents.md lines 1-40 (7 design requirements)\n\nNew docs:\n- docs/design-output.md — markdown-native output architecture, tokenized rendering, token vocabulary, ResolveMarkdown/ResolveTTY pipeline, emit() pattern, --raw flag, testing strategy\n- docs/design-templates.md — Go text/template system, {{ bw }} function, available data per prompt, how to add new template functions\n\nReplace comment blocks in prompt files with one-line reference: {{/* See docs/design-prime.md */}}\n\nFiles: docs/design-*.md (5 new), prompts/prime.md, prompts/start.md, prompts/agents.md",
+  "id": "bw-hlv.4",
+  "labels": [],
+  "parent": "bw-hlv",
+  "priority": 2,
+  "status": "open",
+  "title": "Extract design docs to docs/",
+  "type": "task",
+  "updated_at": "2026-03-06T18:29:59Z"
+}
