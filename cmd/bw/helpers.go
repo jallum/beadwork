@@ -262,24 +262,6 @@ func sectionHeader(w Writer, name string) string {
 	return w.Style(name, Bold)
 }
 
-func trimDate(s string) string {
-	if len(s) >= 10 {
-		return s[:10]
-	}
-	return s
-}
-
-// formatDateTime parses an RFC3339 timestamp and returns it in
-// "2006-01-02 15:04:05" format. Falls back to the raw string on
-// parse failure.
-func formatDateTime(s string) string {
-	t, err := time.Parse(time.RFC3339, s)
-	if err != nil {
-		return s
-	}
-	return t.Format("2006-01-02 15:04:05")
-}
-
 // relativeTime returns a human-readable relative time like "2h ago".
 func relativeTime(timestamp string) string {
 	t, err := time.Parse(time.RFC3339, timestamp)

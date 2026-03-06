@@ -50,16 +50,12 @@ func cmdBlocked(store *issue.Store, args []string, w Writer) error {
 		w.Push(2)
 
 		blockerIDs := make([]string, len(bi.OpenBlockers))
-		for i, id := range bi.OpenBlockers {
-			blockerIDs[i] = id
-		}
+		copy(blockerIDs, bi.OpenBlockers)
 		fmt.Fprintf(w, "Blocked by: %s\n", strings.Join(blockerIDs, ", "))
 
 		if len(bi.Blocks) > 0 {
 			blockIDs := make([]string, len(bi.Blocks))
-			for i, id := range bi.Blocks {
-				blockIDs[i] = id
-			}
+			copy(blockIDs, bi.Blocks)
 			fmt.Fprintf(w, "Blocks: %s\n", strings.Join(blockIDs, ", "))
 		}
 		w.Pop()
