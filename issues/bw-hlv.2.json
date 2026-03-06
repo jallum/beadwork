@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [
     "bw-hlv.1"
   ],
@@ -12,8 +12,8 @@
   "labels": [],
   "parent": "bw-hlv",
   "priority": 1,
-  "status": "open",
+  "status": "in_progress",
   "title": "Migrate commands to tokenized markdown output",
   "type": "task",
-  "updated_at": "2026-03-06T18:30:06Z"
+  "updated_at": "2026-03-06T18:42:24Z"
 }
