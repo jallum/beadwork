@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.10.0 — 2026-03-06
+
+- **Automatic upgrade notifications** — `bw` now checks for newer releases once per day (throttled via a local cache). When a new version is found, it creates a P1 upgrade bead with the changelog and instructions to run `bw upgrade`. The bead updates itself if further releases appear, and `bw upgrade` auto-closes it when complete. This runs silently in the background of any store-using command — no new flags or commands required.
+
+- **`bw prime` now includes issue ID prefix** — the prime output resolves `{prefix}` placeholders so agents see the project's actual prefix (e.g., `bw-XYZ`) in the model description, reducing ambiguity about issue ID format.
+
+- **Improved agent onboarding prompt** — the prime directive in `prompts/agents.md` now emphasizes that untracked/unlanded work is effectively void, better aligning with how agents actually lose context across sessions.
+
+- **Project-level AGENTS.md** — replaced the symlink to `prompts/agents.md` with a standalone file describing beadwork's purpose, architecture, and repo structure for agents working on beadwork itself.
+
 ## 0.9.0 — 2026-02-28
 
 - **`bw start` is now a full point-of-action briefing** — starting an issue prints type-aware guidance for both beginning and landing the work. Epics get "work through children via `bw ready`" while tasks and bugs get scoped commit steps. Children, dependencies, and comments are rendered inline from the template, so the briefing adapts to each issue type. Comments now always appear regardless of issue type (previously they were missing for non-standard types like `feature`).
