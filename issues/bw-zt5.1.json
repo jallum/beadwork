@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "bw-zt5.2"
+  ],
   "created": "2026-03-06T12:35:21Z",
   "description": "New file: cmd/bw/version_check.go\n\nImplement the core check logic:\n- Read cache from ~/.cache/bw/version-check.json (lastCheck timestamp + latestVersion)\n- If lastCheck \u003c 24h ago, skip entirely (return cached latestVersion or nothing)\n- Otherwise, write the timestamp unconditionally (before or after the API call — either way, a failure means we tried today)\n- Call the GitHub releases API (same endpoint as bw upgrade)\n- On success, store latestVersion in cache\n- On failure (network error, timeout, non-200), just return — no retry, no error surfaced\n- Compare latestVersion to current binary version; return the result\n\nUse injectable dependencies (same pattern as upgrade.go) for testability.",
   "id": "bw-zt5.1",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Version check with cache",
   "type": "task",
-  "updated_at": "2026-03-06T12:35:21Z"
+  "updated_at": "2026-03-06T12:35:25Z"
 }
