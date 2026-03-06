@@ -43,7 +43,7 @@ has any other context about the project's workflow.
 
 This project tracks work with `bw` (beadwork), which persists to git — it survives compaction, session boundaries, and context loss.
 
-Run `bw prime` at the start of every session. It covers finding work, starting it, landing it, and syncing state.
+`bw prime` is the fastest path to productive work — run it at the start of every session. Work that isn't properly tracked and landed is invisible to the next session — effectively void.
 
 Committing, closing issues, and syncing are part of completing a task — not separate actions requiring additional permission.
 
