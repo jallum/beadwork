@@ -6,14 +6,15 @@
   "blocks": [
     "bw-hlv.4"
   ],
+  "closed_at": "2026-03-06T19:00:57Z",
   "created": "2026-03-06T18:29:51Z",
   "description": "Replace internal/template/ (custom HTML-comment DSL) with Go text/template.\n\nCreate internal/tmpl/tmpl.go:\n- Execute(w, name, src, data, bwFn) — thin wrapper around text/template\n- bw template function captures command output via PlainWriter (always markdown), preventing ANSI corruption\n\nMigrate prompts:\n- prime.md: {prefix} → {{ .Prefix }}, \u003c!-- bw ready --\u003e → {{ bw \"ready\" }}\n- start.md: \u003c!-- IF type == epic --\u003e → {{ if eq .Type \"epic\" }}, {id} → {{ .ID }}, \u003c!-- bw show {id} --only children --\u003e → {{ bw \"show\" .ID \"--only\" \"children\" }}\n- agents.md: No template syntax (copy-pasted into AGENTS.md). Just remove design comment block.\n\nTemplate data structs:\n- PrimeData{Prefix}\n- StartData{ID, Type, Status, Parent, WorkflowReview}\n\nMigrate cmd/bw/prime.go and cmd/bw/start.go to use tmpl.Execute + emit().\n\nDelete internal/template/template.go and internal/template/template_test.go.\n\nFiles: internal/tmpl/tmpl.go, internal/tmpl/tmpl_test.go, prompts/prime.md, prompts/start.md, prompts/agents.md, cmd/bw/prime.go, cmd/bw/start.go + their tests",
   "id": "bw-hlv.3",
   "labels": [],
   "parent": "bw-hlv",
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Replace template DSL with Go text/template",
   "type": "task",
-  "updated_at": "2026-03-06T18:56:09Z"
+  "updated_at": "2026-03-06T19:00:57Z"
 }
