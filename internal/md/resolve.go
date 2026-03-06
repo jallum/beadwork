@@ -162,8 +162,6 @@ func unescape(s string) string {
 
 // colorize applies ANSI coloring to the wrapped plain text.
 // It processes inline color markers (\x01kind\x02) and markdown syntax.
-var colorMarkerRe = regexp.MustCompile("\x01([^\x02]+)\x02")
-
 func colorize(s string) string {
 	var out strings.Builder
 	lines := strings.Split(s, "\n")
