@@ -262,62 +262,6 @@ func sectionHeader(w Writer, name string) string {
 	return w.Style(name, Bold)
 }
 
-// styleMD adds ANSI color to markdown text without altering it.
-// Used by prime.go. Will be replaced in Phase 3.
-func styleMD(w Writer, text string) string {
-	var out strings.Builder
-	inFence := false
-	for i, line := range strings.Split(text, "\n") {
-		if i > 0 {
-			out.WriteByte('\n')
-		}
-		if strings.HasPrefix(line, "```") {
-			inFence = !inFence
-		}
-		switch {
-		case inFence && strings.HasPrefix(strings.TrimSpace(line), "#"):
-			out.WriteString(w.Style(line, Green))
-		case inFence:
-			out.WriteString(line)
-		case strings.HasPrefix(line, "# ") || strings.HasPrefix(line, "## "):
-			out.WriteString(w.Style(line, Bold, Cyan))
-		case strings.HasPrefix(line, "- "):
-			out.WriteString(w.Style("- ", Cyan) + styleInline(w, line[2:]))
-		default:
-			out.WriteString(styleInline(w, line))
-		}
-	}
-	return out.String()
-}
-
-// styleInline colors **bold** and `code` spans in place.
-// Used by styleMD. Will be replaced in Phase 3.
-func styleInline(w Writer, line string) string {
-	var out strings.Builder
-	i := 0
-	for i < len(line) {
-		if i+1 < len(line) && line[i] == '*' && line[i+1] == '*' {
-			end := strings.Index(line[i+2:], "**")
-			if end >= 0 {
-				out.WriteString(w.Style(line[i:i+2+end+2], Bold))
-				i += 2 + end + 2
-				continue
-			}
-		}
-		if line[i] == '`' {
-			end := strings.IndexByte(line[i+1:], '`')
-			if end >= 0 {
-				out.WriteString(w.Style(line[i:i+1+end+1], Dim, Yellow))
-				i += 1 + end + 1
-				continue
-			}
-		}
-		out.WriteByte(line[i])
-		i++
-	}
-	return out.String()
-}
-
 func trimDate(s string) string {
 	if len(s) >= 10 {
 		return s[:10]
