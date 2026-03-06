@@ -6,14 +6,15 @@
   "blocks": [
     "bw-hlv.3"
   ],
+  "closed_at": "2026-03-06T18:56:06Z",
   "created": "2026-03-06T18:29:38Z",
   "description": "Migrate all display commands to use internal/md renderer + emit() helper.\n\nWriter changes (cmd/bw/writer.go):\n- Add IsTTY() bool and IsRaw() bool to Writer interface\n- Add emit(w Writer, tokenized string) helper that routes to ResolveMarkdown, ResolveTTY, or raw passthrough\n\nAdd --raw undocumented global flag (main.go) that selects RawWriter — dumps tokenized text without resolution. For integration tests and debugging. Not listed in --help.\n\nMigration order:\n1. bw list — one-liners via md.IssueOneLiner()\n2. bw ready — grouped list; footer (separator, count, legend) only when IsTTY()\n3. bw show — section-by-section via renderer; --only selects sections\n4. bw blocked — straightforward\n5. bw close — add next-action suggestion: Next: bw start \u003cid\u003e when work is unblocked\n\nCleanup cmd/bw/helpers.go — remove: fprintIssue, fprintDescription, fprintChildren, fprintMap, fprintComments, styleMD, styleInline, sectionHeader, formatDeps. Keep: fprintJSON, relativeTime, arg parsing.\n\nbw start and bw prime deferred to Phase 3 (template-dependent).\n\nFiles: cmd/bw/writer.go, cmd/bw/helpers.go, cmd/bw/main.go, cmd/bw/list.go, cmd/bw/ready.go, cmd/bw/show.go, cmd/bw/blocked.go, cmd/bw/close.go + their tests",
   "id": "bw-hlv.2",
   "labels": [],
   "parent": "bw-hlv",
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Migrate commands to tokenized markdown output",
   "type": "task",
-  "updated_at": "2026-03-06T18:42:24Z"
+  "updated_at": "2026-03-06T18:56:06Z"
 }
