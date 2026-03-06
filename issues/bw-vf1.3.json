@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-vf1.2"
+  ],
   "blocks": [],
   "created": "2026-03-06T20:07:16Z",
   "description": "Add a test similar to TestReadyClosedBlockerHidden (cli_test.go:1027) but for list output: create two issues, link A blocks B, close A, run bw list — B should not show [blocked by: A].",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Add test for closed blocker filtering in bw list",
   "type": "task",
-  "updated_at": "2026-03-06T20:07:16Z"
+  "updated_at": "2026-03-06T20:07:21Z"
 }
