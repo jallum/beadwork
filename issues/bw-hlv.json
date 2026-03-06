@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-06T18:29:08Z",
+  "description": "Refactor beadwork output to use tokenized markdown as the canonical format. Render functions produce markdown with semantic tokens ({status:}, {p:}, {id:}, etc.). Two resolution passes produce final output: ResolveMarkdown() for agents (clean markdown) and ResolveTTY() for humans (wrapped, ANSI-colored). Replaces custom HTML-comment template DSL with Go text/template. Extracts design docs from prompt comments into docs/. Adds blocked status icon and next-action suggestions on close. Includes --raw flag for dumping tokenized text (integration tests, debugging).",
+  "id": "bw-hlv",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Markdown-native output with tokenized rendering",
+  "type": "epic",
+  "updated_at": "2026-03-06T18:29:08Z"
+}
