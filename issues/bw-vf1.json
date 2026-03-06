@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-06T20:07:02Z",
+  "description": "bw list shows [blocked by: X] for all blockers including closed ones. bw ready already filters these out. The fix: extract the closed-blocker-set logic into a shared Store method, then use it in both cmdReady and cmdList.",
+  "id": "bw-vf1",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Filter closed blockers from bw list dep annotations",
+  "type": "epic",
+  "updated_at": "2026-03-06T20:07:02Z"
+}
