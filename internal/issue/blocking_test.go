@@ -856,3 +856,64 @@ func TestReadyChainPartialClose(t *testing.T) {
 	}
 }
 
+func TestClosedBlockerSet(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker A", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked B", issue.CreateOpts{})
+	c, _ := env.Store.Create("Blocker C", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Link(c.ID, b.ID)
+	env.Store.Close(a.ID, "done")
+	env.CommitIntent("setup")
+
+	// Re-read B to get updated BlockedBy
+	b, _ = env.Store.Get(b.ID)
+
+	set := env.Store.ClosedBlockerSet([]*issue.Issue{b})
+	if !set[a.ID] {
+		t.Errorf("closed blocker A should be in set")
+	}
+	if set[c.ID] {
+		t.Errorf("open blocker C should NOT be in set")
+	}
+}
+
+func TestClosedBlockerSetEmpty(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("No deps", issue.CreateOpts{})
+	env.CommitIntent("setup")
+
+	set := env.Store.ClosedBlockerSet([]*issue.Issue{a})
+	if len(set) != 0 {
+		t.Errorf("got %d entries, want 0", len(set))
+	}
+}
+
+func TestClosedBlockerSetDeduplicates(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Shared blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("Blocked B", issue.CreateOpts{})
+	c, _ := env.Store.Create("Blocked C", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Link(a.ID, c.ID)
+	env.Store.Close(a.ID, "done")
+	env.CommitIntent("setup")
+
+	b, _ = env.Store.Get(b.ID)
+	c, _ = env.Store.Get(c.ID)
+
+	set := env.Store.ClosedBlockerSet([]*issue.Issue{b, c})
+	if !set[a.ID] {
+		t.Errorf("closed blocker A should be in set")
+	}
+	if len(set) != 1 {
+		t.Errorf("got %d entries, want 1 (deduplicated)", len(set))
+	}
+}
+

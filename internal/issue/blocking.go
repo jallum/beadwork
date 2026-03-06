@@ -309,3 +309,17 @@ func (s *Store) NewlyUnblocked(id string) ([]*Issue, error) {
 	}
 	return unblocked, nil
 }
+
+// ClosedBlockerSet returns the set of blocker IDs that are closed,
+// collected from the BlockedBy lists of the given issues.
+func (s *Store) ClosedBlockerSet(issues []*Issue) map[string]bool {
+	set := make(map[string]bool)
+	for _, iss := range issues {
+		for _, bid := range iss.BlockedBy {
+			if dep, err := s.Get(bid); err == nil && dep.Status == "closed" {
+				set[bid] = true
+			}
+		}
+	}
+	return set
+}
