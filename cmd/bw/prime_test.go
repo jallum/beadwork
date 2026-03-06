@@ -81,8 +81,8 @@ func TestCmdPrimeTemplateProcessing(t *testing.T) {
 	if !strings.Contains(out, "Beadwork") {
 		t.Errorf("output missing 'Beadwork' header: %q", out)
 	}
-	if !strings.Contains(out, "Starting the Work") {
-		t.Errorf("output missing 'Starting the Work' section: %q", out)
+	if !strings.Contains(out, "Starting Work") {
+		t.Errorf("output missing 'Starting Work' section: %q", out)
 	}
 	// No IF/END template artifacts should leak through
 	if strings.Contains(out, "<!-- IF") || strings.Contains(out, "<!-- END") {

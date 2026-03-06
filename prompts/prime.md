@@ -1,41 +1,49 @@
 {{/* See docs/design-prime.md */}}
 # Beadwork
 
-Beadwork is a state-management tool designed specifically to help you get things done more efficiently.
+Beadwork tracks work as durable state in git — plans, progress, and decisions that survive compaction, session boundaries, and context loss. Your built-in planning tools handle small tasks; beadwork makes ambitious work safe by checkpointing progress so you can pick up after losing context.
 
-Your built-in planning tools work well for small tasks. Beadwork extends them with durable state in git — plans, progress, and decisions that survive compaction, session boundaries, and context loss. This makes ambitious work safe to attempt: checkpoint progress, record decisions, and pick up where you left off even after losing your entire context.
-
-A plan in your context window is fragile — one compaction and it's gone. Make it durable: a comment on the issue preserves a simple plan; an epic with children and dependencies preserves a complex one. Either way, the plan survives across sessions and `bw ready` feeds you the next step.
+Plans in your context window die at compaction. Make them durable: a comment on the issue preserves a simple plan; an epic with children and dependencies preserves a complex one. `bw ready` feeds you the next step — you don't need to remember it all.
 
 ## The Model
 
-All data lives on the `beadwork` git branch — deleting it permanently destroys everything. Issue IDs are prefixed with `{{ .Prefix }}-` (e.g., `{{ .Prefix }}-XYZ`).
+Data lives on the `beadwork` git branch. Issue IDs: `{{ .Prefix }}-XYZ`. Issues have status (open → in_progress → closed, or deferred), priority (P0-P4, default P2), and optional dependencies, labels, comments, and parent relationships.
 
-Issues have **status** (open → in_progress → closed, or deferred), **priority** (P0-P4: P0 critical → P4 backlog, default P2), and optionally **dependencies**, **labels**, **comments**, and **parent** relationships. Issues can form hierarchies: an epic with child tasks (`--parent <epic>`), wired with dependencies (`bw dep add <blocker> blocks <blocked>`). Blocked issues can't be started; when a dependency closes (`bw close <id>`), newly unblocked work surfaces. To find more work, use `bw ready`. `bw show <id>` will give you the description, assignee, comments, blockers and the tickets that _that_ ticket will unblock, all in one go.
+Epics contain child tasks (`--parent <epic>`) wired with dependencies (`bw dep add <blocker> blocks <blocked>`). Blocked issues can't start. `bw ready` shows unblocked work. `bw show <id>` shows full context.
 
-## Tickets are Cheap Insurance
+## Every Task Gets a Ticket
 
-Every task gets a ticket (`bw create "Title" --description "..." -p 2 -t task`) to capture _why_ a change was made — commit messages record the what, tickets record the intent. Larger efforts: structure as an epic with children and dependencies so `bw ready` feeds you the next step -- you don't need to remember it all.
+`bw create "Title" --description "..." -p 2 -t task` — tickets capture _why_ a change was made. Commit messages record the what. Even small fixes benefit: the cost is one command, the payoff is traceable intent. Larger efforts: epic with children so `bw ready` feeds you the next step.
 
-## Starting the Work
+## Starting Work
 
-The main working tree belongs to the user. Your work happens in a worktree named after the ticket it serves — this isolates your changes, keeps main clean for the user or other agents, and gives the work a clear lifecycle with a beginning and an end.
+Beadwork's issue state is concurrency-safe; the repo's working tree is not. The main working tree belongs to the user — working directly in it blocks them from other tasks, other branches, other agents.
 
-Create the worktree, then claim the ticket inside it. When working solo as the main agent, `bw start <id>` claims it — sets status, assigns the current user, shows the full issue context, and tells you how to land it when done.
+**The workflow:**
+1. **Enter a worktree** for the ticket — use the word "worktree" when telling the user what you're doing (e.g., "I'll work in a worktree for {{ .Prefix }}-xyz"). This activates the EnterWorktree tool, giving you an isolated branch at `.claude/worktrees/<name>`.
+2. **Claim the ticket**: `bw start <id>` — sets status, assigns you, shows context and landing instructions.
+3. **Do the work.** One ticket per worktree. Related fixes are new tickets, not scope expansion.
+4. **Land it** per `bw start`'s instructions. Work that isn't committed, closed, and synced is invisible to the next session. Remove the worktree when done.
 
-When delegating the work to another agent, remember that they don't inherit your context. Each worker will need to run `bw start <id> --assignee <delegate-agent-id>` itself — this will explain the issue context and how to land the work, while signalling to other agents _who_ is doing _what_. It's important to close the ticket after you've verified that the agent has completed the work.
+If a `bw` command fails, read the error — beadwork errors are descriptive and actionable.
 
-Beadwork's issue state is concurrency-safe; the repo's working tree is not. Skipping the worktree seems faster — especially when you spot a related fix along the way — but a dirty main worktree blocks the user from starting other tasks, switching branches, or working on anything else. That related fix is a new ticket, not an expansion of the current one. When we're done with a worktree we've created, we remove it and leave things as we found them — the local branch preserves all of the work.
+## Delegation
 
-Work that isn't committed, closed, and synced doesn't exist to the next session or to other workers. Landing instructions are delivered by `bw start` — they aren't embedded in tickets or stored in context. A plan that skips these steps leaves the worker without a path to land.
+Sub-agents don't inherit your context — they won't use worktrees or leave breadcrumbs unless you tell them to. Include the workflow in the handoff:
 
-## Leaving Notes
+> **Setup:** Enter a worktree for the ticket, then run `bw start <id> --assignee <agent-id>`. This claims the ticket and delivers your full briefing — what to build, how to land it, everything. Follow its instructions.
+>
+> **When done:** `bw comment <id> "summary of what you did"` before closing.
 
-Comments (`bw comment <id> "..."`) are durable context — breadcrumbs for your future self after compaction, and messages to anyone else working in the project. This is especially useful for leaving implementation notes when deviations or adjustments are necessary.
+Close the ticket only after verifying the work landed.
+
+## Durable Notes
+
+`bw comment <id> "..."` — breadcrumbs for your future self after compaction, and messages to anyone else working in the project.
 
 ## Commands
 
-Every command supports `--help`. Read commands accept `--json`. `bw --help` lists everything. Common operations: `bw list --grep "auth"` or filter by `--status`, `--label`, `--assignee`. `bw label <id> +bug -wontfix`. `bw defer <id> 2026-03-01`. `bw dep remove <id> blocks <id>`. `bw delete <id>` (previews first; `--force` to confirm).
+`bw --help` lists everything. `--help` on any subcommand. Read commands accept `--json`. Common: `bw list --grep "auth"`, filter by `--status`/`--label`/`--assignee`. `bw defer <id> 2026-03-01`. `bw delete <id>` (previews first; `--force` to confirm).
 
 ## Currently available work:
 

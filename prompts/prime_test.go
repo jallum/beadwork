@@ -6,11 +6,11 @@ import (
 )
 
 func TestPrimePriorityRange(t *testing.T) {
-	if !strings.Contains(Prime, "P0 critical") {
-		t.Error("prime.md should document P0 as critical")
+	if !strings.Contains(Prime, "P0") {
+		t.Error("prime.md should document P0")
 	}
-	if !strings.Contains(Prime, "P4 backlog") {
-		t.Error("prime.md should document P4 as backlog")
+	if !strings.Contains(Prime, "P4") {
+		t.Error("prime.md should document P4")
 	}
 	if !strings.Contains(Prime, "P0-P4") {
 		t.Error("prime.md should mention P0-P4 notation")
