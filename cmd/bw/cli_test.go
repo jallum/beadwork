@@ -1042,6 +1042,24 @@ func TestReadyClosedBlockerHidden(t *testing.T) {
 	assertNotContains(t, out, "blocked by")
 }
 
+func TestListClosedBlockerHidden(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Blocker", issue.CreateOpts{Priority: intPtr(1)})
+	b, _ := env.Store.Create("Unblocked task", issue.CreateOpts{Priority: intPtr(2)})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Close(a.ID, "done")
+	env.CommitIntent("setup")
+
+	out := bw(t, env.Dir, "list")
+
+	// B should appear in the list
+	assertContains(t, out, b.ID)
+	// The closed blocker should NOT appear in the [blocked by: ...] annotation
+	assertNotContains(t, out, "blocked by")
+}
+
 // --- Update ---
 
 func TestUpdateTitleOutput(t *testing.T) {

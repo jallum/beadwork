@@ -41,15 +41,7 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 		return nil
 	}
 
-	// Build set of closed blocker IDs so we can filter them from dep annotations.
-	closedBlockers := make(map[string]bool)
-	for _, iss := range issues {
-		for _, bid := range iss.BlockedBy {
-			if dep, err := store.Get(bid); err == nil && dep.Status == "closed" {
-				closedBlockers[bid] = true
-			}
-		}
-	}
+	closedBlockers := store.ClosedBlockerSet(issues)
 
 	// Partition into standalone issues and groups keyed by parent ID.
 	// Preserve insertion order for parents.
