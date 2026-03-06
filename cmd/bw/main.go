@@ -61,6 +61,7 @@ func main() {
 			fatal(err.Error())
 		}
 		store.DryRun = dryRun
+		maybeCheckForUpgrade(store, w)
 	}
 
 	if err := c.Run(store, args, w); err != nil {
