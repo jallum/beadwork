@@ -4,14 +4,15 @@
   "blocks": [
     "bw-vf1.2"
   ],
+  "closed_at": "2026-03-06T20:47:46Z",
   "created": "2026-03-06T20:07:08Z",
   "description": "Extract the closed-blocker-set construction from ready.go:44-52 into a Store method: func (s *Store) ClosedBlockerSet(issues []*Issue) map[string]bool. Iterates BlockedBy for each issue, calls s.Get(bid), adds to set if Status == closed.",
   "id": "bw-vf1.1",
   "labels": [],
   "parent": "bw-vf1",
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add ClosedBlockerSet method to issue.Store",
   "type": "task",
-  "updated_at": "2026-03-06T20:46:48Z"
+  "updated_at": "2026-03-06T20:47:46Z"
 }
