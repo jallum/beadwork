@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-06T21:17:01Z",
+  "description": "colorizeLine() in internal/md/resolve.go applies heading/list styling to lines inside fenced code blocks. Lines starting with # or ## get bold+cyan even when they're inside a ``` fence. The colorize() function processes lines individually with no fence state tracking. Fix: track fenced code block state in colorize() and skip markdown styling for lines inside fences. Render them dim instead. May also want a hidden flag (e.g. --x-render-as tty|markdown|raw) to force writer mode regardless of stdout, for debugging.",
+  "id": "bw-srj",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "TTY renderer applies markdown styling inside fenced code blocks",
+  "type": "task",
+  "updated_at": "2026-03-06T21:17:01Z"
+}
