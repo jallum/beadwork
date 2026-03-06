@@ -4,14 +4,15 @@
   "blocks": [
     "bw-zt5.5"
   ],
+  "closed_at": "2026-03-06T12:41:50Z",
   "created": "2026-03-06T12:35:21Z",
   "description": "In cmdUpgrade (upgrade.go), after a successful install+verify:\n- Open the store (if available — upgrade doesn't currently require NeedsStore)\n- Search for an open issue with label `beadwork-upgrade`\n- If found, close it with reason 'upgraded'\n- Non-fatal: if store isn't available or close fails, just skip",
   "id": "bw-zt5.4",
   "labels": [],
   "parent": "bw-zt5",
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Auto-close upgrade bead on successful upgrade",
   "type": "task",
-  "updated_at": "2026-03-06T12:35:25Z"
+  "updated_at": "2026-03-06T12:41:50Z"
 }
