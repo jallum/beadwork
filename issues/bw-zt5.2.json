@@ -3,7 +3,9 @@
   "blocked_by": [
     "bw-zt5.1"
   ],
-  "blocks": [],
+  "blocks": [
+    "bw-zt5.3"
+  ],
   "created": "2026-03-06T12:35:21Z",
   "description": "When the version check finds a newer release:\n- Scan open/in_progress issues for label `beadwork-upgrade`\n- If found: update title to 'Upgrade bw to X.Y.Z' and description with new version info, changelog, and instructions\n- If not found: create a new P1 task with label `beadwork-upgrade`, title, and description\n- Description template includes: current version, target version, relevant changelog entries, and the command `bw upgrade --yes`\n- Fetch changelog using existing fetchChangelog/parseChangelog infrastructure from upgrade.go",
   "id": "bw-zt5.2",
