@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-06T12:41:55Z",
   "created": "2026-03-06T12:35:02Z",
   "description": "Add a mechanism that periodically checks for new bw releases and signals to the agent/user by creating/updating a beadwork ticket with upgrade instructions.\n\n## Design\n\nWhen bw runs a command that opens the store, it checks (at most once per day) whether a newer release is available on GitHub. If one is found, it creates or updates a bead labeled `beadwork-upgrade` with the target version, changelog, and upgrade instructions.\n\n## Key decisions\n\n- **Cache file at ~/.cache/bw/version-check.json** — stores lastCheck timestamp and latestVersion. Checked before any network call.\n- **24h throttle, unconditional** — the timestamp is written regardless of API success or failure. A network timeout means 'we tried today, move on' — no retrying on every subsequent command.\n- **Label-based sentinel** (`beadwork-upgrade`) — at most one open upgrade ticket exists. Found by scanning open issues for the label.\n- **Update in place** — if a newer release supersedes the current upgrade ticket, title and description are updated rather than creating a new ticket.\n- **P1 priority** — high enough to surface in bw ready, not P0-critical.\n- **Non-blocking, fail-silent** — errors never break normal commands.\n- **Auto-close on upgrade** — successful bw upgrade finds and closes the upgrade bead.",
   "id": "bw-zt5",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Periodic upgrade notification",
   "type": "epic",
-  "updated_at": "2026-03-06T12:35:02Z"
+  "updated_at": "2026-03-06T12:41:55Z"
 }
