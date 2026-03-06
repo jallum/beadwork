@@ -9,6 +9,12 @@
   "id": "bw-vf1.3",
   "labels": [],
   "parent": "bw-vf1",
+  "comments": [
+    {
+      "text": "Test already landed as TestListClosedBlockerHidden in the bw-vf1.2 commit.",
+      "timestamp": "2026-03-06T20:49:21Z"
+    }
+  ],
   "priority": 1,
   "status": "in_progress",
   "title": "Add test for closed blocker filtering in bw list",
