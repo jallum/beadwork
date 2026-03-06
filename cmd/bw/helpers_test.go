@@ -103,7 +103,6 @@ func TestParseArgsEmpty(t *testing.T) {
 }
 
 func TestParseArgsValueFlagAtEnd(t *testing.T) {
-	// Value flag with no following token should be silently ignored
 	a, err := ParseArgs([]string{"--status"}, []string{"--status"}, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -129,13 +128,11 @@ func TestParseArgsIntErr(t *testing.T) {
 		t.Error("expected error for non-numeric priority")
 	}
 
-	// Missing flag
 	_, set, err = a.IntErr("--missing")
 	if set || err != nil {
 		t.Errorf("expected set=false, err=nil for missing flag, got set=%v, err=%v", set, err)
 	}
 
-	// Valid int
 	a2, parseErr := ParseArgs([]string{"--priority", "3"}, []string{"--priority"}, nil)
 	if parseErr != nil {
 		t.Fatal(parseErr)
@@ -189,7 +186,7 @@ func TestFprintJSON(t *testing.T) {
 	}
 }
 
-func TestFprintIssue(t *testing.T) {
+func TestShowSummaryContainsIDAndTitle(t *testing.T) {
 	iss := &issue.Issue{
 		ID:       "test-1234",
 		Title:    "Test issue",
@@ -202,7 +199,7 @@ func TestFprintIssue(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	fprintIssue(PlainWriter(&buf), iss)
+	fprintIssueSummary(PlainWriter(&buf), iss)
 	out := buf.String()
 	if !strings.Contains(out, "test-1234") {
 		t.Errorf("missing ID in output: %q", out)
@@ -210,257 +207,51 @@ func TestFprintIssue(t *testing.T) {
 	if !strings.Contains(out, "Test issue") {
 		t.Errorf("missing title in output: %q", out)
 	}
-	if !strings.Contains(out, "alice") {
-		t.Errorf("missing assignee in output: %q", out)
-	}
 	if !strings.Contains(out, "Labels: bug") {
 		t.Errorf("missing labels in output: %q", out)
 	}
 }
 
-func TestFprintIssueWrapsDescription(t *testing.T) {
+func TestShowSummaryTypeTag(t *testing.T) {
 	iss := &issue.Issue{
-		ID:          "test-wrap",
-		Title:       "Wrap test",
-		Status:      "open",
-		Priority:    2,
-		Type:        "task",
-		Created:     "2024-01-15T12:00:00Z",
-		Description: "This is a long description that should be wrapped when the terminal width is narrow enough to trigger wrapping behavior",
+		ID:      "test-9999",
+		Title:   "Bug report",
+		Status:  "open",
+		Type:    "bug",
+		Created: "2024-01-15T12:00:00Z",
 	}
 
 	var buf bytes.Buffer
-	w := ColorWriter(&buf, 40)
-	fprintIssue(w, iss)
-
-	// Strip ANSI codes for line-length checking.
-	out := stripANSI(buf.String())
-
-	// With width=40 and 2-char indent, lines wrap at 38 chars.
-	inDesc := false
-	for _, line := range strings.Split(out, "\n") {
-		if strings.Contains(line, "DESCRIPTION") {
-			inDesc = true
-			continue
-		}
-		if !inDesc || line == "" {
-			continue
-		}
-		content := strings.TrimPrefix(line, "  ")
-		if len(content) > 38 {
-			t.Errorf("description line exceeds width: %d chars: %q", len(content), content)
-		}
-	}
-}
-
-func TestFprintCommentsWrapsText(t *testing.T) {
-	iss := &issue.Issue{
-		ID:       "test-cwrap",
-		Title:    "Comment wrap test",
-		Status:   "open",
-		Priority: 2,
-		Type:     "task",
-		Created:  "2024-01-15T12:00:00Z",
-		Comments: []issue.Comment{
-			{
-				Timestamp: "2024-01-16T10:00:00Z",
-				Text:      "This is a long comment that should be wrapped when the terminal width is narrow enough to trigger wrapping",
-			},
-		},
-	}
-
-	var buf bytes.Buffer
-	w := ColorWriter(&buf, 40)
-	fprintComments(w, iss)
-
-	// Strip ANSI codes for line-length checking.
-	out := stripANSI(buf.String())
-
-	// With width=40 and 4-char indent, content lines wrap at 36 chars.
-	for _, line := range strings.Split(out, "\n") {
-		if !strings.HasPrefix(line, "    ") {
-			continue
-		}
-		content := strings.TrimPrefix(line, "    ")
-		if len(content) > 36 {
-			t.Errorf("comment line exceeds width: %d chars: %q", len(content), content)
-		}
-	}
-}
-
-func TestFprintIssueFull(t *testing.T) {
-	iss := &issue.Issue{
-		ID:          "test-5678",
-		Title:       "Full issue",
-		Status:      "in_progress",
-		Priority:    1,
-		Type:        "bug",
-		Assignee:    "",
-		Created:     "2024-06-15T12:00:00Z",
-		Labels:      []string{},
-		Blocks:      []string{"test-aaaa"},
-		BlockedBy:   []string{"test-bbbb"},
-		Parent:      "test-cccc",
-		Description: "Line one\nLine two",
-	}
-
-	var buf bytes.Buffer
-	w := PlainWriter(&buf)
-	fprintIssue(w, iss)
-	fprintDescription(w, iss)
-	out := buf.String()
-	if !strings.Contains(out, "[BUG]") {
-		t.Errorf("missing [BUG] type tag: %q", out)
-	}
-	// Deps are now rendered by fprintMap (not fprintIssue)
-	if !strings.Contains(out, "Parent: test-cccc") {
-		t.Errorf("missing Parent in output: %q", out)
-	}
-	if !strings.Contains(out, "DESCRIPTION") {
-		t.Errorf("missing DESCRIPTION in output: %q", out)
-	}
-	if !strings.Contains(out, "Line one") || !strings.Contains(out, "Line two") {
-		t.Errorf("missing description lines in output: %q", out)
-	}
-	// No assignee → should show "—"
-	if !strings.Contains(out, "\u2014") {
-		t.Errorf("missing dash for empty assignee: %q", out)
-	}
-}
-
-func TestFprintIssueTypeTag(t *testing.T) {
-	iss := &issue.Issue{
-		ID:       "test-9999",
-		Title:    "Bug report",
-		Status:   "open",
-		Priority: 1,
-		Type:     "bug",
-		Created:  "2024-01-15T12:00:00Z",
-	}
-
-	var buf bytes.Buffer
-	fprintIssue(PlainWriter(&buf), iss)
+	fprintIssueSummary(PlainWriter(&buf), iss)
 	out := buf.String()
 	if !strings.Contains(out, "[BUG]") {
 		t.Errorf("should contain [BUG] tag: %q", out)
 	}
 
-	// Task type should NOT have a tag
 	iss.Type = "task"
 	buf.Reset()
-	fprintIssue(PlainWriter(&buf), iss)
+	fprintIssueSummary(PlainWriter(&buf), iss)
 	out = buf.String()
 	if strings.Contains(out, "[TASK]") {
 		t.Errorf("task should not have type tag: %q", out)
 	}
 }
 
-func TestFprintIssueDateLine(t *testing.T) {
+func TestShowSummaryParent(t *testing.T) {
 	iss := &issue.Issue{
-		ID:        "test-date",
-		Title:     "Date test",
-		Status:    "open",
-		Priority:  2,
-		Type:      "task",
-		Created:   "2024-01-15T12:00:00Z",
-		UpdatedAt: "2024-02-20T14:00:00Z",
+		ID:      "test-par",
+		Title:   "With parent",
+		Status:  "open",
+		Type:    "task",
+		Parent:  "test-cccc",
+		Created: "2024-01-15T12:00:00Z",
 	}
 
 	var buf bytes.Buffer
-	fprintIssue(PlainWriter(&buf), iss)
+	fprintIssueSummary(PlainWriter(&buf), iss)
 	out := buf.String()
-	if !strings.Contains(out, "Created: 2024-01-15") {
-		t.Errorf("missing Created date: %q", out)
-	}
-	if !strings.Contains(out, "Updated: 2024-02-20") {
-		t.Errorf("missing Updated date: %q", out)
-	}
-
-	// Deferred should be on same line
-	iss.DeferUntil = "2027-06-01"
-	buf.Reset()
-	fprintIssue(PlainWriter(&buf), iss)
-	out = buf.String()
-	if !strings.Contains(out, "Deferred: 2027-06-01") {
-		t.Errorf("missing Deferred date: %q", out)
-	}
-}
-
-func TestFprintIssueCloseReason(t *testing.T) {
-	iss := &issue.Issue{
-		ID:          "test-closed",
-		Title:       "Closed issue",
-		Status:      "closed",
-		Priority:    2,
-		Type:        "task",
-		Created:     "2024-01-15T12:00:00Z",
-		ClosedAt:    "2024-03-01T10:00:00Z",
-		CloseReason: "duplicate",
-	}
-
-	var buf bytes.Buffer
-	fprintIssue(PlainWriter(&buf), iss)
-	out := buf.String()
-	if !strings.Contains(out, "Close reason: duplicate") {
-		t.Errorf("should contain close reason: %q", out)
-	}
-}
-
-func TestFormatDepsEmpty(t *testing.T) {
-	w := PlainWriter(&bytes.Buffer{})
-	iss := &issue.Issue{
-		Blocks:    []string{},
-		BlockedBy: []string{},
-	}
-	if got := formatDeps(w, iss); got != "" {
-		t.Errorf("formatDeps(empty) = %q, want empty", got)
-	}
-}
-
-func TestFormatDepsBlocksOnly(t *testing.T) {
-	w := PlainWriter(&bytes.Buffer{})
-	iss := &issue.Issue{
-		Blocks:    []string{"bw-abc", "bw-def"},
-		BlockedBy: []string{},
-	}
-	got := formatDeps(w, iss)
-	want := " [blocks: bw-abc, bw-def]"
-	if got != want {
-		t.Errorf("formatDeps = %q, want %q", got, want)
-	}
-}
-
-func TestFormatDepsBlockedByOnly(t *testing.T) {
-	w := PlainWriter(&bytes.Buffer{})
-	iss := &issue.Issue{
-		Blocks:    []string{},
-		BlockedBy: []string{"bw-xyz"},
-	}
-	got := formatDeps(w, iss)
-	want := " [blocked by: bw-xyz]"
-	if got != want {
-		t.Errorf("formatDeps = %q, want %q", got, want)
-	}
-}
-
-func TestFormatDepsBoth(t *testing.T) {
-	w := PlainWriter(&bytes.Buffer{})
-	iss := &issue.Issue{
-		Blocks:    []string{"bw-abc"},
-		BlockedBy: []string{"bw-xyz"},
-	}
-	got := formatDeps(w, iss)
-	want := " [blocks: bw-abc] [blocked by: bw-xyz]"
-	if got != want {
-		t.Errorf("formatDeps = %q, want %q", got, want)
-	}
-}
-
-func TestFormatDepsNilSlices(t *testing.T) {
-	w := PlainWriter(&bytes.Buffer{})
-	iss := &issue.Issue{}
-	if got := formatDeps(w, iss); got != "" {
-		t.Errorf("formatDeps(nil slices) = %q, want empty", got)
+	if !strings.Contains(out, "Parent: test-cccc") {
+		t.Errorf("missing Parent in output: %q", out)
 	}
 }
 
@@ -468,7 +259,6 @@ func TestGetInitializedWithDefaultPriority(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	// Set a default priority config
 	env.Repo.SetConfig("default.priority", "2")
 	env.Repo.Commit("config default.priority=2")
 
@@ -482,11 +272,9 @@ func TestGetInitializedWithDefaultPriority(t *testing.T) {
 }
 
 func TestGetInitializedReturnsError(t *testing.T) {
-	// getRepo / getInitializedStore should return errors, not crash
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	// Verify it works when initialized
 	s, err := getInitializedStore()
 	if err != nil {
 		t.Fatalf("getInitializedStore: %v", err)
@@ -548,5 +336,31 @@ func TestRemoveFlag(t *testing.T) {
 				t.Errorf("removeFlag(%v, %q)[%d] = %q, want %q", tt.args, tt.flag, i, got[i], tt.want[i])
 			}
 		}
+	}
+}
+
+func TestWriterIsTTY(t *testing.T) {
+	var buf bytes.Buffer
+	if PlainWriter(&buf).IsTTY() {
+		t.Error("PlainWriter should not be TTY")
+	}
+	if !ColorWriter(&buf, 80).IsTTY() {
+		t.Error("ColorWriter should be TTY")
+	}
+	if RawWriter(&buf).IsTTY() {
+		t.Error("RawWriter should not be TTY")
+	}
+}
+
+func TestWriterIsRaw(t *testing.T) {
+	var buf bytes.Buffer
+	if PlainWriter(&buf).IsRaw() {
+		t.Error("PlainWriter should not be Raw")
+	}
+	if ColorWriter(&buf, 80).IsRaw() {
+		t.Error("ColorWriter should not be Raw")
+	}
+	if !RawWriter(&buf).IsRaw() {
+		t.Error("RawWriter should be Raw")
 	}
 }

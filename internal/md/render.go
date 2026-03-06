@@ -37,6 +37,10 @@ func IssueSummary(iss *issue.Issue) string {
 	b.WriteString(" \u2014 ")
 	b.WriteString(Escape(iss.Title))
 
+	if iss.DeferUntil != "" {
+		b.WriteString("\nDeferred: ")
+		b.WriteString(iss.DeferUntil)
+	}
 	if iss.Parent != "" {
 		b.WriteString("\nParent: ")
 		b.WriteString(iss.Parent)
@@ -52,7 +56,7 @@ func IssueSummary(iss *issue.Issue) string {
 // IssueOneLiner returns a compact single-line representation with status,
 // id, priority, optional type tag, title, and inline deps.
 func IssueOneLiner(iss *issue.Issue) string {
-	return issueOneLiner(iss, statusToken(iss.Status))
+	return issueOneLiner(iss, statusToken(iss.Status), nil)
 }
 
 // IssueOneLinerBlocked is like IssueOneLiner but uses the blocked status icon
@@ -62,10 +66,16 @@ func IssueOneLinerBlocked(iss *issue.Issue, openBlockers []string) string {
 	if len(openBlockers) > 0 && iss.Status == "open" {
 		st = statusToken("blocked")
 	}
-	return issueOneLiner(iss, st)
+	return issueOneLiner(iss, st, nil)
 }
 
-func issueOneLiner(iss *issue.Issue, statusTok string) string {
+// IssueOneLinerFiltered is like IssueOneLiner but filters out closed blockers
+// from the dep annotation.
+func IssueOneLinerFiltered(iss *issue.Issue, closedBlockers map[string]bool) string {
+	return issueOneLiner(iss, statusToken(iss.Status), closedBlockers)
+}
+
+func issueOneLiner(iss *issue.Issue, statusTok string, closedBlockers map[string]bool) string {
 	var b strings.Builder
 	b.WriteString(statusTok)
 	b.WriteByte(' ')
@@ -81,7 +91,12 @@ func issueOneLiner(iss *issue.Issue, statusTok string) string {
 	b.WriteByte(' ')
 	b.WriteString(Escape(iss.Title))
 
-	deps := FormatDeps(iss)
+	var deps string
+	if closedBlockers != nil {
+		deps = FormatDepsFiltered(iss, closedBlockers)
+	} else {
+		deps = FormatDeps(iss)
+	}
 	if deps != "" {
 		b.WriteString(deps)
 	}

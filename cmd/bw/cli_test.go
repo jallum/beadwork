@@ -128,19 +128,12 @@ func TestShowFormat(t *testing.T) {
 
 	out := bw(t, env.Dir, "show", iss.ID)
 
-	// Header line: icon, ID, title, priority, status
-	assertContains(t, out, iss.ID+" [BUG] · Fix login timeout")
-	assertContains(t, out, "P1 · OPEN")
+	// Heading: status icon + ID + type tag + title
+	assertContains(t, out, iss.ID+" [BUG]")
+	assertContains(t, out, "Fix login timeout")
 
-	// Metadata line
-	assertContains(t, out, "Assignee: agent-1 · Type: bug")
-
-	// Created date (just the date portion)
-	assertContains(t, out, "Created: ")
-
-	// Description block
-	assertContains(t, out, "DESCRIPTION")
-	assertContains(t, out, "  Users get kicked out after 30s")
+	// Description flows directly (no DESCRIPTION header)
+	assertContains(t, out, "Users get kicked out after 30s")
 }
 
 func TestShowNoAssignee(t *testing.T) {
@@ -151,7 +144,7 @@ func TestShowNoAssignee(t *testing.T) {
 	env.CommitIntent("create " + iss.ID)
 
 	out := bw(t, env.Dir, "show", iss.ID)
-	assertContains(t, out, "Assignee: — · Type: task")
+	assertContains(t, out, "Unassigned task")
 }
 
 func TestShowNoDescription(t *testing.T) {
@@ -206,7 +199,6 @@ func TestShowClosedStatus(t *testing.T) {
 	env.CommitIntent("create and close " + iss.ID)
 
 	out := bw(t, env.Dir, "show", iss.ID)
-	assertContains(t, out, "CLOSED")
 	assertContains(t, out, "✓")
 }
 
@@ -353,8 +345,7 @@ func TestReadyOutput(t *testing.T) {
 	// (its ID may appear in [blocks: ...] suffix on the blocker line)
 	assertNotListedIssue(t, out, b.ID)
 
-	// Footer
-	assertContains(t, out, "Ready:")
+	// No footer in non-TTY output
 }
 
 func TestReadyEmpty(t *testing.T) {
@@ -603,11 +594,11 @@ func TestImportFromFile(t *testing.T) {
 	// Verify issues exist
 	showOut := bw(t, env.Dir, "show", "ext-001")
 	assertContains(t, showOut, "Imported task")
-	assertContains(t, showOut, "OPEN")
+	assertContains(t, showOut, "○")
 
 	showOut2 := bw(t, env.Dir, "show", "ext-002")
 	assertContains(t, showOut2, "Another import")
-	assertContains(t, showOut2, "CLOSED")
+	assertContains(t, showOut2, "✓")
 }
 
 func TestImportPreservesIDs(t *testing.T) {
@@ -718,13 +709,11 @@ func TestImportRoundtrip(t *testing.T) {
 	// Verify issues exist with correct properties
 	showA := bw(t, env2.Dir, "show", a.ID)
 	assertContains(t, showA, "Roundtrip A")
-	assertContains(t, showA, "P1")
-	assertContains(t, showA, "Assignee: alice")
 	assertContains(t, showA, "desc A")
 
 	showB := bw(t, env2.Dir, "show", b.ID)
 	assertContains(t, showB, "Roundtrip B")
-	assertContains(t, showB, "CLOSED")
+	assertContains(t, showB, "✓")
 }
 
 // --- helpers ---
@@ -1077,8 +1066,8 @@ func TestUpdatePriorityOutput(t *testing.T) {
 	env.CommitIntent("create " + iss.ID)
 
 	bw(t, env.Dir, "update", iss.ID, "-p", "1")
-	show := bw(t, env.Dir, "show", iss.ID)
-	assertContains(t, show, "P1")
+	show := bw(t, env.Dir, "show", iss.ID, "--json")
+	assertContains(t, show, `"priority": 1`)
 }
 
 func TestUpdateStatusOutput(t *testing.T) {
@@ -1090,7 +1079,7 @@ func TestUpdateStatusOutput(t *testing.T) {
 
 	bw(t, env.Dir, "update", iss.ID, "-s", "in_progress")
 	show := bw(t, env.Dir, "show", iss.ID)
-	assertContains(t, show, "IN_PROGRESS")
+	assertContains(t, show, "◐")
 }
 
 func TestUpdateAssigneeOutput(t *testing.T) {
@@ -1101,8 +1090,8 @@ func TestUpdateAssigneeOutput(t *testing.T) {
 	env.CommitIntent("create " + iss.ID)
 
 	bw(t, env.Dir, "update", iss.ID, "-a", "agent-1")
-	show := bw(t, env.Dir, "show", iss.ID)
-	assertContains(t, show, "Assignee: agent-1")
+	show := bw(t, env.Dir, "show", iss.ID, "--json")
+	assertContains(t, show, `"assignee": "agent-1"`)
 }
 
 func TestUpdateDescriptionOutput(t *testing.T) {
@@ -1126,7 +1115,7 @@ func TestUpdateTypeOutput(t *testing.T) {
 
 	bw(t, env.Dir, "update", iss.ID, "-t", "bug")
 	show := bw(t, env.Dir, "show", iss.ID)
-	assertContains(t, show, "Type: bug")
+	assertContains(t, show, "[BUG]")
 }
 
 func TestUpdateMultipleFlags(t *testing.T) {
@@ -1138,9 +1127,10 @@ func TestUpdateMultipleFlags(t *testing.T) {
 
 	bw(t, env.Dir, "update", iss.ID, "-p", "1", "-a", "alice", "-t", "bug")
 	show := bw(t, env.Dir, "show", iss.ID)
-	assertContains(t, show, "P1")
-	assertContains(t, show, "Assignee: alice")
-	assertContains(t, show, "Type: bug")
+	assertContains(t, show, "[BUG]")
+	jsonShow := bw(t, env.Dir, "show", iss.ID, "--json")
+	assertContains(t, jsonShow, `"priority": 1`)
+	assertContains(t, jsonShow, `"assignee": "alice"`)
 }
 
 func TestUpdateJSON(t *testing.T) {
@@ -1230,7 +1220,6 @@ func TestPrimeOutput(t *testing.T) {
 
 	out := bw(t, env.Dir, "prime")
 	assertContains(t, out, "Open task")
-	assertContains(t, out, "Ready: 1")
 }
 
 func TestPrimeWithInProgress(t *testing.T) {

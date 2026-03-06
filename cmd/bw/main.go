@@ -12,7 +12,9 @@ const version = "0.10.0"
 
 func main() {
 	var w Writer
-	if term.IsTerminal(int(os.Stdout.Fd())) && os.Getenv("NO_COLOR") == "" {
+	if hasFlag(os.Args, "--raw") {
+		w = RawWriter(os.Stdout)
+	} else if term.IsTerminal(int(os.Stdout.Fd())) && os.Getenv("NO_COLOR") == "" {
 		width, _, _ := term.GetSize(int(os.Stdout.Fd()))
 		w = ColorWriter(os.Stdout, width)
 	} else {
@@ -26,6 +28,8 @@ func main() {
 
 	cmd := os.Args[1]
 	args := os.Args[2:]
+
+	args = removeFlag(args, "--raw")
 
 	dryRun := hasFlag(args, "--dry-run")
 	if dryRun {
