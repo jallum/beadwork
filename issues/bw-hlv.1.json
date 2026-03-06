@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-06T18:29:24Z",
+  "description": "Create internal/md package with two files:\n\nrender.go — Functions producing tokenized markdown strings:\n- Escape(s) — escapes { in user text to prevent token collisions\n- IssueSummary(iss) — # heading with {status:}, {id:}, {type:} tokens, escaped title\n- IssueOneLiner(iss) — compact line with {status:}, {id:}, {p:} tokens\n- Description(desc) — escaped raw text (no header)\n- Children(children, store) — ## CHILDREN with {check:}, {id:}, {p:}, {dep:} tokens\n- BlockedBy(tips) — ## BLOCKED BY section\n- Unblocks(deps) — ## UNBLOCKS section\n- Comments(comments) — ## COMMENTS section with escaped text\n- FormatDeps(iss) — inline {dep:blocks:id} / {dep:blocked_by:id} tokens\n\nresolve.go — Two resolution functions:\n- ResolveMarkdown(tokenized) — tokens → clean markdown for agents\n- ResolveTTY(tokenized, width) — tokens → plain TTY text → wrap.Text() → ANSI colorize\n\nToken vocabulary (~12 types): {status:open/closed/in_progress/blocked/deferred}, {p:0-4}, {id:ID}, {type:TYPE}, {check:done/open}, {dep:blocks:ID}, {dep:blocked_by:ID}\n\nTTY pipeline: resolve tokens to plain text (with extras like ● dots), wrap at terminal width via existing internal/wrap package, then apply ANSI coloring using Claude Code conventions (Bold+Cyan headings, priority colors, Cyan IDs, etc.).\n\nAlso add ⊘ blocked icon to issue.StatusIcon() for open issues with unresolved blockers.\n\nFiles: internal/md/render.go, internal/md/render_test.go, internal/md/resolve.go, internal/md/resolve_test.go",
+  "id": "bw-hlv.1",
+  "labels": [],
+  "parent": "bw-hlv",
+  "priority": 1,
+  "status": "open",
+  "title": "Create internal/md renderer and resolver",
+  "type": "task",
+  "updated_at": "2026-03-06T18:29:24Z"
+}
