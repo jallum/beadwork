@@ -12,13 +12,27 @@ const version = "0.10.0"
 
 func main() {
 	var w Writer
-	if hasFlag(os.Args, "--raw") {
-		w = RawWriter(os.Stdout)
-	} else if term.IsTerminal(int(os.Stdout.Fd())) && os.Getenv("NO_COLOR") == "" {
-		width, _, _ := term.GetSize(int(os.Stdout.Fd()))
+	renderAs, _ := flagValue(os.Args, "--x-render-as")
+	switch renderAs {
+	case "tty":
+		width := 80
+		if term.IsTerminal(int(os.Stdout.Fd())) {
+			width, _, _ = term.GetSize(int(os.Stdout.Fd()))
+		}
 		w = ColorWriter(os.Stdout, width)
-	} else {
+	case "markdown":
 		w = PlainWriter(os.Stdout)
+	case "raw":
+		w = RawWriter(os.Stdout)
+	default:
+		if hasFlag(os.Args, "--raw") {
+			w = RawWriter(os.Stdout)
+		} else if term.IsTerminal(int(os.Stdout.Fd())) && os.Getenv("NO_COLOR") == "" {
+			width, _, _ := term.GetSize(int(os.Stdout.Fd()))
+			w = ColorWriter(os.Stdout, width)
+		} else {
+			w = PlainWriter(os.Stdout)
+		}
 	}
 
 	if len(os.Args) < 2 {
@@ -30,6 +44,7 @@ func main() {
 	args := os.Args[2:]
 
 	args = removeFlag(args, "--raw")
+	args, _ = removeFlagValue(args, "--x-render-as")
 
 	dryRun := hasFlag(args, "--dry-run")
 	if dryRun {

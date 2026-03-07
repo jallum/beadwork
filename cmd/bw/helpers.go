@@ -68,6 +68,29 @@ func removeFlag(args []string, flag string) []string {
 	return out
 }
 
+func flagValue(args []string, flag string) (string, bool) {
+	for i, a := range args {
+		if a == flag && i+1 < len(args) {
+			return args[i+1], true
+		}
+	}
+	return "", false
+}
+
+func removeFlagValue(args []string, flag string) ([]string, bool) {
+	out := make([]string, 0, len(args))
+	found := false
+	for i := 0; i < len(args); i++ {
+		if args[i] == flag && i+1 < len(args) {
+			found = true
+			i++ // skip value
+		} else {
+			out = append(out, args[i])
+		}
+	}
+	return out, found
+}
+
 // aliases maps short flags to their long forms.
 var aliases = map[string]string{
 	"-p": "--priority",
