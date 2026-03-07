@@ -6,6 +6,7 @@
   "blocks": [
     "bw-exq.4"
   ],
+  "closed_at": "2026-03-07T22:49:32Z",
   "created": "2026-03-07T21:53:41Z",
   "description": "**Depends on T1 succeeding.** Same setup as T1. After user addresses dirty state (e.g., \"stash those and continue\"), observe whether the agent then asks how to deliver the new work.\n\n**Observables**:\n- Agent asks how to deliver after hygiene is resolved\n- If user says \"as a branch\": full workflow activates",
   "id": "bw-exq.2",
@@ -20,7 +21,7 @@
     }
   ],
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "T2: After hygiene pause, does agent ask about delivery?",
   "type": "task",
   "updated_at": "2026-03-07T22:49:32Z"
