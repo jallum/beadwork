@@ -8,9 +8,15 @@
   "labels": [
     "experiment"
   ],
+  "comments": [
+    {
+      "text": "Blocked: Opus 4.6 never runs bw prime (0/3 runs). The entire hygiene-as-gate mechanism depends on bw prime being called. Suspending in favor of a bootstrap prompt experiment — need to fix bw prime activation before this experiment is viable.",
+      "timestamp": "2026-03-07T22:04:13Z"
+    }
+  ],
   "priority": 3,
   "status": "open",
   "title": "Hygiene warning as workflow gate",
   "type": "epic",
-  "updated_at": "2026-03-07T21:53:26Z"
+  "updated_at": "2026-03-07T22:04:13Z"
 }
