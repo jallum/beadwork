@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-07T23:25:41Z",
   "created": "2026-03-07T23:23:24Z",
   "description": "Detect which AI coding agent is invoking bw via environment variables. Start with known reliable signals (CLAUDECODE, AIDER, CURSOR_*, etc). Be honest about confidence — distinguish confirmed from speculative.",
   "id": "bw-oga",
   "labels": [],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add agent detection module",
   "type": "task",
-  "updated_at": "2026-03-07T23:23:28Z"
+  "updated_at": "2026-03-07T23:25:41Z"
 }
