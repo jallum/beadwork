@@ -2,13 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-07T13:14:28Z",
+  "close_reason": "Test issue for investigating date parsing bug",
   "created": "2026-03-07T13:08:59Z",
   "description": "",
   "id": "bw-y01",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "Test defer date parsing",
   "type": "task",
-  "updated_at": "2026-03-07T13:08:59Z"
+  "updated_at": "2026-03-07T13:14:28Z"
 }
