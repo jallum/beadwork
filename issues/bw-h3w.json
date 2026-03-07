@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-07T03:31:26Z",
+  "description": "Two workstreams: fix the TTY renderer's fenced code block bug (bw-srj), and strengthen the prime prompt so agents naturally plan in beadwork rather than in ephemeral context.",
+  "id": "bw-h3w",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Improve TTY rendering and prime prompt durability guidance",
+  "type": "epic",
+  "updated_at": "2026-03-07T03:31:26Z"
+}
