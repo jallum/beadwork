@@ -10,9 +10,15 @@
   "labels": [
     "experiment"
   ],
+  "comments": [
+    {
+      "text": "## Experiment complete\n\n**Key findings**:\n1. AGENTS.md is not read by Claude Code — instructions must go in CLAUDE.md (or equivalent)\n2. \"ALWAYS run bw prime\" + consequences is the minimum effective wording (both Opus and Sonnet)\n3. Softer framings (\"at the start of every session\", \"fastest path\") are treated as suggestions and skipped\n4. Once bw prime fires, the dirty worktree warning at the top causes investigation but not a hard pause\n\n**Changes shipped**:\n- agents.md: ALWAYS + consequences wording for bw prime trigger\n- agents.md: Removed policy that belongs in prime (ticket rule, bw ready)\n- onboard.md: Agent-agnostic, recommends CLAUDE.md/GEMINI.md/etc.\n- CLAUDE.md: Matches agents.md\n- Design doc updated with findings\n\n**Unblocks**: bw-exq (hygiene-as-gate experiment) — now that bw prime reliably fires, the hygiene warning can be tested properly.",
+      "timestamp": "2026-03-07T22:42:44Z"
+    }
+  ],
   "priority": 2,
   "status": "open",
   "title": "Bootstrap prompt activation experiment",
   "type": "epic",
-  "updated_at": "2026-03-07T22:04:50Z"
+  "updated_at": "2026-03-07T22:42:44Z"
 }
