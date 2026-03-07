@@ -11,9 +11,15 @@
     "experiment"
   ],
   "parent": "bw-exq",
+  "comments": [
+    {
+      "text": "Moot — already established in bw-u3u T4j that the delivery question is skipped for medium tasks on clean repos (0/4 twice).",
+      "timestamp": "2026-03-07T22:49:32Z"
+    }
+  ],
   "priority": 3,
   "status": "open",
   "title": "T3: Clean repo + medium task — control",
   "type": "task",
-  "updated_at": "2026-03-07T21:53:46Z"
+  "updated_at": "2026-03-07T22:49:32Z"
 }
