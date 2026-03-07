@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-03-07T13:36:13Z",
@@ -7,8 +7,8 @@
   "id": "bw-glk",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "in_progress",
   "title": "Refactor output rendering system",
   "type": "task",
-  "updated_at": "2026-03-07T13:36:13Z"
+  "updated_at": "2026-03-07T13:36:47Z"
 }
