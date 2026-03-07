@@ -1,4 +1,9 @@
 {{/* See docs/prompts/prime.md */}}
+{{ if .WorktreeDirty -}}
+> [!WARNING]
+> The working tree has uncommitted changes. Ask the user what to do with them before starting new work. Do not begin research or coding until this is resolved.
+
+{{ end -}}
 # Beadwork
 
 Beadwork persists plans, progress, and decisions to git so they survive. Compaction erases context.
@@ -52,7 +57,5 @@ What isn't committed, closed, and synced is gone next session.
 {{ bw "ready" }}
 
 ## Work In Progress
-{{ if .WorktreeDirty }}
-⚠️ The working tree has uncommitted changes. Ask the user what to do with them before starting new work.
-{{ end }}
+
 {{ bw "list" "--status" "in_progress" }}

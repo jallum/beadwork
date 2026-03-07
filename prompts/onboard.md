@@ -1,12 +1,12 @@
 Beadwork (bw) Onboarding
 
-Add this minimal snippet to AGENTS.md (or create it):
+Add this snippet to your agent instructions file (CLAUDE.md, GEMINI.md, COPILOT.md, etc.):
 
---- BEGIN AGENTS.MD CONTENT ---
+--- BEGIN SNIPPET ---
 %s
---- END AGENTS.MD CONTENT ---
+--- END SNIPPET ---
 
 How it works:
 
-- bw prime provides dynamic workflow context
-- AGENTS.md only needs this minimal pointer, not full instructions
+- `bw prime` loads workflow context at session start — once it runs, the agent has everything it needs
+- The snippet only needs this minimal pointer, not full instructions

@@ -33,7 +33,7 @@ An agent that has been through the prompt system should:
    ticket), branch/PR (ticket + worktree), or multi-step (epic). The user's
    answer determines the workflow level. Blanket rules like "every change
    gets a ticket" activate stochastically; the delivery question activates
-   deterministically (see experiments/2026-03-07-interactive-validation).
+   deterministically (see bw-u3u).
 
 5. **Leave breadcrumbs.** Comments on issues serve double duty: notes to
    the agent's future self after compaction, and messages to collaborators
@@ -146,7 +146,7 @@ correct workflow. Interactive sessions (via tmux) measure **behavior** — wheth
 the agent actually follows it. These diverge: agents that score perfectly on
 comprehension may skip the workflow entirely in interactive sessions, especially
 for small tasks. Always validate with interactive tests before adopting a prompt
-change. See `experiments/2026-03-07-prime-simplification` for detailed evidence.
+change. See bw-cm6 for detailed evidence.
 
 ### Interpreting results
 
@@ -162,21 +162,9 @@ change:
 
 ### Documented experiments
 
-- **Plan-mode override** (2026-03-06): 9 variations tested. Found 5
-  load-bearing elements for overriding built-in plan format. Superseded
-  by the additive approach — see below.
+Experiments are tracked as bw epics with the `experiment` label.
+Use `bw list --label experiment` to find them. Key completed experiments:
 
-- **Prime simplification** (2026-03-07): 9 variants, 3 rounds, --print
-  and interactive testing. Key findings: prompt can be 57-68% shorter
-  without losing comprehension; additive approach ("plan however you want,
-  then materialize as tickets") outperforms format override in interactive
-  sessions; numbered workflow lists are load-bearing; comprehension ≠
-  behavior. See `experiments/2026-03-07-prime-simplification/`.
-
-- **Interactive validation** (2026-03-07): Tested blanket rules vs
-  delivery-aware prompts in live tmux sessions. Key findings: "every change
-  gets a ticket" activates stochastically (7/7 then 1/7); "ask how this
-  should land" activates deterministically (3/3); hygiene checks ("check
-  git status") cause agents to notice dirty state; sub-agents need
-  mandatory worktree isolation. See
-  `experiments/2026-03-07-interactive-validation/`.
+- **bw-g6n** — Plan-mode override (superseded by additive approach)
+- **bw-cm6** — Prime simplification (comprehension ≠ behavior)
+- **bw-u3u** — Interactive validation (delivery-aware > blanket rules)

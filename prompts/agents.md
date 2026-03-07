@@ -1,9 +1,7 @@
-## Issue Tracking
+## Work Management
 
-This project tracks work with `bw` (beadwork), which persists to git — it survives compaction, session boundaries, and context loss.
+This project tracks work with `bw` (beadwork), which persists to git — plans, progress, and decisions survive compaction, session boundaries, and context loss.
 
-`bw prime` is the fastest path to productive work — run it at the start of every session. Work that isn't properly tracked and landed is invisible to the next session — effectively void.
+ALWAYS run `bw prime` before starting work. Without it, you're missing workflow context, current state, and repo hygiene warnings. Work done without priming often conflicts with in-progress changes.
 
 Committing, closing issues, and syncing are part of completing a task — not separate actions requiring additional permission.
-
-Every code change gets a ticket. Start with `bw ready` to find available work.

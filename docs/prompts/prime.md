@@ -29,7 +29,7 @@ see [`prompts.md`](prompts.md).
    branch/PR (ticket + worktree), or multi-step (epic). The user's answer
    deterministically selects the workflow level. Tested: variant J asked
    and followed through correctly on 3/3 tests; variant I with blanket
-   rules was stochastic. See `experiments/2026-03-07-interactive-validation/`.
+   rules was stochastic. See bw-u3u.
 
 4. **Use numbered lists for workflow.** When the workflow is a numbered
    checklist, agents walk through every step. When compressed to prose,
@@ -44,7 +44,7 @@ see [`prompts.md`](prompts.md).
    The wording should direct agents to ask the user about leftover changes,
    not just "resolve" them (which agents interpret as "understand"). Tested:
    variant J2 checked git status as its first action. See
-   `experiments/2026-03-07-interactive-validation/`.
+   bw-u3u.
 
 6. **Teach worktree hygiene as part of the workflow.** Worktrees aren't
    a standalone concern — they're step 1 of the numbered workflow. When
@@ -93,4 +93,4 @@ see [`prompts.md`](prompts.md).
     still only wins format compliance, not behavioral change. The additive
     approach sidesteps the conflict entirely: let the agent plan in whatever
     format it wants, then add a materialization step. See
-    `experiments/2026-03-07-prime-simplification/` for tested evidence.
+    bw-cm6 for tested evidence.

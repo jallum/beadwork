@@ -442,7 +442,7 @@ var commands = []Command{
 	},
 	{
 		Name:    "onboard",
-		Summary: "Print AGENTS.md snippet",
+		Summary: "Print agent instructions snippet",
 		Run:     wrapNoArgs(cmdOnboard),
 	},
 	{
