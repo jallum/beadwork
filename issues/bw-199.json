@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-07T20:56:41Z",
+  "description": "Add a section to the root README.md with a link to the beadwork Discord server for community discussion, support, and feedback.",
+  "id": "bw-199",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Update README with Discord link and community info",
+  "type": "task",
+  "updated_at": "2026-03-07T20:56:41Z"
+}
