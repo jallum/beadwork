@@ -6,6 +6,7 @@
   "blocks": [
     "bw-86r.3"
   ],
+  "closed_at": "2026-03-07T22:22:23Z",
   "created": "2026-03-07T22:04:47Z",
   "description": "Test 2-3 variants with stronger wording. Same task, same setup, Opus 4.6.\n\n**Variant A** — Direct imperative:\n\"Run bw prime before doing anything else. It loads workflow context, shows current state, and checks repo hygiene.\"\n\n**Variant B** — Imperative + consequence:\n\"ALWAYS run bw prime before starting work. Without it, you're missing workflow context, current state, and repo hygiene warnings. Work done without priming often conflicts with in-progress changes.\"\n\n**Variant C** — Minimal imperative:\n\"First step every session: bw prime\"\n\n2 runs each. Observable: did the agent call bw prime before any other action?",
   "id": "bw-86r.2",
@@ -32,7 +33,7 @@
     }
   ],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "T2: Imperative wording variants",
   "type": "task",
   "updated_at": "2026-03-07T22:22:23Z"
