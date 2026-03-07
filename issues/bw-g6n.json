@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-07T21:52:46Z",
+  "description": "Tested 9 prompt variations to override Claude's built-in plan mode format.\n\n**Finding**: 5 load-bearing elements required together (bold, MUST, negations, consequence, override directive). Superseded by the additive approach — fighting built-in format produces compliance in text but not behavior.\n\nDesign doc updated: docs/prompts/prime.md requirement #14.",
+  "id": "bw-g6n",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Plan-mode override experiment",
+  "type": "epic",
+  "updated_at": "2026-03-07T21:52:46Z"
+}
