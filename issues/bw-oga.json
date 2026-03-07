@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-07T23:23:24Z",
+  "description": "Detect which AI coding agent is invoking bw via environment variables. Start with known reliable signals (CLAUDECODE, AIDER, CURSOR_*, etc). Be honest about confidence — distinguish confirmed from speculative.",
+  "id": "bw-oga",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Add agent detection module",
+  "type": "task",
+  "updated_at": "2026-03-07T23:23:24Z"
+}
