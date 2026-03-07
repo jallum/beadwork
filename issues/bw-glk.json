@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-07T13:36:13Z",
+  "description": "Split TTY and markdown rendering into separate files, extract token resolution into its own package, and add JSON output mode. Currently render.go and resolve.go in internal/md are tangled together - need clean separation of concerns.",
+  "id": "bw-glk",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Refactor output rendering system",
+  "type": "task",
+  "updated_at": "2026-03-07T13:36:13Z"
+}
