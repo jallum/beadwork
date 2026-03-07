@@ -14,11 +14,15 @@
     {
       "text": "Blocked: Opus 4.6 never runs bw prime (0/3 runs). The entire hygiene-as-gate mechanism depends on bw prime being called. Suspending in favor of a bootstrap prompt experiment — need to fix bw prime activation before this experiment is viable.",
       "timestamp": "2026-03-07T22:04:13Z"
+    },
+    {
+      "text": "## Experiment complete\n\n**Finding**: The dirty worktree warning at the top of bw prime is visible but not gating. The agent sees it, investigates the dirty files, then proceeds to the task without asking the user. \"Do not begin research or coding until this is resolved\" is treated as advisory.\n\nThis is the same pattern as the delivery question — medium-task confidence overrides advisory instructions. The agent's task-completion drive is stronger than any text in the output.\n\n**What works**: bw prime activation (fixed in bw-86r with ALWAYS + consequences wording). The warning renders. The agent reads it and is aware of dirty state.\n\n**What doesn't work**: Using the warning as a gate to force the agent to pause. Advisory text in command output doesn't create mandatory pauses.\n\n**Possible next steps**: Tool-level enforcement — bw prime could refuse to render full output and instead emit only the warning + \"run git stash or git checkout to clean up, then run bw prime again.\" This moves the gate from advisory text to tool behavior.",
+      "timestamp": "2026-03-07T22:49:43Z"
     }
   ],
   "priority": 4,
   "status": "open",
   "title": "Hygiene warning as workflow gate",
   "type": "epic",
-  "updated_at": "2026-03-07T22:04:50Z"
+  "updated_at": "2026-03-07T22:49:43Z"
 }
