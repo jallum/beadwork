@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-07T12:51:43Z",
+  "description": "The bw defer command has a bug in parsing date formats. Need to investigate the issue and fix the parsing logic to handle various date input formats correctly.",
+  "id": "bw-kjq",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Fix date parsing bug in bw defer command",
+  "type": "task",
+  "updated_at": "2026-03-07T12:51:43Z"
+}
