@@ -162,16 +162,49 @@ func unescape(s string) string {
 
 // colorize applies ANSI coloring to the wrapped plain text.
 // It processes inline color markers (\x01kind\x02) and markdown syntax.
+// Tracks fenced code block state so lines inside fences are rendered
+// dim without markdown styling.
 func colorize(s string) string {
 	var out strings.Builder
 	lines := strings.Split(s, "\n")
+	var fenceLen int // 0 = not in fence; >0 = backtick count of opening fence
 	for i, line := range lines {
 		if i > 0 {
 			out.WriteByte('\n')
 		}
-		out.WriteString(colorizeLine(line))
+		trimmed := strings.TrimSpace(line)
+		n := countLeadingBackticks(trimmed)
+		if fenceLen == 0 && n >= 3 {
+			fenceLen = n
+			out.WriteString(ansiDim + resolveColorMarkers(line) + ansiReset)
+		} else if fenceLen > 0 && n >= fenceLen && isClosingFence(trimmed, n) {
+			fenceLen = 0
+			out.WriteString(ansiDim + resolveColorMarkers(line) + ansiReset)
+		} else if fenceLen > 0 {
+			out.WriteString(ansiDim + resolveColorMarkers(line) + ansiReset)
+		} else {
+			out.WriteString(colorizeLine(line))
+		}
 	}
 	return out.String()
+}
+
+// countLeadingBackticks returns the number of consecutive backticks
+// at the start of s.
+func countLeadingBackticks(s string) int {
+	n := 0
+	for n < len(s) && s[n] == '`' {
+		n++
+	}
+	return n
+}
+
+// isClosingFence returns true if the line is a valid closing fence:
+// only backticks (already counted) followed by optional whitespace.
+// Per CommonMark, closing fences cannot have an info string.
+func isClosingFence(trimmed string, backtickCount int) bool {
+	rest := trimmed[backtickCount:]
+	return strings.TrimSpace(rest) == ""
 }
 
 func colorizeLine(line string) string {
