@@ -25,11 +25,15 @@
     {
       "text": "## Variant B + CLAUDE.md (not AGENTS.md) — Opus 4.6\n\n**Result: bw prime called, full activation chain**\n\nThe agent:\n1. ✅ Ran bw prime as first action\n2. ✅ Saw the [!WARNING] about uncommitted changes\n3. ✅ Investigated dirty state (git diff, read TODO file)\n4. ✅ Understood the dirty changes in context of the task\n5. ✅ Asked \"How would you like this delivered — quick fix or branch/PR?\"\n\n**This is the first time Opus has activated the full workflow chain.** The key variable was CLAUDE.md vs AGENTS.md. Claude Code does not support AGENTS.md — it reads CLAUDE.md. All previous AGENTS.md tests (variants A, B, C) were effectively invisible to the agent.\n\n**Finding**: AGENTS.md is not a Claude Code concept. `bw onboard` recommends AGENTS.md but Claude Code reads CLAUDE.md. Once the instructions are in the right file, the imperative wording works. The hygiene warning at the top of bw prime fires, the agent investigates, and the delivery question follows naturally.\n\n**Confound**: The early bw-exq.1 tests (Runs 1-2) used CLAUDE.md with the OLD wording (\"bw prime is the fastest path...\") and Opus didn't call bw prime. So CLAUDE.md alone isn't sufficient — the imperative wording matters too. CLAUDE.md + imperative = activation. AGENTS.md + anything = no activation.",
       "timestamp": "2026-03-07T22:16:35Z"
+    },
+    {
+      "text": "## Summary\n\n**Root cause**: AGENTS.md is not read by Claude Code. All AGENTS.md tests were invisible. Once instructions moved to CLAUDE.md with session-start framing, Opus activated bw prime on the first try.\n\n**Changes made**:\n- agents.md: \"At the start of every session, run bw prime\" (session lifecycle, not task prep)\n- agents.md: Removed \"Every code change gets a ticket\" and \"Start with bw ready\" (these belong in prime, not the boot loader)\n- onboard.md: Agent-agnostic — recommends CLAUDE.md, GEMINI.md, COPILOT.md, etc.\n- command.go: Updated help text from \"Print AGENTS.md snippet\" to \"Print agent instructions snippet\"\n- CLAUDE.md: Updated to match new agents.md\n- docs/prompts/agents.md: Updated design requirements with findings",
+      "timestamp": "2026-03-07T22:22:23Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "T2: Imperative wording variants",
   "type": "task",
-  "updated_at": "2026-03-07T22:16:35Z"
+  "updated_at": "2026-03-07T22:22:23Z"
 }
