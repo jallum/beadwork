@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-07T03:31:34Z",
+  "description": "Add hidden --x-render-as tty|markdown|raw flag to cmd/bw/main.go that forces writer mode regardless of stdout. Follows existing --raw / hasFlag() pattern.",
+  "id": "bw-h3w.2",
+  "labels": [],
+  "parent": "bw-h3w",
+  "priority": 2,
+  "status": "open",
+  "title": "Add --x-render-as hidden debug flag",
+  "type": "task",
+  "updated_at": "2026-03-07T03:31:34Z"
+}
