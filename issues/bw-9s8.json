@@ -10,11 +10,15 @@
     {
       "text": "Examined wrap.go: strings.Fields splits correctly and continuation lines use the original indent — no spurious whitespace added. The core issue is that indent is detected from the raw input line, so a bullet line with no leading spaces gets indent=\"\" and continuations start at column 0. The fix needs the caller (or wrapLine itself) to compute a content-aware indent for continuations — e.g. for '- ✓ id P1 Title', continuation indent should be '  ' (2 spaces, matching content after '- ').",
       "timestamp": "2026-03-07T20:09:00Z"
+    },
+    {
+      "text": "The continuation indent needs to work recursively for nested structures: a bullet inside an indented block, a numbered list inside a bullet, etc. The indent for continuation should be derived from the content start position of the current line, not just the raw leading whitespace. E.g.:\n\n  - Parent bullet\n    - Child bullet wraps here and continuation\n      should align to column 6 (after '    - ')\n\n  1. Numbered item that wraps should continue\n     at column 3 (after '1. ')\n\nThe wrap logic should detect the structural prefix (bullet marker, number+dot, checkbox+id, etc.) and compute continuation indent as leading-whitespace + len(structural-prefix).",
+      "timestamp": "2026-03-07T20:10:02Z"
     }
   ],
   "priority": 2,
   "status": "open",
   "title": "Fix line wrapping for bullet items and dep annotations",
   "type": "task",
-  "updated_at": "2026-03-07T20:09:00Z"
+  "updated_at": "2026-03-07T20:10:02Z"
 }
