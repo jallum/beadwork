@@ -16,11 +16,15 @@
     {
       "text": "## Run 1 — Opus 4.6\n\n**Result: 0/4** — Agent never ran `bw prime`. Went straight to code exploration (grep, read files) and started editing list.go. The warning was never rendered.\n\nThe CLAUDE.md says \"bw prime is the fastest path to productive work — run it at the start of every session\" but the agent skipped it entirely. Previous tests (T1j-T4j) all called bw prime as an early action, but those used Sonnet. Opus may treat the CLAUDE.md instruction differently.\n\n**Key issue**: The warning is only effective if the agent runs bw prime. If the agent skips bw prime, the entire hygiene mechanism is bypassed. This is a prerequisite failure — we can't test whether the warning gates behavior if the agent never sees it.\n\n**Possible fixes**:\n1. Make agents.md stronger about running bw prime\n2. Move the hygiene check to a tool the agent does use (git status, or the first bw command)\n3. Accept that bw prime activation is itself stochastic",
       "timestamp": "2026-03-07T21:56:25Z"
+    },
+    {
+      "text": "## Run 2 — Opus 4.6\n\n**Result: 0/4** — Identical to Run 1. Agent never ran bw prime. Straight to grep/read/edit.\n\nThis is consistent, not stochastic. Opus 4.6 doesn't activate on the CLAUDE.md instruction \"bw prime is the fastest path to productive work — run it at the start of every session.\" Previous tests (T1j-T3j on Sonnet) all ran bw prime as an early action.\n\n**This is a model-level difference.** The warning mechanism is dead on Opus unless we fix the bw prime activation problem first. Two paths:\n1. Make agents.md more directive about running bw prime (risk: still stochastic)\n2. Move the hygiene check to bw ready or another command the agent naturally calls",
+      "timestamp": "2026-03-07T21:57:30Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "T1: Dirty repo + medium task — does warning cause pause?",
   "type": "task",
-  "updated_at": "2026-03-07T21:56:25Z"
+  "updated_at": "2026-03-07T21:57:30Z"
 }
