@@ -1,6 +1,6 @@
 # Beadwork
 
-Beadwork is a git-native issue tracker built for AI coding agents. Issues are JSON files stored on a dedicated `beadwork` branch — no external service, no API keys, no network dependency. Sync is just `git push`.
+Beadwork is a git-native work management tool built for AI coding agents. Issues are JSON files stored on a dedicated `beadwork` branch — no external service, no API keys, no network dependency. Sync is just `git push`.
 
 ## Why it exists
 

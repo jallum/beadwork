@@ -3,7 +3,11 @@
 [![CI](https://github.com/jallum/beadwork/actions/workflows/ci.yml/badge.svg)](https://github.com/jallum/beadwork/actions/workflows/ci.yml)
 [![coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/jallum/beadwork/badges/coverage.json)](https://github.com/jallum/beadwork/actions/workflows/ci.yml)
 
-Filesystem-native issue tracking for AI coding agents. Issues are JSON files, structure is directories, sync is git.
+Git-native work management for AI coding agents. Plans, progress, and decisions persist as files — sync is git.
+
+## Community
+
+Join the [Beadwork Discord](https://discord.gg/WCp4wuJwKe) for discussion, support, and updates.
 
 ## Install
 
@@ -26,7 +30,7 @@ bw sync                                           # push to remote
 
 ## Commands
 
-**Working With Issues**
+**Managing Work**
 ```
 bw create <title> [flags]           Create an issue (--parent, --type, -p, --silent)
 bw show <id>... [--only <sections>] [--json]  Show issue details with deps (aliases: view)

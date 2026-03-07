@@ -48,7 +48,13 @@ Now `bw ready` feeds you the next unblocked step, and compaction can't erase you
 
 What isn't committed, closed, and synced is gone next session.
 
-**Delegation**: Sub-agents always work in worktrees — without isolation, agents corrupt each other's state. Include full workflow in handoff: worktree → `bw start <id> --assignee <agent-id>` → work → `bw comment <id> "summary"` → commit → close. Verify the work landed.
+**Delegation**: When using the Agent tool, ALWAYS set `isolation: "worktree"` — without isolation, agents corrupt each other's state. Create a ticket for each delegated task first, then include in the agent prompt:
+
+```
+Run `bw start <id>`. Make the change. Commit referencing <id>. Run `bw close <id>`.
+```
+
+Verify the work landed after the agent returns.
 
 `bw comment <id> "..."` = breadcrumbs. `bw --help` for everything. `--json` gets you raw data.
 
