@@ -7,11 +7,13 @@
   "created": "2026-03-07T21:53:42Z",
   "description": "**Checkout**: aa1d77a with dirty state\n**Task**: \"Sort bw ready by priority and add --reverse to bw list. Delegate to sub-agents.\"\n\nDoes the hygiene warning affect delegation? If the orchestrator pauses on dirty state, does it then include workflow steps in sub-agent handoffs?\n\n**Observables**:\n- Agent pauses on dirty state\n- Sub-agent handoffs include worktree instructions\n- Sub-agents use separate worktrees",
   "id": "bw-exq.4",
-  "labels": [],
+  "labels": [
+    "experiment"
+  ],
   "parent": "bw-exq",
   "priority": 3,
   "status": "open",
   "title": "T4: Dirty repo + delegation",
   "type": "task",
-  "updated_at": "2026-03-07T21:53:45Z"
+  "updated_at": "2026-03-07T21:53:46Z"
 }
