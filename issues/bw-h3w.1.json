@@ -4,14 +4,15 @@
   "blocks": [
     "bw-h3w.3"
   ],
+  "closed_at": "2026-03-07T03:31:56Z",
   "created": "2026-03-07T03:31:34Z",
   "description": "Rewrite prime prompt opening with identity-level framing ('brilliant but amnesiac') and add bold override directive after the epic template so agents produce epic-format plans instead of design documents when entering plan mode. Tested via tmux A/B testing — see docs/prime-plan-mode-findings.md.",
   "id": "bw-h3w.1",
   "labels": [],
   "parent": "bw-h3w",
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Strengthen prime prompt to override plan mode format",
   "type": "task",
-  "updated_at": "2026-03-07T03:31:42Z"
+  "updated_at": "2026-03-07T03:31:56Z"
 }
