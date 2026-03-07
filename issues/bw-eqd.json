@@ -2,13 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-07T20:13:04Z",
+  "close_reason": "unnecessary — --json covers structured data, TTY/markdown paths cover display",
   "created": "2026-03-07T12:51:39Z",
   "description": "Add a --format flag to bw list that supports different output formats (e.g., json, table, compact). Should integrate with existing --json flag.",
   "id": "bw-eqd",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Add --format flag to bw list command",
   "type": "task",
-  "updated_at": "2026-03-07T12:51:39Z"
+  "updated_at": "2026-03-07T20:13:04Z"
 }
