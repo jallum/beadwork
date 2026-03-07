@@ -1,0 +1,15 @@
+{
+  "assignee": "Jason Allum",
+  "blocked_by": [],
+  "blocks": [],
+  "closed_at": "2026-03-07T19:59:36Z",
+  "created": "2026-03-07T19:52:01Z",
+  "description": "The condition on line 102 of cmd/bw/list.go uses \u003e= instead of \u003e, causing an off-by-one error. When there are exactly limit number of issues, it unnecessarily slices the array, which can lead to incorrect behavior.",
+  "id": "bw-amj",
+  "labels": [],
+  "priority": 3,
+  "status": "closed",
+  "title": "Fix off-by-one bug in bw list --limit",
+  "type": "task",
+  "updated_at": "2026-03-07T19:59:36Z"
+}
