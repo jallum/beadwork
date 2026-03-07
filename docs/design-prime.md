@@ -2,6 +2,11 @@
 
 Design requirements for the prime prompt (`prompts/prime.md`).
 
+For end goals, prompt architecture, and experimentation methodology,
+see [`design-prompts.md`](design-prompts.md).
+
+## Design requirements
+
 1. **Teach principles, not procedures.** Explain the system — why it exists, how
    it works, what good usage looks like — and trust the agent to apply that
    understanding. Favor describing consequences over issuing commands.
