@@ -19,11 +19,15 @@
     {
       "text": "## Experiment complete\n\n**Finding**: The dirty worktree warning at the top of bw prime is visible but not gating. The agent sees it, investigates the dirty files, then proceeds to the task without asking the user. \"Do not begin research or coding until this is resolved\" is treated as advisory.\n\nThis is the same pattern as the delivery question — medium-task confidence overrides advisory instructions. The agent's task-completion drive is stronger than any text in the output.\n\n**What works**: bw prime activation (fixed in bw-86r with ALWAYS + consequences wording). The warning renders. The agent reads it and is aware of dirty state.\n\n**What doesn't work**: Using the warning as a gate to force the agent to pause. Advisory text in command output doesn't create mandatory pauses.\n\n**Possible next steps**: Tool-level enforcement — bw prime could refuse to render full output and instead emit only the warning + \"run git stash or git checkout to clean up, then run bw prime again.\" This moves the gate from advisory text to tool behavior.",
       "timestamp": "2026-03-07T22:49:43Z"
+    },
+    {
+      "text": "T5j delegation test (Opus 4.6, 2026-03-07): PASS\n\nTask: 'Sort bw ready by priority + add --reverse flag to bw list. Delegate to sub-agents.'\n\nScorecard:\n1. bw prime: ✅ ran immediately\n2. Created tickets: ✅ bw-gfu and bw-qvc created before delegation\n3. Used isolation:worktree: ✅ two worktree agents (agent-a15b15f3, agent-a71ab322)\n4. Sub-agents ran bw prime: ✅ both sub-agents primed\n5. Sub-agents ran bw start: ✅ both claimed their tickets\n6. Sub-agents committed with ticket ID: ✅ both commits reference bw-gfu/bw-qvc\n7. Sub-agents ran bw close: ✅ both closed their tickets\n8. Orchestrator merged branches: ✅ clean merges\n9. Orchestrator verified: ✅ tested both features post-merge\n\nPrevious T5j score: 0/5. New score: 9/9 — full delegation workflow activated.\n\nKey prompt change: Added 'When using the Agent tool, ALWAYS set isolation: worktree' + template prompt with bw start/close instructions. The ALWAYS + consequences pattern continues to work for delegation just as it did for bootstrap.",
+      "timestamp": "2026-03-07T23:15:50Z"
     }
   ],
   "priority": 4,
   "status": "closed",
   "title": "Hygiene warning as workflow gate",
   "type": "epic",
-  "updated_at": "2026-03-07T22:49:43Z"
+  "updated_at": "2026-03-07T23:15:50Z"
 }
