@@ -1,4 +1,4 @@
-{{/* See docs/design-start.md */}}
+{{/* See docs/prompts/start.md */}}
 {{ if eq .Type "epic" }}{{ bw "show" .ID "--only" "children" }}
 
 ## STARTING THE WORK

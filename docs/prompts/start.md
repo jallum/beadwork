@@ -1,9 +1,9 @@
-# Design: start.md
+# start.md
 
 Design requirements for the start prompt (`prompts/start.md`).
 
 For end goals, prompt architecture, and experimentation methodology,
-see [`design-prompts.md`](design-prompts.md).
+see [`prompts.md`](prompts.md).
 
 This is the point-of-action briefing shown when an agent claims work with
 `bw start`. It may be the ONLY beadwork context a sub-agent ever sees.

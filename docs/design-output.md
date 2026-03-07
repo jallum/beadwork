@@ -1,4 +1,4 @@
-# Design: Markdown-Native Output
+# Markdown-Native Output
 
 Architecture for beadwork's markdown-first rendering pipeline.
 

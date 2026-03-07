@@ -1,9 +1,9 @@
-# Design: agents.md
+# agents.md
 
 Design requirements for the agents snippet (`prompts/agents.md`).
 
 For end goals, prompt architecture, and experimentation methodology,
-see [`design-prompts.md`](design-prompts.md).
+see [`prompts.md`](prompts.md).
 
 This snippet is embedded in AGENTS.md (or CLAUDE.md) and lives permanently in
 the repo. It is the first thing an agent sees about beadwork — often before it
