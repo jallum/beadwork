@@ -6,9 +6,15 @@
   "description": "TTY resolver uses ✓ for {check:done} but [ ] for {check:open}. Use ☐ instead for visual consistency. Update resolve.go (line 111, TTY path only — markdown path should stay as [ ] for compatibility). Update docs/design-output.md token vocabulary if it documents check rendering.",
   "id": "bw-dns",
   "labels": [],
+  "comments": [
+    {
+      "text": "Also add color: dim for ☐ (open), green ✓ is already handled via check:done marker. Add a check:open marker to the TTY path so colorize can style it.",
+      "timestamp": "2026-03-07T20:02:44Z"
+    }
+  ],
   "priority": 3,
   "status": "open",
   "title": "Use ☐ for open checkbox in TTY output",
   "type": "task",
-  "updated_at": "2026-03-07T20:01:58Z"
+  "updated_at": "2026-03-07T20:02:44Z"
 }
