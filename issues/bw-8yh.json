@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-07T13:08:21Z",
   "created": "2026-03-07T13:04:38Z",
   "description": "Add a --format flag to the bw list command to support different output formats (json, table, minimal). This will improve usability for scripts and integrations.",
   "id": "bw-8yh",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "Add --format flag to bw list",
   "type": "task",
-  "updated_at": "2026-03-07T13:04:38Z"
+  "updated_at": "2026-03-07T13:08:21Z"
 }
