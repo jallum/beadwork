@@ -20,11 +20,15 @@
     {
       "text": "## Run 2 — Opus 4.6\n\n**Result: 0/4** — Identical to Run 1. Agent never ran bw prime. Straight to grep/read/edit.\n\nThis is consistent, not stochastic. Opus 4.6 doesn't activate on the CLAUDE.md instruction \"bw prime is the fastest path to productive work — run it at the start of every session.\" Previous tests (T1j-T3j on Sonnet) all ran bw prime as an early action.\n\n**This is a model-level difference.** The warning mechanism is dead on Opus unless we fix the bw prime activation problem first. Two paths:\n1. Make agents.md more directive about running bw prime (risk: still stochastic)\n2. Move the hygiene check to bw ready or another command the agent naturally calls",
       "timestamp": "2026-03-07T21:57:30Z"
+    },
+    {
+      "text": "## Run 3 — Opus 4.6, AGENTS.md instead of CLAUDE.md\n\n**Result: 0/4** — Same as Runs 1-2. AGENTS.md vs CLAUDE.md made no difference. Agent never ran bw prime. 3/3 consistent on Opus.\n\n**Conclusion**: The hygiene-as-gate experiment is blocked by a prerequisite: bw prime activation. The boot loader (agents.md) doesn't reliably cause Opus to run bw prime. Suspending this experiment in favor of a new experiment focused on the bootstrap prompt.",
+      "timestamp": "2026-03-07T22:04:08Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "T1: Dirty repo + medium task — does warning cause pause?",
   "type": "task",
-  "updated_at": "2026-03-07T21:57:30Z"
+  "updated_at": "2026-03-07T22:04:08Z"
 }
