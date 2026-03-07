@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-07T13:04:43Z",
+  "description": "Fix the date parsing issue in bw defer command that fails to handle relative dates properly. Currently throws error on inputs like '2 weeks' or 'next monday'.",
+  "id": "bw-m44",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Fix date parsing bug in bw defer",
+  "type": "bug",
+  "updated_at": "2026-03-07T13:04:43Z"
+}
