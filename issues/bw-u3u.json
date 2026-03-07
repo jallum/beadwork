@@ -5,10 +5,12 @@
   "created": "2026-03-07T21:53:11Z",
   "description": "Tested delivery-aware (\"How Should This Land?\") vs blanket rules (\"Every change gets a ticket\") in live tmux sessions.\n\n**Findings**:\n- Delivery question activates for simple/ambiguous tasks and explicit cues\n- Blanket rules are stochastic (7/7 then 1/7 on same task)\n- Explicit cues (\"as a branch\") produce deterministic activation\n- Medium-complexity tasks: agent skips the question (0/4 twice)\n- Delegation: 0/5 — no workflow in sub-agent handoffs\n- Hygiene checks (\"check git status\") cause agents to notice dirty state\n- Dirty repo state can prevent prompt activation\n- Sub-agent worktree isolation instruction ignored entirely\n\n**Conclusion**: Delivery question is better than blanket rules but not deterministic for all task types. Agent's cost/benefit heuristic is the final arbiter for medium+ tasks.\n\nDesign doc updated: docs/prompts/prime.md requirements #3, #5, #6.",
   "id": "bw-u3u",
-  "labels": [],
+  "labels": [
+    "experiment"
+  ],
   "priority": 3,
   "status": "open",
   "title": "Interactive validation: delivery-aware prompt",
   "type": "epic",
-  "updated_at": "2026-03-07T21:53:11Z"
+  "updated_at": "2026-03-07T21:53:13Z"
 }
