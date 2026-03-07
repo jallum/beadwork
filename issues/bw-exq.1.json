@@ -24,11 +24,15 @@
     {
       "text": "## Run 3 — Opus 4.6, AGENTS.md instead of CLAUDE.md\n\n**Result: 0/4** — Same as Runs 1-2. AGENTS.md vs CLAUDE.md made no difference. Agent never ran bw prime. 3/3 consistent on Opus.\n\n**Conclusion**: The hygiene-as-gate experiment is blocked by a prerequisite: bw prime activation. The boot loader (agents.md) doesn't reliably cause Opus to run bw prime. Suspending this experiment in favor of a new experiment focused on the bootstrap prompt.",
       "timestamp": "2026-03-07T22:04:08Z"
+    },
+    {
+      "text": "## Run 4 — Opus 4.6, CLAUDE.md with ALWAYS + consequences wording\n\n**Result: 2/4**\n\n| Observable | Result |\n|---|---|\n| Agent runs bw prime | ✅ Yes — first action |\n| Warning visible in output | ✅ Yes — [!WARNING] rendered |\n| Agent pauses and asks about dirty state | ❌ No — investigated then proceeded |\n| Agent does NOT begin research before addressing dirty state | ❌ No — went straight to grep/read |\n\nThe bootstrap fix (bw-86r) worked — bw prime fires reliably with the ALWAYS + consequences wording. The dirty worktree warning renders and the agent reads it. But the warning doesn't create a hard pause. The agent treats \"Ask the user what to do\" as informational, investigates the dirty files for context, then proceeds to the task.\n\n**Conclusion**: The warning is visible but not gating. The wording \"Do not begin research or coding until this is resolved\" was ignored. The agent's task-completion drive overrides advisory text in bw prime output.",
+      "timestamp": "2026-03-07T22:49:22Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "T1: Dirty repo + medium task — does warning cause pause?",
   "type": "task",
-  "updated_at": "2026-03-07T22:47:19Z"
+  "updated_at": "2026-03-07T22:49:22Z"
 }
