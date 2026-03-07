@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-07T19:56:27Z",
+  "description": "The blocked icon (⊘) appears in list/ready output via IssueOneLinerBlocked but isn't in the Statuses slice, so it's missing from the TTY footer legend. Add it to the legend so users can identify what ⊘ means.",
+  "id": "bw-ivl",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Add blocked status to TTY legend in bw ready",
+  "type": "task",
+  "updated_at": "2026-03-07T19:56:27Z"
+}
