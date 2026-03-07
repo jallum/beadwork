@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-07T21:53:41Z",
+  "description": "**Checkout**: 4e18619 (parent of closed-blockers fix)\n**Setup**: Engineer dirty state (modified ready.go + untracked TODO)\n**Task**: \"Closed blockers should be filtered out of dep annotations in list and ready output.\"\n\n**Observables**:\n- Agent runs bw prime\n- Warning is visible in output\n- Agent pauses and asks about dirty state\n- Agent does NOT begin research or coding before addressing dirty state",
+  "id": "bw-exq.1",
+  "labels": [],
+  "parent": "bw-exq",
+  "priority": 3,
+  "status": "open",
+  "title": "T1: Dirty repo + medium task — does warning cause pause?",
+  "type": "task",
+  "updated_at": "2026-03-07T21:53:41Z"
+}
