@@ -17,11 +17,15 @@
     {
       "text": "## Results — all variants failed on Opus 4.6\n\n| Variant | AGENTS.md wording | bw prime called? |\n|---------|-------------------|------------------|\n| C | \"First step every session: bw prime\" | No |\n| B | \"ALWAYS run bw prime before starting work. Without it...\" | No |\n| A | \"Run bw prime before doing anything else. It loads...\" | No |\n\n**0/3 variants activated bw prime.** All went straight to code exploration (grep, read files). The wording strength (suggestion → imperative → ALWAYS + consequences) made no difference. Opus treats AGENTS.md instructions as context, not as action triggers.\n\n**Key insight**: This isn't a wording problem. Opus processes the task immediately and treats AGENTS.md as background information. It doesn't pause to execute setup instructions before addressing the user's request. The previous Sonnet tests that showed bw prime activation may reflect a model-level behavioral difference, not prompt effectiveness.\n\n**Possible next directions**:\n1. Use a hook (pre-tool or session-start) to run bw prime automatically\n2. Move critical info from bw prime into AGENTS.md directly (defeats the \"minimal boot loader\" design)\n3. Test whether Opus calls bw prime when the task is vague (e.g., \"what should I work on?\" instead of a specific task)\n4. Explore CLAUDE.md vs AGENTS.md — maybe CLAUDE.md has higher authority",
       "timestamp": "2026-03-07T22:07:34Z"
+    },
+    {
+      "text": "**Correction**: Claude Code docs confirm there is no AGENTS.md support. Claude Code reads CLAUDE.md, .claude/CLAUDE.md, CLAUDE.local.md, ~/.claude/CLAUDE.md, and .claude/rules/*.md. AGENTS.md is not part of Claude Code's file resolution.\n\nHowever, the early bw-exq.1 tests (Runs 1-2) used CLAUDE.md and also failed on Opus. Run 3 used AGENTS.md. So the file name isn't the cause of the Opus failure — but bw onboard should be updated to recommend CLAUDE.md regardless.\n\nAll 3 wording variants (A, B, C) tested with AGENTS.md. Need to retest at least one with CLAUDE.md to isolate the variable.",
+      "timestamp": "2026-03-07T22:10:25Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "T2: Imperative wording variants",
   "type": "task",
-  "updated_at": "2026-03-07T22:07:34Z"
+  "updated_at": "2026-03-07T22:10:25Z"
 }
