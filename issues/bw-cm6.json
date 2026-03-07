@@ -5,10 +5,12 @@
   "created": "2026-03-07T21:52:55Z",
   "description": "9 variants, 3 rounds, --print and interactive testing.\n\n**Findings**:\n- Prompt can be 57-68% shorter without losing comprehension\n- Additive approach (\"plan however you want, then materialize\") outperforms format override in interactive sessions\n- Numbered workflow lists are load-bearing — compressing to prose loses steps\n- Comprehension (--print) ≠ behavior (interactive) — always validate interactively\n\nDesign doc updated: docs/prompts/prime.md requirements #1, #2, #4, #7, #14.",
   "id": "bw-cm6",
-  "labels": [],
+  "labels": [
+    "experiment"
+  ],
   "priority": 3,
   "status": "open",
   "title": "Prime simplification experiment",
   "type": "epic",
-  "updated_at": "2026-03-07T21:52:55Z"
+  "updated_at": "2026-03-07T21:52:57Z"
 }
