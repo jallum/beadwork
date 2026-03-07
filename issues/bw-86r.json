@@ -5,10 +5,12 @@
   "created": "2026-03-07T22:04:32Z",
   "description": "## Problem\n\nagents.md tells the agent to run bw prime at the start of every session, but Opus 4.6 skips it entirely (0/3 runs in bw-exq.1). Previous experiments on Sonnet showed bw prime being called reliably. The entire prompt system depends on the agent loading the prime — if it doesn't, no hygiene warning, no delivery question, no workflow guidance.\n\n## Hypothesis\n\nThe current agents.md is too soft. \"bw prime is the fastest path to productive work\" is a suggestion, not an instruction. Agents with high task confidence skip suggestions. We need to find wording that reliably causes the agent to run bw prime before starting work.\n\n## Variables to test\n\n1. **Wording strength**: suggestion vs instruction vs imperative\n2. **Placement**: does AGENTS.md vs CLAUDE.md matter?\n3. **Framing**: \"run bw prime\" vs \"start with bw prime\" vs \"ALWAYS run bw prime first\"\n4. **Consequences**: with/without explaining what happens if you skip it\n5. **Model**: Opus vs Sonnet (previous tests suggest model-level differences)\n\n## Method\n\nInteractive tmux sessions. Same medium-complexity task (closed blockers at 4e18619). Observe whether bw prime is called before any other action.\n\n## Observable\n\nBinary: did the agent call bw prime before starting work? Yes/No.\n\n```mermaid\ngraph LR\n    1[Baseline: current agents.md] --\u003e 2[Variant A: imperative]\n    1 --\u003e 3[Variant B: consequences]\n    2 --\u003e 4[Best variant + Sonnet cross-check]\n    3 --\u003e 4\n```",
   "id": "bw-86r",
-  "labels": [],
+  "labels": [
+    "experiment"
+  ],
   "priority": 2,
   "status": "open",
   "title": "Bootstrap prompt activation experiment",
   "type": "epic",
-  "updated_at": "2026-03-07T22:04:32Z"
+  "updated_at": "2026-03-07T22:04:46Z"
 }
