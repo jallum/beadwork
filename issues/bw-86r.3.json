@@ -11,9 +11,15 @@
     "experiment"
   ],
   "parent": "bw-86r",
+  "comments": [
+    {
+      "text": "## Sonnet cross-check results\n\n**Session-start framing** (\"At the start of every session, run bw prime\"):\n- Sonnet: **No** — went straight to code. 0/1.\n\n**Imperative + consequences** (\"ALWAYS run bw prime before starting work. Without it...\"):\n- Sonnet: **Yes** — called bw prime as first action. 1/1.\n- (Opus from T2: also Yes, 1/1.)\n\nThe session-start framing is too soft. \"At the start of every session\" reads as a suggestion the agent evaluates and skips. \"ALWAYS\" + consequences (\"Without it, you're missing...\") is the minimum effective wording — same finding as the plan-mode override experiment (bw-g6n): imperative + consequence is load-bearing.\n\n**Secondary observation**: Sonnet ran bw prime, saw the dirty worktree warning, investigated the dirty state, but then proceeded to research and coding without asking about the dirty state or delivery. Same gap as Opus on medium-complexity tasks — the hygiene warning causes investigation but not a hard pause.\n\n**Reverted** agents.md and CLAUDE.md to Variant B wording.",
+      "timestamp": "2026-03-07T22:42:17Z"
+    }
+  ],
   "priority": 3,
   "status": "in_progress",
   "title": "T3: Cross-model check — best variant on Sonnet",
   "type": "task",
-  "updated_at": "2026-03-07T22:38:32Z"
+  "updated_at": "2026-03-07T22:42:17Z"
 }
