@@ -1,4 +1,4 @@
-# Design: Template System
+# Template System
 
 Architecture for beadwork's Go `text/template` prompt rendering.
 

@@ -1,9 +1,9 @@
-# Design: prime.md
+# prime.md
 
 Design requirements for the prime prompt (`prompts/prime.md`).
 
 For end goals, prompt architecture, and experimentation methodology,
-see [`design-prompts.md`](design-prompts.md).
+see [`prompts.md`](prompts.md).
 
 ## Design requirements
 
@@ -79,5 +79,5 @@ see [`design-prompts.md`](design-prompts.md).
     more procedural, higher-authority instruction. When beadwork's way
     genuinely matters (e.g., plan format), the prompt must combine
     principle (why) with enough procedural force (what, and permission to
-    override) to compete. See `docs/prime-plan-mode-findings.md` for
-    tested evidence of what works and what doesn't.
+    override) to compete. See the Experimentation section of
+    [`prompts.md`](prompts.md) for tested evidence of what works.

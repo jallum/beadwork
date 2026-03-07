@@ -1,13 +1,13 @@
-# Design: Prompt System
+# Prompt System
 
 Beadwork's prompt system teaches agents to use beadwork effectively. This
 document covers what the system is trying to accomplish, how the prompts
 relate to each other, and how to validate that changes are working.
 
 Per-prompt design requirements live in dedicated docs:
-- [`design-agents.md`](design-agents.md) — the boot loader
-- [`design-prime.md`](design-prime.md) — the mental model
-- [`design-start.md`](design-start.md) — the point-of-action briefing
+- [`agents.md`](agents.md) — the boot loader
+- [`prime.md`](prime.md) — the mental model
+- [`start.md`](start.md) — the point-of-action briefing
 
 ## End Goals
 
@@ -51,7 +51,7 @@ Its job is to get the agent to load the prime, not to teach beadwork.
 **Why it's separate:** Always-in-context means every token is a tax on the
 agent's attention budget for the entire session. This must be tiny.
 
-See [`design-agents.md`](design-agents.md) for design requirements.
+See [`agents.md`](agents.md) for design requirements.
 
 ### `prime.md` — Mental model
 
@@ -64,7 +64,7 @@ beadwork effectively in one read.
 permanently consuming context. Dynamic rendering means it can include
 current state (ready queue, WIP list) that makes it immediately actionable.
 
-See [`design-prime.md`](design-prime.md) for design requirements.
+See [`prime.md`](prime.md) for design requirements.
 
 ### `start.md` — Point-of-action briefing
 
@@ -76,7 +76,7 @@ principles; start delivers the procedure at the moment the agent needs it.
 procedure in a mental-model document. A sub-agent may see *only* this
 prompt — it must be self-contained.
 
-See [`design-start.md`](design-start.md) for design requirements.
+See [`start.md`](start.md) for design requirements.
 
 ### `onboard.md` — One-time setup
 
@@ -153,4 +153,4 @@ findings alongside the design doc. Example: the plan-mode override
 required testing 9 prompt variations to find the minimum effective
 formulation. Key finding: five elements are load-bearing (bold formatting,
 MUST, explicit negations, consequence argument, override directive) — all
-required together. See design-prime.md requirement #14 for context.
+required together. See prime.md requirement #14 for context.

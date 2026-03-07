@@ -1,4 +1,4 @@
-{{/* See docs/design-prime.md */}}
+{{/* See docs/prompts/prime.md */}}
 # Beadwork
 
 Beadwork tracks work as durable state in git — plans, progress, and decisions that survive compaction, session boundaries, and context loss. Your built-in planning tools handle small tasks; beadwork makes ambitious work safe by checkpointing progress so you can pick up after losing context.
