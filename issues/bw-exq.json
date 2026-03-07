@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-86r"
+  ],
   "blocks": [],
   "created": "2026-03-07T21:53:23Z",
   "description": "## Hypothesis\n\nThe top-of-prime dirty worktree warning creates a pause the agent can't skip. If the agent must address dirty state before proceeding, that pause is the natural moment to also ask about delivery — linking hygiene to workflow activation.\n\n## Method\n\nInteractive tmux sessions. Test binary with WorktreeDirty warning at top of bw prime output.\n\n## Tests\n\n1. **Dirty repo, medium task** — Does the warning cause the agent to pause and ask the user? (T4j failed without warning)\n2. **Dirty repo → delivery question** — After addressing dirty state, does the agent ask how to deliver?\n3. **Clean repo, medium task** — Control: does the agent still skip the delivery question on clean repos?\n4. **Dirty repo, delegation** — Does the warning affect sub-agent handoffs?\n\n## Harness\n\nUse real historical tasks (checkout parent commits). Engineer dirty state with leftover changes.\n\n```mermaid\ngraph LR\n    1[Dirty + medium task] --\u003e 3[Clean + medium task]\n    2[Dirty → delivery gate] --\u003e 4[Dirty + delegation]\n```",
@@ -18,5 +20,5 @@
   "status": "open",
   "title": "Hygiene warning as workflow gate",
   "type": "epic",
-  "updated_at": "2026-03-07T22:04:13Z"
+  "updated_at": "2026-03-07T22:04:50Z"
 }
