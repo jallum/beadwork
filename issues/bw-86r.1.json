@@ -2,6 +2,7 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-07T22:04:47Z",
   "created": "2026-03-07T22:04:46Z",
   "description": "Already tested in bw-exq.1 (3 runs, 0/3 called bw prime). Record as baseline.\n\n**agents.md**: \"bw prime is the fastest path to productive work — run it at the start of every session.\"\n**Result**: 0/3 on Opus 4.6.",
   "id": "bw-86r.1",
@@ -16,7 +17,7 @@
     }
   ],
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "T1: Baseline — current agents.md on Opus",
   "type": "task",
   "updated_at": "2026-03-07T22:04:47Z"
