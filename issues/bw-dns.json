@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-07T20:01:58Z",
+  "description": "TTY resolver uses ✓ for {check:done} but [ ] for {check:open}. Use ☐ instead for visual consistency. Update resolve.go (line 111, TTY path only — markdown path should stay as [ ] for compatibility). Update docs/design-output.md token vocabulary if it documents check rendering.",
+  "id": "bw-dns",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Use ☐ for open checkbox in TTY output",
+  "type": "task",
+  "updated_at": "2026-03-07T20:01:58Z"
+}
