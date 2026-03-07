@@ -9,9 +9,15 @@
     "experiment"
   ],
   "parent": "bw-86r",
+  "comments": [
+    {
+      "text": "Baseline established from bw-exq.1: 0/3 on Opus 4.6. All 3 runs went straight to code exploration without calling bw prime.",
+      "timestamp": "2026-03-07T22:04:47Z"
+    }
+  ],
   "priority": 3,
   "status": "open",
   "title": "T1: Baseline — current agents.md on Opus",
   "type": "task",
-  "updated_at": "2026-03-07T22:04:46Z"
+  "updated_at": "2026-03-07T22:04:47Z"
 }
