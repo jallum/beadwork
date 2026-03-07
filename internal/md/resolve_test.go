@@ -216,3 +216,101 @@ func TestResolveTTYCheckboxes(t *testing.T) {
 		t.Errorf("check:done in TTY should be green ✓: got %q", got)
 	}
 }
+
+func TestResolveTTYFencedHeadingNotStyled(t *testing.T) {
+	input := "before\n```\n# not a heading\n```\nafter"
+	got := ResolveTTY(input, 80)
+	// The heading inside the fence should NOT have bold+cyan
+	lines := strings.Split(got, "\n")
+	fencedLine := lines[2] // "# not a heading"
+	if strings.Contains(fencedLine, "\033[1m") && strings.Contains(fencedLine, "\033[36m") {
+		t.Errorf("heading inside fence should not be styled bold+cyan: got %q", fencedLine)
+	}
+	// Should be dim
+	if !strings.Contains(fencedLine, "\033[2m") {
+		t.Errorf("fenced content should be dim: got %q", fencedLine)
+	}
+}
+
+func TestResolveTTYFencedBoldNotStyled(t *testing.T) {
+	input := "```\n**not bold**\n```"
+	got := ResolveTTY(input, 80)
+	lines := strings.Split(got, "\n")
+	fencedLine := lines[1]
+	if strings.Contains(fencedLine, "\033[1m") {
+		t.Errorf("bold inside fence should not be styled: got %q", fencedLine)
+	}
+	if !strings.Contains(fencedLine, "**not bold**") {
+		t.Errorf("bold markers should be preserved literally: got %q", fencedLine)
+	}
+}
+
+func TestResolveTTYFencedBulletNotStyled(t *testing.T) {
+	input := "```\n- not a bullet\n```"
+	got := ResolveTTY(input, 80)
+	lines := strings.Split(got, "\n")
+	fencedLine := lines[1]
+	// Should NOT have cyan bullet styling
+	if strings.Contains(fencedLine, "\033[36m") {
+		t.Errorf("bullet inside fence should not have cyan: got %q", fencedLine)
+	}
+}
+
+func TestResolveTTYFenceResumesNormalStyling(t *testing.T) {
+	input := "```\ncode\n```\n# real heading"
+	got := ResolveTTY(input, 80)
+	lines := strings.Split(got, "\n")
+	headingLine := lines[3]
+	if !strings.Contains(headingLine, "\033[1m") || !strings.Contains(headingLine, "\033[36m") {
+		t.Errorf("heading after fence close should be bold+cyan: got %q", headingLine)
+	}
+}
+
+func TestResolveTTYNestedFences(t *testing.T) {
+	input := "````\n```\nstill inside\n```\n````"
+	got := ResolveTTY(input, 80)
+	lines := strings.Split(got, "\n")
+	// "still inside" (line 2) should be dim (inside outer fence)
+	if !strings.Contains(lines[2], "\033[2m") {
+		t.Errorf("content inside nested fence should be dim: got %q", lines[2])
+	}
+	// Inner ``` (line 1) should NOT close the outer fence
+	// So line 3 (inner closing ```) should also be dim
+	if !strings.Contains(lines[3], "\033[2m") {
+		t.Errorf("inner closing fence should still be dim (inside outer): got %q", lines[3])
+	}
+}
+
+func TestResolveTTYFenceClosingNeedsMatchingBackticks(t *testing.T) {
+	input := "````\ncode\n```\nstill code\n````"
+	got := ResolveTTY(input, 80)
+	lines := strings.Split(got, "\n")
+	// "still code" should be dim — ``` didn't close the ```` fence
+	if !strings.Contains(lines[3], "\033[2m") {
+		t.Errorf("line after short fence should still be dim: got %q", lines[3])
+	}
+}
+
+func TestResolveTTYFenceClosingNoInfoString(t *testing.T) {
+	input := "```go\ncode\n```go\nstill code\n```"
+	got := ResolveTTY(input, 80)
+	lines := strings.Split(got, "\n")
+	// "```go" on line 2 has an info string — should NOT close the fence
+	// "still code" should be dim
+	if !strings.Contains(lines[3], "\033[2m") {
+		t.Errorf("line after fence with info string should still be dim: got %q", lines[3])
+	}
+}
+
+func TestResolveTTYFenceDelimitersDim(t *testing.T) {
+	input := "```\ncode\n```"
+	got := ResolveTTY(input, 80)
+	lines := strings.Split(got, "\n")
+	// Both fence delimiters should be dim
+	if !strings.Contains(lines[0], "\033[2m") {
+		t.Errorf("opening fence should be dim: got %q", lines[0])
+	}
+	if !strings.Contains(lines[2], "\033[2m") {
+		t.Errorf("closing fence should be dim: got %q", lines[2])
+	}
+}
