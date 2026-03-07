@@ -3,7 +3,9 @@
   "blocked_by": [
     "bw-exq.1"
   ],
-  "blocks": [],
+  "blocks": [
+    "bw-exq.4"
+  ],
   "created": "2026-03-07T21:53:41Z",
   "description": "**Depends on T1 succeeding.** Same setup as T1. After user addresses dirty state (e.g., \"stash those and continue\"), observe whether the agent then asks how to deliver the new work.\n\n**Observables**:\n- Agent asks how to deliver after hygiene is resolved\n- If user says \"as a branch\": full workflow activates",
   "id": "bw-exq.2",
