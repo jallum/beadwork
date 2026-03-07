@@ -12,14 +12,18 @@ import (
 )
 
 type PrimeData struct {
-	Prefix string
+	Prefix         string
+	WorktreeDirty  bool
 }
 
 func cmdPrime(store *issue.Store, _ []string, w Writer) error {
 	r := store.Committer.(*repo.Repo)
 	cfg := r.ListConfig()
 
-	data := PrimeData{Prefix: cfg["prefix"]}
+	data := PrimeData{
+		Prefix:        cfg["prefix"],
+		WorktreeDirty: r.WorktreeDirty(),
+	}
 
 	bwFn := func(args ...string) string {
 		if cmd := commandMap[args[0]]; cmd != nil {

@@ -7,77 +7,90 @@ see [`prompts.md`](prompts.md).
 
 ## Design requirements
 
-1. **Teach principles, not procedures.** Explain the system — why it exists, how
-   it works, what good usage looks like — and trust the agent to apply that
-   understanding. Favor describing consequences over issuing commands.
+1. **Combine principle with procedure.** Principles ("context loss is certain")
+   set disposition but don't drive behavior at the point of action. Procedures
+   (numbered workflow steps) drive behavior but feel arbitrary without
+   rationale. Effective prompts pair a brief *why* with a concrete *what*.
+   Tested: principle alone fails, procedure alone fails, both together work.
 
-2. **Position as augmentation.** Agents already have built-in planning and task
-   management. Those work fine for small, tactical work. Beadwork doesn't
-   replace them — it gives plans and progress durability that survives context
-   loss. An in-memory todo list is one compaction away from gone; a bead isn't.
+2. **Be additive, not overriding.** Agents arrive with built-in planning,
+   formatting, and task management. Fighting these instincts requires heavy
+   rhetorical force and still doesn't translate to interactive behavior.
+   Instead, work *with* the agent's natural patterns and add a durability
+   step: "plan however you want, then materialize as tickets before
+   executing." Tested: the additive approach produced actual `bw create` →
+   worktree → `bw start` execution in interactive sessions; the override
+   approach produced format compliance in text output but not tool usage.
 
-3. **Build confidence for larger work.** Agents are often hesitant to attempt
-   ambitious, multi-file changes because they sense their own context limits.
-   Beadwork makes that work safe to attempt — progress is checkpointed, state
-   is recoverable, and losing context doesn't mean losing the plot.
+3. **Let the user decide the delivery level.** Blanket rules ("every change
+   gets a ticket") activate stochastically — agents override them based on
+   their own cost/benefit heuristic (7/7 in one run, 1/7 in the next).
+   Instead, ask the user how they want work delivered: quick fix (no ticket),
+   branch/PR (ticket + worktree), or multi-step (epic). The user's answer
+   deterministically selects the workflow level. Tested: variant J asked
+   and followed through correctly on 3/3 tests; variant I with blanket
+   rules was stochastic. See `experiments/2026-03-07-interactive-validation/`.
 
-4. **Plans belong in beadwork, not just in context.** Agents naturally plan in
-   their context window. That's fine for understanding work, but a plan that
-   lives only in context is lost at compaction. When work has multiple discrete
-   steps — especially steps that could each be completed independently — the
-   plan should be materialized as issues. An epic with children *is* the plan,
-   and `bw ready` *is* the execution loop.
+4. **Use numbered lists for workflow.** When the workflow is a numbered
+   checklist, agents walk through every step. When compressed to prose,
+   individual steps get skipped. Tested: variant E compressed the 5-step
+   workflow to a paragraph and lost `bw sync` and worktree cleanup;
+   variants F/G/H kept the list and scored perfectly despite being shorter
+   overall.
 
-5. **Teach worktree hygiene as part of starting work.** Agents treat worktrees
-   as optional hygiene — a separate concern they can evaluate independently.
-   But the main working tree belongs to the user; agent work belongs in a
-   worktree. Presenting this as inseparable from claiming work (not a
-   standalone section) makes the connection harder to skip.
+5. **Start from clean state.** A "check `git status`" instruction before
+   starting work causes agents to notice and investigate dirty state.
+   Without it, agents ignore uncommitted changes from previous sessions.
+   The wording should direct agents to ask the user about leftover changes,
+   not just "resolve" them (which agents interpret as "understand"). Tested:
+   variant J2 checked git status as its first action. See
+   `experiments/2026-03-07-interactive-validation/`.
 
-6. **Frame beadwork as shared state.** In multi-agent setups, beadwork is the
-   durable communication layer between workers. Comments and issues serve
-   double duty — breadcrumbs for your future self (surviving compaction) and
-   messages to collaborators.
+6. **Teach worktree hygiene as part of the workflow.** Worktrees aren't
+   a standalone concern — they're step 1 of the numbered workflow. When
+   presented as inseparable from claiming work, agents follow through.
+   When presented as a separate section, agents evaluate and skip.
+   Sub-agents must always use worktrees for isolation regardless of
+   delivery level — this prevents cross-contamination between concurrent
+   agents.
 
-7. **Stay compact.** This goes into an agent's context window. Every unnecessary
-   sentence is a tax on the agent's attention budget. Dense, scannable, no
-   filler.
+7. **Stay compact.** Shorter is not just cheaper — it's more effective.
+   224 words scored identically to 699 words on comprehension. 303 words
+   (additive variant) produced better interactive behavior than 699 words
+   (baseline). Less noise means less competition for attention.
 
-8. **Adapt to project configuration.** Per-task conditionals (PR review, etc.)
-   now live in start.md and render at point of action. Prime shows the full
-   mental model to all agents regardless of configuration.
+8. **Keep state at the bottom.** The ready queue and WIP list make the
+   prompt immediately actionable. Moving them above instructions caused
+   total failure (0/7) — the agent fell back to default behavior entirely.
+   State should follow instructions, not precede them.
 
-9. **Be the canonical reference.** AGENTS.md is deliberately minimal — just a
-   pointer to `bw prime`. This prompt is the single source of truth for how
-   to use beadwork in this project.
+9. **Adapt to project configuration.** Per-task conditionals (PR review,
+   etc.) live in start.md and render at point of action. Prime shows the
+   full mental model to all agents regardless of configuration.
 
-10. **Land the work.** Prime establishes the principle (unfinished bookkeeping
-    is invisible progress); `bw start` delivers the concrete steps via
-    start.md. Prime should reinforce that landing matters without
-    duplicating the procedure.
+10. **Be the canonical reference.** AGENTS.md is deliberately minimal — just
+    a pointer to `bw prime`. This prompt is the single source of truth for
+    how to use beadwork in this project.
 
-11. **Every task gets a ticket.** Agents skip ticket creation for small tasks,
-    treating it as overhead. But tickets are cheap and capture intent —
-    why a change was made, not just what changed. Commit messages record
-    the what; tickets record the why. Without them, release notes and
-    changelogs require reverse-engineering intent from diffs.
+11. **Land the work.** Prime establishes the principle (unfinished
+    bookkeeping is invisible progress); `bw start` delivers the concrete
+    steps via start.md. The numbered workflow list reinforces landing as
+    step 4, not a separate concern.
 
-12. **No implementation details or setup instructions.** Keep the focus on usage
-    and mental model.
+12. **Teach delegation concisely.** When orchestrating sub-agents, the
+    orchestrator must include workflow steps in the handoff. A compressed
+    one-line delegation instruction works as well as a full paragraph —
+    the key information is the sequence (worktree → start → work → comment
+    → close) and the principle (they don't inherit your context).
 
-13. **Teach delegation.** When orchestrating sub-agents, the orchestrator has
-    beadwork context but the workers don't. The prompt should make clear
-    that delegated tasks must include the workflow steps — claim, do, land
-    — or the workers will skip them. The orchestrator is responsible for
-    including the workflow and verifying the work landed.
+13. **No implementation details or setup instructions.** Keep the focus on
+    usage and mental model.
 
-14. **Win instruction conflicts.** The prime prompt is not the only voice
-    the agent hears. Built-in tools (plan mode, task management) arrive
-    with their own system-level instructions — specific formats, procedures,
-    and templates that contradict beadwork's guidance. Principles alone
-    don't win these conflicts; the agent defaults to the more specific,
-    more procedural, higher-authority instruction. When beadwork's way
-    genuinely matters (e.g., plan format), the prompt must combine
-    principle (why) with enough procedural force (what, and permission to
-    override) to compete. See the Experimentation section of
-    [`prompts.md`](prompts.md) for tested evidence of what works.
+14. **Don't fight — augment.** The prime prompt competes with agents'
+    built-in instructions (system prompts, plan mode templates). Overriding
+    these requires escalating rhetorical force (bold, MUST, negations,
+    consequences, override directives — all five required together) and
+    still only wins format compliance, not behavioral change. The additive
+    approach sidesteps the conflict entirely: let the agent plan in whatever
+    format it wants, then add a materialization step. See
+    `experiments/2026-03-07-prime-simplification/` for tested evidence.

@@ -5,10 +5,15 @@ Beadwork persists plans, progress, and decisions to git so they survive. Compact
 
 Issues live on the `beadwork` branch. IDs: `{{ .Prefix }}-XYZ`. Status: open → in_progress → closed / deferred. Priority: P0-P4 (default P2). Epics have children (`--parent`) and deps (`bw dep add <blocker> blocks <blocked>`). `bw ready` = next unblocked work.
 
-## Every Change Gets a Ticket
+## How Should This Land?
 
-Before you touch code, create a ticket:
-`bw create "Title" --description "..." -t task`. Tickets capture _why_ a change was made — intent that commits don't preserve. Even a one-line fix gets a ticket; the cost is one command.
+Before starting work, ask the user how they want it delivered:
+
+- **Quick fix**: Just make the change in the working tree. No ticket needed.
+- **Branch/PR**: Create a ticket first (`bw create "Title" --description "..." -t task`) and work in a worktree. This is the only way to land cleanly.
+- **Multi-step**: Create an epic with children and dependencies (see below).
+
+If the user doesn't specify, default to asking. The cost of asking once is lower than the cost of delivering work in the wrong form.
 
 ## Plans Are Scratch — Tickets Survive
 
@@ -38,8 +43,7 @@ Now `bw ready` feeds you the next unblocked step, and compaction can't erase you
 
 What isn't committed, closed, and synced is gone next session.
 
-**Delegation**: Sub-agents lack your context. Include workflow in handoff:
-worktree → `bw start <id> --assignee <agent-id>` → work → `bw comment <id> "summary"` → close. Verify.
+**Delegation**: Sub-agents always work in worktrees — without isolation, agents corrupt each other's state. Include full workflow in handoff: worktree → `bw start <id> --assignee <agent-id>` → work → `bw comment <id> "summary"` → commit → close. Verify the work landed.
 
 `bw comment <id> "..."` = breadcrumbs. `bw --help` for everything. `--json` gets you raw data.
 
@@ -48,5 +52,7 @@ worktree → `bw start <id> --assignee <agent-id>` → work → `bw comment <id>
 {{ bw "ready" }}
 
 ## Work In Progress
-
+{{ if .WorktreeDirty }}
+⚠️ The working tree has uncommitted changes. Ask the user what to do with them before starting new work.
+{{ end }}
 {{ bw "list" "--status" "in_progress" }}

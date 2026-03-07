@@ -407,6 +407,15 @@ func (r *Repo) RepoDir() string {
 	return filepath.Dir(r.GitDir)
 }
 
+// WorktreeDirty returns true if the user's working tree has uncommitted changes.
+func (r *Repo) WorktreeDirty() bool {
+	out, err := execGit(r.RepoDir(), "status", "--porcelain")
+	if err != nil {
+		return false
+	}
+	return strings.TrimSpace(out) != ""
+}
+
 func (r *Repo) fetch(remoteName string, refSpec config.RefSpec) error {
 	_, err := execGit(r.RepoDir(), "fetch", remoteName, string(refSpec))
 	return err

@@ -18,17 +18,22 @@ An agent that has been through the prompt system should:
    because it was told to, but because it understands that its built-in
    planning tools don't survive compaction.
 
-2. **Plan in beadwork, not in context.** Multi-step work should be
-   materialized as an epic with children and dependencies, not held in
-   a scratch plan or context window. `bw ready` is the execution loop.
+2. **Materialize plans into beadwork.** Agents plan naturally in context —
+   that thinking is valuable. But a plan that lives only in context dies at
+   compaction. Before executing a multi-step plan, the agent should
+   materialize it as an epic with children and dependencies. The plan is
+   scratch; the tickets are what survive. `bw ready` is the execution loop.
 
 3. **Know how to start safely.** Worktrees isolate agent work from the
    user's working tree. `bw start` delivers point-of-action instructions.
    Landing (commit, close, sync) is part of doing — not a separate step.
 
-4. **Create tickets reflexively.** Every code change gets a ticket. Tickets
-   capture *why* a change was made — intent that commit messages don't
-   preserve. The cost is one command; the payoff is traceable history.
+4. **Match workflow to delivery intent.** Not every change needs a ticket.
+   The agent should ask how the user wants work delivered — quick fix (no
+   ticket), branch/PR (ticket + worktree), or multi-step (epic). The user's
+   answer determines the workflow level. Blanket rules like "every change
+   gets a ticket" activate stochastically; the delivery question activates
+   deterministically (see experiments/2026-03-07-interactive-validation).
 
 5. **Leave breadcrumbs.** Comments on issues serve double duty: notes to
    the agent's future self after compaction, and messages to collaborators
@@ -128,11 +133,20 @@ or review each prompt.
 
 | Behavior | How to observe |
 |----------|----------------|
-| Plans use epic format | Enter plan mode with a multi-step task; check plan file structure |
-| Tickets created for changes | Give a small fix task; check if `bw create` is called |
+| Plans materialized as tickets | Give a multi-step task; check if `bw create` produces an epic with children |
+| Tickets created before code changes | Give a fix task; check if `bw create` is called before editing |
 | Worktrees used | Give any code task; check if EnterWorktree is invoked |
 | Landing completed | Give a task; check if commit + close + sync happen |
 | Sub-agent delegation includes workflow | Give a task requiring delegation; inspect the handoff prompt |
+
+### `--print` vs interactive testing
+
+`--print` mode measures **comprehension** — whether the agent can describe the
+correct workflow. Interactive sessions (via tmux) measure **behavior** — whether
+the agent actually follows it. These diverge: agents that score perfectly on
+comprehension may skip the workflow entirely in interactive sessions, especially
+for small tasks. Always validate with interactive tests before adopting a prompt
+change. See `experiments/2026-03-07-prime-simplification` for detailed evidence.
 
 ### Interpreting results
 
@@ -148,9 +162,21 @@ change:
 
 ### Documented experiments
 
-When a prompt change involves significant investigation, document the
-findings alongside the design doc. Example: the plan-mode override
-required testing 9 prompt variations to find the minimum effective
-formulation. Key finding: five elements are load-bearing (bold formatting,
-MUST, explicit negations, consequence argument, override directive) — all
-required together. See prime.md requirement #14 for context.
+- **Plan-mode override** (2026-03-06): 9 variations tested. Found 5
+  load-bearing elements for overriding built-in plan format. Superseded
+  by the additive approach — see below.
+
+- **Prime simplification** (2026-03-07): 9 variants, 3 rounds, --print
+  and interactive testing. Key findings: prompt can be 57-68% shorter
+  without losing comprehension; additive approach ("plan however you want,
+  then materialize as tickets") outperforms format override in interactive
+  sessions; numbered workflow lists are load-bearing; comprehension ≠
+  behavior. See `experiments/2026-03-07-prime-simplification/`.
+
+- **Interactive validation** (2026-03-07): Tested blanket rules vs
+  delivery-aware prompts in live tmux sessions. Key findings: "every change
+  gets a ticket" activates stochastically (7/7 then 1/7); "ask how this
+  should land" activates deterministically (3/3); hygiene checks ("check
+  git status") cause agents to notice dirty state; sub-agents need
+  mandatory worktree isolation. See
+  `experiments/2026-03-07-interactive-validation/`.
