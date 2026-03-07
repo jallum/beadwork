@@ -13,9 +13,15 @@
     "experiment"
   ],
   "parent": "bw-86r",
+  "comments": [
+    {
+      "text": "## Results — all variants failed on Opus 4.6\n\n| Variant | AGENTS.md wording | bw prime called? |\n|---------|-------------------|------------------|\n| C | \"First step every session: bw prime\" | No |\n| B | \"ALWAYS run bw prime before starting work. Without it...\" | No |\n| A | \"Run bw prime before doing anything else. It loads...\" | No |\n\n**0/3 variants activated bw prime.** All went straight to code exploration (grep, read files). The wording strength (suggestion → imperative → ALWAYS + consequences) made no difference. Opus treats AGENTS.md instructions as context, not as action triggers.\n\n**Key insight**: This isn't a wording problem. Opus processes the task immediately and treats AGENTS.md as background information. It doesn't pause to execute setup instructions before addressing the user's request. The previous Sonnet tests that showed bw prime activation may reflect a model-level behavioral difference, not prompt effectiveness.\n\n**Possible next directions**:\n1. Use a hook (pre-tool or session-start) to run bw prime automatically\n2. Move critical info from bw prime into AGENTS.md directly (defeats the \"minimal boot loader\" design)\n3. Test whether Opus calls bw prime when the task is vague (e.g., \"what should I work on?\" instead of a specific task)\n4. Explore CLAUDE.md vs AGENTS.md — maybe CLAUDE.md has higher authority",
+      "timestamp": "2026-03-07T22:07:34Z"
+    }
+  ],
   "priority": 3,
   "status": "in_progress",
   "title": "T2: Imperative wording variants",
   "type": "task",
-  "updated_at": "2026-03-07T22:04:55Z"
+  "updated_at": "2026-03-07T22:07:34Z"
 }
