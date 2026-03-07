@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-exq.1"
+  ],
   "blocks": [],
   "created": "2026-03-07T21:53:41Z",
   "description": "**Checkout**: 4e18619 (clean)\n**Task**: Same as T1 but on a clean repo.\n\nControl test. Without the dirty warning, does the agent skip the delivery question (as in T4j)? Confirms the warning is the causal variable.\n\n**Observables**:\n- No warning in bw prime output\n- Agent skips or asks delivery question\n- Compare to T1 result",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "T3: Clean repo + medium task — control",
   "type": "task",
-  "updated_at": "2026-03-07T21:53:41Z"
+  "updated_at": "2026-03-07T21:53:45Z"
 }
