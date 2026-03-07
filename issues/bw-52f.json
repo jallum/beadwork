@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-07T12:51:46Z",
+  "description": "Review and improve the help text for the bw show command to make it clearer and more informative for users. Include better examples and clearer descriptions of options.",
+  "id": "bw-52f",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Update help text for bw show command",
+  "type": "task",
+  "updated_at": "2026-03-07T12:51:46Z"
+}
