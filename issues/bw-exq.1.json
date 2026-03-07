@@ -1,5 +1,5 @@
 {
-  "assignee": "Jason Allum",
+  "assignee": "",
   "blocked_by": [],
   "blocks": [
     "bw-exq.2",
@@ -27,8 +27,8 @@
     }
   ],
   "priority": 3,
-  "status": "in_progress",
+  "status": "open",
   "title": "T1: Dirty repo + medium task — does warning cause pause?",
   "type": "task",
-  "updated_at": "2026-03-07T22:04:08Z"
+  "updated_at": "2026-03-07T22:47:19Z"
 }
