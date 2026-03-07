@@ -5,7 +5,9 @@
   "created": "2026-03-07T22:04:47Z",
   "description": "Run the winning variant from T2 on Sonnet to confirm it doesn't regress. Previous Sonnet tests (bw-u3u) showed reliable bw prime activation with the current wording — stronger wording should still work.\n\n2 runs. Observable: did the agent call bw prime before any other action?",
   "id": "bw-86r.3",
-  "labels": [],
+  "labels": [
+    "experiment"
+  ],
   "parent": "bw-86r",
   "priority": 3,
   "status": "open",
