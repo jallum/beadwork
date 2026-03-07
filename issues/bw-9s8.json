@@ -6,9 +6,15 @@
   "description": "Two issues in TTY wrap output:\n\n1. Dep annotations ([blocks: X], [blocked by: X]) wrap mid-annotation onto the next line. These should be treated as atomic/non-breaking units by the wrap logic.\n\n2. When a bullet item (- ✓ bw-xyz ...) wraps, the continuation line starts at column 0. It should be indented to align with the content start (after the bullet prefix), matching standard markdown list rendering.\n\nBoth are in internal/wrap/wrap.go.",
   "id": "bw-9s8",
   "labels": [],
+  "comments": [
+    {
+      "text": "Examined wrap.go: strings.Fields splits correctly and continuation lines use the original indent — no spurious whitespace added. The core issue is that indent is detected from the raw input line, so a bullet line with no leading spaces gets indent=\"\" and continuations start at column 0. The fix needs the caller (or wrapLine itself) to compute a content-aware indent for continuations — e.g. for '- ✓ id P1 Title', continuation indent should be '  ' (2 spaces, matching content after '- ').",
+      "timestamp": "2026-03-07T20:09:00Z"
+    }
+  ],
   "priority": 2,
   "status": "open",
   "title": "Fix line wrapping for bullet items and dep annotations",
   "type": "task",
-  "updated_at": "2026-03-07T20:06:15Z"
+  "updated_at": "2026-03-07T20:09:00Z"
 }
