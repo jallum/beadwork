@@ -8,9 +8,15 @@
   "labels": [
     "experiment"
   ],
+  "comments": [
+    {
+      "text": "Variant 1 test (principle-only, Opus 4.6, 2026-03-07): PARTIAL PASS\n\nPrompt change: 'Each delegated task needs its own worktree' (removed 'isolation: worktree' reference)\n\nScorecard:\n1. bw prime: ✅ ran immediately\n2. Created tickets: ✅ bw-y75 and bw-9st\n3. Worktree isolation: ✅ launched 2 agents with isolation (agent figured out mechanism)\n4. Sub-agents ran bw prime: ❌ blocked by permissions (background agents)\n5. Sub-agents ran bw start: ❌ blocked by permissions\n6. Sub-agents committed: ❌ blocked by permissions\n7. Sub-agents ran bw close: ❌ blocked by permissions\n8. Orchestrator recovery: ✅ detected failures, did work itself, closed tickets\n9. Orchestrator verified: ✅ ran tests, confirmed both features work\n\nKey findings:\n- The principle-only delegation wording DID activate worktree isolation — the agent used isolation without being told the specific parameter name\n- The actual failure was the permission model: background agents can't get interactive approvals\n- The orchestrator launched agents in background mode ('Running in the background') instead of foreground — this is what killed the sub-agents\n- Previous test (bw-exq) ran agents in foreground, which allowed approval prompts to surface\n- This is NOT a delegation wording regression — it's a confounding variable (foreground vs background agent execution)\n\nConclusion: Cannot compare to baseline. The foreground/background execution mode, not the delegation wording, determined the outcome. Need to retest with foreground agents.",
+      "timestamp": "2026-03-07T23:30:33Z"
+    }
+  ],
   "priority": 3,
   "status": "open",
   "title": "Test agent-agnostic delegation wording",
   "type": "epic",
-  "updated_at": "2026-03-07T23:20:06Z"
+  "updated_at": "2026-03-07T23:30:33Z"
 }
