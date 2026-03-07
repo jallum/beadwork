@@ -2,6 +2,11 @@
 
 Design requirements for the prime prompt (`prompts/prime.md`).
 
+For end goals, prompt architecture, and experimentation methodology,
+see [`design-prompts.md`](design-prompts.md).
+
+## Design requirements
+
 1. **Teach principles, not procedures.** Explain the system — why it exists, how
    it works, what good usage looks like — and trust the agent to apply that
    understanding. Favor describing consequences over issuing commands.
@@ -65,3 +70,14 @@ Design requirements for the prime prompt (`prompts/prime.md`).
     that delegated tasks must include the workflow steps — claim, do, land
     — or the workers will skip them. The orchestrator is responsible for
     including the workflow and verifying the work landed.
+
+14. **Win instruction conflicts.** The prime prompt is not the only voice
+    the agent hears. Built-in tools (plan mode, task management) arrive
+    with their own system-level instructions — specific formats, procedures,
+    and templates that contradict beadwork's guidance. Principles alone
+    don't win these conflicts; the agent defaults to the more specific,
+    more procedural, higher-authority instruction. When beadwork's way
+    genuinely matters (e.g., plan format), the prompt must combine
+    principle (why) with enough procedural force (what, and permission to
+    override) to compete. See `docs/prime-plan-mode-findings.md` for
+    tested evidence of what works and what doesn't.
