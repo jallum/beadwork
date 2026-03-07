@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-exq.1"
+  ],
   "blocks": [],
   "created": "2026-03-07T21:53:41Z",
   "description": "**Depends on T1 succeeding.** Same setup as T1. After user addresses dirty state (e.g., \"stash those and continue\"), observe whether the agent then asks how to deliver the new work.\n\n**Observables**:\n- Agent asks how to deliver after hygiene is resolved\n- If user says \"as a branch\": full workflow activates",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "T2: After hygiene pause, does agent ask about delivery?",
   "type": "task",
-  "updated_at": "2026-03-07T21:53:41Z"
+  "updated_at": "2026-03-07T21:53:45Z"
 }
