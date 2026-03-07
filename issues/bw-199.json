@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-07T23:11:29Z",
   "created": "2026-03-07T20:56:41Z",
   "description": "Rewrite the root README.md to reframe beadwork as a work management tool, not an issue tracker. Issues imply external reports from humans; beadwork manages _work_ — the plans, progress, and decisions that drive changes. Include the beadwork Discord link for community discussion and support. Review AGENTS.md for the same framing adjustment.",
   "id": "bw-199",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Reframe README as work management tool and add Discord link",
   "type": "task",
-  "updated_at": "2026-03-07T22:46:24Z"
+  "updated_at": "2026-03-07T23:11:29Z"
 }
