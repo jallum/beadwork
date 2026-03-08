@@ -24,7 +24,7 @@ func cmdOnboard(w Writer) error {
 	}
 
 	out := strings.Trim(buf.String(), "\n")
-	emit(w, out)
+	fmt.Fprint(w, out)
 	fmt.Fprintln(w)
 	return nil
 }

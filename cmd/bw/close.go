@@ -62,18 +62,18 @@ func cmdClose(store *issue.Store, args []string, w Writer) error {
 		}
 		fprintJSON(w, result)
 	} else {
-		emitln(w, fmt.Sprintf("closed {id:%s}: ~~%s~~", iss.ID, md.Escape(iss.Title)))
+		fmt.Fprintf(w, "closed {id:%s}: ~~%s~~\n", iss.ID, md.Escape(iss.Title))
 		if len(unblocked) > 0 {
 			w.Push(2)
 			for _, u := range unblocked {
-				emitln(w, fmt.Sprintf("unblocked {id:%s}: %s", u.ID, md.Escape(u.Title)))
+				fmt.Fprintf(w, "unblocked {id:%s}: %s\n", u.ID, md.Escape(u.Title))
 			}
 			w.Pop()
 			fmt.Fprintln(w)
 			if len(unblocked) == 1 {
-				emitln(w, fmt.Sprintf("Next: `bw start %s` to begin, or `bw ready` for all options.", unblocked[0].ID))
+				fmt.Fprintf(w, "Next: `bw start %s` to begin, or `bw ready` for all options.\n", unblocked[0].ID)
 			} else {
-				emitln(w, "Next: `bw ready` to see available work.")
+				fmt.Fprintln(w, "Next: `bw ready` to see available work.")
 			}
 		}
 	}

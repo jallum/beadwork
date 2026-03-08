@@ -104,7 +104,7 @@ func cmdList(store *issue.Store, args []string, w Writer) error {
 		}
 		closedBlockers := store.ClosedBlockerSet(displayed)
 		for _, iss := range displayed {
-			emitln(w, md.IssueOneLinerFiltered(iss, closedBlockers))
+			fmt.Fprintln(w, md.IssueOneLinerFiltered(iss, closedBlockers))
 		}
 		if limit > 0 && len(issues) > limit {
 			fmt.Fprintf(w, "... and %d more (use --limit or --all)\n", len(issues)-limit)

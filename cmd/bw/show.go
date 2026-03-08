@@ -90,7 +90,7 @@ func cmdShow(store *issue.Store, args []string, w Writer) error {
 			fmt.Fprintln(w)
 		}
 		if sa.showSection("summary") {
-			emitln(w, md.IssueSummary(iss))
+			fmt.Fprintln(w, md.IssueSummary(iss))
 		}
 		if sa.showSection("description") {
 			showDescription(w, iss)
@@ -111,7 +111,7 @@ func cmdShow(store *issue.Store, args []string, w Writer) error {
 func showDescription(w Writer, iss *issue.Issue) {
 	if iss.Description != "" {
 		fmt.Fprintln(w)
-		emitln(w, md.Description(iss.Description))
+		fmt.Fprintln(w, md.Description(iss.Description))
 	}
 }
 
@@ -121,7 +121,7 @@ func showChildren(w Writer, iss *issue.Issue, store *issue.Store) {
 		return
 	}
 	fmt.Fprintln(w)
-	emitln(w, md.Children(children))
+	fmt.Fprintln(w, md.Children(children))
 }
 
 // showMap renders BLOCKED BY and UNBLOCKS sections using the md package.
@@ -133,7 +133,7 @@ func showMap(w Writer, iss *issue.Issue, store *issue.Store) {
 		actionable := nearestOpen(tips, iss.ID, store)
 		if len(actionable) > 0 {
 			fmt.Fprintln(w)
-			emitln(w, md.BlockedBy(actionable))
+			fmt.Fprintln(w, md.BlockedBy(actionable))
 		}
 	}
 
@@ -148,7 +148,7 @@ func showMap(w Writer, iss *issue.Issue, store *issue.Store) {
 		}
 		if len(deps) > 0 {
 			fmt.Fprintln(w)
-			emitln(w, md.Unblocks(deps))
+			fmt.Fprintln(w, md.Unblocks(deps))
 		}
 	}
 }
@@ -156,13 +156,13 @@ func showMap(w Writer, iss *issue.Issue, store *issue.Store) {
 func showComments(w Writer, iss *issue.Issue) {
 	if len(iss.Comments) > 0 {
 		fmt.Fprintln(w)
-		emitln(w, md.Comments(iss.Comments))
+		fmt.Fprintln(w, md.Comments(iss.Comments))
 	}
 }
 
 // fprintIssueSummary renders the summary for use by start.go (Phase 3).
 func fprintIssueSummary(w Writer, iss *issue.Issue) {
-	emitln(w, md.IssueSummary(iss))
+	fmt.Fprintln(w, md.IssueSummary(iss))
 }
 
 // fprintDescription renders description for use by start.go (Phase 3).

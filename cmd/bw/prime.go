@@ -31,7 +31,7 @@ func cmdPrime(store *issue.Store, _ []string, w Writer) error {
 	bwFn := func(args ...string) string {
 		if cmd := commandMap[args[0]]; cmd != nil {
 			var buf bytes.Buffer
-			cmd.Run(store, args[1:], PlainWriter(&buf))
+			cmd.Run(store, args[1:], TokenWriter(&buf))
 			return strings.TrimRight(buf.String(), "\n")
 		}
 		return ""
@@ -43,7 +43,7 @@ func cmdPrime(store *issue.Store, _ []string, w Writer) error {
 	}
 
 	out := strings.Trim(buf.String(), "\n")
-	emit(w, out)
+	fmt.Fprint(w, out)
 	fmt.Fprintln(w)
 	return nil
 }
