@@ -2,6 +2,7 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-08T10:53:05Z",
   "created": "2026-03-07T20:06:15Z",
   "description": "Two issues in TTY wrap output:\n\n1. Dep annotations ([blocks: X], [blocked by: X]) wrap mid-annotation onto the next line. These should be treated as atomic/non-breaking units by the wrap logic.\n\n2. When a bullet item (- ✓ bw-xyz ...) wraps, the continuation line starts at column 0. It should be indented to align with the content start (after the bullet prefix), matching standard markdown list rendering.\n\nBoth are in internal/wrap/wrap.go.",
   "id": "bw-9s8",
@@ -17,8 +18,8 @@
     }
   ],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Fix line wrapping for bullet items and dep annotations",
   "type": "task",
-  "updated_at": "2026-03-08T10:50:34Z"
+  "updated_at": "2026-03-08T10:53:05Z"
 }
