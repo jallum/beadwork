@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-08T11:14:09Z",
+  "description": "Frame working tree as shared resource. Quick fix = you are certain nobody else needs the working tree right now. If unsure, use a worktree. Tests: same as A.",
+  "id": "bw-tnz.2",
+  "labels": [],
+  "parent": "bw-tnz",
+  "priority": 2,
+  "status": "open",
+  "title": "Variant B: shared-resource framing",
+  "type": "task",
+  "updated_at": "2026-03-08T11:14:09Z"
+}
