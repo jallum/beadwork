@@ -108,7 +108,7 @@ func ResolveTTY(s string, width int) string {
 			if val == "done" {
 				return "\x01check:done\x02" + "✓" + "\x01end\x02"
 			}
-			return "[ ]"
+			return "\x01check:open\x02" + "☐" + "\x01end\x02"
 		case "dep":
 			return resolveDepTTYPlain(val)
 		}
@@ -257,6 +257,8 @@ func resolveColorMarkers(s string) string {
 			out.WriteString(ansiRed)
 		case kind == "check:done":
 			out.WriteString(ansiGreen)
+		case kind == "check:open":
+			out.WriteString(ansiDim)
 		case strings.HasPrefix(kind, "p:"):
 			pLevel := kind[2:]
 			if c, ok := priorityColors[pLevel]; ok {
