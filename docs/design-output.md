@@ -26,8 +26,8 @@ render → tokenized markdown
 | `{p:0}`..`{p:4}` | `P0`..`P4` | `● P0`..`● P4` (priority color) |
 | `{id:bw-xyz}` | `bw-xyz` | `bw-xyz` (cyan) |
 | `{type:epic}` | `[EPIC]` | `[EPIC]` |
-| `{check:done}` | `[x]` | `✓` |
-| `{check:open}` | `[ ]` | `[ ]` |
+| `{check:done}` | `[x]` | `✓` (green) |
+| `{check:open}` | `[ ]` | `☐` (dim) |
 | `{dep:blocks:id}` | `[blocks: id]` | dim `[blocks:` red `id` dim `]` |
 | `{dep:blocked_by:id}` | `[blocked by: id]` | same |
 

@@ -215,6 +215,14 @@ func TestResolveTTYCheckboxes(t *testing.T) {
 	if !strings.Contains(got, "✓") || !strings.Contains(got, "\033[32m") {
 		t.Errorf("check:done in TTY should be green ✓: got %q", got)
 	}
+
+	got = ResolveTTY("- {check:open} open item", 80)
+	if !strings.Contains(got, "☐") {
+		t.Errorf("check:open in TTY should contain ☐: got %q", got)
+	}
+	if !strings.Contains(got, "\033[2m") {
+		t.Errorf("check:open in TTY should be dim: got %q", got)
+	}
 }
 
 func TestResolveTTYFencedHeadingNotStyled(t *testing.T) {
