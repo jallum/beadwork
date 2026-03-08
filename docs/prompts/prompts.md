@@ -91,10 +91,21 @@ onboard.md's job is done.
 
 ## Experimentation
 
-Prompt changes are hypotheses. The prompt system competes with agents'
-built-in instructions (system prompts, plan mode templates, tool-specific
-guidance) for influence over agent behavior. Changes must be tested against
-actual agent behavior, not just read for plausibility.
+Opinion < experiment. Prompt changes are hypotheses — they compete with
+agents' built-in instructions (system prompts, plan mode templates,
+tool-specific guidance) for influence over behavior. Changes must be tested
+against actual agent behavior, not just read for plausibility.
+
+### Test environment
+
+Use a fresh `git clone` for test repos — not worktrees of the main repo,
+which risks contamination. Real historical commits make good test tasks:
+checkout the parent commit, then ask the agent to implement the feature.
+
+Experiments are tracked as bw epics with the `experiment` label
+(`bw list --label experiment`). Child tickets track individual
+variants/trials. Results, scoring, and observations go in ticket comments
+so they survive compaction and session boundaries.
 
 ### Build and test loop
 
