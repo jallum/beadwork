@@ -2,14 +2,16 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-08T14:52:49Z",
+  "close_reason": "not needed — variant A worked",
   "created": "2026-03-08T10:53:14Z",
   "description": "Add branch naming guidance to start.md instead of prime.md. Since start.md is the point-of-action briefing, test whether placing the convention there (closer to when the agent actually creates the worktree) is more effective than prime.md.",
   "id": "bw-kn8.2",
   "labels": [],
   "parent": "bw-kn8",
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Variant B: naming in start.md",
   "type": "task",
-  "updated_at": "2026-03-08T10:53:14Z"
+  "updated_at": "2026-03-08T14:52:49Z"
 }
