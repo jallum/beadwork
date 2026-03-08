@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-03-08T10:18:01Z",
@@ -7,8 +7,8 @@
   "id": "bw-k4u",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "in_progress",
   "title": "Surface onboard instructions during bw init",
   "type": "task",
-  "updated_at": "2026-03-08T10:18:01Z"
+  "updated_at": "2026-03-08T17:07:35Z"
 }
