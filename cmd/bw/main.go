@@ -10,29 +10,32 @@ import (
 
 const version = "0.11.1"
 
+func resolveRenderMode(args []string) string {
+	if mode, ok := flagValue(args, "--x-render-as"); ok && mode != "" {
+		return mode
+	}
+	if hasFlag(args, "--x-raw") {
+		return "raw"
+	}
+	if term.IsTerminal(int(os.Stdout.Fd())) && os.Getenv("NO_COLOR") == "" {
+		return "tty"
+	}
+	return "markdown"
+}
+
 func main() {
 	var w Writer
-	renderAs, _ := flagValue(os.Args, "--x-render-as")
-	switch renderAs {
+	switch resolveRenderMode(os.Args) {
 	case "tty":
 		width := 80
 		if term.IsTerminal(int(os.Stdout.Fd())) {
 			width, _, _ = term.GetSize(int(os.Stdout.Fd()))
 		}
 		w = ColorWriter(os.Stdout, width)
-	case "markdown":
-		w = PlainWriter(os.Stdout)
 	case "raw":
 		w = RawWriter(os.Stdout)
 	default:
-		if hasFlag(os.Args, "--x-raw") {
-			w = RawWriter(os.Stdout)
-		} else if term.IsTerminal(int(os.Stdout.Fd())) && os.Getenv("NO_COLOR") == "" {
-			width, _, _ := term.GetSize(int(os.Stdout.Fd()))
-			w = ColorWriter(os.Stdout, width)
-		} else {
-			w = PlainWriter(os.Stdout)
-		}
+		w = PlainWriter(os.Stdout)
 	}
 
 	if len(os.Args) < 2 {

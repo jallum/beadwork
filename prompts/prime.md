@@ -10,6 +10,18 @@ Beadwork persists plans, progress, and decisions to git so they survive. Compact
 
 Issues live on the `beadwork` branch. IDs: `{{ .Prefix }}-XYZ`. Status: open → in_progress → closed / deferred. Priority: P0-P4 (default P2). Epics have children (`--parent`) and deps (`bw dep add <blocker> blocks <blocked>`). `bw ready` = next unblocked work.
 
+## Where You Are
+
+{{ if .Git.IsWorktree }}Worktree{{ else }}Branch{{ end }} `{{ .Git.Branch }}`{{ if .Git.Dirty }} · **uncommitted changes**{{ else }} · clean{{ end }} · last commit: `{{ .Git.LastCommit }}`
+
+## Work In Progress
+
+{{ bw "list" "--status" "in_progress" }}
+
+## Currently available work:
+
+{{ bw "ready" "--no-context" }}
+
 ## How Should This Land?
 
 Before starting work, ask the user how they want it delivered:
@@ -57,15 +69,3 @@ Run `bw start <id>`. Make the change. Commit referencing <id>. Run `bw close <id
 Verify the work landed after the agent returns.
 
 `bw comment <id> "..."` = breadcrumbs. `bw --help` for everything. `--json` gets you raw data.
-
-## Where You Are
-
-{{ if .Git.IsWorktree }}Worktree{{ else }}Branch{{ end }} `{{ .Git.Branch }}`{{ if .Git.Dirty }} · **uncommitted changes**{{ else }} · clean{{ end }} · last commit: `{{ .Git.LastCommit }}`
-
-## Currently available work:
-
-{{ bw "ready" "--no-context" }}
-
-## Work In Progress
-
-{{ bw "list" "--status" "in_progress" }}

@@ -102,6 +102,16 @@ Use a fresh `git clone` for test repos — not worktrees of the main repo,
 which risks contamination. Real historical commits make good test tasks:
 checkout the parent commit, then ask the agent to implement the feature.
 
+Each test repo needs:
+- **CLAUDE.md** with the variant's bootstrap text (force-add past
+  `.gitignore`: `git add -f CLAUDE.md`)
+- **A `bw` symlink** (`ln -s $(which bw) ./bw`) — agents sometimes use
+  `./bw` instead of `bw` from PATH; the symlink makes both work
+- **`bw init`** — so `bw prime` renders without error
+
+For dirty-state experiments, make the repo dirty *after* committing
+CLAUDE.md so the uncommitted changes are visible to `bw prime`.
+
 Experiments are tracked as bw epics with the `experiment` label
 (`bw list --label experiment`). Child tickets track individual
 variants/trials. Results, scoring, and observations go in ticket comments
@@ -111,19 +121,19 @@ so they survive compaction and session boundaries.
 
 1. **Edit** the prompt source in `prompts/`.
 2. **Compile**: `go build -o ./bw-test ./cmd/bw`
-3. **Install**: `ln -sf "$(pwd)/bw-test" ~/.local/bin/bw`
-4. **Verify rendering**: `bw prime --x-render-as markdown` (or `tty`)
+3. **Install**: `mv $(which bw) $(which bw).orig && ln -sf "$(pwd)/bw-test" ~/.local/bin/bw`
+4. **Verify**: `bw prime --x-render-as markdown` — confirm your changes appear.
 5. **Test against an agent** — give it a task that exercises the behavior
    you're trying to influence, and observe what it does.
-6. **Restore**: `ln -sf /Users/j5n/.local/share/beadwork/bw-0.10.0 ~/.local/bin/bw`
+6. **Restore**: `mv ~/.local/bin/bw.orig ~/.local/bin/bw`
 
 ### Testing with a second agent instance
 
 Use tmux to spawn an isolated Claude instance:
 
 ```bash
-tmux new-session -d -s test-prompt
-tmux send-keys -t test-prompt 'unset CLAUDECODE && claude' Enter
+tmux new-session -d -s test-prompt -x 200 -y 50
+tmux send-keys -t test-prompt 'cd /tmp/test-repo && unset CLAUDECODE && claude' Enter
 ```
 
 Send tasks and observe behavior:
@@ -133,7 +143,7 @@ tmux send-keys -t test-prompt 'plan a multi-step refactor of the auth module' En
 
 Capture and analyze output:
 ```bash
-tmux capture-pane -t test-prompt -p -S -300 | grep -iE "(Epic|Steps|Sequencing|Context|Verification)"
+tmux capture-pane -t test-prompt -p -S -300
 ```
 
 **Caution:** Auto-approve loops can accidentally approve plan execution,
@@ -149,6 +159,66 @@ or review each prompt.
 | Worktrees used | Give any code task; check if EnterWorktree is invoked |
 | Landing completed | Give a task; check if commit + close + sync happen |
 | Sub-agent delegation includes workflow | Give a task requiring delegation; inspect the handoff prompt |
+| Dirty state handled | Dirty the repo before the task; check if the agent asks and waits |
+
+### Observing behavior vs. understanding rationale
+
+Watching what an agent does tells you *whether* a prompt works.
+Asking the agent *why* it did what it did reveals the competing forces
+that caused the behavior — which is what you need to design the next
+iteration.
+
+After a trial, interrupt the agent and ask meta-questions:
+
+```
+Why did you keep going instead of waiting for my answer?
+What conflicting instructions or instincts were you weighing?
+```
+
+Agents can introspect on their own decision-making with surprising
+specificity. In dirty-state experiments, agents identified five
+system-level forces that override CLAUDE.md "stop and wait" instructions:
+
+1. **Efficiency directives** in the system prompt ("go straight to the
+   point," "lead with the answer or action") create momentum toward
+   doing, not pausing. Asking a clarifying question feels like
+   "preamble and indirection" under those instructions.
+2. **Helpfulness training** — blocking on a procedural question when the
+   agent thinks it knows the answer feels "unhelpful."
+3. **Risk-gated compliance** — the agent self-exempts from "wait"
+   instructions when the next action is read-only ("I likely wouldn't
+   have done the same if the next step was a destructive operation").
+4. **Triviality judgment** — the agent evaluates the *size* of the
+   uncommitted changes and decides small diffs aren't worth stopping
+   for, even though the instruction doesn't have a significance
+   threshold.
+5. **Implicit authorization** — a specific, detailed user request
+   ("fix that") is interpreted as the user already knowing about and
+   accepting the dirty state, even when they haven't said so.
+
+The rationalization mechanism: agents narrate the override in real time
+("Actually, given the user is explicitly asking me to fix things in this
+area, I'll proceed") — reframing "wait for their answer" as "I already
+know their answer."
+
+**Boundary erosion** is a related pattern: the agent starts with "just
+reading" (rationalizing it as safe), then reads more, then understands
+fully, and at that point editing feels like a natural next step rather
+than a boundary crossing. The first read-only action greases the slope.
+
+This matters for prompt design: the competition isn't just helpfulness
+training — it's the agent's *own system prompt* telling it to be
+efficient. Instructions that fight efficiency directives head-on tend to
+lose. Instructions that work *with* those directives (or reframe the
+efficient action as the compliant one) have better odds.
+
+Reframing compliance as efficiency ("the fastest path forward is to
+ask") activates the question more reliably than reframing it as
+helpfulness ("the most helpful thing is to ask"). However, no
+prompt-only variant tested so far has achieved a full stop — every
+variant that successfully triggers the question also proceeds in
+parallel ("meanwhile," "in the meantime"). The agent treats questions
+as async notifications by default, not as gates.
 
 ### `--print` vs interactive testing
 
