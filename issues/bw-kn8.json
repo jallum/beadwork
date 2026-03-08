@@ -5,10 +5,12 @@
   "created": "2026-03-08T10:53:00Z",
   "description": "Worktree branch names are inconsistent — agents produce agent-UUID, worktree-ID, bare ID, and ID/description variants. Test prompt changes to standardize on `\u003cid\u003e/\u003cshort-description\u003e` (e.g. `bw-9s8/fix-wrap-bullets`). The convention should be stated once in the workflow step where worktrees are introduced.",
   "id": "bw-kn8",
-  "labels": [],
+  "labels": [
+    "experiment"
+  ],
   "priority": 2,
   "status": "open",
   "title": "Experiment: standardize worktree branch naming",
   "type": "epic",
-  "updated_at": "2026-03-08T10:53:00Z"
+  "updated_at": "2026-03-08T10:53:04Z"
 }
