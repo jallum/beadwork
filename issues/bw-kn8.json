@@ -8,9 +8,15 @@
   "labels": [
     "experiment"
   ],
+  "comments": [
+    {
+      "text": "Variant A (naming in prime.md workflow step 1) — 2/2 pass. Agent created: bw-6q6/route-changelog-through-md-pipeline, bw-4bv/filter-closed-blockers. Both match \u003cid\u003e/\u003cshort-description\u003e. The one-line example in the workflow step was sufficient — no need for start.md or redundant placement.",
+      "timestamp": "2026-03-08T11:07:18Z"
+    }
+  ],
   "priority": 2,
   "status": "open",
   "title": "Experiment: standardize worktree branch naming",
   "type": "epic",
-  "updated_at": "2026-03-08T10:53:04Z"
+  "updated_at": "2026-03-08T11:07:18Z"
 }
