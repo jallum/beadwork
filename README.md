@@ -32,6 +32,8 @@ curl -fsSL https://raw.githubusercontent.com/jallum/beadwork/main/install.sh | s
 
 Or download a binary from [releases](https://github.com/jallum/beadwork/releases/latest). To update an existing install: `bw upgrade`.
 
+Coming from beads? see [docs/migration.md](docs/migration.md).
+
 ## Quick Start
 
 ```bash
@@ -103,7 +105,7 @@ bw prime                       Print workflow context for agents
 
 All data lives on a git orphan branch, manipulated directly in the object database via [go-git](https://github.com/go-git/go-git). Every operation is an atomic commit. Sync uses fetch-rebase-push with intent replay on conflict.
 
-For storage layout, sync mechanics, and migration guides, see [docs/design.md](docs/design.md).
+For storage layout and sync mechanics, see [docs/design.md](docs/design.md).
 
 ## License
 
