@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-08T17:08:00Z",
   "created": "2026-03-08T10:19:07Z",
   "description": "The quickstart section should show the CLAUDE.md bootstrap snippet (or link to bw onboard) so new users know how to wire up agent integration right away.",
   "id": "bw-s9p",
   "labels": [],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Include bootstrap prompt in README quickstart",
   "type": "task",
-  "updated_at": "2026-03-08T17:07:41Z"
+  "updated_at": "2026-03-08T17:08:00Z"
 }
