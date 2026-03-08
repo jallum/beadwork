@@ -107,13 +107,7 @@ func cmdUpgrade(_ *issue.Store, args []string, w Writer) error {
 		if parsed := parseChangelog(changelogContent, cur, latest); parsed != "" {
 			fmt.Fprintln(w)
 			w.Push(2)
-			for _, line := range strings.Split(parsed, "\n") {
-				if strings.HasPrefix(line, "## ") {
-					fmt.Fprintln(w, sectionHeader(w, strings.TrimPrefix(line, "## ")))
-				} else {
-					fmt.Fprintln(w, line)
-				}
-			}
+			emitln(w, parsed)
 			w.Pop()
 		}
 	}
