@@ -313,13 +313,15 @@ var commands = []Command{
 		Description: "Set an issue's status to deferred with a target date.\nDeferred issues are hidden from ready.",
 		Positionals: []Positional{
 			{Name: "<id>", Required: true, Help: "Issue ID"},
-			{Name: "<date>", Required: true, Help: "Date (YYYY-MM-DD)"},
+			{Name: "<date>", Required: true, Help: "Date: YYYY-MM-DD, \"2 weeks\", \"next monday\", \"tomorrow\""},
 		},
 		Flags: []Flag{
 			{Long: "--json", Help: "Output as JSON"},
 		},
 		Examples: []Example{
 			{Cmd: "bw defer bw-a3f8 2027-06-01"},
+			{Cmd: "bw defer bw-a3f8 2 weeks"},
+			{Cmd: "bw defer bw-a3f8 next monday"},
 		},
 		NeedsStore: true,
 		Run:        cmdDefer,
