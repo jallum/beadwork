@@ -6,6 +6,7 @@ import (
 
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/md"
+	"github.com/jallum/beadwork/internal/repo"
 )
 
 type ReadyArgs struct {
@@ -100,5 +101,12 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 		}
 		fmt.Fprintf(w, "Status: %s\n", strings.Join(legend, "  "))
 	}
+
+	// Warn about uncommitted changes (visible in both TTY and piped output)
+	if r, ok := store.Committer.(*repo.Repo); ok && r.WorktreeDirty() {
+		fmt.Fprintln(w)
+		fmt.Fprintln(w, "⚠ Working tree has uncommitted changes — these won't survive the next session.")
+	}
+
 	return nil
 }

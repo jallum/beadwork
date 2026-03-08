@@ -408,12 +408,17 @@ func (r *Repo) RepoDir() string {
 }
 
 // WorktreeDirty returns true if the user's working tree has uncommitted changes.
+// Uses go-git's Worktree.Status which respects .gitignore natively.
 func (r *Repo) WorktreeDirty() bool {
-	out, err := execGit(r.RepoDir(), "status", "--porcelain")
+	wt, err := r.tfs.Repo().Worktree()
 	if err != nil {
 		return false
 	}
-	return strings.TrimSpace(out) != ""
+	st, err := wt.Status()
+	if err != nil {
+		return false
+	}
+	return !st.IsClean()
 }
 
 func (r *Repo) fetch(remoteName string, refSpec config.RefSpec) error {
