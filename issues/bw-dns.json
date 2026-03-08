@@ -2,6 +2,7 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-08T14:53:01Z",
   "created": "2026-03-07T20:01:58Z",
   "description": "TTY resolver uses ✓ for {check:done} but [ ] for {check:open}. Use ☐ instead for visual consistency. Update resolve.go (line 111, TTY path only — markdown path should stay as [ ] for compatibility). Update docs/design-output.md token vocabulary if it documents check rendering.",
   "id": "bw-dns",
@@ -13,8 +14,8 @@
     }
   ],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Use ☐ for open checkbox in TTY output",
   "type": "task",
-  "updated_at": "2026-03-08T14:51:47Z"
+  "updated_at": "2026-03-08T14:53:01Z"
 }
