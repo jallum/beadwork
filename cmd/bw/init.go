@@ -37,7 +37,7 @@ func cmdInit(_ *issue.Store, args []string, w Writer) error {
 		if err := r.ForceReinit(ia.Prefix); err != nil {
 			return err
 		}
-		emitln(w, initMessage("reinitialized", r.Prefix))
+		fmt.Fprintln(w, initMessage("reinitialized", r.Prefix))
 		return nil
 	}
 	if r.IsInitialized() {
@@ -46,7 +46,7 @@ func cmdInit(_ *issue.Store, args []string, w Writer) error {
 	if err := r.Init(ia.Prefix); err != nil {
 		return err
 	}
-	emitln(w, initMessage("initialized", r.Prefix))
+	fmt.Fprintln(w, initMessage("initialized", r.Prefix))
 	return nil
 }
 

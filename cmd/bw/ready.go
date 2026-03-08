@@ -71,7 +71,7 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 
 	// Print standalone issues.
 	for _, iss := range filteredStandalone {
-		emitln(w, md.IssueOneLinerFiltered(iss, closedBlockers))
+		fmt.Fprintln(w, md.IssueOneLinerFiltered(iss, closedBlockers))
 	}
 
 	// Print groups.
@@ -79,12 +79,12 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 		// Print parent as group header.
 		parent, err := store.Get(parentID)
 		if err == nil {
-			emitln(w, md.IssueOneLinerFiltered(parent, closedBlockers))
+			fmt.Fprintln(w, md.IssueOneLinerFiltered(parent, closedBlockers))
 		}
 		// Print children indented.
 		w.Push(2)
 		for _, child := range groups[parentID] {
-			emitln(w, md.IssueOneLinerFiltered(child, closedBlockers))
+			fmt.Fprintln(w, md.IssueOneLinerFiltered(child, closedBlockers))
 		}
 		w.Pop()
 	}
@@ -108,7 +108,7 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 	if !ra.NoContext {
 		if r, ok := store.Committer.(*repo.Repo); ok {
 			fmt.Fprintln(w)
-			emitGitContext(w, r.GetGitContext())
+			fprintGitContext(w, r.GetGitContext())
 		}
 	}
 

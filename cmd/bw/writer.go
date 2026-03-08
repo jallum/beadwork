@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"io"
 	"strings"
+
+	"github.com/jallum/beadwork/internal/md"
 )
 
 // Style represents an ANSI text style.
@@ -165,17 +167,61 @@ func (w *writer) rebuildPrefix() {
 	w.pfx = strings.Repeat(" ", total)
 }
 
-// PlainWriter returns a Writer that ignores all styling and has no width (no wrapping).
-func PlainWriter(out io.Writer) Writer {
-	return &writer{out: out, bol: true}
+// resolvingWriter wraps a Writer and resolves tokenized markdown in Write().
+// TTY mode resolves to ANSI-styled text, markdown mode resolves to plain
+// markdown, and raw mode passes tokens through unchanged.
+type resolvingWriter struct {
+	Writer
 }
 
-// ColorWriter returns a Writer that applies ANSI styling with the given terminal width.
+func (rw *resolvingWriter) Write(p []byte) (int, error) {
+	s := string(p)
+	if !rw.IsRaw() {
+		if rw.IsTTY() {
+			s = md.ResolveTTY(s, rw.Width())
+		} else {
+			s = md.ResolveMarkdown(s)
+		}
+	}
+	_, err := rw.Writer.Write([]byte(s))
+	// Report the original length so fmt.Fprint doesn't think it short-wrote.
+	if err != nil {
+		return 0, err
+	}
+	return len(p), nil
+}
+
+// ResolvingWriter wraps a Writer so that all output is automatically resolved
+// from tokenized markdown according to the writer's mode.
+func ResolvingWriter(w Writer) Writer {
+	return &resolvingWriter{Writer: w}
+}
+
+// PlainWriter returns a Writer that resolves tokenized markdown to plain text.
+func PlainWriter(out io.Writer) Writer {
+	return ResolvingWriter(plainWriter(out))
+}
+
+// ColorWriter returns a Writer that resolves tokenized markdown with ANSI styling.
 func ColorWriter(out io.Writer, width int) Writer {
-	return &writer{out: out, color: true, width: width, bol: true}
+	return ResolvingWriter(colorWriter(out, width))
 }
 
 // RawWriter returns a Writer that passes tokenized text through without resolution.
 func RawWriter(out io.Writer) Writer {
 	return &writer{out: out, raw: true, bol: true}
+}
+
+// TokenWriter returns a non-resolving plain writer for capturing tokenized
+// output (e.g. template expansion) before final resolution by an outer writer.
+func TokenWriter(out io.Writer) Writer {
+	return plainWriter(out)
+}
+
+func plainWriter(out io.Writer) Writer {
+	return &writer{out: out, bol: true}
+}
+
+func colorWriter(out io.Writer, width int) Writer {
+	return &writer{out: out, color: true, width: width, bol: true}
 }

@@ -45,8 +45,8 @@ func cmdBlocked(store *issue.Store, args []string, w Writer) error {
 
 	for _, bi := range blocked {
 		fmt.Fprintln(w)
-		emitln(w, fmt.Sprintf("{p:%d} {id:%s} %s",
-			bi.Priority, bi.ID, md.Escape(bi.Title)))
+		fmt.Fprintf(w, "{p:%d} {id:%s} %s\n",
+			bi.Priority, bi.ID, md.Escape(bi.Title))
 		w.Push(2)
 
 		blockerIDs := make([]string, len(bi.OpenBlockers))

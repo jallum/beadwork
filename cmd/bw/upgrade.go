@@ -107,7 +107,7 @@ func cmdUpgrade(_ *issue.Store, args []string, w Writer) error {
 		if parsed := parseChangelog(changelogContent, cur, latest); parsed != "" {
 			fmt.Fprintln(w)
 			w.Push(2)
-			emitln(w, parsed)
+			fmt.Fprintln(w, parsed)
 			w.Pop()
 		}
 	}
