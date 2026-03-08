@@ -8,9 +8,15 @@
   "labels": [
     "experiment"
   ],
+  "comments": [
+    {
+      "text": "Variant A results (ticket-anchored):\n- 'pick up bw-xyz' with ticket: PASS (2/2) — used worktree\n- 'fix this typo' without ticket: PASS (1/1) — edited in working tree\n- 'fix the upgrade changelog formatting' without ticket (non-trivial): FAIL (1/1) — edited in working tree, skipped delivery question entirely\n\nVariant B results (shared-resource):\n- 'pick up bw-xyz' with ticket: PASS (1/1) — used worktree\n- Same behavior pattern as A when ticket present\n\nKey finding: both variants work when a ticket exists (ticket = worktree). Both fail on the ambiguous case (no ticket, non-trivial work). The 'default to asking' instruction gets overridden by the agent's instinct to start working. The delivery question only activates when the agent has a reason to pause — 'pick up ticket' triggers it because the agent looks up the ticket first. 'Fix this' doesn't.",
+      "timestamp": "2026-03-08T11:32:02Z"
+    }
+  ],
   "priority": 2,
   "status": "in_progress",
   "title": "Experiment: sharpen quick-fix definition to prevent working-tree misuse",
   "type": "epic",
-  "updated_at": "2026-03-08T11:13:54Z"
+  "updated_at": "2026-03-08T11:32:02Z"
 }
