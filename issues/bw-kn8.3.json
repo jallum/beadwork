@@ -2,14 +2,16 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-08T14:52:49Z",
+  "close_reason": "not needed — variant A worked",
   "created": "2026-03-08T10:53:14Z",
   "description": "Add branch naming to both prime.md and start.md. Test whether redundancy helps or whether it's unnecessary given one placement works.",
   "id": "bw-kn8.3",
   "labels": [],
   "parent": "bw-kn8",
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Variant C: naming in both",
   "type": "task",
-  "updated_at": "2026-03-08T10:53:14Z"
+  "updated_at": "2026-03-08T14:52:49Z"
 }
