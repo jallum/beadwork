@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-08T00:02:46Z",
+  "description": "Sort the bw ready output so P0 appears before P1, P1 before P2, etc. Currently the output is unordered by priority.",
+  "id": "bw-2en",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Sort bw ready output by priority",
+  "type": "task",
+  "updated_at": "2026-03-08T00:02:46Z"
+}
