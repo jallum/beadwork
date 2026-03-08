@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-08T10:51:39Z",
   "created": "2026-03-07T19:40:03Z",
   "description": "The --raw flag is undocumented/internal but doesn't follow the --x- naming convention established by --x-render-as. Remove --raw and replace with --x-raw for consistency. Audit other internal/debug flags (e.g. --dry-run if it's internal) and rename to --x- prefix. Update docs/design-output.md reference to --raw. Update any tests that use --raw.",
   "id": "bw-jq8",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Replace --raw with --x-raw and adopt --x- prefix for internal flags",
   "type": "task",
-  "updated_at": "2026-03-08T10:50:26Z"
+  "updated_at": "2026-03-08T10:51:39Z"
 }
