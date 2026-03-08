@@ -10,15 +10,16 @@ import (
 )
 
 type ReadyArgs struct {
-	JSON bool
+	JSON      bool
+	NoContext bool
 }
 
 func parseReadyArgs(raw []string) (ReadyArgs, error) {
-	a, err := ParseArgs(raw, nil, []string{"--json"})
+	a, err := ParseArgs(raw, nil, []string{"--json", "--no-context"})
 	if err != nil {
 		return ReadyArgs{}, err
 	}
-	return ReadyArgs{JSON: a.JSON()}, nil
+	return ReadyArgs{JSON: a.JSON(), NoContext: a.Bool("--no-context")}, nil
 }
 
 func cmdReady(store *issue.Store, args []string, w Writer) error {
@@ -103,10 +104,12 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 		fmt.Fprintf(w, "Status: %s\n", strings.Join(legend, "  "))
 	}
 
-	// Warn about uncommitted changes (visible in both TTY and piped output)
-	if r, ok := store.Committer.(*repo.Repo); ok && r.WorktreeDirty() {
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, "⚠ Working tree has uncommitted changes — these won't survive the next session.")
+	// Git context (visible in both TTY and piped output)
+	if !ra.NoContext {
+		if r, ok := store.Committer.(*repo.Repo); ok {
+			fmt.Fprintln(w)
+			emitGitContext(w, r.GetGitContext())
+		}
 	}
 
 	return nil

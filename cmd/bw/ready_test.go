@@ -314,13 +314,13 @@ func TestCmdReadyGroupsNotSeparatedByBlankLine(t *testing.T) {
 	env.Repo.Commit("create epics")
 
 	var buf bytes.Buffer
-	err := cmdReady(env.Store, []string{}, PlainWriter(&buf))
+	err := cmdReady(env.Store, []string{"--no-context"}, PlainWriter(&buf))
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
 	out := strings.TrimRight(buf.String(), " \n")
 
-	// No blank lines between groups (PlainWriter has no footer)
+	// No blank lines between groups (PlainWriter has no footer, context suppressed)
 	if strings.Contains(out, "\n\n") {
 		t.Errorf("groups should not be separated by blank lines, got:\n%s", out)
 	}

@@ -14,15 +14,18 @@ import (
 type PrimeData struct {
 	Prefix         string
 	WorktreeDirty  bool
+	Git            repo.GitContext
 }
 
 func cmdPrime(store *issue.Store, _ []string, w Writer) error {
 	r := store.Committer.(*repo.Repo)
 	cfg := r.ListConfig()
+	gitCtx := r.GetGitContext()
 
 	data := PrimeData{
 		Prefix:        cfg["prefix"],
-		WorktreeDirty: r.WorktreeDirty(),
+		WorktreeDirty: gitCtx.Dirty,
+		Git:            gitCtx,
 	}
 
 	bwFn := func(args ...string) string {

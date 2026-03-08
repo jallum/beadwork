@@ -58,9 +58,13 @@ Verify the work landed after the agent returns.
 
 `bw comment <id> "..."` = breadcrumbs. `bw --help` for everything. `--json` gets you raw data.
 
+## Where You Are
+
+{{ if .Git.IsWorktree }}Worktree{{ else }}Branch{{ end }} `{{ .Git.Branch }}`{{ if .Git.Dirty }} · **uncommitted changes**{{ else }} · clean{{ end }} · last commit: `{{ .Git.LastCommit }}`
+
 ## Currently available work:
 
-{{ bw "ready" }}
+{{ bw "ready" "--no-context" }}
 
 ## Work In Progress
 

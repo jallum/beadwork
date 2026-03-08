@@ -421,6 +421,40 @@ func (r *Repo) WorktreeDirty() bool {
 	return !st.IsClean()
 }
 
+// GitContext holds information about the user's current git working state.
+type GitContext struct {
+	Branch     string // current branch name (e.g. "main", "bw-a1b/fix-auth-bug")
+	LastCommit string // short hash + subject of HEAD commit
+	IsWorktree bool   // true if cwd is a git worktree (not the main working tree)
+	Dirty      bool   // true if there are uncommitted changes
+}
+
+// GetGitContext returns information about the user's current working directory.
+// Uses git commands from cwd so it picks up worktree-specific state.
+func (r *Repo) GetGitContext() GitContext {
+	ctx := GitContext{Dirty: r.WorktreeDirty()}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return ctx
+	}
+
+	if out, err := execGit(cwd, "rev-parse", "--abbrev-ref", "HEAD"); err == nil {
+		ctx.Branch = strings.TrimSpace(out)
+	}
+	if out, err := execGit(cwd, "log", "-1", "--oneline"); err == nil {
+		ctx.LastCommit = strings.TrimSpace(out)
+	}
+
+	// .git is a file in worktrees, a directory in the main working tree
+	dotGit := filepath.Join(cwd, ".git")
+	if fi, err := os.Stat(dotGit); err == nil && !fi.IsDir() {
+		ctx.IsWorktree = true
+	}
+
+	return ctx
+}
+
 func (r *Repo) fetch(remoteName string, refSpec config.RefSpec) error {
 	_, err := execGit(r.RepoDir(), "fetch", remoteName, string(refSpec))
 	return err
