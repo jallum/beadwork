@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-08T00:09:08Z",
   "created": "2026-03-08T00:03:13Z",
   "description": "Add a --reverse flag to the bw list command that flips the output order.",
   "id": "bw-xaj",
   "labels": [],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add --reverse flag to bw list",
   "type": "task",
-  "updated_at": "2026-03-08T00:04:27Z"
+  "updated_at": "2026-03-08T00:09:08Z"
 }
