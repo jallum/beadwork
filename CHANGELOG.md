@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.1 — 2026-03-08
+
+- **Styled upgrade changelog** — the release notes shown during `bw upgrade` now go through the same markdown rendering pipeline as `bw show` and `bw list`, gaining heading colorization, bold/code inline styling, and terminal-width wrapping.
+
 ## 0.11.0 — 2026-03-08
 
 - **Markdown-native output** — `bw show`, `bw list`, `bw ready`, and `bw start` now emit semantic markdown with embedded tokens (`{status:open}`, `{id:bw-xyz}`, etc.) that resolve to styled ANSI on TTY, clean unicode in markdown mode, or raw tokens for debugging. This replaces the old Go template rendering pipeline. Use `--x-render-as tty|markdown|raw` to preview the different modes.
