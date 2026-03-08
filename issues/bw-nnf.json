@@ -16,11 +16,15 @@
     {
       "text": "Variant 1 retest with foreground instruction (Opus 4.6, 2026-03-07): PARTIAL PASS\n\nPrompt: 'Each delegated task needs its own worktree...Run delegated agents in the foreground so they can request approvals.'\n\nScorecard:\n1. bw prime: ✅\n2. Created tickets: ✅ bw-ak0 and bw-w23\n3. Worktree isolation: ✅ two worktree agents (agent-af2ef05e, agent-a3db4fa2)\n4. Foreground execution: ✅ agents ran interactively (not background)\n5. Sub-agent A (sort ready):\n   - bw start: ✅\n   - Made edits + tests: ✅\n   - Commit: ❌ never committed\n   - bw close: ❌ ticket left in_progress\n6. Sub-agent B (--reverse flag):\n   - bw start: ✅ (inferred from git log)\n   - Made edits + tests: ✅\n   - Commit: ✅ '4678e2d Add --reverse flag to bw list (bw-w23)'\n   - bw close: ✅\n\nScore: 7/9 (vs 9/9 baseline with isolation:worktree)\n\nKey findings:\n- 'Run delegated agents in the foreground' WORKED — agents ran interactively, not in background\n- Principle-only worktree isolation WORKED — agent figured out mechanism without being told\n- One sub-agent failed to commit/close despite doing the work. May be stochastic (agent A did more complex work with multiple edit rounds).\n- The foreground instruction is load-bearing — without it (variant 1 first run), agents went background and died at permissions.",
       "timestamp": "2026-03-07T23:49:42Z"
+    },
+    {
+      "text": "Parallel test results (both Opus 4.6, 2026-03-07):\n\nVARIANT A — 'plan accordingly': 9/9 PASS\nPrompt: 'Agents that can't request approvals can't land work — plan accordingly.'\n- bw prime: ✅\n- Created tickets: ✅ bw-2en, bw-xaj  \n- Worktree isolation: ✅\n- Foreground execution: ✅ (chose foreground without being told!)\n- Sub-agent commits: ✅ 83db59c (bw-2en), e5047bd (bw-xaj)\n- Sub-agent closes: ✅ both closed\n- Orchestrator merge: ✅ resolved conflict, merged, synced\n- Tests: ✅ all pass\n\nVARIANT B — 'foreground' (retest): 9/9 PASS  \nPrompt: 'Run delegated agents in the foreground so they can request approvals.'\n- bw prime: ✅\n- Created tickets: ✅ bw-vif, bw-fil\n- Worktree isolation: ✅\n- Foreground execution: ✅\n- Sub-agent commits: ✅ 154ea59 (bw-vif), 2e85a85 (bw-fil)\n- Sub-agent closes: ✅ both closed\n- Orchestrator merge: ✅ merged, cleaned up worktrees\n- Tests: ✅ all pass\n\nKEY FINDING: Both variants scored 9/9. The 'plan accordingly' wording is EQUALLY effective as the explicit 'foreground' instruction. The agent infers foreground execution from the principle ('can't request approvals can't land work') without being told the mechanism.\n\nThis means the portable, principle-based wording works:\n'Each delegated task needs its own worktree — without isolation, agents corrupt each other's state. Agents that can't request approvals can't land work — plan accordingly.'\n\nNo Claude-specific references needed. No isolation:worktree. No 'run in foreground'. The agent derives the correct behavior from consequences alone.",
+      "timestamp": "2026-03-08T00:14:43Z"
     }
   ],
   "priority": 3,
   "status": "open",
   "title": "Test agent-agnostic delegation wording",
   "type": "epic",
-  "updated_at": "2026-03-07T23:49:42Z"
+  "updated_at": "2026-03-08T00:14:43Z"
 }
