@@ -2,14 +2,16 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-08T14:52:50Z",
+  "close_reason": "completed — tested, works for ticket-referenced tasks",
   "created": "2026-03-08T11:14:09Z",
   "description": "If a ticket exists, use a worktree. Quick fix = no ticket, immediate change, user is watching. Tests: (1) 'pick up bw-xyz' should always use worktree (ticket exists), (2) 'fix this typo' without a ticket should stay in working tree.",
   "id": "bw-tnz.1",
   "labels": [],
   "parent": "bw-tnz",
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Variant A: ticket-anchored definition",
   "type": "task",
-  "updated_at": "2026-03-08T11:14:09Z"
+  "updated_at": "2026-03-08T14:52:50Z"
 }
