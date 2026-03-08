@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.11.0 — 2026-03-08
+
+- **Markdown-native output** — `bw show`, `bw list`, `bw ready`, and `bw start` now emit semantic markdown with embedded tokens (`{status:open}`, `{id:bw-xyz}`, etc.) that resolve to styled ANSI on TTY, clean unicode in markdown mode, or raw tokens for debugging. This replaces the old Go template rendering pipeline. Use `--x-render-as tty|markdown|raw` to preview the different modes.
+
+- **Rewritten prime prompt** — `bw prime` is shorter (~300 words, down from ~700) and structured around a delivery-awareness question: _"How should this land?"_ with three tiers — quick fix (no ticket), branch/PR (ticket + worktree), or multi-step (epic). The agent asks the user instead of guessing, which tested more reliably than blanket "every change gets a ticket" rules. Dirty worktree warnings now appear as a prominent `[!WARNING]` block at the top.
+
+- **Agent-agnostic delegation** — the prime prompt no longer references Claude Code–specific tools like `isolation: "worktree"`. Instead it states consequences: _"Each delegated task needs its own worktree… Agents that can't request approvals can't land work — plan accordingly."_ Agents infer the right mechanism on their own. Tested 9/9 on both principle-based and explicit variants.
+
+- **Agent detection** — new `internal/agent` package detects the invoking AI agent (Claude Code, Gemini CLI, Cursor) via environment variables, enabling agent-aware behavior in future commands.
+
+- **Improved onboarding** — `bw onboard` now recommends adding the bootstrap prompt to `CLAUDE.md` (not `AGENTS.md`, which Claude Code doesn't read). References are agent-agnostic, mentioning `CLAUDE.md`, `GEMINI.md`, and `COPILOT.md`.
+
+- **Bug fix: closed blockers no longer clutter output** — `bw list` dependency annotations now filter out already-closed blockers.
+
+- **Repositioned as work management** — README reframed from "issue tracking" to "git-native work management." Added Discord community link.
+
+- **Prompt design documentation** — new `docs/prompts/` directory with design requirements for each prompt (`prime.md`, `agents.md`, `start.md`) and a full experimentation methodology (`prompts.md`).
+
 ## 0.10.0 — 2026-03-06
 
 - **Automatic upgrade notifications** — `bw` now checks for newer releases once per day (throttled via a local cache). When a new version is found, it creates a P1 upgrade bead with the changelog and instructions to run `bw upgrade`. The bead updates itself if further releases appear, and `bw upgrade` auto-closes it when complete. This runs silently in the background of any store-using command — no new flags or commands required.

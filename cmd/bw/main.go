@@ -8,7 +8,7 @@ import (
 	"golang.org/x/term"
 )
 
-const version = "0.10.0"
+const version = "0.11.0"
 
 func main() {
 	var w Writer
