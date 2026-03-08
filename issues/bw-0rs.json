@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-08T17:04:46Z",
   "created": "2026-03-08T15:58:07Z",
   "description": "Writer init in main.go has duplicated logic:\n\n- ColorWriter construction (terminal width detection + creation) appears in both the `\"tty\"` case and the `default` case\n- The `default` branch re-resolves the render mode that the explicit switch cases already handle\n\nRefactor: resolve the render mode once (collapsing `--x-raw`, `--x-render-as`, terminal detection, and `NO_COLOR` into a single mode decision), then switch on the resolved mode to construct the writer. Each writer type constructed exactly once.",
   "id": "bw-0rs",
   "labels": [],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "DRY up writer initialization in main.go",
   "type": "task",
-  "updated_at": "2026-03-08T15:59:22Z"
+  "updated_at": "2026-03-08T17:04:46Z"
 }
