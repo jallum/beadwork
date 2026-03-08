@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-08T10:18:01Z",
+  "description": "bw init is a natural moment to show users that bw onboard exists, or even include its output inline. Currently init doesn't mention onboard at all, so users miss the agent integration setup step.",
+  "id": "bw-k4u",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Surface onboard instructions during bw init",
+  "type": "task",
+  "updated_at": "2026-03-08T10:18:01Z"
+}
