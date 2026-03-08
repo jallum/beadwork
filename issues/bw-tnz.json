@@ -24,11 +24,15 @@
     {
       "text": "Variant G (hesitancy about working tree state + research in worktree): FAIL (0/1). Same pattern.\n\nSummary of all variants on the ambiguous 'fix that' task:\n- A (ticket-anchored): FAIL\n- D (default to Branch/PR): FAIL  \n- E (ALWAYS + consequences): FAIL\n- F (ticket as step 1): FAIL\n- G (hesitancy + research in worktree): FAIL\n\nAll variants work when a ticket is referenced. All fail on 'fix that' without a ticket. The delivery question section and workflow steps are read but deprioritized against direct instructions.\n\nKey insight: the agent's research phase is the commitment point. Once it starts reading files in the working tree, it's locked in. The worktree instruction comes in the Workflow section which the agent treats as 'what to do when making changes', not 'what to do before researching'. Research feels read-only and harmless, so the agent doesn't gate it behind ticket/worktree creation.",
       "timestamp": "2026-03-08T11:49:17Z"
+    },
+    {
+      "text": "Closing. The ticket-anchored definition (variant A) works well for its designed case: ticket exists → worktree. The ambiguous 'fix that' case (no ticket) is an acceptable boundary — sometimes the user genuinely wants a quick fix. Tested 7 variants (A-G); all pass when ticket referenced, all fail on open-ended 'fix that'. The forcing function is the ticket ID, not prompt wording.",
+      "timestamp": "2026-03-08T14:50:10Z"
     }
   ],
   "priority": 2,
   "status": "in_progress",
   "title": "Experiment: sharpen quick-fix definition to prevent working-tree misuse",
   "type": "epic",
-  "updated_at": "2026-03-08T11:49:17Z"
+  "updated_at": "2026-03-08T14:50:10Z"
 }
