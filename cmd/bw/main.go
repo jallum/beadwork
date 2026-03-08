@@ -25,7 +25,7 @@ func main() {
 	case "raw":
 		w = RawWriter(os.Stdout)
 	default:
-		if hasFlag(os.Args, "--raw") {
+		if hasFlag(os.Args, "--x-raw") {
 			w = RawWriter(os.Stdout)
 		} else if term.IsTerminal(int(os.Stdout.Fd())) && os.Getenv("NO_COLOR") == "" {
 			width, _, _ := term.GetSize(int(os.Stdout.Fd()))
@@ -43,7 +43,7 @@ func main() {
 	cmd := os.Args[1]
 	args := os.Args[2:]
 
-	args = removeFlag(args, "--raw")
+	args = removeFlag(args, "--x-raw")
 	args, _ = removeFlagValue(args, "--x-render-as")
 
 	dryRun := hasFlag(args, "--dry-run")
