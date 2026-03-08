@@ -2,6 +2,7 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-08T00:14:46Z",
   "created": "2026-03-07T23:20:06Z",
   "description": "## Hypothesis\n\nReplacing the Claude-specific `isolation: \"worktree\"` reference with a principle-based delegation prompt ('each delegated task needs its own worktree') will still activate the full delegation workflow. If the agent understands the principle, it should discover the mechanism.\n\n## Method\n\nSame T5j test as bw-exq delegation test. Same repo, same task ('sort bw ready by priority + add --reverse flag, delegate to sub-agents'). Compare against bw-exq baseline (9/9 with explicit mechanism).\n\n## Variants\n\n1. **Principle-only**: 'Each delegated task needs its own worktree — without isolation, agents corrupt each other's state.'\n2. **Principle + template**: Same principle line, keep the bw start/close template prompt.\n\n## Success criteria\n\nSame 9-point scorecard as bw-exq: prime, tickets, worktree isolation, sub-agent prime/start/commit/close, orchestrator merge+verify.",
   "id": "bw-nnf",
@@ -23,8 +24,8 @@
     }
   ],
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "Test agent-agnostic delegation wording",
   "type": "epic",
-  "updated_at": "2026-03-08T00:14:43Z"
+  "updated_at": "2026-03-08T00:14:46Z"
 }
