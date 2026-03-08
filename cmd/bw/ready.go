@@ -99,6 +99,7 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 		for _, s := range issue.Statuses {
 			legend = append(legend, s.Icon+" "+s.Name)
 		}
+		legend = append(legend, "⊘ blocked")
 		fmt.Fprintf(w, "Status: %s\n", strings.Join(legend, "  "))
 	}
 
