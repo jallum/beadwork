@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-08T11:14:10Z",
+  "description": "Quick fix = change that takes under 30 seconds and needs no build/test cycle. Everything else gets a worktree. Tests: same as A.",
+  "id": "bw-tnz.3",
+  "labels": [],
+  "parent": "bw-tnz",
+  "priority": 2,
+  "status": "open",
+  "title": "Variant C: time-based definition",
+  "type": "task",
+  "updated_at": "2026-03-08T11:14:10Z"
+}
