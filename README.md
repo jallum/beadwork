@@ -38,6 +38,7 @@ Coming from beads? see [docs/migration.md](docs/migration.md).
 
 ```bash
 bw init                                           # initialize in any git repo
+bw onboard                                        # print bootstrap snippet for CLAUDE.md / GEMINI.md
 bw create "Fix auth bug" --type bug -p 1          # create an issue
 bw ready                                          # list unblocked work
 bw comment bw-a1b2 "Fixed in latest deploy"       # add a comment
