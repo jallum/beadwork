@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-08T17:22:39Z",
   "created": "2026-03-08T17:16:45Z",
   "description": "Replace emit/emitln with a ResolvingWriter that wraps the inner Writer (ColorWriter, PlainWriter, RawWriter) and resolves tokens in Write(). This moves token resolution from call sites into the Writer abstraction where it belongs.\n\n- Add ResolvingWriter that calls ResolveTTY/ResolveMarkdown/passthrough based on mode, then delegates to inner Writer\n- Compose in main.go: `w = ResolvingWriter(ColorWriter(os.Stdout, width))`\n- Remove emit/emitln — all call sites become plain fmt.Fprint/fmt.Fprintf\n- The Writer already knows its mode (IsTTY, IsRaw), so ResolvingWriter has everything it needs",
   "id": "bw-uk8",
   "labels": [],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Compose token resolution into Writer via ResolvingWriter wrapper",
   "type": "task",
-  "updated_at": "2026-03-08T17:18:00Z"
+  "updated_at": "2026-03-08T17:22:39Z"
 }
