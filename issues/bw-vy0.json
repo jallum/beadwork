@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-08T14:52:55Z",
   "created": "2026-03-07T13:04:46Z",
   "description": "Improve the help text for bw show command to be clearer about available options and provide better examples. Current help is minimal and doesn't explain the various display modes.",
   "id": "bw-vy0",
   "labels": [],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Update help text for bw show",
   "type": "task",
-  "updated_at": "2026-03-08T14:51:41Z"
+  "updated_at": "2026-03-08T14:52:55Z"
 }
