@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-03-08T00:03:13Z",
@@ -7,8 +7,8 @@
   "id": "bw-xaj",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "in_progress",
   "title": "Add --reverse flag to bw list",
   "type": "task",
-  "updated_at": "2026-03-08T00:03:13Z"
+  "updated_at": "2026-03-08T00:04:27Z"
 }
