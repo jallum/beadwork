@@ -2,6 +2,7 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-08T14:50:10Z",
   "created": "2026-03-08T11:13:50Z",
   "description": "Agents rationalize non-trivial work as 'quick fix' and edit the main working tree, blocking the user and other agents. The current definition ('just make the change in the working tree, no ticket needed') is too loose. Test variants that anchor the definition on observable signals: ticket existence, time to complete, whether user is actively waiting. Key principle: don't assume you're the only instance.",
   "id": "bw-tnz",
@@ -31,7 +32,7 @@
     }
   ],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Experiment: sharpen quick-fix definition to prevent working-tree misuse",
   "type": "epic",
   "updated_at": "2026-03-08T14:50:10Z"
