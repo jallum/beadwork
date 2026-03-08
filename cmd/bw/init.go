@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
@@ -36,7 +37,7 @@ func cmdInit(_ *issue.Store, args []string, w Writer) error {
 		if err := r.ForceReinit(ia.Prefix); err != nil {
 			return err
 		}
-		fmt.Fprintf(w, "reinitialized beadwork (prefix: %s)\n", r.Prefix)
+		emitln(w, initMessage("reinitialized", r.Prefix))
 		return nil
 	}
 	if r.IsInitialized() {
@@ -45,6 +46,13 @@ func cmdInit(_ *issue.Store, args []string, w Writer) error {
 	if err := r.Init(ia.Prefix); err != nil {
 		return err
 	}
-	fmt.Fprintf(w, "initialized beadwork (prefix: %s)\n", r.Prefix)
+	emitln(w, initMessage("initialized", r.Prefix))
 	return nil
+}
+
+func initMessage(verb, prefix string) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "%s beadwork (prefix: %s)\n", verb, prefix)
+	b.WriteString("\nNext step: run `bw onboard` to set up agent integration.")
+	return b.String()
 }
