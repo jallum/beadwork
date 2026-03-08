@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-03-08T11:13:50Z",
@@ -9,7 +9,7 @@
     "experiment"
   ],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Experiment: sharpen quick-fix definition to prevent working-tree misuse",
   "type": "epic",
   "updated_at": "2026-03-08T11:13:54Z"
