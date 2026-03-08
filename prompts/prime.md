@@ -40,7 +40,7 @@ Now `bw ready` feeds you the next unblocked step, and compaction can't erase you
 
 ## Workflow
 
-1. **Worktree**: "I'll work in a worktree for {{ .Prefix }}-xyz"
+1. **Worktree**: Create a worktree with branch `<id>/<short-description>` (e.g. `{{ .Prefix }}-a1b/fix-auth-bug`)
 2. **Claim**: `bw start <id>`
 3. **Work**: One ticket, one worktree
 4. **Land**: Commit with ticket ID → `bw close <id>` → `bw sync`
