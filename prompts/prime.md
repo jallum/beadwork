@@ -48,7 +48,7 @@ Now `bw ready` feeds you the next unblocked step, and compaction can't erase you
 
 What isn't committed, closed, and synced is gone next session.
 
-**Delegation**: When using the Agent tool, ALWAYS set `isolation: "worktree"` — without isolation, agents corrupt each other's state. Create a ticket for each delegated task first, then include in the agent prompt:
+**Delegation**: Each delegated task needs its own worktree — without isolation, agents corrupt each other's state. Agents that can't request approvals can't land work — plan accordingly. Create a ticket for each delegated task first, then include in the agent prompt:
 
 ```
 Run `bw start <id>`. Make the change. Commit referencing <id>. Run `bw close <id>`.
