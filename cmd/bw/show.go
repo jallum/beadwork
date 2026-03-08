@@ -16,8 +16,6 @@ var validShowSections = map[string]bool{
 	"blockedby":   true,
 	"unblocks":    true,
 	"comments":    true,
-	"labels":      true,
-	"parent":      true,
 }
 
 type ShowArgs struct {
