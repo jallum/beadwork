@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.11.2 — 2026-03-08
+
+- **Git context in `bw prime` and `bw ready`** — output now shows the current branch, clean/dirty state, and last commit so agents know where they are without a separate `git status`.
+
+- **`bw init` surfaces onboard instructions** — after initializing, `bw init` now tells you about `bw onboard` so new users discover agent integration setup immediately.
+
+- **Standardized worktree branch naming** — the prime prompt now includes a naming convention (`<id>/<short-description>`, e.g. `bw-a1b/fix-auth-bug`) so agents produce consistent branch names.
+
+- **Uncommitted changes warning** — `bw prime` and `bw ready` now warn when the working tree has uncommitted changes.
+
+- **Styled open checkboxes** — TTY output uses `☐` (dimmed) for open checkboxes instead of `[ ]`, matching the `✓` styling for completed items.
+
+- **Blocked status in `bw ready` legend** — the TTY legend now includes the blocked indicator.
+
+- **Bug fix: `bw defer` relative dates** — inputs like "2 weeks" and "next monday" now parse correctly.
+
+- **Bug fix: line wrapping** — bullet items and dependency annotations no longer break mid-word.
+
+- **`--raw` renamed to `--x-raw`** — internal/debug flags now use an `--x-` prefix to distinguish them from stable flags.
+
 ## 0.11.1 — 2026-03-08
 
 - **Styled upgrade changelog** — the release notes shown during `bw upgrade` now go through the same markdown rendering pipeline as `bw show` and `bw list`, gaining heading colorization, bold/code inline styling, and terminal-width wrapping.
