@@ -60,9 +60,11 @@ func parseCreateArgs(raw []string) (CreateArgs, error) {
 		}
 	}
 	if ca.DeferUntil != "" {
-		if err := validateDate(ca.DeferUntil); err != nil {
+		resolved, err := resolveDateNow(ca.DeferUntil)
+		if err != nil {
 			return ca, err
 		}
+		ca.DeferUntil = resolved
 	}
 	return ca, nil
 }

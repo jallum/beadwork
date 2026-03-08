@@ -68,11 +68,12 @@ func parseUpdateArgs(raw []string) (UpdateArgs, error) {
 		ua.StatusSet = true
 	}
 	if a.Has("--defer") {
-		ua.DeferUntil = a.String("--defer")
-		ua.DeferSet = true
-		if err := validateDate(ua.DeferUntil); err != nil {
+		resolved, err := resolveDateNow(a.String("--defer"))
+		if err != nil {
 			return ua, err
 		}
+		ua.DeferUntil = resolved
+		ua.DeferSet = true
 	}
 	if a.Has("--parent") {
 		ua.Parent = a.String("--parent")
