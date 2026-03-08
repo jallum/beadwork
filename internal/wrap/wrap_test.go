@@ -276,3 +276,81 @@ func TestVisibleLen(t *testing.T) {
 		}
 	}
 }
+
+func TestText_BulletContinuationIndent(t *testing.T) {
+	input := "- This is a bullet item that should wrap with proper continuation indent"
+	got := Text(input, 30)
+	// "- " is 2 chars, so continuation lines should be indented 2 spaces.
+	want := "- This is a bullet item that\n  should wrap with proper\n  continuation indent"
+	if got != want {
+		t.Errorf("Text(..., 30):\n got: %q\nwant: %q", got, want)
+	}
+}
+
+func TestText_BulletWithCheckmarkContinuationIndent(t *testing.T) {
+	input := "- ✓ bw-abc P1 Some task title that is long enough to wrap around"
+	got := Text(input, 35)
+	// "- ✓ " is 4 visible chars, so continuation indent is 4 spaces.
+	// First line fits 35 chars, continuation lines fit 31 (35-4).
+	want := "- ✓ bw-abc P1 Some task title that\n    is long enough to wrap around"
+	if got != want {
+		t.Errorf("Text(..., 35):\n got: %q\nwant: %q", got, want)
+	}
+}
+
+func TestText_IndentedBulletContinuation(t *testing.T) {
+	input := "  - Child bullet that wraps onto a second continuation line here"
+	got := Text(input, 30)
+	// "  " leading + "- " prefix = continuation indent "    " (4 spaces).
+	// First line avail = 28 (30-2), cont avail = 26 (30-4).
+	want := "  - Child bullet that wraps\n    onto a second continuation\n    line here"
+	if got != want {
+		t.Errorf("Text(..., 30):\n got: %q\nwant: %q", got, want)
+	}
+}
+
+func TestText_NumberedListContinuation(t *testing.T) {
+	input := "1. Numbered item that wraps should continue indented properly"
+	got := Text(input, 30)
+	// "1. " is 3 chars, so continuation indent is 3 spaces.
+	want := "1. Numbered item that wraps\n   should continue indented\n   properly"
+	if got != want {
+		t.Errorf("Text(..., 30):\n got: %q\nwant: %q", got, want)
+	}
+}
+
+func TestText_DepAnnotationNonBreaking(t *testing.T) {
+	input := "- ○ bw-xyz P1 Some task [blocked by: bw-abc]"
+	got := Text(input, 35)
+	// The annotation [blocked by: bw-abc] should not be split.
+	for _, line := range strings.Split(got, "\n") {
+		if strings.Contains(line, "[blocked") && !strings.Contains(line, "[blocked by: bw-abc]") {
+			t.Errorf("dep annotation was split across lines:\n%s", got)
+		}
+	}
+}
+
+func TestText_DepAnnotationBlocks(t *testing.T) {
+	input := "- ✓ bw-abc P1 Some task [blocks: bw-xyz]"
+	got := Text(input, 30)
+	// [blocks: bw-xyz] must appear as a single unit on one line.
+	for _, line := range strings.Split(got, "\n") {
+		if strings.Contains(line, "[blocks:") && !strings.Contains(line, "[blocks: bw-xyz]") {
+			t.Errorf("dep annotation was split across lines:\n%s", got)
+		}
+	}
+}
+
+func TestTokenize(t *testing.T) {
+	input := "hello [blocked by: bw-abc] world"
+	got := tokenize(input)
+	want := []string{"hello", "[blocked by: bw-abc]", "world"}
+	if len(got) != len(want) {
+		t.Fatalf("tokenize(%q) = %v, want %v", input, got, want)
+	}
+	for i := range got {
+		if got[i] != want[i] {
+			t.Errorf("tokenize(%q)[%d] = %q, want %q", input, i, got[i], want[i])
+		}
+	}
+}

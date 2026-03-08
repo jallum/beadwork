@@ -2,14 +2,28 @@
 package wrap
 
 import (
+	"regexp"
 	"strings"
 	"unicode"
 )
+
+// listPrefixRe matches a bullet or numbered-list prefix at the start of
+// the body (after leading whitespace has been stripped). It captures the
+// prefix so we can compute a content-aware continuation indent.
+//
+// Matches: "- ", "* ", "1. ", "12. ", "- ✓ ", "- ○ ", etc.
+var listPrefixRe = regexp.MustCompile(`^(?:[-*]|[0-9]+\.)\s+(?:[✓○◐✗]\s+)?`)
 
 // Text wraps s to fit within the given width. It preserves existing
 // line breaks and detects leading whitespace on each input line,
 // maintaining that indent when a line is wrapped. Words longer than
 // the available width are broken to fit.
+//
+// For list items (bullets, numbered lists), continuation lines are
+// indented to align with the content start after the list prefix.
+//
+// Dep annotations like [blocks: X] and [blocked by: X] are treated
+// as non-breaking units.
 //
 // A width of zero or less disables wrapping and returns s unchanged.
 func Text(s string, width int) string {
@@ -39,36 +53,78 @@ func Text(s string, width int) string {
 			continue
 		}
 
-		wrapLine(&out, indent, body, width)
+		// Compute continuation indent: for list items, align to
+		// content after the structural prefix.
+		contIndent := indent
+		if m := listPrefixRe.FindString(body); m != "" {
+			contIndent = indent + strings.Repeat(" ", visibleLen(m))
+		}
+
+		wrapLine(&out, indent, contIndent, body, width)
 	}
 
 	return out.String()
 }
 
-// wrapLine word-wraps body into out, prefixing every output line
-// (including continuations) with indent. It breaks words that exceed
-// the available space.
-func wrapLine(out *strings.Builder, indent, body string, width int) {
+// depAnnotationRe matches dependency annotations that should not be
+// broken across lines, e.g. "[blocks: bw-abc]", "[blocked by: bw-xyz]".
+var depAnnotationRe = regexp.MustCompile(`\[(?:blocks|blocked by):\s*[^\]]*\]`)
+
+// tokenize splits body into words (like strings.Fields) but keeps dep
+// annotations as single tokens even if they contain spaces.
+func tokenize(body string) []string {
+	var tokens []string
+	for body != "" {
+		body = strings.TrimLeft(body, " \t\r")
+		if body == "" {
+			break
+		}
+		// Check if the next token is a dep annotation.
+		if loc := depAnnotationRe.FindStringIndex(body); loc != nil && loc[0] == 0 {
+			tokens = append(tokens, body[:loc[1]])
+			body = body[loc[1]:]
+			continue
+		}
+		// Regular word: take until next whitespace.
+		end := strings.IndexAny(body, " \t\r")
+		if end == -1 {
+			tokens = append(tokens, body)
+			break
+		}
+		tokens = append(tokens, body[:end])
+		body = body[end:]
+	}
+	return tokens
+}
+
+// wrapLine word-wraps body into out, prefixing the first output line
+// with indent and continuation lines with contIndent. It breaks words
+// that exceed the available space.
+func wrapLine(out *strings.Builder, indent, contIndent, body string, width int) {
 	indentLen := visibleLen(indent)
+	contIndentLen := visibleLen(contIndent)
 	avail := width - indentLen
+	contAvail := width - contIndentLen
 	if avail <= 0 {
-		// Indent alone exceeds width; use at least 1 character.
 		avail = 1
 	}
+	if contAvail <= 0 {
+		contAvail = 1
+	}
 
-	words := strings.Fields(body)
+	words := tokenize(body)
 	col := 0 // current column (relative to indent)
 	first := true
+	curAvail := avail
 
 	for _, w := range words {
 		wLen := visibleLen(w)
 
 		if first {
 			out.WriteString(indent)
-			// Word wider than available space: break it.
-			if wLen > avail {
-				breakWord(out, indent, w, avail, true)
-				col = visibleLen(lastSegment(w, avail))
+			if wLen > curAvail {
+				breakWord(out, indent, w, curAvail, true)
+				col = visibleLen(lastSegment(w, curAvail))
 			} else {
 				out.WriteString(w)
 				col = wLen
@@ -78,17 +134,18 @@ func wrapLine(out *strings.Builder, indent, body string, width int) {
 		}
 
 		// Fits on current line with a leading space?
-		if col+1+wLen <= avail {
+		if col+1+wLen <= curAvail {
 			out.WriteByte(' ')
 			out.WriteString(w)
 			col += 1 + wLen
 		} else {
 			// Start a new continuation line.
 			out.WriteByte('\n')
-			out.WriteString(indent)
-			if wLen > avail {
-				breakWord(out, indent, w, avail, true)
-				col = visibleLen(lastSegment(w, avail))
+			out.WriteString(contIndent)
+			curAvail = contAvail
+			if wLen > curAvail {
+				breakWord(out, contIndent, w, curAvail, true)
+				col = visibleLen(lastSegment(w, curAvail))
 			} else {
 				out.WriteString(w)
 				col = wLen
