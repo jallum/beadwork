@@ -2,6 +2,7 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-08T15:18:49Z",
   "created": "2026-03-08T15:01:30Z",
   "description": "Show where the agent is: branch name, worktree vs working tree, clean/dirty, last commit. Placement: bottom of output, before ready queue in prime. Include in both prime and ready so agents have context at session start and when picking up work.",
   "id": "bw-nck",
@@ -13,8 +14,8 @@
     }
   ],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add git context (branch, state, last commit) to prime and ready output",
   "type": "task",
-  "updated_at": "2026-03-08T15:17:00Z"
+  "updated_at": "2026-03-08T15:18:49Z"
 }
