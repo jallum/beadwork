@@ -4,7 +4,7 @@
   "blocks": [],
   "closed_at": "2026-03-08T14:50:10Z",
   "created": "2026-03-08T11:13:50Z",
-  "description": "Agents rationalize non-trivial work as 'quick fix' and edit the main working tree, blocking the user and other agents. The current definition ('just make the change in the working tree, no ticket needed') is too loose. Test variants that anchor the definition on observable signals: ticket existence, time to complete, whether user is actively waiting. Key principle: don't assume you're the only instance.",
+  "description": "Agents rationalized non-trivial work as 'quick fix' and edited the main working tree, blocking the user. Tested 7 prompt variants (A-G) to fix this.\n\n## Results\nTwo test cases: (1) 'pick up bw-xyz' with existing ticket, (2) 'fix that' with no ticket.\n\n**Case 1 (ticket exists):** All variants PASS. Agents create worktree, follow workflow.\n**Case 2 (no ticket, non-trivial):** All variants FAIL. Agents edit in working tree regardless of prompt wording.\n\nVariants tested on case 2:\n- A: ticket-anchored definition — FAIL\n- B: shared-resource framing — (equivalent to A on case 1)\n- C: time-based — (not tested, A covered)\n- D: default to Branch/PR — FAIL\n- E: ALWAYS + consequences — FAIL\n- F: ticket as workflow step 1 — FAIL\n- G: hesitancy about working tree state — FAIL\n\n## Key finding\nThe forcing function is the ticket ID, not prompt wording. When the user references a ticket, the agent pauses to look it up and the workflow activates. When the user says 'fix that', the agent's research phase commits it to the working tree before the workflow section is actionable. Research feels read-only, so the agent doesn't gate it behind worktree creation.\n\n## Conclusion\nNo prompt change landed. The ticket-anchored behavior (ticket exists → worktree) is the designed workflow and works reliably. The 'fix that' case is an acceptable boundary.",
   "id": "bw-tnz",
   "labels": [
     "experiment"
@@ -35,5 +35,5 @@
   "status": "closed",
   "title": "Experiment: sharpen quick-fix definition to prevent working-tree misuse",
   "type": "epic",
-  "updated_at": "2026-03-08T14:50:10Z"
+  "updated_at": "2026-03-08T14:53:42Z"
 }
