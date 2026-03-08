@@ -56,11 +56,12 @@ tokenized markdown through the appropriate resolver:
 - `w.IsTTY()` → `md.ResolveTTY(tokenized, w.Width())`
 - else → `md.ResolveMarkdown(tokenized)`
 
-## --raw Flag
+## --x-raw Flag
 
 Undocumented global flag that selects a RawWriter, passing tokenized text
 through without resolution. Useful for integration tests (assert on `{p:1}`
-and `{id:bw-xyz}` tokens directly) and debugging.
+and `{id:bw-xyz}` tokens directly) and debugging. The `--x-` prefix marks
+it as internal (consistent with `--x-render-as`).
 
 ## TTY-Only Affordances
 
