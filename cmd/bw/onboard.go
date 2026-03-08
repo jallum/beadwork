@@ -1,12 +1,30 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"strings"
 
+	"github.com/jallum/beadwork/internal/tmpl"
 	"github.com/jallum/beadwork/prompts"
 )
 
+type OnboardData struct {
+	Snippet string
+}
+
 func cmdOnboard(w Writer) error {
-	fmt.Fprintf(w, prompts.Onboard, prompts.AgentsMD)
+	data := OnboardData{
+		Snippet: prompts.AgentsMD,
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, "onboard", prompts.Onboard, data, nil); err != nil {
+		return err
+	}
+
+	out := strings.Trim(buf.String(), "\n")
+	emit(w, out)
+	fmt.Fprintln(w)
 	return nil
 }
