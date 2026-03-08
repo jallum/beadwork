@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-08T10:53:01Z",
   "created": "2026-03-07T21:12:12Z",
   "description": "When the working tree has uncommitted changes, bw prime and bw ready should mention this — uncommitted work is invisible to the next session. Use go-git Worktree.Status().IsClean() which handles .gitignore natively and benchmarks at ~32ms on this repo. Display as a short warning line in the output, not a blocking error.",
   "id": "bw-kpw",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Show uncommitted changes warning in bw prime and bw ready",
   "type": "task",
-  "updated_at": "2026-03-08T10:50:42Z"
+  "updated_at": "2026-03-08T10:53:01Z"
 }
