@@ -4,7 +4,7 @@
   "blocks": [],
   "closed_at": "2026-03-08T11:08:52Z",
   "created": "2026-03-08T10:53:00Z",
-  "description": "Worktree branch names are inconsistent — agents produce agent-UUID, worktree-ID, bare ID, and ID/description variants. Test prompt changes to standardize on `\u003cid\u003e/\u003cshort-description\u003e` (e.g. `bw-9s8/fix-wrap-bullets`). The convention should be stated once in the workflow step where worktrees are introduced.",
+  "description": "Worktree branch names were inconsistent — agents produced agent-UUID, worktree-ID, bare ID, and ID/description variants. Tested adding the convention to prime.md workflow step 1.\n\n## Result\nVariant A (naming in workflow step): 2/2 pass. A single example in step 1 was sufficient. Agents produced `bw-6q6/route-changelog-through-md-pipeline` and `bw-4bv/filter-closed-blockers`. Variants B (start.md) and C (both) were not needed.\n\n## Change landed\n`1. **Worktree**: Create a worktree with branch `\u003cid\u003e/\u003cshort-description\u003e` (e.g. `bw-a1b/fix-auth-bug`)`\n\nCommitted as 72fd826.",
   "id": "bw-kn8",
   "labels": [
     "experiment"
@@ -19,5 +19,5 @@
   "status": "closed",
   "title": "Experiment: standardize worktree branch naming",
   "type": "epic",
-  "updated_at": "2026-03-08T11:08:52Z"
+  "updated_at": "2026-03-08T14:53:25Z"
 }
