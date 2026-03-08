@@ -16,11 +16,15 @@
     {
       "text": "Variant D (default to Branch/PR): FAIL on ambiguous task (0/1). Agent edited in working tree.\n\nVariant E (ALWAYS use worktree + consequences): FAIL on ambiguous task (0/1). Agent edited in working tree.\n\nPattern: the ALWAYS keyword works for 'bw prime' (a single concrete command to run before anything else) but NOT for 'use a worktree' (a workflow choice that competes with the agent's instinct to edit files directly). The agent treats 'fix that' as implicitly authorizing direct edits. It reads the delivery question, but the 'fix that' framing overrides it — the agent interprets it as the user requesting immediate action.\n\nHypothesis: the problem isn't the definition of quick fix. It's that agents already have a built-in cost/benefit heuristic for when to use worktrees vs direct edits. Our prompt competes with Claude Code's system prompt which says things like 'prefer editing existing files'. The agent's estimation of the task as small/scoped overrides our worktree instruction.",
       "timestamp": "2026-03-08T11:42:11Z"
+    },
+    {
+      "text": "Variant F (ticket as step 1, research in worktree): FAIL on ambiguous task (0/1). Agent edited in working tree. Same pattern as D and E.\n\nAll variants A-F share the same failure mode: the agent reads the delivery question and workflow steps, but 'fix that' implicitly authorizes direct action. The agent's research phase happens in the main working tree before it ever reaches the workflow steps. By the time it's done researching, it's already 'in' the working tree and edits there.\n\nThe delivery-question approach works when: the user references a ticket (agent pauses to look it up, workflow activates). It fails when: the user gives a direct instruction ('fix that') with no ticket reference.",
+      "timestamp": "2026-03-08T11:45:49Z"
     }
   ],
   "priority": 2,
   "status": "in_progress",
   "title": "Experiment: sharpen quick-fix definition to prevent working-tree misuse",
   "type": "epic",
-  "updated_at": "2026-03-08T11:42:11Z"
+  "updated_at": "2026-03-08T11:45:49Z"
 }
