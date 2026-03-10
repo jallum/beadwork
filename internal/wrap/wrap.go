@@ -68,7 +68,9 @@ func Text(s string, width int) string {
 
 // depAnnotationRe matches dependency annotations that should not be
 // broken across lines, e.g. "[blocks: bw-abc]", "[blocked by: bw-xyz]".
-var depAnnotationRe = regexp.MustCompile(`\[(?:blocks|blocked by):\s*[^\]]*\]`)
+// The pattern allows \x01...\x02 color markers anywhere inside the brackets
+// so it works on both plain and TTY-resolved text.
+var depAnnotationRe = regexp.MustCompile(`(?:\x01[^\x02]*\x02)*\[(?:blocks|blocked by):\s*(?:[^\]\x01]|\x01[^\x02]*\x02)*\](?:\x01[^\x02]*\x02)*`)
 
 // tokenize splits body into words (like strings.Fields) but keeps dep
 // annotations as single tokens even if they contain spaces.
@@ -201,9 +203,20 @@ func leadingWhitespace(s string) string {
 	return s
 }
 
-// visibleLen returns the number of visible (non-ANSI-escape) rune positions
-// in s. For now it simply counts runes; this can be extended later to
-// skip ANSI escape sequences.
+// visibleLen returns the number of visible rune positions in s,
+// excluding inline color markers (\x01...\x02 sequences).
 func visibleLen(s string) int {
-	return len([]rune(s))
+	n := 0
+	inMarker := false
+	for _, r := range s {
+		switch {
+		case r == '\x01':
+			inMarker = true
+		case r == '\x02':
+			inMarker = false
+		case !inMarker:
+			n++
+		}
+	}
+	return n
 }
