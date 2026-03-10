@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.3 — 2026-03-10
+
+- **Bug fix: TTY line wrapping** — lines with dependency annotations (e.g. `[blocks: bw-xyz]`) wrapped prematurely because the wrap engine counted invisible color markers as visible width, overcounting each line by ~51 characters. Most visible on `bw ready` and `bw list` output with `blocks`/`blocked by` annotations.
+
 ## 0.11.2 — 2026-03-08
 
 - **Git context in `bw prime` and `bw ready`** — output now shows the current branch, clean/dirty state, and last commit so agents know where they are without a separate `git status`.
