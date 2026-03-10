@@ -354,3 +354,79 @@ func TestTokenize(t *testing.T) {
 		}
 	}
 }
+
+func TestVisibleLen_SkipsMarkers(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want int
+	}{
+		{"plain", "hello", 5},
+		{"single marker", "\x01dim\x02hello\x01end\x02", 5},
+		{"nested markers", "\x01dim\x02[\x01end\x02\x01depid\x02id\x01end\x02\x01dim\x02]\x01end\x02", 4}, // [, i, d, ]
+		{"no markers", "[blocks: bw-xyz]", 16},
+		{"empty", "", 0},
+		{"marker only", "\x01dim\x02\x01end\x02", 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := visibleLen(tt.in)
+			if got != tt.want {
+				t.Errorf("visibleLen(%q) = %d, want %d", tt.in, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTokenize_WithColorMarkers(t *testing.T) {
+	// Simulates the resolved TTY form of a dep annotation.
+	dep := "\x01dim\x02[blocks: \x01end\x02\x01depid\x02bw-abc\x01end\x02\x01dim\x02]\x01end\x02"
+	input := "title " + dep
+	got := tokenize(input)
+	want := []string{"title", dep}
+	if len(got) != len(want) {
+		t.Fatalf("tokenize with markers: got %d tokens, want %d\ngot: %v", len(got), len(want), got)
+	}
+	for i := range got {
+		if got[i] != want[i] {
+			t.Errorf("tokenize with markers [%d] = %q, want %q", i, got[i], want[i])
+		}
+	}
+}
+
+func TestText_ColorMarkersNotCountedAsWidth(t *testing.T) {
+	// Simulates a resolved TTY issue line with color markers.
+	// Visible: "○ collx-ap-rxe.14 ● P2 Fix TS errors: src/pages/checkout/ [blocks: collx-ap-rxe.32]"
+	// That's ~84 visible chars — should fit in 90 columns without wrapping.
+	line := "○ " +
+		"\x01id\x02collx-ap-rxe.14\x01end\x02 " +
+		"\x01p:2\x02● P2\x01end\x02 " +
+		"Fix TS errors: src/pages/checkout/ " +
+		"\x01dim\x02[blocks: \x01end\x02\x01depid\x02collx-ap-rxe.32\x01end\x02\x01dim\x02]\x01end\x02"
+
+	got := Text(line, 90)
+	if strings.Contains(got, "\n") {
+		t.Errorf("line should not wrap at width 90, but got:\n%s", got)
+	}
+}
+
+func TestText_ColorMarkerLineContinuationIndent(t *testing.T) {
+	// When wrapping IS needed, continuation should be properly indented.
+	line := "  ○ " +
+		"\x01id\x02collx-ap-rxe.14\x01end\x02 " +
+		"\x01p:2\x02● P2\x01end\x02 " +
+		"Fix TS errors: src/pages/checkout/ " +
+		"\x01dim\x02[blocks: \x01end\x02\x01depid\x02collx-ap-rxe.32\x01end\x02\x01dim\x02]\x01end\x02"
+
+	got := Text(line, 50)
+	lines := strings.Split(got, "\n")
+	if len(lines) < 2 {
+		t.Fatalf("expected wrapping at width 50, got single line")
+	}
+	// Continuation lines should preserve the leading indent (2 spaces).
+	for i, l := range lines[1:] {
+		if !strings.HasPrefix(l, "  ") {
+			t.Errorf("continuation line %d should be indented 2+ spaces: %q", i+1, l)
+		}
+	}
+}
