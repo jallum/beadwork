@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-10T21:37:35Z",
   "created": "2026-03-10T21:36:57Z",
   "description": "visibleLen() in internal/wrap/wrap.go counts \\x01...\\x02 inline color markers as visible characters. The TTY pipeline resolves tokens to plain text with markers (stage 1), wraps (stage 2), then colorizes (stage 3). At stage 2, each dep annotation carries ~32 invisible marker runes plus ~19 for id/priority — overcounting each line by ~51 chars, causing wrapping at ~60 visible chars on a 90-char terminal.\n\nFixes:\n1. visibleLen() skips \\x01...\\x02 marker sequences\n2. depAnnotationRe matches dep annotations with embedded color markers (non-breaking in TTY mode)",
   "id": "bw-wzo",
   "labels": [],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Fix TTY line wrapping overcounting color marker width",
   "type": "task",
-  "updated_at": "2026-03-10T21:37:06Z"
+  "updated_at": "2026-03-10T21:37:35Z"
 }
