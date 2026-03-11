@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-11T01:32:42Z",
+  "description": "`bw ready` and `bw prime` show \"uncommitted changes\" in the git context footer even when `git status` reports a clean working tree. Observed on collx-app repo (branch `develop`).",
+  "id": "bw-0z4",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Git context reports uncommitted changes on clean working tree",
+  "type": "task",
+  "updated_at": "2026-03-11T01:32:42Z"
+}
