@@ -408,17 +408,17 @@ func (r *Repo) RepoDir() string {
 }
 
 // WorktreeDirty returns true if the user's working tree has uncommitted changes.
-// Uses go-git's Worktree.Status which respects .gitignore natively.
+// Uses `git diff --quiet HEAD` which short-circuits on the first changed file
+// and skips untracked-file scanning, making it fast on large repos.
+// Shells out rather than using go-git's Worktree.Status, which can disagree
+// with real git on worktree boundaries, submodules, and file modes.
 func (r *Repo) WorktreeDirty() bool {
-	wt, err := r.tfs.Repo().Worktree()
+	cwd, err := os.Getwd()
 	if err != nil {
 		return false
 	}
-	st, err := wt.Status()
-	if err != nil {
-		return false
-	}
-	return !st.IsClean()
+	_, err = execGit(cwd, "diff", "--quiet", "HEAD")
+	return err != nil
 }
 
 // GitContext holds information about the user's current git working state.
