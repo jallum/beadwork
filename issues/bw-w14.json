@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-11T01:52:06Z",
+  "description": "We switched from go-git's `Status()` to shelling out to `git status` in #104 because go-git produces false dirty-tree detection.\n\nUpstream bug: https://github.com/go-git/go-git/issues/1896\n\nOnce that issue is resolved and a new go-git release includes the fix, revert to using go-git's native `Status()` method and remove the `git status` subprocess workaround.\n\nRelated commits:\n- e793169 Fix false dirty-tree detection by using git status (#104)\n- 95ec983 Update go-git to v5.17.0 (#105)",
+  "id": "bw-w14",
+  "labels": [],
+  "priority": 4,
+  "status": "open",
+  "title": "Switch back to go-git Status() once upstream bug is fixed",
+  "type": "task",
+  "updated_at": "2026-03-11T01:52:06Z"
+}
