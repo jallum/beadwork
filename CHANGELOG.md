@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.4 — 2026-03-10
+
+- **Bug fix: false "uncommitted changes" warning** — `bw prime` and `bw ready` could report uncommitted changes on a clean working tree. The dirty-tree check used go-git's in-process status, which disagrees with real git on worktree boundaries and file modes. Now uses `git diff --quiet HEAD`, which is both correct and faster on large repos.
+
+- Updated go-git to v5.17.0.
+
 ## 0.11.3 — 2026-03-10
 
 - **Bug fix: TTY line wrapping** — lines with dependency annotations (e.g. `[blocks: bw-xyz]`) wrapped prematurely because the wrap engine counted invisible color markers as visible width, overcounting each line by ~51 characters. Most visible on `bw ready` and `bw list` output with `blocks`/`blocked by` annotations.
