@@ -83,6 +83,9 @@ func (s *Store) List(filter Filter) ([]*Issue, error) {
 		if filter.Label != "" && !containsStr(issue.Labels, filter.Label) {
 			continue
 		}
+		if filter.Parent != "" && issue.Parent != filter.Parent {
+			continue
+		}
 		if filter.Grep != "" {
 			needle := strings.ToLower(filter.Grep)
 			if !strings.Contains(strings.ToLower(issue.Title), needle) &&

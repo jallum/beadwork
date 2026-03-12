@@ -14,6 +14,7 @@ type ListArgs struct {
 	Type     string
 	Label    string
 	Grep     string
+	Parent   string
 	Limit    int
 	LimitSet bool
 	All      bool
@@ -23,7 +24,7 @@ type ListArgs struct {
 
 func parseListArgs(raw []string) (ListArgs, error) {
 	a, err := ParseArgs(raw,
-		[]string{"--status", "--assignee", "--priority", "--type", "--label", "--limit", "--grep"},
+		[]string{"--status", "--assignee", "--priority", "--type", "--label", "--limit", "--grep", "--parent"},
 		[]string{"--all", "--deferred", "--json"},
 	)
 	if err != nil {
@@ -35,6 +36,7 @@ func parseListArgs(raw []string) (ListArgs, error) {
 		Type:     a.String("--type"),
 		Label:    a.String("--label"),
 		Grep:     a.String("--grep"),
+		Parent:   a.String("--parent"),
 		All:      a.Bool("--all"),
 		Deferred: a.Bool("--deferred"),
 		JSON:     a.JSON(),
@@ -67,6 +69,7 @@ func cmdList(store *issue.Store, args []string, w Writer) error {
 		Type:     la.Type,
 		Label:    la.Label,
 		Grep:     la.Grep,
+		Parent:   la.Parent,
 	}
 
 	limit := la.Limit
