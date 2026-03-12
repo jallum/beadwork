@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-12T22:17:18Z",
+  "description": "",
+  "id": "bw-b6b",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Add ls alias and --parent filter to list command",
+  "type": "enhancement",
+  "updated_at": "2026-03-12T22:17:18Z"
+}
