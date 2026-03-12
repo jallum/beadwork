@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-12T22:17:33Z",
+  "description": "",
+  "id": "bw-mm5",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Add compact command reference to prime prompt",
+  "type": "enhancement",
+  "updated_at": "2026-03-12T22:17:33Z"
+}
