@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-13T13:50:09Z",
+  "description": "",
+  "id": "bw-spa",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Group dep tokens by kind for compact one-liner output",
+  "type": "bug",
+  "updated_at": "2026-03-13T13:50:09Z"
+}
