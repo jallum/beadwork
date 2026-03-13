@@ -124,6 +124,7 @@ var commands = []Command{
 	},
 	{
 		Name:        "list",
+		Aliases:     []string{"ls"},
 		Summary:     "List issues",
 		Description: "List issues matching filters. Defaults to open and in-progress issues, limit 10.",
 		Flags: []Flag{
@@ -133,6 +134,7 @@ var commands = []Command{
 			{Long: "--type", Short: "-t", Value: "TYPE", Help: "Filter by type"},
 			{Long: "--label", Value: "LABEL", Help: "Filter by label"},
 			{Long: "--grep", Short: "-g", Value: "TEXT", Help: "Search title and description"},
+			{Long: "--parent", Value: "ID", Help: "Filter by parent issue ID"},
 			{Long: "--limit", Value: "N", Help: "Max results (default 10)"},
 			{Long: "--all", Help: "Show all issues (no status/limit filter)"},
 			{Long: "--deferred", Help: "Show only deferred issues"},
@@ -142,6 +144,7 @@ var commands = []Command{
 			{Cmd: "bw list --assignee alice"},
 			{Cmd: "bw list --all --type bug"},
 			{Cmd: "bw list --status closed --limit 5"},
+			{Cmd: "bw list --parent bw-a3f8", Help: "Children of an epic"},
 			{Cmd: "bw list --deferred"},
 		},
 		NeedsStore: true,

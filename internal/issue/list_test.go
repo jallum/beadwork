@@ -317,5 +317,34 @@ func TestListGrep(t *testing.T) {
 	}
 }
 
+// --- Parent filter ---
+
+func TestListFilterByParent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{})
+	env.CommitIntent("create " + epic.ID)
+	child1, _ := env.Store.Create("Child 1", issue.CreateOpts{Parent: epic.ID})
+	env.CommitIntent("create " + child1.ID)
+	child2, _ := env.Store.Create("Child 2", issue.CreateOpts{Parent: epic.ID})
+	env.CommitIntent("create " + child2.ID)
+	env.Store.Create("Standalone", issue.CreateOpts{})
+	env.CommitIntent("create standalone")
+
+	children, err := env.Store.List(issue.Filter{Parent: epic.ID})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(children) != 2 {
+		t.Errorf("got %d children, want 2", len(children))
+	}
+	for _, c := range children {
+		if c.Parent != epic.ID {
+			t.Errorf("issue %s has parent %q, want %q", c.ID, c.Parent, epic.ID)
+		}
+	}
+}
+
 // --- DeletePreview tests ---
 

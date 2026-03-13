@@ -227,3 +227,40 @@ func TestCmdListShowsMultipleDeps(t *testing.T) {
 		t.Errorf("output should mention blocker B (%s): %q", b.ID, out)
 	}
 }
+
+func TestLsAliasExists(t *testing.T) {
+	cmd, ok := commandMap["ls"]
+	if !ok {
+		t.Fatal("ls alias not registered in commandMap")
+	}
+	if cmd.Name != "list" {
+		t.Errorf("ls alias points to %q, want list", cmd.Name)
+	}
+}
+
+func TestCmdListFilterByParent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic task", issue.CreateOpts{})
+	env.Store.Create("Child A", issue.CreateOpts{Parent: epic.ID})
+	env.Store.Create("Child B", issue.CreateOpts{Parent: epic.ID})
+	env.Store.Create("Unrelated", issue.CreateOpts{})
+	env.Repo.Commit("create issues")
+
+	var buf bytes.Buffer
+	err := cmdList(env.Store, []string{"--parent", epic.ID}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdList --parent: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "Child A") || !strings.Contains(out, "Child B") {
+		t.Errorf("--parent should show children: %q", out)
+	}
+	if strings.Contains(out, "Unrelated") {
+		t.Errorf("--parent should NOT show unrelated issues: %q", out)
+	}
+	if strings.Contains(out, "Epic task") {
+		t.Errorf("--parent should NOT show the epic itself: %q", out)
+	}
+}

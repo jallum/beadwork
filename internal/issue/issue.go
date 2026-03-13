@@ -119,4 +119,5 @@ type Filter struct {
 	Type     string
 	Label    string
 	Grep     string
+	Parent   string
 }
