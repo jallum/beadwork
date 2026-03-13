@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.5 — 2026-03-13
+
+- **`bw ls` alias** — `ls` is now an alias for `bw list`, saving a few keystrokes for the most common query command.
+
+- **`--parent` filter for `bw list`** — filter issues by parent ID to see only children of a given epic. Example: `bw list --parent bw-a3f8`. Useful when reviewing progress on a specific epic without noise from unrelated work.
+
 ## 0.11.4 — 2026-03-10
 
 - **Bug fix: false "uncommitted changes" warning** — `bw prime` and `bw ready` could report uncommitted changes on a clean working tree. The dirty-tree check used go-git's in-process status, which disagrees with real git on worktree boundaries and file modes. Now uses `git diff --quiet HEAD`, which is both correct and faster on large repos.
