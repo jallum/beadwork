@@ -213,14 +213,18 @@ func FormatDepsFiltered(iss *issue.Issue, closedSet map[string]bool) string {
 
 func formatDepsInner(blocks, blockedBy []string, closedSet map[string]bool) string {
 	var parts []string
-	for _, id := range blocks {
-		parts = append(parts, " "+depToken("blocks", id))
+	if len(blocks) > 0 {
+		parts = append(parts, " "+depToken("blocks", strings.Join(blocks, ",")))
 	}
+	var openBlockedBy []string
 	for _, id := range blockedBy {
 		if closedSet != nil && closedSet[id] {
 			continue
 		}
-		parts = append(parts, " "+depToken("blocked_by", id))
+		openBlockedBy = append(openBlockedBy, id)
+	}
+	if len(openBlockedBy) > 0 {
+		parts = append(parts, " "+depToken("blocked_by", strings.Join(openBlockedBy, ",")))
 	}
 	return strings.Join(parts, "")
 }

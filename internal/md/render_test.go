@@ -308,11 +308,9 @@ func TestFormatDeps(t *testing.T) {
 		BlockedBy: []string{"bw-c"},
 	}
 	got := FormatDeps(iss)
-	if !strings.Contains(got, "{dep:blocks:bw-a}") {
-		t.Errorf("should contain blocks token: got %q", got)
-	}
-	if !strings.Contains(got, "{dep:blocks:bw-b}") {
-		t.Errorf("should contain second blocks token: got %q", got)
+	// Multiple IDs of the same kind should be grouped into one token.
+	if !strings.Contains(got, "{dep:blocks:bw-a,bw-b}") {
+		t.Errorf("should group blocks into single token: got %q", got)
 	}
 	if !strings.Contains(got, "{dep:blocked_by:bw-c}") {
 		t.Errorf("should contain blocked_by token: got %q", got)
@@ -336,7 +334,7 @@ func TestFormatDepsFiltersClosed(t *testing.T) {
 	if strings.Contains(got, "bw-closed") {
 		t.Errorf("should filter closed blockers: got %q", got)
 	}
-	if !strings.Contains(got, "{dep:blocked_by:bw-open}") {
+	if !strings.Contains(got, "bw-open") {
 		t.Errorf("should keep open blockers: got %q", got)
 	}
 }

@@ -130,12 +130,12 @@ func resolveDepMarkdown(val string) string {
 	if len(parts) != 2 {
 		return val
 	}
-	kind, id := parts[0], parts[1]
+	kind, ids := parts[0], strings.Join(strings.Split(parts[1], ","), ", ")
 	switch kind {
 	case "blocks":
-		return "[blocks: " + id + "]"
+		return "[blocks: " + ids + "]"
 	case "blocked_by":
-		return "[blocked by: " + id + "]"
+		return "[blocked by: " + ids + "]"
 	}
 	return val
 }
@@ -145,14 +145,38 @@ func resolveDepTTYPlain(val string) string {
 	if len(parts) != 2 {
 		return val
 	}
-	kind, id := parts[0], parts[1]
+	kind, idsRaw := parts[0], parts[1]
+	ids := strings.Split(idsRaw, ",")
+
+	var label string
 	switch kind {
 	case "blocks":
-		return "\x01dim\x02" + "[blocks: " + "\x01end\x02" + "\x01depid\x02" + id + "\x01end\x02" + "\x01dim\x02" + "]" + "\x01end\x02"
+		label = "blocks: "
 	case "blocked_by":
-		return "\x01dim\x02" + "[blocked by: " + "\x01end\x02" + "\x01depid\x02" + id + "\x01end\x02" + "\x01dim\x02" + "]" + "\x01end\x02"
+		label = "blocked by: "
+	default:
+		return val
 	}
-	return val
+
+	var b strings.Builder
+	b.WriteString("\x01dim\x02")
+	b.WriteString("[")
+	b.WriteString(label)
+	b.WriteString("\x01end\x02")
+	for i, id := range ids {
+		if i > 0 {
+			b.WriteString("\x01dim\x02")
+			b.WriteString(", ")
+			b.WriteString("\x01end\x02")
+		}
+		b.WriteString("\x01depid\x02")
+		b.WriteString(id)
+		b.WriteString("\x01end\x02")
+	}
+	b.WriteString("\x01dim\x02")
+	b.WriteString("]")
+	b.WriteString("\x01end\x02")
+	return b.String()
 }
 
 // unescape restores escaped braces.
