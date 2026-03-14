@@ -70,11 +70,15 @@ func TestResolveMarkdownCheckTokens(t *testing.T) {
 func TestResolveMarkdownDepTokens(t *testing.T) {
 	got := ResolveMarkdown("{dep:blocks:bw-abc}")
 	if got != "[blocks: bw-abc]" {
-		t.Errorf("got %q, want [blocks: bw-abc]", got)
+		t.Errorf("single: got %q, want [blocks: bw-abc]", got)
 	}
 	got = ResolveMarkdown("{dep:blocked_by:bw-xyz}")
 	if got != "[blocked by: bw-xyz]" {
-		t.Errorf("got %q, want [blocked by: bw-xyz]", got)
+		t.Errorf("single: got %q, want [blocked by: bw-xyz]", got)
+	}
+	got = ResolveMarkdown("{dep:blocked_by:bw-a,bw-b}")
+	if got != "[blocked by: bw-a, bw-b]" {
+		t.Errorf("multi: got %q, want [blocked by: bw-a, bw-b]", got)
 	}
 }
 
@@ -176,6 +180,14 @@ func TestResolveTTYDepTokens(t *testing.T) {
 	}
 	if !strings.Contains(got, "bw-abc") {
 		t.Errorf("dep token should contain ID: got %q", got)
+	}
+	// Multiple IDs should resolve into a single bracket group.
+	got = ResolveTTY("{dep:blocked_by:bw-a,bw-b}", 80)
+	if !strings.Contains(got, "blocked by:") {
+		t.Errorf("multi dep should contain label: got %q", got)
+	}
+	if !strings.Contains(got, "bw-a") || !strings.Contains(got, "bw-b") {
+		t.Errorf("multi dep should contain both IDs: got %q", got)
 	}
 }
 
