@@ -160,19 +160,16 @@ func TestCmdShowJSONIncludesComments(t *testing.T) {
 		t.Fatalf("cmdShow --json: %v", err)
 	}
 
-	// show --json returns an array of issues
-	var issues []issue.Issue
-	if err := json.Unmarshal(buf.Bytes(), &issues); err != nil {
+	// show --json returns a single object
+	var got issue.Issue
+	if err := json.Unmarshal(buf.Bytes(), &got); err != nil {
 		t.Fatalf("JSON parse: %v", err)
 	}
-	if len(issues) != 1 {
-		t.Fatalf("expected 1 issue, got %d", len(issues))
+	if len(got.Comments) != 1 {
+		t.Fatalf("expected 1 comment, got %d", len(got.Comments))
 	}
-	if len(issues[0].Comments) != 1 {
-		t.Fatalf("expected 1 comment, got %d", len(issues[0].Comments))
-	}
-	if issues[0].Comments[0].Text != "Show JSON comment" {
-		t.Errorf("text = %q, want %q", issues[0].Comments[0].Text, "Show JSON comment")
+	if got.Comments[0].Text != "Show JSON comment" {
+		t.Errorf("text = %q, want %q", got.Comments[0].Text, "Show JSON comment")
 	}
 }
 

@@ -273,14 +273,10 @@ func TestScenarioFullWorkflow(t *testing.T) {
 		if err := cmdShow(env.Store, []string{idD, "--json"}, PlainWriter(&buf)); err != nil {
 			t.Fatalf("show D: %v", err)
 		}
-		var arr []issue.Issue
-		if err := json.Unmarshal(buf.Bytes(), &arr); err != nil {
+		var d issue.Issue
+		if err := json.Unmarshal(buf.Bytes(), &d); err != nil {
 			t.Fatalf("JSON parse: %v", err)
 		}
-		if len(arr) != 1 {
-			t.Fatalf("expected 1 issue, got %d", len(arr))
-		}
-		d := arr[0]
 		if d.Status != "deferred" {
 			t.Errorf("D status=%q, want deferred", d.Status)
 		}
