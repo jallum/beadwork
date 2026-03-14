@@ -8,7 +8,7 @@ import (
 	"golang.org/x/term"
 )
 
-const version = "0.11.5"
+const version = "0.11.6"
 
 func resolveRenderMode(args []string) string {
 	if mode, ok := flagValue(args, "--x-render-as"); ok && mode != "" {

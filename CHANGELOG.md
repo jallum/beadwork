@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.6 — 2026-03-13
+
+- **Compact dependency annotations** — issues that block (or are blocked by) multiple others now show a single grouped annotation instead of one per ID. For example, `[blocks: bw-a, bw-b]` instead of two separate `[blocks: bw-a]` `[blocks: bw-b]` tags. Reduces visual noise in `bw list` and `bw ready` output, especially for epics with many children.
+
+- **`bw show` simplified to single ID** — `bw show` now accepts exactly one issue ID instead of multiple. Multi-ID usage was rare in practice and made JSON output awkward (array vs object). `bw show --json` now returns a plain JSON object instead of a single-element array, which is easier to pipe into `jq` and other tools.
+
 ## 0.11.5 — 2026-03-13
 
 - **`bw ls` alias** — `ls` is now an alias for `bw list`, saving a few keystrokes for the most common query command.
