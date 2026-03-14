@@ -19,7 +19,7 @@ var validShowSections = map[string]bool{
 }
 
 type ShowArgs struct {
-	IDs      []string
+	ID       string
 	JSON     bool
 	Sections map[string]bool // nil means show all
 }
@@ -31,10 +31,13 @@ func parseShowArgs(raw []string) (ShowArgs, error) {
 	}
 	ids := a.Pos()
 	if len(ids) == 0 {
-		return ShowArgs{}, fmt.Errorf("usage: bw show <id> [<id>...]")
+		return ShowArgs{}, fmt.Errorf("usage: bw show <id>")
+	}
+	if len(ids) > 1 {
+		return ShowArgs{}, fmt.Errorf("show accepts a single issue ID")
 	}
 
-	sa := ShowArgs{IDs: ids, JSON: a.JSON()}
+	sa := ShowArgs{ID: ids[0], JSON: a.JSON()}
 
 	if only := a.String("--only"); only != "" {
 		sa.Sections = make(map[string]bool)
@@ -71,39 +74,30 @@ func cmdShow(store *issue.Store, args []string, w Writer) error {
 		return err
 	}
 
-	var issues []*issue.Issue
-	for _, id := range sa.IDs {
-		iss, err := store.Get(id)
-		if err != nil {
-			return err
-		}
-		issues = append(issues, iss)
+	iss, err := store.Get(sa.ID)
+	if err != nil {
+		return err
 	}
 
 	if sa.JSON {
-		fprintJSON(w, issues)
+		fprintJSON(w, iss)
 		return nil
 	}
 
-	for i, iss := range issues {
-		if i > 0 {
-			fmt.Fprintln(w)
-		}
-		if sa.showSection("summary") {
-			fmt.Fprintln(w, md.IssueSummary(iss))
-		}
-		if sa.showSection("description") {
-			showDescription(w, iss)
-		}
-		if sa.showSection("children") {
-			showChildren(w, iss, store)
-		}
-		if sa.showSection("blockedby") || sa.showSection("unblocks") {
-			showMap(w, iss, store)
-		}
-		if sa.showSection("comments") {
-			showComments(w, iss)
-		}
+	if sa.showSection("summary") {
+		fmt.Fprintln(w, md.IssueSummary(iss))
+	}
+	if sa.showSection("description") {
+		showDescription(w, iss)
+	}
+	if sa.showSection("children") {
+		showChildren(w, iss, store)
+	}
+	if sa.showSection("blockedby") || sa.showSection("unblocks") {
+		showMap(w, iss, store)
+	}
+	if sa.showSection("comments") {
+		showComments(w, iss)
 	}
 	return nil
 }

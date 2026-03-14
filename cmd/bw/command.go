@@ -105,15 +105,14 @@ var commands = []Command{
 		Summary:     "Show issue details",
 		Description: "Display full details for an issue including status, priority, labels, and dependency context.\nBy default all sections are shown. Use --only to select specific sections.\n\nThe BLOCKED BY section shows actionable tips — the leaf issues that need work to unblock this one.\nThe UNBLOCKS section shows what completing this issue would immediately unblock.\n\nAlias: view",
 		Positionals: []Positional{
-			{Name: "<id>", Required: true, Help: "Issue ID (can specify multiple)"},
+			{Name: "<id>", Required: true, Help: "Issue ID"},
 		},
 		Flags: []Flag{
-			{Long: "--json", Help: "Output full issue data as JSON"},
+			{Long: "--json", Help: "Output as JSON object"},
 			{Long: "--only", Value: "SECTIONS", Help: "Show only named sections (comma-separated: summary, description, children, blockedby, unblocks, comments)"},
 		},
 		Examples: []Example{
 			{Cmd: "bw show bw-a3f8", Help: "Full details for one issue"},
-			{Cmd: "bw show bw-a3f8 bw-b2c1", Help: "Show multiple issues at once"},
 			{Cmd: "bw show bw-a3f8 --only summary", Help: "Compact one-line summary (status, priority, title)"},
 			{Cmd: "bw show bw-a3f8 --only description,comments", Help: "Description and comments only"},
 			{Cmd: "bw show bw-a3f8 --only blockedby,unblocks", Help: "Dependency context only"},

@@ -40,20 +40,17 @@ func TestCmdShowJSON(t *testing.T) {
 		t.Fatalf("cmdShow: %v", err)
 	}
 
-	// JSON output should be an array
-	var got []issue.Issue
+	// JSON output should be a single object, not an array.
+	var got issue.Issue
 	if err := json.Unmarshal(buf.Bytes(), &got); err != nil {
-		t.Fatalf("JSON parse: %v", err)
+		t.Fatalf("JSON parse as object: %v", err)
 	}
-	if len(got) != 1 {
-		t.Fatalf("expected 1 issue, got %d", len(got))
-	}
-	if got[0].Title != "JSON show" {
-		t.Errorf("title = %q", got[0].Title)
+	if got.Title != "JSON show" {
+		t.Errorf("title = %q", got.Title)
 	}
 }
 
-func TestCmdShowMultiID(t *testing.T) {
+func TestCmdShowMultiIDRejectsMultiple(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
@@ -63,38 +60,8 @@ func TestCmdShowMultiID(t *testing.T) {
 
 	var buf bytes.Buffer
 	err := cmdShow(env.Store, []string{a.ID, b.ID}, PlainWriter(&buf))
-	if err != nil {
-		t.Fatalf("cmdShow multi: %v", err)
-	}
-	out := buf.String()
-	if !strings.Contains(out, "First") {
-		t.Errorf("missing First: %q", out)
-	}
-	if !strings.Contains(out, "Second") {
-		t.Errorf("missing Second: %q", out)
-	}
-}
-
-func TestCmdShowMultiIDJSON(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	a, _ := env.Store.Create("Alpha", issue.CreateOpts{})
-	b, _ := env.Store.Create("Beta", issue.CreateOpts{})
-	env.Repo.Commit("create issues")
-
-	var buf bytes.Buffer
-	err := cmdShow(env.Store, []string{a.ID, b.ID, "--json"}, PlainWriter(&buf))
-	if err != nil {
-		t.Fatalf("cmdShow multi --json: %v", err)
-	}
-
-	var got []issue.Issue
-	if err := json.Unmarshal(buf.Bytes(), &got); err != nil {
-		t.Fatalf("JSON parse: %v", err)
-	}
-	if len(got) != 2 {
-		t.Fatalf("expected 2 issues, got %d", len(got))
+	if err == nil {
+		t.Fatal("expected error for multiple IDs")
 	}
 }
 
