@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-03-25T22:05:11Z",
@@ -13,8 +13,8 @@
     }
   ],
   "priority": 3,
-  "status": "open",
+  "status": "in_progress",
   "title": "Reject cyclic dependency edges in Link",
   "type": "task",
-  "updated_at": "2026-03-25T22:17:39Z"
+  "updated_at": "2026-03-25T22:39:41Z"
 }
