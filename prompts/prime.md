@@ -8,7 +8,7 @@
 
 Beadwork persists plans, progress, and decisions to git so they survive. Compaction erases context.
 
-Issues live on the `beadwork` branch. IDs: `{{ .Prefix }}-XYZ`. Status: open → in_progress → closed / deferred. Priority: P0-P4 (default P2). Epics have children (`--parent`) and deps (`bw dep add <blocker> blocks <blocked>`). `bw ready` = next unblocked work.
+Issues live on the `beadwork` branch. IDs: `{{ .Prefix }}-XYZ`. Status: open → in_progress → closed / deferred. Priority: P0-P4 (default P2). Epics have children (`--parent`) and deps (`bw dep add <blocker> blocks <blocked>`). `bw ready` feeds you the next unblocked step, so compaction can't erase your progress.
 
 ## Where You Are
 
@@ -39,7 +39,7 @@ Plan however you want. Your plan is useful for thinking, but it lives in context
 1. Create an epic: `bw create "Epic title" -t epic --description "..."`
 2. Create a child task for each step: `bw create "Step title" --parent <epic> --description "..."`
 3. Wire dependencies: `bw dep add <blocker> blocks <blocked>`
-4. Include a mermaid sequencing graph in the epic description so the dependency structure is visible:
+4. Include a mermaid sequencing graph in the plan so the dependency structure is visible:
    ```mermaid
    graph LR
        1 --> 2
@@ -48,17 +48,15 @@ Plan however you want. Your plan is useful for thinking, but it lives in context
        3 --> 4
    ```
 
-Now `bw ready` feeds you the next unblocked step, and compaction can't erase your progress.
-
 ## Workflow
 
 1. **Worktree**: Create a worktree with branch `<id>/<short-description>` (e.g. `{{ .Prefix }}-a1b/fix-auth-bug`)
 2. **Claim**: `bw start <id>`
 3. **Work**: One ticket, one worktree
 4. **Land**: Commit with ticket ID → `bw close <id>` → `bw sync`
-5. **Clean up**: Remove worktree
+5. **Clean up**: Remove worktree, leave branch
 
-What isn't committed, closed, and synced is gone next session.
+What isn't committed, closed, and synced will polute the next session.
 
 **Delegation**: Each delegated task needs its own worktree — without isolation, agents corrupt each other's state. Agents that can't request approvals can't land work — plan accordingly. Create a ticket for each delegated task first, then include in the agent prompt:
 
