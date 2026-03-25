@@ -2,6 +2,7 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-25T22:41:17Z",
   "created": "2026-03-25T22:05:11Z",
   "description": "## Problem\n\n`Link` (blocking.go) only prevents self-loops (`blockerID == blockedID`). It does not detect transitive cycles — e.g. A blocks B, B blocks C, C blocks A is silently accepted. The parent hierarchy already rejects cycles (`update.go:46-54`); dependency edges should too.\n\n## Approach\n\nAdd a targeted BFS/DFS walk in `Link` before writing the edge. Starting from `blockedID`, follow each issue's `Blocks` list via `readIssue`. If `blockerID` is reachable, return an error like:\n\n```\ncircular dependency: \u003cblockerID\u003e is already transitively blocked by \u003cblockedID\u003e\n```\n\nUse a `visited` set to handle diamond-shaped DAGs efficiently (same pattern as `Tips`). No need to call `LoadEdges` — the walk reads only the reachable subgraph.\n\n## Tests\n\n- Direct cycle: A blocks B, then B blocks A → error\n- Deep cycle: A→B→C, then C blocks A → error\n- Diamond (non-cycle): A→B, A→C, B→D, C→D → allowed\n- Self-loop: existing test, already rejected\n\n## Notes\n\n- Error message should mention \"circular\" for consistency with parent cycle errors.\n- `Unlink` needs no check (removing edges can't create cycles).",
   "id": "bw-a8i",
@@ -13,8 +14,8 @@
     }
   ],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Reject cyclic dependency edges in Link",
   "type": "task",
-  "updated_at": "2026-03-25T22:39:41Z"
+  "updated_at": "2026-03-25T22:41:17Z"
 }
