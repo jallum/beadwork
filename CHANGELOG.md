@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.7 — 2026-03-25
+
+- **Cyclic dependency rejection** — `bw dep add` now rejects edges that would create circular dependencies (e.g. A blocks B, B blocks C, then C blocks A). Previously only self-loops were caught; transitive cycles were silently accepted, creating logically incoherent state where blocked issues could never become unblocked. The check uses a DFS walk of the reachable subgraph, consistent with the existing parent-child cycle detection.
+
 ## 0.11.6 — 2026-03-13
 
 - **Compact dependency annotations** — issues that block (or are blocked by) multiple others now show a single grouped annotation instead of one per ID. For example, `[blocks: bw-a, bw-b]` instead of two separate `[blocks: bw-a]` `[blocks: bw-b]` tags. Reduces visual noise in `bw list` and `bw ready` output, especially for epics with many children.
