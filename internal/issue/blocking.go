@@ -18,6 +18,12 @@ func (s *Store) Link(blockerID, blockedID string) error {
 		return fmt.Errorf("an issue cannot block itself")
 	}
 
+	// Cycle detection: walk from blockedID following Blocks edges.
+	// If blockerID is reachable, adding this edge would create a cycle.
+	if s.wouldCycle(blockedID, blockerID) {
+		return fmt.Errorf("circular dependency: %s is already transitively blocked by %s", blockerID, blockedID)
+	}
+
 	// Create marker file: blocks/<blocker>/<blocked>
 	s.FS.MkdirAll("blocks/" + blockerID)
 	if err := s.FS.WriteFile("blocks/"+blockerID+"/"+blockedID, []byte{}); err != nil {
@@ -322,4 +328,32 @@ func (s *Store) ClosedBlockerSet(issues []*Issue) map[string]bool {
 		}
 	}
 	return set
+}
+
+// wouldCycle reports whether target is reachable from start by following
+// Blocks edges. If so, adding an edge from target→start would create a
+// cycle in the dependency graph.
+func (s *Store) wouldCycle(start, target string) bool {
+	visited := make(map[string]bool)
+	var walk func(id string) bool
+	walk = func(id string) bool {
+		if id == target {
+			return true
+		}
+		if visited[id] {
+			return false
+		}
+		visited[id] = true
+		iss, err := s.readIssue(id)
+		if err != nil {
+			return false
+		}
+		for _, next := range iss.Blocks {
+			if walk(next) {
+				return true
+			}
+		}
+		return false
+	}
+	return walk(start)
 }

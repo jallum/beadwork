@@ -3,6 +3,7 @@ package issue_test
 import (
 	"encoding/json"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/jallum/beadwork/internal/issue"
@@ -66,6 +67,68 @@ func TestUnlink(t *testing.T) {
 	bGot, _ := env.Store.Get(b.ID)
 	if len(bGot.BlockedBy) != 0 {
 		t.Errorf("blocked.BlockedBy = %v, want empty", bGot.BlockedBy)
+	}
+}
+
+func TestLinkDirectCycle(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("A", issue.CreateOpts{})
+	b, _ := env.Store.Create("B", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID) // A blocks B
+	env.CommitIntent("link a->b")
+
+	err := env.Store.Link(b.ID, a.ID) // B blocks A → cycle
+	if err == nil {
+		t.Fatal("expected error for direct cycle")
+	}
+	if !strings.Contains(err.Error(), "circular") {
+		t.Errorf("error = %q, want mention of circular", err)
+	}
+}
+
+func TestLinkDeepCycle(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("A", issue.CreateOpts{})
+	b, _ := env.Store.Create("B", issue.CreateOpts{})
+	c, _ := env.Store.Create("C", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID) // A blocks B
+	env.Store.Link(b.ID, c.ID) // B blocks C
+	env.CommitIntent("chain a->b->c")
+
+	err := env.Store.Link(c.ID, a.ID) // C blocks A → cycle
+	if err == nil {
+		t.Fatal("expected error for deep cycle")
+	}
+	if !strings.Contains(err.Error(), "circular") {
+		t.Errorf("error = %q, want mention of circular", err)
+	}
+}
+
+func TestLinkDiamondNoCycle(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("A", issue.CreateOpts{})
+	b, _ := env.Store.Create("B", issue.CreateOpts{})
+	c, _ := env.Store.Create("C", issue.CreateOpts{})
+	d, _ := env.Store.Create("D", issue.CreateOpts{})
+
+	// A→B, A→C, B→D, C→D (diamond, not a cycle)
+	if err := env.Store.Link(a.ID, b.ID); err != nil {
+		t.Fatalf("Link a->b: %v", err)
+	}
+	if err := env.Store.Link(a.ID, c.ID); err != nil {
+		t.Fatalf("Link a->c: %v", err)
+	}
+	if err := env.Store.Link(b.ID, d.ID); err != nil {
+		t.Fatalf("Link b->d: %v", err)
+	}
+	if err := env.Store.Link(c.ID, d.ID); err != nil {
+		t.Fatalf("Link c->d: %v", err)
 	}
 }
 
