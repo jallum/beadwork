@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-27T05:31:57Z",
   "created": "2026-03-27T05:26:43Z",
   "description": "When bw onboard output is piped (i.e. stdout is not a TTY), it should emit just the raw snippet text without explanatory decoration, so it can be piped or pasted directly into an agent instructions file.",
   "id": "bw-fz9",
   "labels": [],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "bw onboard should output only the prompt snippet when piped",
   "type": "task",
-  "updated_at": "2026-03-27T05:28:30Z"
+  "updated_at": "2026-03-27T05:31:57Z"
 }
