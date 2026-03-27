@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-27T05:26:43Z",
+  "description": "The machine-readable output of bw onboard currently includes explanatory decoration around the prompt snippet. It should emit just the raw snippet text so it can be piped or pasted directly into an agent instructions file.",
+  "id": "bw-fz9",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "bw onboard --machine should output only the prompt snippet",
+  "type": "task",
+  "updated_at": "2026-03-27T05:26:43Z"
+}
