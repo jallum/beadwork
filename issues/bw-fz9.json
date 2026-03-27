@@ -3,12 +3,12 @@
   "blocked_by": [],
   "blocks": [],
   "created": "2026-03-27T05:26:43Z",
-  "description": "The machine-readable output of bw onboard currently includes explanatory decoration around the prompt snippet. It should emit just the raw snippet text so it can be piped or pasted directly into an agent instructions file.",
+  "description": "When bw onboard output is piped (i.e. stdout is not a TTY), it should emit just the raw snippet text without explanatory decoration, so it can be piped or pasted directly into an agent instructions file.",
   "id": "bw-fz9",
   "labels": [],
   "priority": 3,
   "status": "open",
-  "title": "bw onboard --machine should output only the prompt snippet",
+  "title": "bw onboard should output only the prompt snippet when piped",
   "type": "task",
-  "updated_at": "2026-03-27T05:26:43Z"
+  "updated_at": "2026-03-27T05:27:27Z"
 }
