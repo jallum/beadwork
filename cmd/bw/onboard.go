@@ -14,6 +14,13 @@ type OnboardData struct {
 }
 
 func cmdOnboard(w Writer) error {
+	if !w.IsTTY() {
+		out := strings.Trim(prompts.AgentsMD, "\n")
+		fmt.Fprint(w, out)
+		fmt.Fprintln(w)
+		return nil
+	}
+
 	data := OnboardData{
 		Snippet: prompts.AgentsMD,
 	}
