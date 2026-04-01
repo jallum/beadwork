@@ -23,11 +23,7 @@ func TestFindGitDirNormalRepo(t *testing.T) {
 	gitDir := filepath.Join(dir, ".git")
 	os.Mkdir(gitDir, 0755)
 
-	orig, _ := os.Getwd()
-	os.Chdir(dir)
-	defer os.Chdir(orig)
-
-	got, err := findGitDir()
+	got, err := findGitDir(dir)
 	if err != nil {
 		t.Fatalf("findGitDir: %v", err)
 	}
@@ -47,11 +43,7 @@ func TestFindGitDirNestedDirectory(t *testing.T) {
 	nested := filepath.Join(dir, "a", "b", "c")
 	os.MkdirAll(nested, 0755)
 
-	orig, _ := os.Getwd()
-	os.Chdir(nested)
-	defer os.Chdir(orig)
-
-	got, err := findGitDir()
+	got, err := findGitDir(nested)
 	if err != nil {
 		t.Fatalf("findGitDir: %v", err)
 	}
@@ -63,11 +55,7 @@ func TestFindGitDirNestedDirectory(t *testing.T) {
 func TestFindGitDirNoRepo(t *testing.T) {
 	dir := t.TempDir()
 
-	orig, _ := os.Getwd()
-	os.Chdir(dir)
-	defer os.Chdir(orig)
-
-	_, err := findGitDir()
+	_, err := findGitDir(dir)
 	if err == nil {
 		t.Error("expected error outside git repo")
 	}
@@ -96,11 +84,7 @@ func TestFindGitDirWorktreeGitFile(t *testing.T) {
 	// commondir is relative to the worktree gitdir
 	os.WriteFile(filepath.Join(wtGitDir, "commondir"), []byte("../..\n"), 0644)
 
-	orig, _ := os.Getwd()
-	os.Chdir(wtDir)
-	defer os.Chdir(orig)
-
-	got, err := findGitDir()
+	got, err := findGitDir(wtDir)
 	if err != nil {
 		t.Fatalf("findGitDir: %v", err)
 	}
@@ -133,11 +117,8 @@ func TestFindGitDirWorktreeNestedDirectory(t *testing.T) {
 	// Write commondir file
 	os.WriteFile(filepath.Join(wtGitDir, "commondir"), []byte("../..\n"), 0644)
 
-	orig, _ := os.Getwd()
-	os.Chdir(filepath.Join(wtDir, "src", "pkg"))
-	defer os.Chdir(orig)
-
-	got, err := findGitDir()
+	nested := filepath.Join(wtDir, "src", "pkg")
+	got, err := findGitDir(nested)
 	if err != nil {
 		t.Fatalf("findGitDir: %v", err)
 	}
@@ -167,11 +148,7 @@ func TestFindGitDirWorktreeAbsoluteCommondir(t *testing.T) {
 	// commondir with an absolute path
 	os.WriteFile(filepath.Join(wtGitDir, "commondir"), []byte(mainGitDir+"\n"), 0644)
 
-	orig, _ := os.Getwd()
-	os.Chdir(wtDir)
-	defer os.Chdir(orig)
-
-	got, err := findGitDir()
+	got, err := findGitDir(wtDir)
 	if err != nil {
 		t.Fatalf("findGitDir: %v", err)
 	}

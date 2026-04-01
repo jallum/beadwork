@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/jallum/beadwork/internal/issue"
 	"golang.org/x/term"
@@ -38,13 +39,16 @@ func main() {
 		w = PlainWriter(os.Stdout)
 	}
 
-	if len(os.Args) < 2 {
+	allArgs := os.Args[1:]
+	allArgs = extractDirFlag(allArgs)
+
+	if len(allArgs) < 1 {
 		printUsage(w)
 		os.Exit(1)
 	}
 
-	cmd := os.Args[1]
-	args := os.Args[2:]
+	cmd := allArgs[0]
+	args := allArgs[1:]
 
 	args = removeFlag(args, "--x-raw")
 	args, _ = removeFlagValue(args, "--x-render-as")
@@ -89,4 +93,25 @@ func main() {
 	if err := c.Run(store, args, w); err != nil {
 		fatal(err.Error())
 	}
+}
+
+// extractDirFlag removes all -C <dir> pairs from args and sets repoDir.
+func extractDirFlag(args []string) []string {
+	out := make([]string, 0, len(args))
+	for i := 0; i < len(args); i++ {
+		if args[i] == "-C" {
+			if i+1 >= len(args) {
+				fatal("-C requires an argument")
+			}
+			abs, err := filepath.Abs(args[i+1])
+			if err != nil {
+				fatal(fmt.Sprintf("-C %s: %s", args[i+1], err))
+			}
+			repoDir = abs
+			i++ // skip value
+		} else {
+			out = append(out, args[i])
+		}
+	}
+	return out
 }

@@ -1545,6 +1545,59 @@ func TestVersionGateNewerRepoCLI(t *testing.T) {
 	assertContains(t, out, "newer than this binary")
 }
 
+// --- -C flag ---
+
+func TestDirFlagList(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.Store.Create("Remote task", issue.CreateOpts{})
+	env.CommitIntent("create task")
+
+	// Run from /tmp but point -C at the test repo
+	out := bw(t, t.TempDir(), "-C", env.Dir, "list")
+	assertContains(t, out, "Remote task")
+}
+
+func TestDirFlagCreate(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Create an issue via -C from a different directory
+	out := bw(t, t.TempDir(), "-C", env.Dir, "create", "Created remotely")
+	assertContains(t, out, "created test-")
+	assertContains(t, out, "Created remotely")
+
+	// Verify it's visible through normal access
+	listOut := bw(t, env.Dir, "list")
+	assertContains(t, listOut, "Created remotely")
+}
+
+func TestDirFlagNotGit(t *testing.T) {
+	out := bwFail(t, t.TempDir(), "-C", t.TempDir(), "list")
+	assertContains(t, out, "not a git repository")
+}
+
+func TestDirFlagMissingArg(t *testing.T) {
+	out := bwFail(t, t.TempDir(), "-C")
+	assertContains(t, out, "-C requires an argument")
+}
+
+func TestDirFlagInit(t *testing.T) {
+	dir := t.TempDir()
+	setupGitRepo(t, dir)
+
+	out := bw(t, t.TempDir(), "-C", dir, "init", "--prefix", "remote")
+	assertContains(t, out, "initialized beadwork")
+	assertContains(t, out, "prefix: remote")
+}
+
+func TestDirFlagVersion(t *testing.T) {
+	// -C should be harmless for commands that don't need a store
+	out := bw(t, t.TempDir(), "-C", t.TempDir(), "--version")
+	assertContains(t, out, "bw ")
+}
+
 func init() {
 	os.Setenv("GIT_AUTHOR_NAME", "Test")
 	os.Setenv("GIT_AUTHOR_EMAIL", "test@test.com")

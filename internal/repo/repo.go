@@ -25,13 +25,29 @@ const refRemote = "refs/remotes/origin/" + BranchName
 
 type Repo struct {
 	GitDir      string
+	CWD         string // working directory this repo was discovered from
 	Prefix      string
 	tfs         *treefs.TreeFS
 	initialized bool
 }
 
+// FindRepo discovers the repository from the current working directory.
 func FindRepo() (*Repo, error) {
-	gitDir, err := findGitDir()
+	return FindRepoAt("")
+}
+
+// FindRepoAt discovers the repository starting from dir.
+// If dir is empty, the current working directory is used.
+func FindRepoAt(dir string) (*Repo, error) {
+	if dir == "" {
+		var err error
+		dir, err = os.Getwd()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	gitDir, err := findGitDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("not a git repository")
 	}
@@ -49,6 +65,7 @@ func FindRepo() (*Repo, error) {
 
 	r := &Repo{
 		GitDir: gitDir,
+		CWD:    dir,
 		tfs:    tfs,
 	}
 
@@ -413,11 +430,7 @@ func (r *Repo) RepoDir() string {
 // Shells out rather than using go-git's Worktree.Status, which can disagree
 // with real git on worktree boundaries, submodules, and file modes.
 func (r *Repo) WorktreeDirty() bool {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return false
-	}
-	_, err = execGit(cwd, "diff", "--quiet", "HEAD")
+	_, err := execGit(r.CWD, "diff", "--quiet", "HEAD")
 	return err != nil
 }
 
@@ -434,20 +447,15 @@ type GitContext struct {
 func (r *Repo) GetGitContext() GitContext {
 	ctx := GitContext{Dirty: r.WorktreeDirty()}
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		return ctx
-	}
-
-	if out, err := execGit(cwd, "rev-parse", "--abbrev-ref", "HEAD"); err == nil {
+	if out, err := execGit(r.CWD, "rev-parse", "--abbrev-ref", "HEAD"); err == nil {
 		ctx.Branch = strings.TrimSpace(out)
 	}
-	if out, err := execGit(cwd, "log", "-1", "--oneline"); err == nil {
+	if out, err := execGit(r.CWD, "log", "-1", "--oneline"); err == nil {
 		ctx.LastCommit = strings.TrimSpace(out)
 	}
 
 	// .git is a file in worktrees, a directory in the main working tree
-	dotGit := filepath.Join(cwd, ".git")
+	dotGit := filepath.Join(r.CWD, ".git")
 	if fi, err := os.Stat(dotGit); err == nil && !fi.IsDir() {
 		ctx.IsWorktree = true
 	}
@@ -466,14 +474,11 @@ func (r *Repo) gitPush(remoteName string, refSpec config.RefSpec) error {
 }
 
 // findGitDir returns the common .git directory for the repository.
-// It walks up from the current working directory looking for .git (file or
-// directory). If .git is a file (worktree), it reads the gitdir path and
+// It walks up from startDir looking for .git (file or directory).
+// If .git is a file (worktree), it reads the gitdir path and
 // then reads commondir to resolve the shared .git directory.
-func findGitDir() (string, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
+func findGitDir(startDir string) (string, error) {
+	dir := startDir
 
 	for {
 		dotGit := filepath.Join(dir, ".git")

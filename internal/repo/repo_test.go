@@ -47,6 +47,87 @@ func TestFindRepoNotGit(t *testing.T) {
 	}
 }
 
+func TestFindRepoAtExplicitDir(t *testing.T) {
+	dir := t.TempDir()
+
+	gitRun(t, dir, "init")
+	gitRun(t, dir, "config", "user.email", "test@test.com")
+	gitRun(t, dir, "config", "user.name", "Test")
+	os.WriteFile(filepath.Join(dir, "README"), []byte("test"), 0644)
+	gitRun(t, dir, "add", ".")
+	gitRun(t, dir, "commit", "-m", "initial")
+
+	// No chdir — discover repo purely from the explicit path.
+	r, err := repo.FindRepoAt(dir)
+	if err != nil {
+		t.Fatalf("FindRepoAt: %v", err)
+	}
+	if r.CWD != dir {
+		t.Errorf("CWD = %q, want %q", r.CWD, dir)
+	}
+	if r.RepoDir() != dir {
+		t.Errorf("RepoDir() = %q, want %q", r.RepoDir(), dir)
+	}
+}
+
+func TestFindRepoAtNestedDir(t *testing.T) {
+	dir := t.TempDir()
+
+	gitRun(t, dir, "init")
+	gitRun(t, dir, "config", "user.email", "test@test.com")
+	gitRun(t, dir, "config", "user.name", "Test")
+	os.WriteFile(filepath.Join(dir, "README"), []byte("test"), 0644)
+	gitRun(t, dir, "add", ".")
+	gitRun(t, dir, "commit", "-m", "initial")
+
+	nested := filepath.Join(dir, "a", "b", "c")
+	os.MkdirAll(nested, 0755)
+
+	r, err := repo.FindRepoAt(nested)
+	if err != nil {
+		t.Fatalf("FindRepoAt: %v", err)
+	}
+	if r.CWD != nested {
+		t.Errorf("CWD = %q, want %q", r.CWD, nested)
+	}
+	if r.RepoDir() != dir {
+		t.Errorf("RepoDir() = %q, want %q", r.RepoDir(), dir)
+	}
+}
+
+func TestFindRepoAtNotGit(t *testing.T) {
+	dir := t.TempDir()
+
+	_, err := repo.FindRepoAt(dir)
+	if err == nil {
+		t.Error("expected error for non-git directory")
+	}
+}
+
+func TestFindRepoAtEmpty(t *testing.T) {
+	// Empty string should fall back to cwd, same as FindRepo.
+	dir, _ := filepath.EvalSymlinks(t.TempDir())
+
+	gitRun(t, dir, "init")
+	gitRun(t, dir, "config", "user.email", "test@test.com")
+	gitRun(t, dir, "config", "user.name", "Test")
+	os.WriteFile(filepath.Join(dir, "README"), []byte("test"), 0644)
+	gitRun(t, dir, "add", ".")
+	gitRun(t, dir, "commit", "-m", "initial")
+
+	orig, _ := os.Getwd()
+	os.Chdir(dir)
+	defer os.Chdir(orig)
+
+	r, err := repo.FindRepoAt("")
+	if err != nil {
+		t.Fatalf("FindRepoAt empty: %v", err)
+	}
+	if r.RepoDir() != dir {
+		t.Errorf("RepoDir() = %q, want %q", r.RepoDir(), dir)
+	}
+}
+
 func TestInitInvalidPrefix(t *testing.T) {
 	dir := t.TempDir()
 
