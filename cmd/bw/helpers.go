@@ -12,8 +12,10 @@ import (
 	"github.com/jallum/beadwork/internal/repo"
 )
 
+var repoDir string // set by -C flag; empty means use cwd
+
 func getRepo() (*repo.Repo, error) {
-	return repo.FindRepo()
+	return repo.FindRepoAt(repoDir)
 }
 
 func getInitializedStore() (*issue.Store, error) {

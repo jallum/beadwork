@@ -521,6 +521,7 @@ func printUsage(w Writer) {
 
 	fmt.Fprintf(w, "\n%s\n", w.Style("Global Flags:", Cyan))
 	w.Push(2)
+	fmt.Fprintf(w, "%-28s %s\n", "-C <dir>", "Run as if started in <dir>")
 	fmt.Fprintf(w, "%-28s %s\n", "--dry-run", "Run without committing changes")
 	w.Pop()
 
