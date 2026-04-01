@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.8 — 2026-04-01
+
+- **`-C <dir>` flag** — run `bw` as if started in `<dir>`, matching `git -C` semantics. The repo is discovered from the specified directory without changing the process working directory. Useful for scripting against a different repo or running `bw` from outside a checkout: `bw -C /path/to/repo list`.
+
+- **`bw onboard` pipe-friendly output** — when stdout is not a TTY (e.g. `bw onboard | pbcopy` or `bw onboard >> CLAUDE.md`), only the raw snippet text is emitted, without headings, code fences, or the "How it works" section. TTY output is unchanged.
+
+- Minor prime prompt wording adjustments.
+
 ## 0.11.7 — 2026-03-25
 
 - **Cyclic dependency rejection** — `bw dep add` now rejects edges that would create circular dependencies (e.g. A blocks B, B blocks C, then C blocks A). Previously only self-loops were caught; transitive cycles were silently accepted, creating logically incoherent state where blocked issues could never become unblocked. The check uses a DFS walk of the reachable subgraph, consistent with the existing parent-child cycle detection.
