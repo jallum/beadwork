@@ -3,9 +3,12 @@ package md
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
+
+var testNow = time.Date(2027, 4, 16, 12, 0, 0, 0, time.UTC)
 
 func TestEscape(t *testing.T) {
 	tests := []struct {
@@ -33,7 +36,7 @@ func TestIssueSummary(t *testing.T) {
 		Priority: 1,
 		Type:     "task",
 	}
-	got := IssueSummary(iss)
+	got := IssueSummary(iss, testNow)
 	// Should start with # heading
 	if !strings.HasPrefix(got, "# ") {
 		t.Errorf("IssueSummary should start with '# ': got %q", got)
@@ -62,7 +65,7 @@ func TestIssueSummaryEpic(t *testing.T) {
 		Status: "in_progress",
 		Type:   "epic",
 	}
-	got := IssueSummary(iss)
+	got := IssueSummary(iss, testNow)
 	if !strings.Contains(got, "{type:epic}") {
 		t.Errorf("epic should have type tag: got %q", got)
 	}
@@ -77,7 +80,7 @@ func TestIssueSummaryWithParentAndLabels(t *testing.T) {
 		Parent: "bw-abc",
 		Labels: []string{"v2", "frontend"},
 	}
-	got := IssueSummary(iss)
+	got := IssueSummary(iss, testNow)
 	if !strings.Contains(got, "Parent: bw-abc") {
 		t.Errorf("should contain Parent line: got %q", got)
 	}
@@ -93,7 +96,7 @@ func TestIssueSummaryNoParentNoLabels(t *testing.T) {
 		Status: "open",
 		Type:   "task",
 	}
-	got := IssueSummary(iss)
+	got := IssueSummary(iss, testNow)
 	if strings.Contains(got, "Parent:") {
 		t.Errorf("should not contain Parent line when empty: got %q", got)
 	}
@@ -350,7 +353,7 @@ func TestFullRoundTrip(t *testing.T) {
 		Labels:      []string{"v1"},
 		Description: "A description with {braces}",
 	}
-	summary := IssueSummary(iss)
+	summary := IssueSummary(iss, testNow)
 	desc := Description(iss.Description)
 	full := summary + "\n" + desc
 
@@ -374,5 +377,109 @@ func TestFullRoundTrip(t *testing.T) {
 	tty := ResolveTTY(full, 80)
 	if !strings.Contains(tty, "bw-trip") {
 		t.Errorf("TTY should contain ID: got %q", tty)
+	}
+}
+
+func TestIssueSummaryWithDue(t *testing.T) {
+	iss := &issue.Issue{
+		ID:     "bw-due1",
+		Title:  "Has due date",
+		Status: "open",
+		Type:   "task",
+		Due:    "2027-12-15",
+	}
+	got := IssueSummary(iss, testNow)
+	if !strings.Contains(got, "Due: 2027-12-15") {
+		t.Errorf("should contain Due line: got %q", got)
+	}
+	if strings.Contains(got, "overdue") {
+		t.Errorf("future due should not be overdue: got %q", got)
+	}
+}
+
+func TestIssueSummaryOverdue(t *testing.T) {
+	iss := &issue.Issue{
+		ID:     "bw-over1",
+		Title:  "Overdue issue",
+		Status: "open",
+		Type:   "task",
+		Due:    "2027-03-01",
+	}
+	got := IssueSummary(iss, testNow)
+	if !strings.Contains(got, "Due: 2027-03-01") {
+		t.Errorf("should contain Due line: got %q", got)
+	}
+	if !strings.Contains(got, "{overdue}") {
+		t.Errorf("past due should have overdue token: got %q", got)
+	}
+}
+
+func TestIssueSummaryNotOverdueOnDueDay(t *testing.T) {
+	now := time.Date(2027, 4, 15, 18, 0, 0, 0, time.UTC)
+	iss := &issue.Issue{
+		ID:     "bw-today",
+		Title:  "Due today",
+		Status: "open",
+		Type:   "task",
+		Due:    "2027-04-15",
+	}
+	got := IssueSummary(iss, now)
+	if strings.Contains(got, "overdue") {
+		t.Errorf("should not be overdue on due day (end-of-day semantics): got %q", got)
+	}
+}
+
+func TestIssueOneLinerWithDue(t *testing.T) {
+	iss := &issue.Issue{
+		ID:       "bw-duel",
+		Title:    "Task with due",
+		Status:   "open",
+		Priority: 2,
+		Type:     "task",
+		Due:      "2027-12-15",
+	}
+	got := IssueOneLinerWithDue(iss, testNow, nil)
+	if !strings.Contains(got, "Due: 2027-12-15") {
+		t.Errorf("should contain due date: got %q", got)
+	}
+}
+
+func TestIssueOneLinerOverdue(t *testing.T) {
+	iss := &issue.Issue{
+		ID:       "bw-overl",
+		Title:    "Overdue task",
+		Status:   "open",
+		Priority: 2,
+		Type:     "task",
+		Due:      "2027-03-01",
+	}
+	got := IssueOneLinerWithDue(iss, testNow, nil)
+	if !strings.Contains(got, "{overdue:2027-03-01}") {
+		t.Errorf("should contain overdue token: got %q", got)
+	}
+
+	// Resolve to markdown
+	resolved := ResolveMarkdown(got)
+	if !strings.Contains(resolved, "(OVERDUE since 2027-03-01)") {
+		t.Errorf("resolved should contain OVERDUE since: got %q", resolved)
+	}
+}
+
+func TestFormatDateDisplay(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"2027-04-15", "2027-04-15"},
+		{"2027-04-15T17:00:00-04:00", "2027-04-15 at 5:00 PM"},
+		{"2027-04-15T09:30:00Z", "2027-04-15 at 9:30 AM"},
+		{"not-a-date", "not-a-date"},
+		{"", ""},
+	}
+	for _, tt := range tests {
+		got := formatDateDisplay(tt.input)
+		if got != tt.want {
+			t.Errorf("formatDateDisplay(%q) = %q, want %q", tt.input, got, tt.want)
+		}
 	}
 }

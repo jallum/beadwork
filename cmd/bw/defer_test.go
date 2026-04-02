@@ -373,6 +373,223 @@ func TestResolveDate(t *testing.T) {
 	}
 }
 
+func TestResolveDateTimeExpressions(t *testing.T) {
+	// Fixed reference: Wednesday 2027-03-10 at noon UTC.
+	// In a test environment, time.Local may be UTC, so we set up accordingly.
+	now := time.Date(2027, 3, 10, 12, 0, 0, 0, time.UTC)
+
+	t.Run("RFC3339 passthrough", func(t *testing.T) {
+		got, err := resolveDate("2027-04-15T14:00:00-04:00", now)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+		if got != "2027-04-15T14:00:00-04:00" {
+			t.Errorf("got %q, want passthrough", got)
+		}
+	})
+
+	t.Run("in N minutes", func(t *testing.T) {
+		got, err := resolveDate("in 15 minutes", now)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+		parsed, err := time.Parse(time.RFC3339, got)
+		if err != nil {
+			t.Fatalf("result %q is not RFC3339: %v", got, err)
+		}
+		expected := now.Add(15 * time.Minute)
+		if !parsed.Equal(expected) {
+			t.Errorf("got instant %v, want %v", parsed, expected)
+		}
+	})
+
+	t.Run("in 4 hours", func(t *testing.T) {
+		got, err := resolveDate("in 4 hours", now)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+		parsed, _ := time.Parse(time.RFC3339, got)
+		expected := now.Add(4 * time.Hour)
+		if !parsed.Equal(expected) {
+			t.Errorf("got instant %v, want %v", parsed, expected)
+		}
+	})
+
+	t.Run("N minutes without in", func(t *testing.T) {
+		got, err := resolveDate("15 minutes", now)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+		parsed, _ := time.Parse(time.RFC3339, got)
+		expected := now.Add(15 * time.Minute)
+		if !parsed.Equal(expected) {
+			t.Errorf("got instant %v, want %v", parsed, expected)
+		}
+	})
+
+	t.Run("2 hours without in", func(t *testing.T) {
+		got, err := resolveDate("2 hours", now)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+		parsed, _ := time.Parse(time.RFC3339, got)
+		expected := now.Add(2 * time.Hour)
+		if !parsed.Equal(expected) {
+			t.Errorf("got instant %v, want %v", parsed, expected)
+		}
+	})
+
+	t.Run("negative duration rejected", func(t *testing.T) {
+		_, err := resolveDate("in -5 minutes", now)
+		if err == nil {
+			t.Error("expected error for negative duration")
+		}
+	})
+
+	t.Run("in 0 minutes", func(t *testing.T) {
+		got, err := resolveDate("in 0 minutes", now)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+		parsed, _ := time.Parse(time.RFC3339, got)
+		if !parsed.Equal(now) {
+			t.Errorf("got %v, want %v (now)", parsed, now)
+		}
+	})
+
+	t.Run("tomorrow at 2pm", func(t *testing.T) {
+		got, err := resolveDate("tomorrow at 2pm", now)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+		parsed, err := time.Parse(time.RFC3339, got)
+		if err != nil {
+			t.Fatalf("result %q is not RFC3339: %v", got, err)
+		}
+		if parsed.Hour() != 14 || parsed.Minute() != 0 {
+			t.Errorf("got hour=%d min=%d, want 14:00", parsed.Hour(), parsed.Minute())
+		}
+	})
+
+	t.Run("tomorrow at 14:00", func(t *testing.T) {
+		got, err := resolveDate("tomorrow at 14:00", now)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+		parsed, _ := time.Parse(time.RFC3339, got)
+		if parsed.Hour() != 14 || parsed.Minute() != 0 {
+			t.Errorf("got hour=%d min=%d, want 14:00", parsed.Hour(), parsed.Minute())
+		}
+	})
+
+	t.Run("next monday at 9am", func(t *testing.T) {
+		got, err := resolveDate("next monday at 9am", now)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+		parsed, _ := time.Parse(time.RFC3339, got)
+		if parsed.Weekday() != time.Monday {
+			t.Errorf("got weekday %v, want Monday", parsed.Weekday())
+		}
+		if parsed.Hour() != 9 {
+			t.Errorf("got hour %d, want 9", parsed.Hour())
+		}
+	})
+
+	t.Run("next monday at 9:30am", func(t *testing.T) {
+		got, err := resolveDate("next monday at 9:30am", now)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+		parsed, _ := time.Parse(time.RFC3339, got)
+		if parsed.Hour() != 9 || parsed.Minute() != 30 {
+			t.Errorf("got %d:%d, want 9:30", parsed.Hour(), parsed.Minute())
+		}
+	})
+
+	t.Run("date-only expressions still produce YYYY-MM-DD", func(t *testing.T) {
+		for _, expr := range []string{"tomorrow", "2 weeks", "next monday", "2027-06-01"} {
+			got, err := resolveDate(expr, now)
+			if err != nil {
+				t.Errorf("resolveDate(%q) error: %v", expr, err)
+				continue
+			}
+			if strings.Contains(got, "T") {
+				t.Errorf("resolveDate(%q) = %q, should be date-only (no T)", expr, got)
+			}
+		}
+	})
+}
+
+func TestParseTimeOfDay(t *testing.T) {
+	tests := []struct {
+		input   string
+		wantH   int
+		wantM   int
+		wantErr bool
+	}{
+		{"3pm", 15, 0, false},
+		{"3PM", 15, 0, false},
+		{"12pm", 12, 0, false},  // noon
+		{"12am", 0, 0, false},   // midnight
+		{"9am", 9, 0, false},
+		{"3:30pm", 15, 30, false},
+		{"11:45am", 11, 45, false},
+		{"14:00", 14, 0, false},
+		{"0:00", 0, 0, false},
+		{"23:59", 23, 59, false},
+		{"9:05", 9, 5, false},
+		// Invalid
+		{"24:00", 0, 0, true},
+		{"25:00", 0, 0, true},
+		{"13pm", 0, 0, true},
+		{"0am", 0, 0, true},
+		{"abc", 0, 0, true},
+		{"", 0, 0, true},
+	}
+
+	for _, tt := range tests {
+		got, err := parseTimeOfDay(tt.input)
+		if tt.wantErr {
+			if err == nil {
+				t.Errorf("parseTimeOfDay(%q) = %+v, want error", tt.input, got)
+			}
+			continue
+		}
+		if err != nil {
+			t.Errorf("parseTimeOfDay(%q) error: %v", tt.input, err)
+			continue
+		}
+		if got.hour != tt.wantH || got.min != tt.wantM {
+			t.Errorf("parseTimeOfDay(%q) = %d:%02d, want %d:%02d", tt.input, got.hour, got.min, tt.wantH, tt.wantM)
+		}
+	}
+}
+
+func TestValidateDateAcceptsBothFormats(t *testing.T) {
+	valid := []string{
+		"2027-06-01",
+		"2027-04-15T14:00:00-04:00",
+		"2027-04-15T14:00:00Z",
+	}
+	for _, d := range valid {
+		if err := validateDate(d); err != nil {
+			t.Errorf("validateDate(%q) = %v, want nil", d, err)
+		}
+	}
+
+	invalid := []string{
+		"not-a-date",
+		"2027/06/01",
+		"",
+	}
+	for _, d := range invalid {
+		if err := validateDate(d); err == nil {
+			t.Errorf("validateDate(%q) = nil, want error", d)
+		}
+	}
+}
+
 func TestResolveDateInvalid(t *testing.T) {
 	now := time.Date(2027, 3, 10, 12, 0, 0, 0, time.UTC)
 

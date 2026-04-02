@@ -7,6 +7,7 @@ package md
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
@@ -21,8 +22,9 @@ func Escape(s string) string {
 }
 
 // IssueSummary returns a # heading line with status, id, optional type tag,
-// and title, followed by optional Parent: and Labels: lines.
-func IssueSummary(iss *issue.Issue) string {
+// and title, followed by optional Due:, Deferred:, Parent:, and Labels: lines.
+// The now parameter is used for overdue detection.
+func IssueSummary(iss *issue.Issue, now time.Time) string {
 	var b strings.Builder
 	b.WriteString("# ")
 	b.WriteString(statusToken(iss.Status))
@@ -37,9 +39,19 @@ func IssueSummary(iss *issue.Issue) string {
 	b.WriteString(" \u2014 ")
 	b.WriteString(Escape(iss.Title))
 
+	if iss.Due != "" {
+		b.WriteString("\nDue: ")
+		b.WriteString(formatDateDisplay(iss.Due))
+		if iss.Status != "closed" && issue.IsOverdue(iss.Due, now) {
+			b.WriteString(" {overdue}")
+		}
+	}
 	if iss.DeferUntil != "" {
 		b.WriteString("\nDeferred: ")
-		b.WriteString(iss.DeferUntil)
+		b.WriteString(formatDateDisplay(iss.DeferUntil))
+		if iss.Status == "deferred" && issue.IsDeferralExpired(iss.DeferUntil, now) {
+			b.WriteString(" (expired — now due for attention)")
+		}
 	}
 	if iss.Parent != "" {
 		b.WriteString("\nParent: ")
@@ -51,6 +63,20 @@ func IssueSummary(iss *issue.Issue) string {
 	}
 
 	return b.String()
+}
+
+// formatDateDisplay returns a human-friendly display of a date or datetime value.
+// Date-only (YYYY-MM-DD) passes through as-is. RFC3339 values are formatted as
+// "YYYY-MM-DD at H:MM AM/PM".
+func formatDateDisplay(s string) string {
+	if !strings.Contains(s, "T") {
+		return s
+	}
+	t, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		return s
+	}
+	return t.Format("2006-01-02") + " at " + t.Format("3:04 PM")
 }
 
 // IssueOneLiner returns a compact single-line representation with status,
@@ -73,6 +99,25 @@ func IssueOneLinerBlocked(iss *issue.Issue, openBlockers []string) string {
 // from the dep annotation.
 func IssueOneLinerFiltered(iss *issue.Issue, closedBlockers map[string]bool) string {
 	return issueOneLiner(iss, statusToken(iss.Status), closedBlockers)
+}
+
+// IssueOneLinerWithDue is like IssueOneLinerFiltered but appends due date,
+// overdue indicator, and expired deferral indicator when present.
+func IssueOneLinerWithDue(iss *issue.Issue, now time.Time, closedBlockers map[string]bool) string {
+	line := issueOneLiner(iss, statusToken(iss.Status), closedBlockers)
+	var suffixes []string
+	if iss.Status != "closed" && iss.Due != "" && issue.IsOverdue(iss.Due, now) {
+		suffixes = append(suffixes, "{overdue:"+iss.Due+"}")
+	} else if iss.Due != "" {
+		suffixes = append(suffixes, "Due: "+formatDateDisplay(iss.Due))
+	}
+	if iss.Status == "deferred" && issue.IsDeferralExpired(iss.DeferUntil, now) {
+		suffixes = append(suffixes, "(deferred until "+formatDateDisplay(iss.DeferUntil)+", now due)")
+	}
+	if len(suffixes) > 0 {
+		return line + " " + strings.Join(suffixes, " ")
+	}
+	return line
 }
 
 func issueOneLiner(iss *issue.Issue, statusTok string, closedBlockers map[string]bool) string {

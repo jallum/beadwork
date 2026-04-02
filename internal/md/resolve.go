@@ -44,10 +44,14 @@ var statusColors = map[string]string{
 }
 
 // tokenRe matches all token forms: {kind:value} and {dep:kind:value}.
-var tokenRe = regexp.MustCompile(`\{(status|p|id|type|check|dep):([^}]+)\}`)
+var tokenRe = regexp.MustCompile(`\{(status|p|id|type|check|dep|overdue):([^}]*)\}`)
+
+// overdueSimpleRe matches the bare {overdue} token (no value).
+var overdueSimpleRe = regexp.MustCompile(`\{overdue\}`)
 
 // ResolveMarkdown transforms tokenized markdown into clean markdown for agents.
 func ResolveMarkdown(s string) string {
+	s = overdueSimpleRe.ReplaceAllString(s, "(OVERDUE)")
 	s = tokenRe.ReplaceAllStringFunc(s, func(tok string) string {
 		m := tokenRe.FindStringSubmatch(tok)
 		if m == nil {
@@ -73,6 +77,8 @@ func ResolveMarkdown(s string) string {
 			return "[ ]"
 		case "dep":
 			return resolveDepMarkdown(val)
+		case "overdue":
+			return "(OVERDUE since " + formatDateDisplay(val) + ")"
 		}
 		return tok
 	})
@@ -82,6 +88,9 @@ func ResolveMarkdown(s string) string {
 // ResolveTTY transforms tokenized markdown into ANSI-colored terminal output.
 // Pipeline: resolve tokens → plain text with TTY extras → wrap → colorize.
 func ResolveTTY(s string, width int) string {
+	// Stage 0: Resolve bare {overdue} tokens.
+	s = overdueSimpleRe.ReplaceAllString(s, "\x01overdue\x02OVERDUE\x01end\x02")
+
 	// Stage 1: Resolve tokens to plain TTY text (no ANSI yet).
 	plain := tokenRe.ReplaceAllStringFunc(s, func(tok string) string {
 		m := tokenRe.FindStringSubmatch(tok)
@@ -111,6 +120,8 @@ func ResolveTTY(s string, width int) string {
 			return "\x01check:open\x02" + "☐" + "\x01end\x02"
 		case "dep":
 			return resolveDepTTYPlain(val)
+		case "overdue":
+			return "\x01overdue\x02" + "(OVERDUE since " + formatDateDisplay(val) + ")" + "\x01end\x02"
 		}
 		return tok
 	})
@@ -283,6 +294,8 @@ func resolveColorMarkers(s string) string {
 			out.WriteString(ansiGreen)
 		case kind == "check:open":
 			out.WriteString(ansiDim)
+		case kind == "overdue":
+			out.WriteString(ansiBrightRed)
 		case strings.HasPrefix(kind, "p:"):
 			pLevel := kind[2:]
 			if c, ok := priorityColors[pLevel]; ok {

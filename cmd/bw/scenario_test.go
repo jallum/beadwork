@@ -415,22 +415,22 @@ func TestScenarioFullWorkflow(t *testing.T) {
 			t.Error("export C updated_at should be set")
 		}
 
-		// D: deferred, defer_until as RFC3339
+		// D: deferred, defer_until passed through as-is
 		d := byID[idD]
 		if d.Status != "deferred" {
 			t.Errorf("export D status=%q, want deferred", d.Status)
 		}
-		if d.DeferUntil != "2027-06-01T00:00:00Z" {
-			t.Errorf("export D defer_until=%q, want 2027-06-01T00:00:00Z", d.DeferUntil)
+		if d.DeferUntil != "2027-06-01" {
+			t.Errorf("export D defer_until=%q, want 2027-06-01", d.DeferUntil)
 		}
 
-		// E: deferred, defer_until as RFC3339
+		// E: deferred, defer_until passed through as-is
 		e := byID[idE]
 		if e.Status != "deferred" {
 			t.Errorf("export E status=%q, want deferred", e.Status)
 		}
-		if e.DeferUntil != "2027-09-01T00:00:00Z" {
-			t.Errorf("export E defer_until=%q, want 2027-09-01T00:00:00Z", e.DeferUntil)
+		if e.DeferUntil != "2027-09-01" {
+			t.Errorf("export E defer_until=%q, want 2027-09-01", e.DeferUntil)
 		}
 
 		// Verify dependencies array for B (should have A as blocker)

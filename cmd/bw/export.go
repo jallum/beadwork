@@ -69,6 +69,7 @@ type beadsRecord struct {
 	CloseReason  string     `json:"close_reason,omitempty"`
 	Labels       []string   `json:"labels,omitempty"`
 	DeferUntil   string     `json:"defer_until,omitempty"`
+	Due          string     `json:"due,omitempty"`
 	Blocks       []string   `json:"blocks,omitempty"`
 	BlockedBy    []string   `json:"blocked_by,omitempty"`
 	Dependencies []beadsDep       `json:"dependencies,omitempty"`
@@ -118,7 +119,8 @@ func cmdExport(store *issue.Store, args []string, w Writer) error {
 			ClosedAt:    iss.ClosedAt,
 			CloseReason: iss.CloseReason,
 			Labels:      nilIfEmpty(iss.Labels),
-			DeferUntil:  toRFC3339Date(iss.DeferUntil),
+			DeferUntil:  iss.DeferUntil,
+			Due:         iss.Due,
 			Blocks:      nilIfEmpty(iss.Blocks),
 			BlockedBy:   nilIfEmpty(iss.BlockedBy),
 		}

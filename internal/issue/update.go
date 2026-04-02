@@ -33,6 +33,9 @@ func (s *Store) Update(id string, opts UpdateOpts) (*Issue, error) {
 	if opts.DeferUntil != nil {
 		issue.DeferUntil = *opts.DeferUntil
 	}
+	if opts.Due != nil {
+		issue.Due = *opts.Due
+	}
 	if opts.Parent != nil {
 		if *opts.Parent != "" {
 			if *opts.Parent == id {

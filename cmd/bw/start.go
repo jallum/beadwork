@@ -86,7 +86,7 @@ func cmdStart(store *issue.Store, args []string, w Writer) error {
 
 	// -- Rich output: issue context + template-driven briefing --
 
-	fprintIssueSummary(w, iss)
+	fprintIssueSummary(w, iss, store.Now())
 	fprintDescription(w, iss)
 	fprintComments(w, iss)
 

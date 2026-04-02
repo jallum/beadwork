@@ -113,6 +113,38 @@ func TestCmdUpdateStatus(t *testing.T) {
 	}
 }
 
+func TestCmdUpdateWithDue(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Due update", issue.CreateOpts{})
+	env.Repo.Commit("create " + iss.ID)
+
+	// Set a due date
+	var buf bytes.Buffer
+	err := cmdUpdate(env.Store, []string{iss.ID, "--due", "2027-09-15"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdUpdate --due: %v", err)
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.Due != "2027-09-15" {
+		t.Errorf("due = %q, want 2027-09-15", got.Due)
+	}
+
+	// Clear due date with empty string
+	buf.Reset()
+	err = cmdUpdate(env.Store, []string{iss.ID, "--due", ""}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdUpdate --due clear: %v", err)
+	}
+
+	got, _ = env.Store.Get(iss.ID)
+	if got.Due != "" {
+		t.Errorf("due = %q, want empty after clearing", got.Due)
+	}
+}
+
 func TestCmdUpdateNotFound(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()

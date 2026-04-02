@@ -228,6 +228,39 @@ func TestCmdListShowsMultipleDeps(t *testing.T) {
 	}
 }
 
+func TestCmdListOverdue(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Set BW_CLOCK to 2027-06-15 so we can control what is overdue
+	t.Setenv("BW_CLOCK", "2027-06-15T12:00:00Z")
+
+	// Create an overdue issue (due in the past relative to BW_CLOCK)
+	env.Store.Create("Overdue task", issue.CreateOpts{Due: "2027-06-01"})
+	// Create a non-overdue issue (due in the future)
+	env.Store.Create("Future task", issue.CreateOpts{Due: "2027-12-01"})
+	// Create an issue with no due date
+	env.Store.Create("No due date", issue.CreateOpts{})
+	env.Repo.Commit("create issues")
+
+	// --overdue should show only the overdue issue
+	var buf bytes.Buffer
+	err := cmdList(env.Store, []string{"--overdue"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdList --overdue: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "Overdue task") {
+		t.Errorf("--overdue should show overdue task: %q", out)
+	}
+	if strings.Contains(out, "Future task") {
+		t.Error("--overdue should NOT show future task")
+	}
+	if strings.Contains(out, "No due date") {
+		t.Error("--overdue should NOT show issue with no due date")
+	}
+}
+
 func TestLsAliasExists(t *testing.T) {
 	cmd, ok := commandMap["ls"]
 	if !ok {
