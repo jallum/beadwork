@@ -10,10 +10,16 @@ Beadwork persists plans, progress, and decisions to git so they survive. Compact
 
 Issues live on the `beadwork` branch. IDs: `{{ .Prefix }}-XYZ`. Status: open → in_progress → closed / deferred. Priority: P0-P4 (default P2). Epics have children (`--parent`) and deps (`bw dep add <blocker> blocks <blocked>`). `bw ready` feeds you the next unblocked step, so compaction can't erase your progress.
 
+Due dates (`bw update <id> --due <date>`) are deadlines that do not change status. Deferred issues (`bw defer`) are hidden from `bw ready`; due issues are not. Overdue items appear in `bw list --overdue`. Date expressions: `YYYY-MM-DD`, `tomorrow`, `2 weeks`, `next monday`.
+
 ## Where You Are
 
 {{ if .Git.IsWorktree }}Worktree{{ else }}Branch{{ end }} `{{ .Git.Branch }}`{{ if .Git.Dirty }} · **uncommitted changes**{{ else }} · clean{{ end }} · last commit: `{{ .Git.LastCommit }}`
 
+{{ if gt .OverdueCount 0 -}}
+> **{{ .OverdueCount }} items are past due.** Run `bw list --overdue` for details.
+
+{{ end -}}
 ## Work In Progress
 
 {{ bw "list" "--status" "in_progress" }}

@@ -69,9 +69,11 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 		}
 	}
 
+	now := store.Now()
+
 	// Print standalone issues.
 	for _, iss := range filteredStandalone {
-		fmt.Fprintln(w, md.IssueOneLinerFiltered(iss, closedBlockers))
+		fmt.Fprintln(w, md.IssueOneLinerWithDue(iss, now, closedBlockers))
 	}
 
 	// Print groups.
@@ -79,12 +81,12 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 		// Print parent as group header.
 		parent, err := store.Get(parentID)
 		if err == nil {
-			fmt.Fprintln(w, md.IssueOneLinerFiltered(parent, closedBlockers))
+			fmt.Fprintln(w, md.IssueOneLinerWithDue(parent, now, closedBlockers))
 		}
 		// Print children indented.
 		w.Push(2)
 		for _, child := range groups[parentID] {
-			fmt.Fprintln(w, md.IssueOneLinerFiltered(child, closedBlockers))
+			fmt.Fprintln(w, md.IssueOneLinerWithDue(child, now, closedBlockers))
 		}
 		w.Pop()
 	}

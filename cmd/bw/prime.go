@@ -12,9 +12,10 @@ import (
 )
 
 type PrimeData struct {
-	Prefix         string
-	WorktreeDirty  bool
-	Git            repo.GitContext
+	Prefix        string
+	WorktreeDirty bool
+	Git           repo.GitContext
+	OverdueCount  int
 }
 
 func cmdPrime(store *issue.Store, _ []string, w Writer) error {
@@ -22,10 +23,13 @@ func cmdPrime(store *issue.Store, _ []string, w Writer) error {
 	cfg := r.ListConfig()
 	gitCtx := r.GetGitContext()
 
+	overdueIssues, _ := store.List(issue.Filter{Overdue: true})
+
 	data := PrimeData{
 		Prefix:        cfg["prefix"],
 		WorktreeDirty: gitCtx.Dirty,
-		Git:            gitCtx,
+		Git:           gitCtx,
+		OverdueCount:  len(overdueIssues),
 	}
 
 	bwFn := func(args ...string) string {

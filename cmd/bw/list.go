@@ -19,13 +19,14 @@ type ListArgs struct {
 	LimitSet bool
 	All      bool
 	Deferred bool
+	Overdue  bool
 	JSON     bool
 }
 
 func parseListArgs(raw []string) (ListArgs, error) {
 	a, err := ParseArgs(raw,
 		[]string{"--status", "--assignee", "--priority", "--type", "--label", "--limit", "--grep", "--parent"},
-		[]string{"--all", "--deferred", "--json"},
+		[]string{"--all", "--deferred", "--overdue", "--json"},
 	)
 	if err != nil {
 		return ListArgs{}, err
@@ -39,6 +40,7 @@ func parseListArgs(raw []string) (ListArgs, error) {
 		Parent:   a.String("--parent"),
 		All:      a.Bool("--all"),
 		Deferred: a.Bool("--deferred"),
+		Overdue:  a.Bool("--overdue"),
 		JSON:     a.JSON(),
 		Limit:    10,
 	}
@@ -76,7 +78,13 @@ func cmdList(store *issue.Store, args []string, w Writer) error {
 
 	// Defaults: open status, limit 10. --all overrides both.
 	// --deferred overrides status to "deferred".
-	if la.Deferred {
+	// --overdue filters to overdue issues across actionable statuses.
+	if la.Overdue {
+		filter.Overdue = true
+		if la.Status == "" {
+			filter.Statuses = []string{"open", "in_progress", "deferred"}
+		}
+	} else if la.Deferred {
 		filter.Status = "deferred"
 	} else if la.All {
 		if !la.LimitSet {
@@ -106,8 +114,9 @@ func cmdList(store *issue.Store, args []string, w Writer) error {
 			displayed = displayed[:limit]
 		}
 		closedBlockers := store.ClosedBlockerSet(displayed)
+		now := store.Now()
 		for _, iss := range displayed {
-			fmt.Fprintln(w, md.IssueOneLinerFiltered(iss, closedBlockers))
+			fmt.Fprintln(w, md.IssueOneLinerWithDue(iss, now, closedBlockers))
 		}
 		if limit > 0 && len(issues) > limit {
 			fmt.Fprintf(w, "... and %d more (use --limit or --all)\n", len(issues)-limit)

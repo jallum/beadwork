@@ -77,11 +77,6 @@ func resolveDate(expr string, now time.Time) (string, error) {
 	return "", fmt.Errorf("invalid date %q (expected YYYY-MM-DD or relative like \"2 weeks\", \"next monday\", \"tomorrow\")", expr)
 }
 
-// resolveDateNow is a convenience wrapper that uses time.Now().
-func resolveDateNow(expr string) (string, error) {
-	return resolveDate(expr, time.Now())
-}
-
 func validateDate(s string) error {
 	_, err := time.Parse("2006-01-02", s)
 	if err != nil {
@@ -128,7 +123,7 @@ func cmdDefer(store *issue.Store, args []string, w Writer) error {
 		return err
 	}
 
-	resolved, err := resolveDateNow(da.Date)
+	resolved, err := resolveDate(da.Date, store.Now())
 	if err != nil {
 		return err
 	}

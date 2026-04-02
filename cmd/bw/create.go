@@ -15,6 +15,7 @@ type CreateArgs struct {
 	Type        string
 	Description string
 	DeferUntil  string
+	Due         string
 	Labels      []string
 	JSON        bool
 	Silent      bool
@@ -22,7 +23,7 @@ type CreateArgs struct {
 
 func parseCreateArgs(raw []string) (CreateArgs, error) {
 	a, err := ParseArgs(raw,
-		[]string{"--priority", "--type", "--description", "--defer", "--labels", "--parent", "--id"},
+		[]string{"--priority", "--type", "--description", "--defer", "--due", "--labels", "--parent", "--id"},
 		[]string{"--json", "--silent"},
 	)
 	if err != nil {
@@ -41,6 +42,7 @@ func parseCreateArgs(raw []string) (CreateArgs, error) {
 	ca.Type = a.String("--type")
 	ca.Description = a.String("--description")
 	ca.DeferUntil = a.String("--defer")
+	ca.Due = a.String("--due")
 	ca.Parent = a.String("--parent")
 	ca.JSON = a.JSON()
 	ca.Silent = a.Bool("--silent")
@@ -59,13 +61,6 @@ func parseCreateArgs(raw []string) (CreateArgs, error) {
 			}
 		}
 	}
-	if ca.DeferUntil != "" {
-		resolved, err := resolveDateNow(ca.DeferUntil)
-		if err != nil {
-			return ca, err
-		}
-		ca.DeferUntil = resolved
-	}
 	return ca, nil
 }
 
@@ -75,12 +70,29 @@ func cmdCreate(store *issue.Store, args []string, w Writer) error {
 		return err
 	}
 
+	now := store.Now()
+	if ca.DeferUntil != "" {
+		resolved, err := resolveDate(ca.DeferUntil, now)
+		if err != nil {
+			return err
+		}
+		ca.DeferUntil = resolved
+	}
+	if ca.Due != "" {
+		resolved, err := resolveDate(ca.Due, now)
+		if err != nil {
+			return err
+		}
+		ca.Due = resolved
+	}
+
 	opts := issue.CreateOpts{
 		ID:          ca.ID,
 		Priority:    ca.Priority,
 		Type:        ca.Type,
 		Description: ca.Description,
 		DeferUntil:  ca.DeferUntil,
+		Due:         ca.Due,
 		Parent:      ca.Parent,
 	}
 
@@ -99,6 +111,9 @@ func cmdCreate(store *issue.Store, args []string, w Writer) error {
 	intent := fmt.Sprintf("create %s p%d %s %q", iss.ID, iss.Priority, iss.Type, iss.Title)
 	if iss.Description != "" {
 		intent += fmt.Sprintf(" description=%q", iss.Description)
+	}
+	if iss.Due != "" {
+		intent += " due=" + iss.Due
 	}
 	if iss.Parent != "" {
 		intent += " parent=" + iss.Parent

@@ -199,7 +199,7 @@ func TestShowSummaryContainsIDAndTitle(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	fprintIssueSummary(PlainWriter(&buf), iss)
+	fprintIssueSummary(PlainWriter(&buf), iss, time.Now())
 	out := buf.String()
 	if !strings.Contains(out, "test-1234") {
 		t.Errorf("missing ID in output: %q", out)
@@ -222,7 +222,7 @@ func TestShowSummaryTypeTag(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	fprintIssueSummary(PlainWriter(&buf), iss)
+	fprintIssueSummary(PlainWriter(&buf), iss, time.Now())
 	out := buf.String()
 	if !strings.Contains(out, "[BUG]") {
 		t.Errorf("should contain [BUG] tag: %q", out)
@@ -230,7 +230,7 @@ func TestShowSummaryTypeTag(t *testing.T) {
 
 	iss.Type = "task"
 	buf.Reset()
-	fprintIssueSummary(PlainWriter(&buf), iss)
+	fprintIssueSummary(PlainWriter(&buf), iss, time.Now())
 	out = buf.String()
 	if strings.Contains(out, "[TASK]") {
 		t.Errorf("task should not have type tag: %q", out)
@@ -248,7 +248,7 @@ func TestShowSummaryParent(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	fprintIssueSummary(PlainWriter(&buf), iss)
+	fprintIssueSummary(PlainWriter(&buf), iss, time.Now())
 	out := buf.String()
 	if !strings.Contains(out, "Parent: test-cccc") {
 		t.Errorf("missing Parent in output: %q", out)

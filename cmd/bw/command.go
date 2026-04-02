@@ -87,6 +87,7 @@ var commands = []Command{
 			{Long: "--type", Short: "-t", Value: "TYPE", Help: "Issue type (task, bug, etc.)"},
 			{Long: "--description", Short: "-d", Value: "TEXT", Help: "Description"},
 			{Long: "--defer", Value: "DATE", Help: "Defer until date (YYYY-MM-DD)"},
+			{Long: "--due", Value: "DATE", Help: "Due date (YYYY-MM-DD)"},
 			{Long: "--parent", Value: "ID", Help: "Parent issue ID"},
 			{Long: "--json", Help: "Output as JSON"},
 			{Long: "--silent", Help: "Output bare issue ID only"},
@@ -94,6 +95,7 @@ var commands = []Command{
 		Examples: []Example{
 			{Cmd: `bw create "Fix login bug" --priority 1 --type bug`},
 			{Cmd: `bw create "Q3 planning" --defer 2027-07-01`},
+			{Cmd: `bw create "Ship v2" --due 2027-09-01`},
 			{Cmd: `bw create "Fix bug" --silent`, Help: "Output bare ID for scripting"},
 		},
 		NeedsStore: true,
@@ -137,6 +139,7 @@ var commands = []Command{
 			{Long: "--limit", Value: "N", Help: "Max results (default 10)"},
 			{Long: "--all", Help: "Show all issues (no status/limit filter)"},
 			{Long: "--deferred", Help: "Show only deferred issues"},
+			{Long: "--overdue", Help: "Show only overdue issues"},
 			{Long: "--json", Help: "Output as JSON"},
 		},
 		Examples: []Example{
@@ -145,6 +148,7 @@ var commands = []Command{
 			{Cmd: "bw list --status closed --limit 5"},
 			{Cmd: "bw list --parent bw-a3f8", Help: "Children of an epic"},
 			{Cmd: "bw list --deferred"},
+			{Cmd: "bw list --overdue"},
 		},
 		NeedsStore: true,
 		Run:        cmdList,
@@ -164,6 +168,7 @@ var commands = []Command{
 			{Long: "--type", Short: "-t", Value: "TYPE", Help: "New type"},
 			{Long: "--status", Short: "-s", Value: "STATUS", Help: "New status"},
 			{Long: "--defer", Value: "DATE", Help: "Defer until date (YYYY-MM-DD)"},
+			{Long: "--due", Value: "DATE", Help: "Due date (YYYY-MM-DD, empty to clear)"},
 			{Long: "--parent", Value: "ID", Help: "Parent issue ID (empty to clear)"},
 			{Long: "--json", Help: "Output as JSON"},
 		},
@@ -171,6 +176,7 @@ var commands = []Command{
 			{Cmd: "bw update bw-a3f8 --priority 1 --assignee bob"},
 			{Cmd: "bw update bw-a3f8 --status in_progress"},
 			{Cmd: "bw update bw-a3f8 --defer 2027-06-01"},
+			{Cmd: "bw update bw-a3f8 --due 2027-09-01"},
 		},
 		NeedsStore: true,
 		Run:        cmdUpdate,
@@ -314,7 +320,7 @@ var commands = []Command{
 	{
 		Name:        "defer",
 		Summary:     "Defer an issue until a date",
-		Description: "Set an issue's status to deferred with a target date.\nDeferred issues are hidden from ready.",
+		Description: "Set an issue's status to deferred with a target date.\nDeferred issues are hidden from ready.\nUnlike due dates (--due on create/update), deferring changes the issue status and hides it from bw ready.",
 		Positionals: []Positional{
 			{Name: "<id>", Required: true, Help: "Issue ID"},
 			{Name: "<date>", Required: true, Help: "Date: YYYY-MM-DD, \"2 weeks\", \"next monday\", \"tomorrow\""},

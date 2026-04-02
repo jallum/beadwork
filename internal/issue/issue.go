@@ -24,6 +24,7 @@ type Issue struct {
 	Created     string    `json:"created"`
 	DeferUntil  string    `json:"defer_until,omitempty"`
 	Description string    `json:"description"`
+	Due         string    `json:"due,omitempty"`
 	ID          string    `json:"id"`
 	Labels      []string  `json:"labels"`
 	Parent      string    `json:"parent,omitempty"`
@@ -86,6 +87,8 @@ func (s *Store) Now() time.Time {
 }
 
 // nowRFC3339 returns s.Now() formatted as an RFC3339 string.
+// Created timestamps are always UTC. The string-sort tiebreaker in
+// sortIssues depends on this invariant.
 func (s *Store) nowRFC3339() string {
 	return s.Now().Format(time.RFC3339)
 }
@@ -98,6 +101,7 @@ type CreateOpts struct {
 	Type        string
 	Assignee    string
 	DeferUntil  string
+	Due         string
 }
 
 type UpdateOpts struct {
@@ -109,6 +113,7 @@ type UpdateOpts struct {
 	Type        *string
 	Status      *string
 	DeferUntil  *string
+	Due         *string
 }
 
 type Filter struct {
@@ -120,4 +125,5 @@ type Filter struct {
 	Label    string
 	Grep     string
 	Parent   string
+	Overdue  bool
 }

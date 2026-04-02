@@ -30,6 +30,7 @@ type importRecord struct {
 	CloseReason  string          `json:"close_reason"`
 	Labels       []string        `json:"labels"`
 	DeferUntil   string          `json:"defer_until"`
+	Due          string          `json:"due"`
 	Dependencies []beadsDep      `json:"dependencies"`
 	Comments     []importComment `json:"comments"`
 }
@@ -149,7 +150,8 @@ func cmdImport(store *issue.Store, args []string, w Writer) error {
 			UpdatedAt:   rec.UpdatedAt,
 			ClosedAt:    rec.ClosedAt,
 			CloseReason: rec.CloseReason,
-			DeferUntil:  fromRFC3339Date(rec.DeferUntil),
+			DeferUntil:  rec.DeferUntil,
+			Due:         rec.Due,
 			Labels:      labels,
 			Blocks:      []string{},
 			BlockedBy:   []string{},

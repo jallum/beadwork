@@ -46,6 +46,7 @@ func (s *Store) Create(title string, opts CreateOpts) (*Issue, error) {
 		Created:     now,
 		DeferUntil:  opts.DeferUntil,
 		Description: opts.Description,
+		Due:         opts.Due,
 		ID:          id,
 		Labels:      []string{},
 		Parent:      parentID,

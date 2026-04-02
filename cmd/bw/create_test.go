@@ -225,3 +225,22 @@ func TestCmdCreateWithLabelsJSON(t *testing.T) {
 		t.Errorf("Labels = %v, want [backend]", iss.Labels)
 	}
 }
+
+func TestCmdCreateWithDue(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	var buf bytes.Buffer
+	err := cmdCreate(env.Store, []string{"Ship feature", "--due", "2027-05-01"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdCreate --due: %v", err)
+	}
+
+	issues, _ := env.Store.List(issue.Filter{})
+	if len(issues) != 1 {
+		t.Fatalf("expected 1 issue, got %d", len(issues))
+	}
+	if issues[0].Due != "2027-05-01" {
+		t.Errorf("due = %q, want 2027-05-01", issues[0].Due)
+	}
+}

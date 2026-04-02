@@ -3,7 +3,60 @@ package issue
 import (
 	"sort"
 	"strings"
+	"time"
 )
+
+// IsOverdue reports whether an issue's due date has passed relative to now.
+// Date-only values use end-of-day semantics: "2027-04-15" is not overdue on
+// April 15, only on April 16+. This avoids the Taskwarrior pain point where
+// an issue appears overdue all day on its due date.
+func IsOverdue(due string, now time.Time) bool {
+	if due == "" {
+		return false
+	}
+	if strings.Contains(due, "T") {
+		t, err := time.Parse(time.RFC3339, due)
+		if err != nil {
+			return false
+		}
+		return now.After(t)
+	}
+	// Date-only: compare against today in local timezone.
+	today := now.In(time.Local).Format("2006-01-02")
+	return today > due
+}
+
+// sortIssues sorts by priority ascending, overdue-first within priority band,
+// then created ascending. The now parameter is used for overdue detection.
+func sortIssues(issues []*Issue, now time.Time) {
+	today := now.In(time.Local).Format("2006-01-02")
+	sort.Slice(issues, func(i, j int) bool {
+		if issues[i].Priority != issues[j].Priority {
+			return issues[i].Priority < issues[j].Priority
+		}
+		oi := isOverdueQuick(issues[i].Due, issues[i].Status, today, now)
+		oj := isOverdueQuick(issues[j].Due, issues[j].Status, today, now)
+		if oi != oj {
+			return oi
+		}
+		return issues[i].Created < issues[j].Created
+	})
+}
+
+// isOverdueQuick checks overdue status for sorting. Closed issues are never overdue.
+func isOverdueQuick(due, status, today string, now time.Time) bool {
+	if due == "" || status == "closed" {
+		return false
+	}
+	if strings.Contains(due, "T") {
+		t, err := time.Parse(time.RFC3339, due)
+		if err != nil {
+			return false
+		}
+		return now.After(t)
+	}
+	return today > due
+}
 
 // StatusCount returns the number of issues with the given status by counting
 // entries in the status index directory. No deserialization.
@@ -96,12 +149,19 @@ func (s *Store) List(filter Filter) ([]*Issue, error) {
 		issues = append(issues, issue)
 	}
 
-	sort.Slice(issues, func(i, j int) bool {
-		if issues[i].Priority != issues[j].Priority {
-			return issues[i].Priority < issues[j].Priority
+	now := s.Now()
+
+	if filter.Overdue {
+		var overdue []*Issue
+		for _, iss := range issues {
+			if iss.Status != "closed" && IsOverdue(iss.Due, now) {
+				overdue = append(overdue, iss)
+			}
 		}
-		return issues[i].Created < issues[j].Created
-	})
+		issues = overdue
+	}
+
+	sortIssues(issues, now)
 
 	return issues, nil
 }

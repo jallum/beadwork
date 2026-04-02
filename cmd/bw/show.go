@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/md"
@@ -85,7 +86,7 @@ func cmdShow(store *issue.Store, args []string, w Writer) error {
 	}
 
 	if sa.showSection("summary") {
-		fmt.Fprintln(w, md.IssueSummary(iss))
+		fmt.Fprintln(w, md.IssueSummary(iss, store.Now()))
 	}
 	if sa.showSection("description") {
 		showDescription(w, iss)
@@ -155,8 +156,8 @@ func showComments(w Writer, iss *issue.Issue) {
 }
 
 // fprintIssueSummary renders the summary for use by start.go (Phase 3).
-func fprintIssueSummary(w Writer, iss *issue.Issue) {
-	fmt.Fprintln(w, md.IssueSummary(iss))
+func fprintIssueSummary(w Writer, iss *issue.Issue, now time.Time) {
+	fmt.Fprintln(w, md.IssueSummary(iss, now))
 }
 
 // fprintDescription renders description for use by start.go (Phase 3).

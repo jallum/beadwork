@@ -223,12 +223,7 @@ func (s *Store) Ready() ([]*Issue, error) {
 			ready = append(ready, iss)
 		}
 	}
-	sort.Slice(ready, func(i, j int) bool {
-		if ready[i].Priority != ready[j].Priority {
-			return ready[i].Priority < ready[j].Priority
-		}
-		return ready[i].Created < ready[j].Created
-	})
+	sortIssues(ready, s.Now())
 	return ready, nil
 }
 

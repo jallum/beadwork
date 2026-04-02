@@ -22,6 +22,8 @@ type UpdateArgs struct {
 	StatusSet   bool
 	DeferUntil  string
 	DeferSet    bool
+	Due         string
+	DueSet      bool
 	Parent      string
 	ParentSet   bool
 	JSON        bool
@@ -32,7 +34,7 @@ func parseUpdateArgs(raw []string) (UpdateArgs, error) {
 		return UpdateArgs{}, fmt.Errorf("usage: bw update <id> [flags]")
 	}
 	a, err := ParseArgs(raw[1:],
-		[]string{"--title", "--description", "--priority", "--assignee", "--type", "--status", "--defer", "--parent"},
+		[]string{"--title", "--description", "--priority", "--assignee", "--type", "--status", "--defer", "--due", "--parent"},
 		[]string{"--json"},
 	)
 	if err != nil {
@@ -68,12 +70,12 @@ func parseUpdateArgs(raw []string) (UpdateArgs, error) {
 		ua.StatusSet = true
 	}
 	if a.Has("--defer") {
-		resolved, err := resolveDateNow(a.String("--defer"))
-		if err != nil {
-			return ua, err
-		}
-		ua.DeferUntil = resolved
+		ua.DeferUntil = a.String("--defer")
 		ua.DeferSet = true
+	}
+	if a.Has("--due") {
+		ua.Due = a.String("--due")
+		ua.DueSet = true
 	}
 	if a.Has("--parent") {
 		ua.Parent = a.String("--parent")
@@ -86,6 +88,22 @@ func cmdUpdate(store *issue.Store, args []string, w Writer) error {
 	ua, err := parseUpdateArgs(args)
 	if err != nil {
 		return err
+	}
+
+	now := store.Now()
+	if ua.DeferSet && ua.DeferUntil != "" {
+		resolved, err := resolveDate(ua.DeferUntil, now)
+		if err != nil {
+			return err
+		}
+		ua.DeferUntil = resolved
+	}
+	if ua.DueSet && ua.Due != "" {
+		resolved, err := resolveDate(ua.Due, now)
+		if err != nil {
+			return err
+		}
+		ua.Due = resolved
 	}
 
 	opts := issue.UpdateOpts{}
@@ -120,6 +138,10 @@ func cmdUpdate(store *issue.Store, args []string, w Writer) error {
 		status := "deferred"
 		opts.Status = &status
 		changes = append(changes, "defer="+ua.DeferUntil)
+	}
+	if ua.DueSet {
+		opts.Due = &ua.Due
+		changes = append(changes, "due="+ua.Due)
 	}
 	if ua.ParentSet {
 		opts.Parent = &ua.Parent
