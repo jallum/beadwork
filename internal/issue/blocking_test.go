@@ -980,3 +980,101 @@ func TestClosedBlockerSetDeduplicates(t *testing.T) {
 	}
 }
 
+func TestReadyIncludesExpiredDeferral(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Deferred with expired defer_until
+	a, _ := env.Store.Create("Expired deferral", issue.CreateOpts{DeferUntil: "2027-04-01"})
+	env.CommitIntent("create " + a.ID)
+
+	// Deferred with future defer_until
+	b, _ := env.Store.Create("Future deferral", issue.CreateOpts{DeferUntil: "2027-12-01"})
+	env.CommitIntent("create " + b.ID)
+
+	// Regular open issue
+	c, _ := env.Store.Create("Open task", issue.CreateOpts{})
+	env.CommitIntent("create " + c.ID)
+
+	// Set clock to April 15
+	t.Setenv("BW_CLOCK", "2027-04-15T12:00:00Z")
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+
+	if !ids[a.ID] {
+		t.Error("expired deferral should appear in ready")
+	}
+	if ids[b.ID] {
+		t.Error("future deferral should NOT appear in ready")
+	}
+	if !ids[c.ID] {
+		t.Error("open task should appear in ready")
+	}
+
+	// Verify on-disk status is still deferred
+	got, _ := env.Store.Get(a.ID)
+	if got.Status != "deferred" {
+		t.Errorf("on-disk status = %q, want deferred (no write-on-read)", got.Status)
+	}
+}
+
+func TestDeferralExpiredStartOfDay(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Deferred until today", issue.CreateOpts{DeferUntil: "2027-04-15"})
+	env.CommitIntent("create " + a.ID)
+
+	// Set clock to morning of April 15 — should be expired (start-of-day)
+	t.Setenv("BW_CLOCK", "2027-04-15T08:00:00Z")
+
+	ready, _ := env.Store.Ready()
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[a.ID] {
+		t.Error("date-only deferral should be expired at start of day (April 15)")
+	}
+
+	// Day before — should NOT be expired
+	t.Setenv("BW_CLOCK", "2027-04-14T23:00:00Z")
+	ready2, _ := env.Store.Ready()
+	ids2 := make(map[string]bool)
+	for _, r := range ready2 {
+		ids2[r.ID] = true
+	}
+	if ids2[a.ID] {
+		t.Error("date-only deferral should NOT be expired the day before")
+	}
+}
+
+func TestExpiredDeferralNoStatusChange(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Will expire", issue.CreateOpts{DeferUntil: "2027-04-01"})
+	env.CommitIntent("create " + a.ID)
+
+	t.Setenv("BW_CLOCK", "2027-04-15T12:00:00Z")
+
+	// Query ready (which includes the expired deferral)
+	env.Store.Ready()
+	// Query list
+	env.Store.List(issue.Filter{Statuses: []string{"open", "in_progress"}, IncludeExpiredDeferred: true})
+
+	// Status should still be deferred on disk
+	got, _ := env.Store.Get(a.ID)
+	if got.Status != "deferred" {
+		t.Errorf("status = %q, want deferred (reads must not change status)", got.Status)
+	}
+}
+

@@ -535,5 +535,96 @@ func TestStoreNowAlwaysUTC(t *testing.T) {
 	}
 }
 
+func TestIsDeferralExpired(t *testing.T) {
+	// Fixed reference: 2027-04-15 at noon UTC
+	now := time.Date(2027, 4, 15, 12, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		deferUntil string
+		want       bool
+	}{
+		{"", false},                                     // no deferral
+		{"2027-04-16", false},                           // tomorrow (not expired)
+		{"2027-04-15", true},                            // today (start-of-day: expired)
+		{"2027-04-14", true},                            // yesterday
+		{"2027-04-15T13:00:00Z", false},                 // future RFC3339
+		{"2027-04-15T11:00:00Z", true},                  // past RFC3339
+		{"2027-04-15T12:00:00Z", false},                 // exactly now (not After)
+		{"not-a-date", false},                           // invalid
+	}
+
+	for _, tt := range tests {
+		got := issue.IsDeferralExpired(tt.deferUntil, now)
+		if got != tt.want {
+			t.Errorf("IsDeferralExpired(%q, now) = %v, want %v", tt.deferUntil, got, tt.want)
+		}
+	}
+}
+
+func TestListIncludesExpiredDeferral(t *testing.T) {
+	now := time.Date(2027, 4, 15, 12, 0, 0, 0, time.UTC)
+
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Expired deferral
+	a, _ := env.Store.Create("Expired", issue.CreateOpts{DeferUntil: "2027-04-01"})
+	env.CommitIntent("create " + a.ID)
+
+	// Future deferral
+	b, _ := env.Store.Create("Future", issue.CreateOpts{DeferUntil: "2027-12-01"})
+	env.CommitIntent("create " + b.ID)
+
+	// Regular open
+	c, _ := env.Store.Create("Open", issue.CreateOpts{})
+	env.CommitIntent("create " + c.ID)
+
+	t.Setenv("BW_CLOCK", now.Format(time.RFC3339))
+
+	// Default list with IncludeExpiredDeferred
+	issues, err := env.Store.List(issue.Filter{
+		Statuses:               []string{"open", "in_progress"},
+		IncludeExpiredDeferred: true,
+	})
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+
+	ids := make(map[string]bool)
+	for _, iss := range issues {
+		ids[iss.ID] = true
+	}
+
+	if !ids[a.ID] {
+		t.Error("expired deferral should appear in default list")
+	}
+	if ids[b.ID] {
+		t.Error("future deferral should NOT appear in default list")
+	}
+	if !ids[c.ID] {
+		t.Error("open task should appear in default list")
+	}
+}
+
+func TestListDeferredShowsAll(t *testing.T) {
+	now := time.Date(2027, 4, 15, 12, 0, 0, 0, time.UTC)
+
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Expired", issue.CreateOpts{DeferUntil: "2027-04-01"})
+	env.CommitIntent("create " + a.ID)
+	b, _ := env.Store.Create("Future", issue.CreateOpts{DeferUntil: "2027-12-01"})
+	env.CommitIntent("create " + b.ID)
+
+	t.Setenv("BW_CLOCK", now.Format(time.RFC3339))
+
+	// --deferred shows ALL deferred, regardless of expiry
+	deferred, _ := env.Store.List(issue.Filter{Status: "deferred"})
+	if len(deferred) != 2 {
+		t.Errorf("--deferred should show all deferred, got %d want 2", len(deferred))
+	}
+}
+
 // --- DeletePreview tests ---
 

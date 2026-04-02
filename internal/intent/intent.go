@@ -103,6 +103,8 @@ func replayCreate(store *issue.Store, parts []string, raw string) error {
 		switch kv[:eqIdx] {
 		case "description":
 			opts.Description = kv[eqIdx+1:]
+		case "due":
+			opts.Due = kv[eqIdx+1:]
 		}
 	}
 
@@ -180,6 +182,8 @@ func replayUpdate(store *issue.Store, parts []string, raw string) error {
 			opts.Description = &val
 		case "defer":
 			opts.DeferUntil = &val
+		case "due":
+			opts.Due = &val
 		}
 	}
 

@@ -117,13 +117,14 @@ type UpdateOpts struct {
 }
 
 type Filter struct {
-	Status   string
-	Statuses []string
-	Assignee string
-	Priority *int
-	Type     string
-	Label    string
-	Grep     string
-	Parent   string
-	Overdue  bool
+	Status                 string
+	Statuses               []string
+	Assignee               string
+	Priority               *int
+	Type                   string
+	Label                  string
+	Grep                   string
+	Parent                 string
+	Overdue                bool
+	IncludeExpiredDeferred bool
 }

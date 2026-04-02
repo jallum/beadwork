@@ -49,6 +49,9 @@ func IssueSummary(iss *issue.Issue, now time.Time) string {
 	if iss.DeferUntil != "" {
 		b.WriteString("\nDeferred: ")
 		b.WriteString(formatDateDisplay(iss.DeferUntil))
+		if iss.Status == "deferred" && issue.IsDeferralExpired(iss.DeferUntil, now) {
+			b.WriteString(" (expired — now due for attention)")
+		}
 	}
 	if iss.Parent != "" {
 		b.WriteString("\nParent: ")
@@ -98,17 +101,23 @@ func IssueOneLinerFiltered(iss *issue.Issue, closedBlockers map[string]bool) str
 	return issueOneLiner(iss, statusToken(iss.Status), closedBlockers)
 }
 
-// IssueOneLinerWithDue is like IssueOneLinerFiltered but appends due date
-// and overdue indicator when present.
+// IssueOneLinerWithDue is like IssueOneLinerFiltered but appends due date,
+// overdue indicator, and expired deferral indicator when present.
 func IssueOneLinerWithDue(iss *issue.Issue, now time.Time, closedBlockers map[string]bool) string {
 	line := issueOneLiner(iss, statusToken(iss.Status), closedBlockers)
-	if iss.Due == "" {
-		return line
+	var suffixes []string
+	if iss.Status != "closed" && iss.Due != "" && issue.IsOverdue(iss.Due, now) {
+		suffixes = append(suffixes, "{overdue:"+iss.Due+"}")
+	} else if iss.Due != "" {
+		suffixes = append(suffixes, "Due: "+formatDateDisplay(iss.Due))
 	}
-	if iss.Status != "closed" && issue.IsOverdue(iss.Due, now) {
-		return line + " {overdue:" + iss.Due + "}"
+	if iss.Status == "deferred" && issue.IsDeferralExpired(iss.DeferUntil, now) {
+		suffixes = append(suffixes, "(deferred until "+formatDateDisplay(iss.DeferUntil)+", now due)")
 	}
-	return line + " Due: " + formatDateDisplay(iss.Due)
+	if len(suffixes) > 0 {
+		return line + " " + strings.Join(suffixes, " ")
+	}
+	return line
 }
 
 func issueOneLiner(iss *issue.Issue, statusTok string, closedBlockers map[string]bool) string {

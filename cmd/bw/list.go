@@ -83,6 +83,7 @@ func cmdList(store *issue.Store, args []string, w Writer) error {
 		filter.Overdue = true
 		if la.Status == "" {
 			filter.Statuses = []string{"open", "in_progress", "deferred"}
+			filter.IncludeExpiredDeferred = true
 		}
 	} else if la.Deferred {
 		filter.Status = "deferred"
@@ -92,6 +93,7 @@ func cmdList(store *issue.Store, args []string, w Writer) error {
 		}
 	} else if la.Status == "" {
 		filter.Statuses = []string{"open", "in_progress"}
+		filter.IncludeExpiredDeferred = true
 	}
 
 	issues, err := store.List(filter)

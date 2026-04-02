@@ -603,3 +603,66 @@ func TestReplayUpdateParent(t *testing.T) {
 		t.Errorf("Parent = %q, want %q", got.Parent, parent.ID)
 	}
 }
+
+func TestReplayUpdateWithDue(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Due test", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	errs := intent.Replay(env.Store, []string{
+		"update " + iss.ID + " due=2027-04-15",
+	})
+	if len(errs) > 0 {
+		t.Fatalf("Replay errors: %v", errs)
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.Due != "2027-04-15" {
+		t.Errorf("Due = %q, want 2027-04-15", got.Due)
+	}
+}
+
+func TestReplayUpdateWithDueClear(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Due clear", issue.CreateOpts{Due: "2027-04-15"})
+	env.CommitIntent("create " + iss.ID)
+
+	errs := intent.Replay(env.Store, []string{
+		"update " + iss.ID + " due=",
+	})
+	if len(errs) > 0 {
+		t.Fatalf("Replay errors: %v", errs)
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.Due != "" {
+		t.Errorf("Due = %q, want empty", got.Due)
+	}
+}
+
+func TestReplayCreateWithDue(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	errs := intent.Replay(env.Store, []string{
+		`create bw-test1 p2 task "Due task" due=2027-04-15`,
+	})
+	if len(errs) > 0 {
+		t.Fatalf("Replay errors: %v", errs)
+	}
+
+	got, err := env.Store.Get("bw-test1")
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.Due != "2027-04-15" {
+		t.Errorf("Due = %q, want 2027-04-15", got.Due)
+	}
+	if got.Status != "open" {
+		t.Errorf("Status = %q, want open (due should not change status)", got.Status)
+	}
+}

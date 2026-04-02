@@ -205,6 +205,9 @@ func (s *Store) Tips(roots []string, edges map[string][]string) ([]*Issue, error
 }
 
 func (s *Store) Ready() ([]*Issue, error) {
+	now := s.Now()
+
+	// Open issues with all blockers resolved.
 	openIDs := s.IDsWithStatus("open")
 	var ready []*Issue
 	for _, id := range openIDs {
@@ -212,19 +215,34 @@ func (s *Store) Ready() ([]*Issue, error) {
 		if err != nil {
 			continue
 		}
-		allResolved := true
-		for _, blockerID := range iss.BlockedBy {
-			if !s.IsClosed(blockerID) {
-				allResolved = false
-				break
-			}
-		}
-		if allResolved {
+		if allBlockersResolved(s, iss) {
 			ready = append(ready, iss)
 		}
 	}
-	sortIssues(ready, s.Now())
+
+	// Deferred issues whose deferral has expired, with all blockers resolved.
+	deferredIDs := s.IDsWithStatus("deferred")
+	for _, id := range deferredIDs {
+		iss, err := s.readIssue(id)
+		if err != nil {
+			continue
+		}
+		if IsDeferralExpired(iss.DeferUntil, now) && allBlockersResolved(s, iss) {
+			ready = append(ready, iss)
+		}
+	}
+
+	sortIssues(ready, now)
 	return ready, nil
+}
+
+func allBlockersResolved(s *Store, iss *Issue) bool {
+	for _, blockerID := range iss.BlockedBy {
+		if !s.IsClosed(blockerID) {
+			return false
+		}
+	}
+	return true
 }
 
 // BlockedIssue pairs an issue with the IDs of its open (unresolved) blockers.
