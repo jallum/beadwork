@@ -1,0 +1,16 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "comments": [],
+  "created": "2026-04-03T13:32:16.967400Z",
+  "description": "Inside the changes tab, we currently display a summary of the number of commits, lines added and removed. we should move this information to the changes tab itself, and use an icon for \"commits\"",
+  "id": "octo-huu",
+  "labels": [],
+  "parent": "",
+  "priority": 2,
+  "status": "open",
+  "title": "Move the commit summary to the tab",
+  "type": "idea",
+  "updated_at": "2026-04-03T13:32:16.967400Z"
+}
