@@ -1,24 +1,18 @@
 # Changelog
 
-## 0.12.1 — 2026-04-02
-
-- **Query-time deferral expiry** — deferred items whose `defer_until` has passed now appear in `bw ready` and default `bw list` without changing on-disk status. No external poller needed — `bw defer bw-abc "in 15 minutes"` just works. Date-only deferrals expire at start-of-day ("defer until Friday" reappears Friday morning). `bw prime` surfaces expired deferrals in a dedicated "Reminders" section so agents know these items are back and need attention. `bw list --deferred` still shows all deferred items regardless of expiry. `bw undefer` still works for manual status cleanup.
-
 ## 0.12.0 — 2026-04-02
 
-- **Due dates** — `--due` flag on `bw create` and `bw update` sets or clears deadlines. Due dates are display-only metadata that do not change issue status (unlike deferrals which set status to deferred). Clear with `bw update <id> --due ""`.
+- **Due dates** — new `--due` flag on `bw create` and `bw update` sets deadlines without changing issue status. `bw list --overdue` filters to past-due items. Overdue items float to the top within their priority band in `bw list` and `bw ready`, and show an `(OVERDUE since YYYY-MM-DD)` marker in `bw show`. Clear a due date with `bw update <id> --due ""`. Date-only values use end-of-day semantics: `due: "2027-04-15"` isn't overdue until April 16.
 
-- **Overdue detection** — `bw list --overdue` filters to past-due items. Overdue items float to top within their priority band in `bw list` and `bw ready`. Date-only due values use end-of-day semantics: `due: "2027-04-15"` is not overdue until April 16.
+- **Time-granular dates** — `bw defer` and the `--due`/`--defer` flags now accept time expressions: `in 15 minutes`, `tomorrow at 2pm`, `3pm`, `14:00`, or full RFC3339. Sub-day values are stored as RFC3339 with your local timezone offset. Date-only expressions (`2027-06-01`, `next monday`) continue to produce plain `YYYY-MM-DD`.
 
-- **Overdue indicators** — `bw show` and `bw list` display overdue markers (`(OVERDUE since YYYY-MM-DD)`). `bw prime` reports overdue count when items are past due.
-
-- **Time-granular dates** — `bw defer` and `--due`/`--defer` flags accept time expressions: `in 15 minutes`, `tomorrow at 2pm`, `3pm`, `14:00`, or full RFC3339. Sub-day values stored as RFC3339 with local timezone offset. Date-only expressions continue to produce YYYY-MM-DD.
+- **Query-time deferral expiry** — deferred items whose `defer_until` has passed now reappear in `bw ready` and default `bw list` automatically — no poller or cron needed. On-disk status stays `deferred`; the expiry is evaluated at query time. `bw defer bw-abc "in 15 minutes"` just works. `bw prime` surfaces expired deferrals in a dedicated "Reminders" section. `bw list --deferred` still shows all deferred items regardless of expiry, and `bw undefer` still works for manual cleanup.
 
 - **Export/import pass-through** — `defer_until` and `due` fields pass through as-is in export/import. No more `T00:00:00Z` padding on export or time stripping on import. Old exports with padded values import without error.
 
-- **Sort order change** — issues sorted by priority ascending, then overdue-first within priority band, then creation date ascending.
+- **Sort order change** — issues now sort by priority ascending, then overdue-first within each priority band, then creation date ascending.
 
-- **Agent guidance** — `bw prime` now includes due-date/deferral guidance and date expression reference for agents.
+- **Agent guidance** — `bw prime` now includes due-date/deferral guidance, a date expression reference, overdue count, and a reminders section for expired deferrals.
 
 - **Note**: Mixed-version usage (old binary reading new issue data) will silently drop the `due` field on write-back. Data is recoverable from git history.
 
