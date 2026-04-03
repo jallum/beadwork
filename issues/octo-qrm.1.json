@@ -1,0 +1,16 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "comments": [],
+  "created": "2026-04-03T13:28:33.853589Z",
+  "description": "## Context\n\n`bw` correctly resolves commondir when running inside a git worktree (fixed in bw-xj5, bw-i9g.1). Unit tests in `gitdir_test.go` cover the resolution logic. But there is no acceptance test that actually creates a worktree and runs `bw` commands from it.\n\nThis matters because the octopus Elixir ODB had this exact bug — refs written to the per-worktree gitdir were invisible from the main checkout. `bw` is safe today, but a regression would be silent and hard to diagnose.\n\n## What to test\n\nAdd a test to `test/acceptance_test.go` (or a new `test/worktree_test.go`) that:\n\n1. Creates a temp git repo with a remote (same pattern as `TestGoldenBasicScenario`)\n2. Runs `bw init` from the main checkout\n3. Creates a git worktree (`git worktree add ../wt -b wt-branch`)\n4. From inside the worktree, runs:\n   - `bw -C <worktree-path> create -t task \"worktree test ticket\"` — creates a ticket\n   - `bw -C <worktree-path> list` — lists tickets (verifies read path)\n5. From the **main checkout**, verifies:\n   - `bw list` shows the ticket created from the worktree\n   - The beadwork branch ref in `.git/refs/heads/beadwork` (or packed-refs) reflects the worktree commit\n6. Cleans up the worktree\n\n## Key assertion\n\nThe ref written by `bw` from within the worktree must be visible from the main checkout. This is the exact failure mode that bit octopus — commits landed in the shared ODB but the ref was invisible.\n\n## Prior art\n\n- `test/acceptance_test.go` — existing golden-path acceptance test pattern\n- `internal/repo/gitdir_test.go` — unit tests for worktree gitdir resolution",
+  "id": "octo-qrm.1",
+  "labels": [],
+  "parent": "octo-qrm",
+  "priority": 2,
+  "status": "open",
+  "title": "Add acceptance test: bw operations from a git worktree",
+  "type": "task",
+  "updated_at": "2026-04-03T13:28:33.853589Z"
+}
