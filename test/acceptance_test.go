@@ -97,6 +97,22 @@ func (e *bwEnv) bw(args ...string) string {
 	return stdout.String()
 }
 
+// bwAt runs bw from a custom directory instead of the default e.dir.
+func (e *bwEnv) bwAt(dir string, args ...string) string {
+	e.t.Helper()
+	cmd := exec.Command(bwBin, args...)
+	cmd.Dir = dir
+	cmd.Env = e.env
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		e.t.Fatalf("bw %s (at %s):\nstdout: %s\nstderr: %s\nerr: %v",
+			strings.Join(args, " "), dir, stdout.String(), stderr.String(), err)
+	}
+	return stdout.String()
+}
+
 // goldenCompare runs `bw export` and compares output against a golden file.
 // If UPDATE_GOLDEN=1, writes the output as the new golden file instead.
 func (e *bwEnv) goldenCompare(name string) {
@@ -169,5 +185,51 @@ func TestGoldenBasicScenario(t *testing.T) {
 	if exported != reimported {
 		t.Errorf("round-trip mismatch\n--- original ---\n%s\n--- reimported ---\n%s",
 			exported, reimported)
+	}
+}
+
+// TestWorktreeRefWrites verifies that bw operations run from inside a git
+// worktree write refs to the shared git dir, so tickets are visible from
+// the main checkout.
+func TestWorktreeRefWrites(t *testing.T) {
+	env := newBwEnv(t)
+
+	// Create a worktree as a sibling directory.
+	wtDir := filepath.Join(filepath.Dir(env.dir), "worktree")
+	env.git("worktree", "add", wtDir, "-b", "wt-branch")
+	t.Cleanup(func() {
+		env.git("worktree", "remove", "--force", wtDir)
+	})
+
+	// From the worktree, create a ticket.
+	env.bwAt(wtDir, "create", "worktree test ticket", "--id", "wt-1", "-t", "task")
+
+	// From the worktree, list tickets — verifies read path.
+	wtList := env.bwAt(wtDir, "list")
+	if !strings.Contains(wtList, "wt-1") {
+		t.Fatalf("ticket wt-1 not visible from worktree list:\n%s", wtList)
+	}
+	if !strings.Contains(wtList, "worktree test ticket") {
+		t.Fatalf("ticket title not visible from worktree list:\n%s", wtList)
+	}
+
+	// From the main checkout, verify the ticket is visible.
+	mainList := env.bw("list")
+	if !strings.Contains(mainList, "wt-1") {
+		t.Fatalf("ticket wt-1 created in worktree not visible from main checkout:\n%s", mainList)
+	}
+
+	// Verify the beadwork branch ref exists in the shared git dir.
+	// `git branch` from main should show the beadwork branch.
+	branches := env.git("branch", "--list", "beadwork")
+	if !strings.Contains(branches, "beadwork") {
+		t.Fatalf("beadwork branch ref not found in shared git dir:\n%s", branches)
+	}
+
+	// Also verify that git log on beadwork from main sees the commit
+	// made by the worktree bw create.
+	log := env.git("log", "--oneline", "beadwork")
+	if !strings.Contains(log, "wt-1") {
+		t.Fatalf("worktree commit not visible in beadwork log from main:\n%s", log)
 	}
 }
