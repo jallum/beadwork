@@ -232,6 +232,31 @@ func (s *Store) Ready() ([]*Issue, error) {
 		}
 	}
 
+	// Subtree-aware reclassification
+	if adj := s.analyzeSubtrees(); adj != nil {
+		readySet := make(map[string]bool, len(ready))
+		var filtered []*Issue
+		for _, iss := range ready {
+			readySet[iss.ID] = true
+			if adj.blockedRoots[iss.ID] != nil {
+				continue // root has external blockers → not ready
+			}
+			filtered = append(filtered, iss)
+		}
+		// Add subtree roots that are only internally blocked
+		for rootID := range adj.readyRoots {
+			if readySet[rootID] {
+				continue // already in ready
+			}
+			iss, err := s.readIssue(rootID)
+			if err != nil || iss.Status != "open" {
+				continue
+			}
+			filtered = append(filtered, iss)
+		}
+		ready = filtered
+	}
+
 	sortIssues(ready, now)
 	return ready, nil
 }
@@ -282,6 +307,40 @@ func (s *Store) Blocked() ([]BlockedIssue, error) {
 			blocked = append(blocked, BlockedIssue{Issue: iss, OpenBlockers: open})
 		}
 	}
+
+	// Subtree-aware reclassification
+	if adj := s.analyzeSubtrees(); adj != nil {
+		var filtered []BlockedIssue
+		for _, bi := range blocked {
+			if adj.descendants[bi.ID] {
+				continue // suppress descendants
+			}
+			if adj.readyRoots[bi.ID] {
+				continue // only internal blockers → ready, not blocked
+			}
+			if ext, ok := adj.blockedRoots[bi.ID]; ok {
+				bi.OpenBlockers = uniqueStrings(append(bi.OpenBlockers, ext...))
+			}
+			filtered = append(filtered, bi)
+		}
+		// Add subtree roots with external blockers not already in blocked
+		blockedSet := make(map[string]bool, len(filtered))
+		for _, bi := range filtered {
+			blockedSet[bi.ID] = true
+		}
+		for rootID, ext := range adj.blockedRoots {
+			if blockedSet[rootID] {
+				continue
+			}
+			iss, err := s.readIssue(rootID)
+			if err != nil || iss.Status == "closed" {
+				continue
+			}
+			filtered = append(filtered, BlockedIssue{Issue: iss, OpenBlockers: ext})
+		}
+		blocked = filtered
+	}
+
 	return blocked, nil
 }
 
@@ -341,6 +400,113 @@ func (s *Store) ClosedBlockerSet(issues []*Issue) map[string]bool {
 		}
 	}
 	return set
+}
+
+// subtreeAdjustment holds the result of analyzing parent-child subtrees
+// for blocked/ready reclassification.
+type subtreeAdjustment struct {
+	blockedRoots map[string][]string // root ID → external blocker IDs
+	readyRoots   map[string]bool     // roots with no external blockers
+	descendants  map[string]bool     // all non-root subtree members
+}
+
+// analyzeSubtrees builds subtrees from parent fields and classifies each
+// root as ready (no external blockers) or blocked (has external blockers).
+// Returns nil when no subtrees exist.
+func (s *Store) analyzeSubtrees() *subtreeAdjustment {
+	// Load all non-closed issues
+	var allIDs []string
+	for _, status := range []string{"open", "in_progress", "in_review", "deferred"} {
+		allIDs = append(allIDs, s.IDsWithStatus(status)...)
+	}
+
+	issues := make(map[string]*Issue, len(allIDs))
+	children := make(map[string][]string)
+	for _, id := range allIDs {
+		iss, err := s.readIssue(id)
+		if err != nil {
+			continue
+		}
+		issues[id] = iss
+		if iss.Parent != "" {
+			children[iss.Parent] = append(children[iss.Parent], iss.ID)
+		}
+	}
+
+	// Find roots: issues with children whose parent is absent or not in the set
+	var roots []string
+	for parentID := range children {
+		iss, ok := issues[parentID]
+		if !ok {
+			continue
+		}
+		if iss.Parent == "" || issues[iss.Parent] == nil {
+			roots = append(roots, parentID)
+		}
+	}
+	if len(roots) == 0 {
+		return nil
+	}
+
+	adj := &subtreeAdjustment{
+		blockedRoots: make(map[string][]string),
+		readyRoots:   make(map[string]bool),
+		descendants:  make(map[string]bool),
+	}
+
+	for _, rootID := range roots {
+		subtree := buildSubtreeSet(rootID, children)
+
+		for id := range subtree {
+			if id != rootID {
+				adj.descendants[id] = true
+			}
+		}
+
+		var ext []string
+		for id := range subtree {
+			iss := issues[id]
+			if iss == nil {
+				continue
+			}
+			for _, blockerID := range iss.BlockedBy {
+				if !subtree[blockerID] && !s.IsClosed(blockerID) {
+					ext = append(ext, blockerID)
+				}
+			}
+		}
+		ext = uniqueStrings(ext)
+
+		if len(ext) > 0 {
+			adj.blockedRoots[rootID] = ext
+		} else {
+			adj.readyRoots[rootID] = true
+		}
+	}
+
+	return adj
+}
+
+func buildSubtreeSet(rootID string, children map[string][]string) map[string]bool {
+	set := map[string]bool{rootID: true}
+	for _, childID := range children[rootID] {
+		for id := range buildSubtreeSet(childID, children) {
+			set[id] = true
+		}
+	}
+	return set
+}
+
+func uniqueStrings(ss []string) []string {
+	seen := make(map[string]bool, len(ss))
+	var result []string
+	for _, s := range ss {
+		if !seen[s] {
+			seen[s] = true
+			result = append(result, s)
+		}
+	}
+	return result
 }
 
 // wouldCycle reports whether target is reachable from start by following

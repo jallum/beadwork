@@ -1078,3 +1078,235 @@ func TestExpiredDeferralNoStatusChange(t *testing.T) {
 	}
 }
 
+// --- Subtree-aware Ready/Blocked tests ---
+
+func TestReadySubtreeInternalBlockerSuppressed(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{Type: "epic"})
+	childA, _ := env.Store.Create("Child A", issue.CreateOpts{Parent: epic.ID})
+	childB, _ := env.Store.Create("Child B", issue.CreateOpts{Parent: epic.ID})
+	env.Store.Link(childA.ID, childB.ID) // A blocks B (internal)
+	env.CommitIntent("setup")
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[epic.ID] {
+		t.Error("epic should be ready (only internal blockers)")
+	}
+
+	blocked, err := env.Store.Blocked()
+	if err != nil {
+		t.Fatalf("Blocked: %v", err)
+	}
+	for _, bi := range blocked {
+		if bi.ID == childB.ID {
+			t.Error("child B should be suppressed from blocked (internal blocker)")
+		}
+	}
+}
+
+func TestReadySubtreeExternalBlocker(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{Type: "epic"})
+	ext, _ := env.Store.Create("External", issue.CreateOpts{})
+	child, _ := env.Store.Create("Child", issue.CreateOpts{Parent: epic.ID})
+	env.Store.Link(ext.ID, child.ID) // external blocks child
+	env.CommitIntent("setup")
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	readyIDs := make(map[string]bool)
+	for _, r := range ready {
+		readyIDs[r.ID] = true
+	}
+	if readyIDs[epic.ID] {
+		t.Error("epic should NOT be ready (child has external blocker)")
+	}
+
+	blocked, err := env.Store.Blocked()
+	if err != nil {
+		t.Fatalf("Blocked: %v", err)
+	}
+	var epicBlocked *issue.BlockedIssue
+	for i := range blocked {
+		if blocked[i].ID == epic.ID {
+			epicBlocked = &blocked[i]
+			break
+		}
+	}
+	if epicBlocked == nil {
+		t.Fatal("epic should appear in blocked list")
+	}
+	found := false
+	for _, ob := range epicBlocked.OpenBlockers {
+		if ob == ext.ID {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("epic open blockers = %v, should contain %s", epicBlocked.OpenBlockers, ext.ID)
+	}
+}
+
+func TestReadySubtreeMixedBlockers(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{Type: "epic"})
+	childA, _ := env.Store.Create("Child A", issue.CreateOpts{Parent: epic.ID})
+	childB, _ := env.Store.Create("Child B", issue.CreateOpts{Parent: epic.ID})
+	childC, _ := env.Store.Create("Child C", issue.CreateOpts{Parent: epic.ID})
+	ext, _ := env.Store.Create("External", issue.CreateOpts{})
+	env.Store.Link(childA.ID, childB.ID) // internal
+	env.Store.Link(ext.ID, childC.ID)    // external
+	env.CommitIntent("setup")
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	readyIDs := make(map[string]bool)
+	for _, r := range ready {
+		readyIDs[r.ID] = true
+	}
+	if readyIDs[epic.ID] {
+		t.Error("epic should NOT be ready (has external blocker)")
+	}
+
+	blocked, err := env.Store.Blocked()
+	if err != nil {
+		t.Fatalf("Blocked: %v", err)
+	}
+	var epicBlocked *issue.BlockedIssue
+	for i := range blocked {
+		if blocked[i].ID == epic.ID {
+			epicBlocked = &blocked[i]
+			break
+		}
+	}
+	if epicBlocked == nil {
+		t.Fatal("epic should appear in blocked list")
+	}
+	hasExt := false
+	for _, ob := range epicBlocked.OpenBlockers {
+		if ob == ext.ID {
+			hasExt = true
+		}
+		if ob == childA.ID {
+			t.Errorf("internal blocker %s should not appear in epic's open blockers", childA.ID)
+		}
+	}
+	if !hasExt {
+		t.Errorf("epic open blockers should contain external %s", ext.ID)
+	}
+}
+
+func TestReadySubtreeGrandchild(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{Type: "epic"})
+	child, _ := env.Store.Create("Child", issue.CreateOpts{Parent: epic.ID})
+	grandchild, _ := env.Store.Create("Grandchild", issue.CreateOpts{Parent: child.ID})
+	ext, _ := env.Store.Create("External", issue.CreateOpts{})
+	env.Store.Link(ext.ID, grandchild.ID)
+	env.CommitIntent("setup")
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	readyIDs := make(map[string]bool)
+	for _, r := range ready {
+		readyIDs[r.ID] = true
+	}
+	if readyIDs[epic.ID] {
+		t.Error("epic should NOT be ready (grandchild has external blocker)")
+	}
+
+	blocked, err := env.Store.Blocked()
+	if err != nil {
+		t.Fatalf("Blocked: %v", err)
+	}
+	var epicBlocked *issue.BlockedIssue
+	for i := range blocked {
+		if blocked[i].ID == epic.ID {
+			epicBlocked = &blocked[i]
+			break
+		}
+	}
+	if epicBlocked == nil {
+		t.Fatal("epic should appear in blocked list")
+	}
+	found := false
+	for _, ob := range epicBlocked.OpenBlockers {
+		if ob == ext.ID {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("external blocker should bubble up to epic, got %v", epicBlocked.OpenBlockers)
+	}
+	// Grandchild should be suppressed from blocked
+	for _, bi := range blocked {
+		if bi.ID == grandchild.ID {
+			t.Error("grandchild should be suppressed from blocked list")
+		}
+	}
+}
+
+func TestBlockedSubtreeParentDirectAndChildExternal(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	extA, _ := env.Store.Create("Ext A", issue.CreateOpts{})
+	extB, _ := env.Store.Create("Ext B", issue.CreateOpts{})
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{Type: "epic"})
+	child, _ := env.Store.Create("Child", issue.CreateOpts{Parent: epic.ID})
+	env.Store.Link(extA.ID, epic.ID)  // epic directly blocked
+	env.Store.Link(extB.ID, child.ID) // child externally blocked
+	env.CommitIntent("setup")
+
+	blocked, err := env.Store.Blocked()
+	if err != nil {
+		t.Fatalf("Blocked: %v", err)
+	}
+	var epicBlocked *issue.BlockedIssue
+	for i := range blocked {
+		if blocked[i].ID == epic.ID {
+			epicBlocked = &blocked[i]
+			break
+		}
+	}
+	if epicBlocked == nil {
+		t.Fatal("epic should appear in blocked list")
+	}
+	hasA, hasB := false, false
+	for _, ob := range epicBlocked.OpenBlockers {
+		if ob == extA.ID {
+			hasA = true
+		}
+		if ob == extB.ID {
+			hasB = true
+		}
+	}
+	if !hasA {
+		t.Errorf("epic should have direct blocker %s", extA.ID)
+	}
+	if !hasB {
+		t.Errorf("epic should have child's external blocker %s", extB.ID)
+	}
+}
+
