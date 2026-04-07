@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.1 — 2026-04-07
+
+- **Subtree-aware `bw ready` and `bw blocked`** — epics with children are now classified based on their full subtree instead of individually. If all blockers are internal to the subtree, the parent shows as ready and descendants are suppressed from both lists. If any descendant has an external blocker, the parent shows as blocked with those external blocker IDs aggregated. This reduces noise for projects with deep issue hierarchies — you see the actionable root, not every leaf.
+
 ## 0.12.0 — 2026-04-02
 
 - **Due dates** — new `--due` flag on `bw create` and `bw update` sets deadlines without changing issue status. `bw list --overdue` filters to past-due items. Overdue items float to the top within their priority band in `bw list` and `bw ready`, and show an `(OVERDUE since YYYY-MM-DD)` marker in `bw show`. Clear a due date with `bw update <id> --due ""`. Date-only values use end-of-day semantics: `due: "2027-04-15"` isn't overdue until April 16.
