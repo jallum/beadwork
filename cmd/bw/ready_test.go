@@ -313,3 +313,82 @@ func TestCmdReadyPlainNoFooter(t *testing.T) {
 		t.Errorf("PlainWriter output should NOT have separator: %q", out)
 	}
 }
+
+func TestCmdReadyScopedToParent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic task", issue.CreateOpts{})
+	childA, _ := env.Store.Create("Child A", issue.CreateOpts{Parent: epic.ID})
+	childB, _ := env.Store.Create("Child B", issue.CreateOpts{Parent: epic.ID})
+	childC, _ := env.Store.Create("Child C", issue.CreateOpts{Parent: epic.ID})
+	env.Store.Link(childA.ID, childC.ID)
+	env.Repo.Commit("create epic with children")
+
+	var buf bytes.Buffer
+	err := cmdReady(env.Store, []string{epic.ID}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdReady scoped: %v", err)
+	}
+	out := buf.String()
+
+	// Parent should NOT appear
+	if strings.Contains(out, "Epic task") {
+		t.Errorf("parent should NOT appear in scoped output: %q", out)
+	}
+	// childA and childB are ready
+	if !strings.Contains(out, childA.ID) {
+		t.Errorf("childA should appear: %q", out)
+	}
+	if !strings.Contains(out, childB.ID) {
+		t.Errorf("childB should appear: %q", out)
+	}
+	// childC blocked — its title should not appear as its own line.
+	// (childC.ID may appear in childA's [blocks: ...] annotation, so check title.)
+	if strings.Contains(out, "Child C") {
+		t.Errorf("childC should NOT appear as a ready issue (blocked): %q", out)
+	}
+}
+
+func TestCmdReadyScopedJSON(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{})
+	env.Store.Create("Child A", issue.CreateOpts{Parent: epic.ID})
+	env.Store.Create("Child B", issue.CreateOpts{Parent: epic.ID})
+	env.Repo.Commit("setup")
+
+	var buf bytes.Buffer
+	err := cmdReady(env.Store, []string{epic.ID, "--json"}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdReady scoped --json: %v", err)
+	}
+
+	var issues []issue.Issue
+	if err := json.Unmarshal(buf.Bytes(), &issues); err != nil {
+		t.Fatalf("JSON parse: %v", err)
+	}
+	if len(issues) != 2 {
+		t.Errorf("expected 2 issues, got %d", len(issues))
+	}
+}
+
+func TestCmdReadyScopedEmpty(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{})
+	child, _ := env.Store.Create("Child", issue.CreateOpts{Parent: epic.ID})
+	env.Store.Close(child.ID, "done")
+	env.Repo.Commit("setup")
+
+	var buf bytes.Buffer
+	err := cmdReady(env.Store, []string{epic.ID}, PlainWriter(&buf))
+	if err != nil {
+		t.Fatalf("cmdReady scoped: %v", err)
+	}
+	if !strings.Contains(buf.String(), "no ready issues") {
+		t.Errorf("expected 'no ready issues', got: %q", buf.String())
+	}
+}

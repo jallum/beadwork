@@ -240,6 +240,65 @@ func (s *Store) Ready() ([]*Issue, error) {
 	return ready, nil
 }
 
+// ReadyScoped returns the ready descendants of parentID, excluding the parent
+// itself. It uses the same blocked-by and deferred logic as Ready, but scoped
+// to the parent's subtree.
+func (s *Store) ReadyScoped(parentID string) ([]*Issue, error) {
+	parentID, err := s.resolveID(parentID)
+	if err != nil {
+		return nil, fmt.Errorf("parent: %w", err)
+	}
+
+	now := s.Now()
+
+	// Load all non-closed issues and build children map.
+	var allIDs []string
+	for _, status := range []string{"open", "in_progress", "in_review", "deferred"} {
+		allIDs = append(allIDs, s.IDsWithStatus(status)...)
+	}
+
+	issues := make(map[string]*Issue, len(allIDs))
+	children := make(map[string][]string)
+	for _, id := range allIDs {
+		iss, err := s.readIssue(id)
+		if err != nil {
+			continue
+		}
+		issues[id] = iss
+		if iss.Parent != "" {
+			children[iss.Parent] = append(children[iss.Parent], iss.ID)
+		}
+	}
+
+	// Build the subtree of the parent.
+	subtree := buildSubtreeSet(parentID, children)
+
+	var ready []*Issue
+	for id := range subtree {
+		if id == parentID {
+			continue // exclude parent
+		}
+		iss := issues[id]
+		if iss == nil {
+			continue
+		}
+
+		switch iss.Status {
+		case "open":
+			if allResolved(s, iss.BlockedBy) {
+				ready = append(ready, iss)
+			}
+		case "deferred":
+			if IsDeferralExpired(iss.DeferUntil, now) && allResolved(s, iss.BlockedBy) {
+				ready = append(ready, iss)
+			}
+		}
+	}
+
+	sortIssues(ready, now)
+	return ready, nil
+}
+
 func allResolved(s *Store, blockerIDs []string) bool {
 	for _, id := range blockerIDs {
 		if !s.IsClosed(id) {

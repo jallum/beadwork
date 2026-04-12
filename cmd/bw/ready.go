@@ -10,6 +10,7 @@ import (
 )
 
 type ReadyArgs struct {
+	ParentID  string
 	JSON      bool
 	NoContext bool
 }
@@ -19,7 +20,11 @@ func parseReadyArgs(raw []string) (ReadyArgs, error) {
 	if err != nil {
 		return ReadyArgs{}, err
 	}
-	return ReadyArgs{JSON: a.JSON(), NoContext: a.Bool("--no-context")}, nil
+	return ReadyArgs{
+		ParentID:  a.PosFirst(),
+		JSON:      a.JSON(),
+		NoContext:  a.Bool("--no-context"),
+	}, nil
 }
 
 func cmdReady(store *issue.Store, args []string, w Writer) error {
@@ -28,7 +33,12 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 		return err
 	}
 
-	issues, err := store.Ready()
+	var issues []*issue.Issue
+	if ra.ParentID != "" {
+		issues, err = store.ReadyScoped(ra.ParentID)
+	} else {
+		issues, err = store.Ready()
+	}
 	if err != nil {
 		return err
 	}
@@ -44,51 +54,57 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 	}
 
 	closedBlockers := store.HiddenBlockerSet(issues)
-
-	// Partition into standalone issues and groups keyed by parent ID.
-	// Preserve insertion order for parents.
-	var standalone []*issue.Issue
-	groups := make(map[string][]*issue.Issue)
-	var parentOrder []string
-	for _, iss := range issues {
-		if iss.Parent == "" {
-			standalone = append(standalone, iss)
-			continue
-		}
-		if _, seen := groups[iss.Parent]; !seen {
-			parentOrder = append(parentOrder, iss.Parent)
-		}
-		groups[iss.Parent] = append(groups[iss.Parent], iss)
-	}
-
-	// Remove parents from standalone — they'll be printed as group headers.
-	var filteredStandalone []*issue.Issue
-	for _, iss := range standalone {
-		if _, isParent := groups[iss.ID]; !isParent {
-			filteredStandalone = append(filteredStandalone, iss)
-		}
-	}
-
 	now := store.Now()
 
-	// Print standalone issues.
-	for _, iss := range filteredStandalone {
-		fmt.Fprintln(w, md.IssueOneLinerWithDue(iss, now, closedBlockers))
-	}
+	if ra.ParentID != "" {
+		// Scoped mode: flat list, no parent grouping.
+		for _, iss := range issues {
+			fmt.Fprintln(w, md.IssueOneLinerWithDue(iss, now, closedBlockers))
+		}
+	} else {
+		// Partition into standalone issues and groups keyed by parent ID.
+		// Preserve insertion order for parents.
+		var standalone []*issue.Issue
+		groups := make(map[string][]*issue.Issue)
+		var parentOrder []string
+		for _, iss := range issues {
+			if iss.Parent == "" {
+				standalone = append(standalone, iss)
+				continue
+			}
+			if _, seen := groups[iss.Parent]; !seen {
+				parentOrder = append(parentOrder, iss.Parent)
+			}
+			groups[iss.Parent] = append(groups[iss.Parent], iss)
+		}
 
-	// Print groups.
-	for _, parentID := range parentOrder {
-		// Print parent as group header.
-		parent, err := store.Get(parentID)
-		if err == nil {
-			fmt.Fprintln(w, md.IssueOneLinerWithDue(parent, now, closedBlockers))
+		// Remove parents from standalone — they'll be printed as group headers.
+		var filteredStandalone []*issue.Issue
+		for _, iss := range standalone {
+			if _, isParent := groups[iss.ID]; !isParent {
+				filteredStandalone = append(filteredStandalone, iss)
+			}
 		}
-		// Print children indented.
-		w.Push(2)
-		for _, child := range groups[parentID] {
-			fmt.Fprintln(w, md.IssueOneLinerWithDue(child, now, closedBlockers))
+
+		// Print standalone issues.
+		for _, iss := range filteredStandalone {
+			fmt.Fprintln(w, md.IssueOneLinerWithDue(iss, now, closedBlockers))
 		}
-		w.Pop()
+
+		// Print groups.
+		for _, parentID := range parentOrder {
+			// Print parent as group header.
+			parent, err := store.Get(parentID)
+			if err == nil {
+				fmt.Fprintln(w, md.IssueOneLinerWithDue(parent, now, closedBlockers))
+			}
+			// Print children indented.
+			w.Push(2)
+			for _, child := range groups[parentID] {
+				fmt.Fprintln(w, md.IssueOneLinerWithDue(child, now, closedBlockers))
+			}
+			w.Pop()
+		}
 	}
 
 	// TTY-only footer

@@ -1411,3 +1411,144 @@ func TestHiddenBlockerSetIncludesDescendants(t *testing.T) {
 	}
 }
 
+func TestReadyScoped(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// Create an epic with three children: two ready, one blocked by the other.
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{})
+	childA, _ := env.Store.Create("Child A", issue.CreateOpts{Parent: epic.ID})
+	childB, _ := env.Store.Create("Child B", issue.CreateOpts{Parent: epic.ID})
+	childC, _ := env.Store.Create("Child C", issue.CreateOpts{Parent: epic.ID})
+	// childC is blocked by childA (both within the subtree)
+	env.Store.Link(childA.ID, childC.ID)
+	env.CommitIntent("setup")
+
+	ready, err := env.Store.ReadyScoped(epic.ID)
+	if err != nil {
+		t.Fatalf("ReadyScoped: %v", err)
+	}
+
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+
+	// Parent should NOT appear
+	if ids[epic.ID] {
+		t.Error("parent epic should NOT appear in scoped ready list")
+	}
+	// childA and childB are ready (no blockers)
+	if !ids[childA.ID] {
+		t.Errorf("childA (%s) should be ready", childA.ID)
+	}
+	if !ids[childB.ID] {
+		t.Errorf("childB (%s) should be ready", childB.ID)
+	}
+	// childC is blocked by childA
+	if ids[childC.ID] {
+		t.Errorf("childC (%s) should NOT be ready (blocked by childA)", childC.ID)
+	}
+}
+
+func TestReadyScopedExcludesClosedChildren(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{})
+	childA, _ := env.Store.Create("Child A", issue.CreateOpts{Parent: epic.ID})
+	childB, _ := env.Store.Create("Child B", issue.CreateOpts{Parent: epic.ID})
+	env.Store.Close(childA.ID, "done")
+	env.CommitIntent("setup")
+
+	ready, err := env.Store.ReadyScoped(epic.ID)
+	if err != nil {
+		t.Fatalf("ReadyScoped: %v", err)
+	}
+
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+
+	if ids[childA.ID] {
+		t.Errorf("closed childA should NOT appear")
+	}
+	if !ids[childB.ID] {
+		t.Errorf("open childB should appear")
+	}
+}
+
+func TestReadyScopedBlockedByExternalUnblocks(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{})
+	child, _ := env.Store.Create("Child", issue.CreateOpts{Parent: epic.ID})
+	external, _ := env.Store.Create("External blocker", issue.CreateOpts{})
+	env.Store.Link(external.ID, child.ID)
+	env.CommitIntent("setup")
+
+	// child is blocked by external, so not ready
+	ready, err := env.Store.ReadyScoped(epic.ID)
+	if err != nil {
+		t.Fatalf("ReadyScoped: %v", err)
+	}
+	if len(ready) != 0 {
+		t.Errorf("expected 0 ready, got %d", len(ready))
+	}
+
+	// Close the external blocker -> child becomes ready
+	env.Store.Close(external.ID, "done")
+	env.CommitIntent("close external")
+
+	ready, err = env.Store.ReadyScoped(epic.ID)
+	if err != nil {
+		t.Fatalf("ReadyScoped after close: %v", err)
+	}
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[child.ID] {
+		t.Errorf("child should be ready after external blocker closed")
+	}
+}
+
+func TestReadyScopedRespectsDeferred(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{})
+	env.Store.Create("Deferred child", issue.CreateOpts{Parent: epic.ID, DeferUntil: "2099-01-01"})
+	childB, _ := env.Store.Create("Open child", issue.CreateOpts{Parent: epic.ID})
+	env.CommitIntent("setup")
+
+	ready, err := env.Store.ReadyScoped(epic.ID)
+	if err != nil {
+		t.Fatalf("ReadyScoped: %v", err)
+	}
+
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+
+	if len(ready) != 1 {
+		t.Errorf("expected 1 ready, got %d", len(ready))
+	}
+	if !ids[childB.ID] {
+		t.Errorf("open child should be ready")
+	}
+}
+
+func TestReadyScopedNonExistentParent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	_, err := env.Store.ReadyScoped("test-zzzz")
+	if err == nil {
+		t.Error("expected error for non-existent parent")
+	}
+}
+
