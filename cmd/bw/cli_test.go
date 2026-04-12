@@ -74,19 +74,25 @@ func mustCwd() string {
 	return d
 }
 
-// bw runs the bw binary in the test env dir and returns stdout.
-func bw(t *testing.T, dir string, args ...string) string {
+func bwTestEnv(t *testing.T, dir string) []string {
 	t.Helper()
-	cmd := exec.Command(bwBin, args...)
-	cmd.Dir = dir
-	cmd.Env = append(os.Environ(),
+	return append(os.Environ(),
 		"GIT_AUTHOR_NAME=Test",
 		"GIT_AUTHOR_EMAIL=test@test.com",
 		"GIT_COMMITTER_NAME=Test",
 		"GIT_COMMITTER_EMAIL=test@test.com",
 		"BW_CONFIG="+filepath.Join(dir, ".bw"),
+		"BEADWORK_HOME="+t.TempDir(),
 		"GOCOVERDIR="+bwCoverDir,
 	)
+}
+
+// bw runs the bw binary in the test env dir and returns stdout.
+func bw(t *testing.T, dir string, args ...string) string {
+	t.Helper()
+	cmd := exec.Command(bwBin, args...)
+	cmd.Dir = dir
+	cmd.Env = bwTestEnv(t, dir)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("bw %s: %s: %v", strings.Join(args, " "), out, err)
@@ -99,14 +105,7 @@ func bwFail(t *testing.T, dir string, args ...string) string {
 	t.Helper()
 	cmd := exec.Command(bwBin, args...)
 	cmd.Dir = dir
-	cmd.Env = append(os.Environ(),
-		"GIT_AUTHOR_NAME=Test",
-		"GIT_AUTHOR_EMAIL=test@test.com",
-		"GIT_COMMITTER_NAME=Test",
-		"GIT_COMMITTER_EMAIL=test@test.com",
-		"BW_CONFIG="+filepath.Join(dir, ".bw"),
-		"GOCOVERDIR="+bwCoverDir,
-	)
+	cmd.Env = bwTestEnv(t, dir)
 	out, err := cmd.CombinedOutput()
 	if err == nil {
 		t.Fatalf("expected bw %s to fail, got: %s", strings.Join(args, " "), out)
@@ -440,7 +439,7 @@ func TestHelpToStdout(t *testing.T) {
 	// bw --help should exit 0 and write to stdout (not stderr)
 	cmd := exec.Command(bwBin, "--help")
 	cmd.Dir = env.Dir
-	cmd.Env = append(os.Environ(), "GOCOVERDIR="+bwCoverDir)
+	cmd.Env = bwTestEnv(t, env.Dir)
 	var stdout, stderr strings.Builder
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -462,7 +461,7 @@ func TestCommandHelpToStdout(t *testing.T) {
 	// bw create --help should exit 0 and write to stdout
 	cmd := exec.Command(bwBin, "create", "--help")
 	cmd.Dir = env.Dir
-	cmd.Env = append(os.Environ(), "GOCOVERDIR="+bwCoverDir)
+	cmd.Env = bwTestEnv(t, env.Dir)
 	var stdout, stderr strings.Builder
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
