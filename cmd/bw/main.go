@@ -15,12 +15,24 @@ import (
 
 const version = "0.12.3"
 
+// globalNoColor is set by commands (e.g. recap --no-color) to force
+// non-colored output even when stdout is a TTY. Consulted at render setup.
+var globalNoColor bool
+
+// globalDryRun mirrors the --dry-run flag. For commands with NeedsStore
+// it drives store.DryRun; for commands without a store (e.g. recap) it
+// suppresses side-effects like advancing the registry cursor.
+var globalDryRun bool
+
 func resolveRenderMode(args []string) string {
 	if mode, ok := flagValue(args, "--x-render-as"); ok && mode != "" {
 		return mode
 	}
 	if hasFlag(args, "--x-raw") {
 		return "raw"
+	}
+	if hasFlag(args, "--no-color") {
+		return "markdown"
 	}
 	if term.IsTerminal(int(os.Stdout.Fd())) && os.Getenv("NO_COLOR") == "" {
 		return "tty"
@@ -56,10 +68,15 @@ func main() {
 
 	args = removeFlag(args, "--x-raw")
 	args, _ = removeFlagValue(args, "--x-render-as")
+	if hasFlag(args, "--no-color") {
+		globalNoColor = true
+		args = removeFlag(args, "--no-color")
+	}
 
 	dryRun := hasFlag(args, "--dry-run")
 	if dryRun {
 		args = removeFlag(args, "--dry-run")
+		globalDryRun = true
 	}
 
 	switch cmd {

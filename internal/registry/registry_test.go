@@ -153,6 +153,50 @@ func TestPrune(t *testing.T) {
 	}
 }
 
+func TestConcurrentAdvanceCursorAndSave(t *testing.T) {
+	dir := t.TempDir()
+	r, _ := Load(dir)
+
+	// Pre-populate with N repos.
+	now := time.Date(2026, 1, 15, 10, 0, 0, 0, time.UTC)
+	for i := range 20 {
+		r.Touch("/repo/"+string(rune('a'+i)), now)
+	}
+	r.Save()
+
+	// Concurrently advance cursors for different repos.
+	var wg sync.WaitGroup
+	for i := range 20 {
+		wg.Add(1)
+		go func(n int) {
+			defer wg.Done()
+			r.AdvanceCursorAndSave("/repo/"+string(rune('a'+n)), "cur-"+string(rune('a'+n)))
+		}(i)
+	}
+	wg.Wait()
+
+	r2, err := Load(dir)
+	if err != nil {
+		t.Fatalf("Load after concurrent cursor advances: %v", err)
+	}
+	// Count how many entries got their cursor set.
+	withCursor := 0
+	for _, e := range r2.Repos {
+		if e.Cursor != "" {
+			withCursor++
+		}
+	}
+	// Due to last-writer-wins at the file level we expect at least one cursor set;
+	// since each goroutine re-reads/writes the whole file atomically, this is best-effort.
+	// What we must guarantee is no corruption: the file is valid JSON with all repos.
+	if len(r2.Repos) != 20 {
+		t.Errorf("lost entries during concurrent cursor advance: %d/20", len(r2.Repos))
+	}
+	if withCursor == 0 {
+		t.Errorf("no cursors set after concurrent advances")
+	}
+}
+
 func TestConcurrentSave(t *testing.T) {
 	dir := t.TempDir()
 	r, _ := Load(dir)

@@ -102,6 +102,22 @@ func (e *bwEnv) bw(args ...string) string {
 	return stdout.String()
 }
 
+// bwCapture runs a bw command and returns stdout + stderr separately.
+func (e *bwEnv) bwCapture(args ...string) (string, string) {
+	e.t.Helper()
+	cmd := exec.Command(bwBin, args...)
+	cmd.Dir = e.dir
+	cmd.Env = e.env
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		e.t.Fatalf("bw %s:\nstdout: %s\nstderr: %s\nerr: %v",
+			strings.Join(args, " "), stdout.String(), stderr.String(), err)
+	}
+	return stdout.String(), stderr.String()
+}
+
 // bwFail runs a bw command that is expected to fail.
 // Returns combined stdout+stderr. Fatals if the command succeeds.
 func (e *bwEnv) bwFail(args ...string) string {
@@ -412,6 +428,249 @@ func TestWorktreeRegistersSameAsMain(t *testing.T) {
 	// Should contain the main repo dir, not the worktree dir.
 	if strings.Contains(got, wtDir) {
 		t.Errorf("registry should not contain worktree path %q:\n%s", wtDir, got)
+	}
+}
+
+// TestRecapEmpty verifies recap output when there's no activity.
+func TestRecapEmpty(t *testing.T) {
+	env := newBwEnv(t)
+	out := env.bw("recap", "today")
+	if !strings.Contains(out, "caught up") {
+		t.Errorf("expected 'caught up' message:\n%s", out)
+	}
+}
+
+// TestRecapWithEvents verifies recap groups events by issue.
+func TestRecapWithEvents(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "Task Alpha", "--id", "re-1")
+	env.bw("start", "re-1")
+	env.bw("close", "re-1")
+
+	out := env.bw("recap", "today")
+	if !strings.Contains(out, "re-1") {
+		t.Errorf("recap missing re-1:\n%s", out)
+	}
+	if !strings.Contains(out, "Task Alpha") {
+		t.Errorf("recap missing title 'Task Alpha':\n%s", out)
+	}
+}
+
+// TestRecapJSON verifies JSON output format and scope field.
+func TestRecapJSON(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "json target", "--id", "rj-1")
+
+	out := env.bw("recap", "today", "--json")
+	if !strings.Contains(out, `"scope": "single"`) {
+		t.Errorf("recap --json missing scope=single:\n%s", out)
+	}
+	if !strings.Contains(out, `"rj-1"`) {
+		t.Errorf("recap --json missing issue id:\n%s", out)
+	}
+}
+
+// TestRecapDryRun verifies --dry-run doesn't advance the cursor.
+func TestRecapDryRun(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "dry", "--id", "dr-1")
+
+	env.bw("recap", "today", "--dry-run")
+	contents := env.registryContents()
+	if strings.Contains(contents, `"cursor"`) {
+		t.Errorf("--dry-run should not have set a cursor:\n%s", contents)
+	}
+}
+
+// TestRecapAdvancesCursor verifies that a non-dry-run recap advances the cursor.
+func TestRecapAdvancesCursor(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "normal", "--id", "cr-1")
+
+	env.bw("recap", "today")
+	contents := env.registryContents()
+	if !strings.Contains(contents, `"cursor"`) {
+		t.Errorf("recap should advance cursor:\n%s", contents)
+	}
+}
+
+// TestRecapSince verifies the --since flag.
+func TestRecapSince(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "src", "--id", "sn-1")
+
+	out := env.bw("recap", "--since", "2026-01-01")
+	if !strings.Contains(out, "sn-1") {
+		t.Errorf("recap --since missing event:\n%s", out)
+	}
+}
+
+// TestRecapSinceInvalid verifies rejection of a bad --since value.
+func TestRecapSinceInvalid(t *testing.T) {
+	env := newBwEnv(t)
+	out := env.bwFail("recap", "--since", "not-a-date")
+	if !strings.Contains(out, "invalid") {
+		t.Errorf("expected error for invalid --since:\n%s", out)
+	}
+}
+
+// TestRecapASCII verifies that --ascii uses plain tree characters.
+func TestRecapASCII(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "ascii test", "--id", "as-1")
+
+	out := env.bw("recap", "today", "--ascii")
+	// ASCII tree should use | and ` and -, not ├ └ │
+	if strings.ContainsRune(out, '├') || strings.ContainsRune(out, '│') {
+		t.Errorf("--ascii output contains unicode box chars:\n%s", out)
+	}
+}
+
+// TestRecapFirstRecap24h verifies first-recap uses 24h backfill when no cursor.
+func TestRecapFirstRecap24h(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "recent", "--id", "fr-1")
+
+	out := env.bw("recap")
+	if !strings.Contains(out, "first recap") {
+		t.Errorf("first recap should show backfill label:\n%s", out)
+	}
+}
+
+// TestRecapFromSubdir verifies recap walks up to find the repo.
+func TestRecapFromSubdir(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "from sub", "--id", "sb-1")
+
+	sub := filepath.Join(env.dir, "a", "b")
+	os.MkdirAll(sub, 0755)
+
+	out := env.bwAt(sub, "recap", "today")
+	if !strings.Contains(out, "sb-1") {
+		t.Errorf("recap from subdir missing event:\n%s", out)
+	}
+}
+
+// TestRecapNotInRepo verifies error when not in a git repo.
+func TestRecapNotInRepo(t *testing.T) {
+	dir := t.TempDir()
+	env := &bwEnv{
+		t:           t,
+		dir:         dir,
+		registryDir: t.TempDir(),
+		env: append(os.Environ(),
+			"BW_CLOCK="+fixedClock,
+			"NO_COLOR=1",
+		),
+	}
+	out := env.bwFail("recap")
+	if !strings.Contains(out, "not a git repository") {
+		t.Errorf("expected 'not a git repository' error:\n%s", out)
+	}
+}
+
+// TestRecapHelp verifies the recap help output.
+func TestRecapHelp(t *testing.T) {
+	env := newBwEnv(t)
+	out := env.bw("recap", "--help")
+	for _, flag := range []string{"--since", "--dry-run", "--all", "--json", "--ascii"} {
+		if !strings.Contains(out, flag) {
+			t.Errorf("recap help missing %s:\n%s", flag, out)
+		}
+	}
+}
+
+// TestRecapInBwHelp verifies recap appears in top-level help.
+func TestRecapInBwHelp(t *testing.T) {
+	env := newBwEnv(t)
+	out := env.bw("--help")
+	if !strings.Contains(out, "recap") {
+		t.Errorf("bw --help missing recap:\n%s", out)
+	}
+}
+
+// TestRecapAllThreeHealthy verifies cross-repo recap over 3 healthy repos.
+func TestRecapAllThreeHealthy(t *testing.T) {
+	envs := newMultiRepoEnv(t, 3)
+
+	// Create activity in each repo.
+	envs[0].bw("create", "Alpha", "--id", "a-1")
+	envs[1].bw("create", "Beta", "--id", "b-1")
+	envs[2].bw("create", "Gamma", "--id", "g-1")
+
+	out := envs[0].bw("recap", "today", "--all")
+	for _, id := range []string{"a-1", "b-1", "g-1"} {
+		if !strings.Contains(out, id) {
+			t.Errorf("cross-repo recap missing %s:\n%s", id, out)
+		}
+	}
+	if !strings.Contains(out, "3 repo") {
+		t.Errorf("expected '3 repo(s)' summary:\n%s", out)
+	}
+}
+
+// TestRecapAllWarnsOnMissing verifies that missing repos warn on stderr
+// and get skipped rather than failing.
+func TestRecapAllWarnsOnMissing(t *testing.T) {
+	envs := newMultiRepoEnv(t, 2)
+	envs[0].bw("create", "Real", "--id", "re-1")
+
+	// Seed an extra registry entry for a nonexistent repo.
+	path := filepath.Join(envs[0].registryDir, "registry.json")
+	existing, _ := os.ReadFile(path)
+	// Add a missing repo to the existing registry JSON.
+	modified := strings.Replace(string(existing), `"repos": {`,
+		`"repos": {
+    "/nonexistent/path": {"last_seen_at": "2026-01-15T10:00:00Z"},`, 1)
+	os.WriteFile(path, []byte(modified), 0644)
+
+	stdout, stderr := envs[0].bwCapture("recap", "today", "--all")
+	if !strings.Contains(stderr, "skipping") || !strings.Contains(stderr, "/nonexistent/path") {
+		t.Errorf("expected 'skipping' warning for missing repo on stderr:\n%s", stderr)
+	}
+	if !strings.Contains(stdout, "re-1") {
+		t.Errorf("healthy repo activity missing from stdout:\n%s", stdout)
+	}
+}
+
+// TestRecapAllWarnsOnCFlag verifies that -C is warned about with --all.
+func TestRecapAllWarnsOnCFlag(t *testing.T) {
+	envs := newMultiRepoEnv(t, 2)
+	envs[0].bw("create", "A", "--id", "c-1")
+
+	_, stderr := envs[0].bwCapture("-C", envs[0].dir, "recap", "today", "--all")
+	if !strings.Contains(stderr, "-C is ignored with --all") {
+		t.Errorf("expected '-C ignored' warning:\n%s", stderr)
+	}
+}
+
+// TestRecapAllJSONScope verifies the --json shape has scope=cross.
+func TestRecapAllJSONScope(t *testing.T) {
+	envs := newMultiRepoEnv(t, 2)
+	envs[0].bw("create", "J", "--id", "j-1")
+
+	out := envs[0].bw("recap", "today", "--all", "--json")
+	if !strings.Contains(out, `"scope": "cross"`) {
+		t.Errorf("cross-repo --json missing scope=cross:\n%s", out)
+	}
+	if !strings.Contains(out, `"repos"`) {
+		t.Errorf("cross-repo --json missing repos array:\n%s", out)
+	}
+}
+
+// TestRecapAllAdvancesPerRepoCursors verifies each repo gets its own cursor advance.
+func TestRecapAllAdvancesPerRepoCursors(t *testing.T) {
+	envs := newMultiRepoEnv(t, 2)
+	envs[0].bw("create", "A", "--id", "ca-1")
+	envs[1].bw("create", "B", "--id", "cb-1")
+
+	envs[0].bw("recap", "--all")
+
+	contents := envs[0].registryContents()
+	// Both repos should now have a "cursor" field.
+	cursorCount := strings.Count(contents, `"cursor"`)
+	if cursorCount < 2 {
+		t.Errorf("expected 2 cursors after recap --all, got %d:\n%s", cursorCount, contents)
 	}
 }
 
