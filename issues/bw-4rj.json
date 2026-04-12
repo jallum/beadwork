@@ -10,8 +10,8 @@
   "labels": [],
   "parent": "",
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Simplify ready/blocked: bubble-up external blockers, drop reclassify",
   "type": "task",
-  "updated_at": "2026-04-12T16:04:47.787696Z"
+  "updated_at": "2026-04-12T16:04:55.429591Z"
 }
