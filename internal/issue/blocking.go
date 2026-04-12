@@ -241,6 +241,9 @@ func (s *Store) Ready() ([]*Issue, error) {
 			if adj.blockedRoots[iss.ID] != nil {
 				continue // root has external blockers → not ready
 			}
+			if _, ok := adj.descendants[iss.ID]; ok {
+				continue // descendant — part of its root ticket
+			}
 			filtered = append(filtered, iss)
 		}
 		// Add subtree roots that are only internally blocked
@@ -312,7 +315,7 @@ func (s *Store) Blocked() ([]BlockedIssue, error) {
 	if adj := s.analyzeSubtrees(); adj != nil {
 		var filtered []BlockedIssue
 		for _, bi := range blocked {
-			if adj.descendants[bi.ID] {
+			if _, ok := adj.descendants[bi.ID]; ok {
 				continue // suppress descendants
 			}
 			if adj.readyRoots[bi.ID] {
@@ -397,6 +400,18 @@ func (s *Store) ClosedBlockerSet(issues []*Issue) map[string]bool {
 			if dep, err := s.Get(bid); err == nil && dep.Status == "closed" {
 				set[bid] = true
 			}
+		}
+	}
+	return set
+}
+
+// HiddenBlockerSet returns blocker IDs that should be hidden from ready
+// display: closed blockers plus internal (within-subtree) blockers.
+func (s *Store) HiddenBlockerSet(issues []*Issue) map[string]bool {
+	set := s.ClosedBlockerSet(issues)
+	if adj := s.analyzeSubtrees(); adj != nil {
+		for id := range adj.descendants {
+			set[id] = true
 		}
 	}
 	return set

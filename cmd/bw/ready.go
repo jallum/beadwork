@@ -43,7 +43,7 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 		return nil
 	}
 
-	closedBlockers := store.ClosedBlockerSet(issues)
+	closedBlockers := store.HiddenBlockerSet(issues)
 
 	// Partition into standalone issues and groups keyed by parent ID.
 	// Preserve insertion order for parents.

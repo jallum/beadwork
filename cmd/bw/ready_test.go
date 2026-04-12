@@ -150,7 +150,7 @@ func TestCmdReadyNoDepsNoBrackets(t *testing.T) {
 	}
 }
 
-func TestCmdReadyGroupsChildrenUnderParent(t *testing.T) {
+func TestCmdReadyEpicAppearsChildrenSuppressed(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
@@ -165,52 +165,26 @@ func TestCmdReadyGroupsChildrenUnderParent(t *testing.T) {
 		t.Fatalf("cmdReady: %v", err)
 	}
 	out := buf.String()
-	lines := strings.Split(out, "\n")
 
-	// Find the epic line and verify children appear indented after it.
-	// Match " epic.ID " with spaces to avoid substring matches on child IDs.
-	epicIdx := -1
-	child1Idx := -1
-	child2Idx := -1
-	for i, line := range lines {
-		if strings.Contains(line, " "+epic.ID+" ") {
-			epicIdx = i
-		}
-		if strings.Contains(line, child1.ID) {
-			child1Idx = i
-		}
-		if strings.Contains(line, child2.ID) {
-			child2Idx = i
-		}
+	if !strings.Contains(out, epic.ID) {
+		t.Errorf("epic %s should appear in ready output:\n%s", epic.ID, out)
 	}
-	if epicIdx < 0 {
-		t.Fatalf("epic %s not found in output:\n%s", epic.ID, out)
+	// Children are part of the root ticket and should not appear individually.
+	if strings.Contains(out, child1.ID) {
+		t.Errorf("child1 %s should NOT appear in ready output:\n%s", child1.ID, out)
 	}
-	if child1Idx < 0 || child2Idx < 0 {
-		t.Fatalf("children not found in output:\n%s", out)
-	}
-	// Children must appear after their parent.
-	if child1Idx <= epicIdx || child2Idx <= epicIdx {
-		t.Errorf("children should appear after parent; epicIdx=%d child1Idx=%d child2Idx=%d", epicIdx, child1Idx, child2Idx)
-	}
-	// Children must be indented (leading spaces).
-	if !strings.HasPrefix(lines[child1Idx], "  ") {
-		t.Errorf("child1 line should be indented: %q", lines[child1Idx])
-	}
-	if !strings.HasPrefix(lines[child2Idx], "  ") {
-		t.Errorf("child2 line should be indented: %q", lines[child2Idx])
-	}
-	// Epic line must NOT be indented.
-	if strings.HasPrefix(lines[epicIdx], "  ") {
-		t.Errorf("epic line should not be indented: %q", lines[epicIdx])
+	if strings.Contains(out, child2.ID) {
+		t.Errorf("child2 %s should NOT appear in ready output:\n%s", child2.ID, out)
 	}
 }
 
-func TestCmdReadyChildUnderNonReadyParent(t *testing.T) {
+func TestCmdReadyChildOfClosedParentStillShown(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
 	// Create an epic and close it, but leave a child open.
+	// The closed parent has no children loaded in analyzeSubtrees (it's closed),
+	// so the child is not a descendant — it appears as a standalone ready item.
 	epic, _ := env.Store.Create("Closed epic", issue.CreateOpts{})
 	child, _ := env.Store.Create("Orphaned child", issue.CreateOpts{Parent: epic.ID})
 	env.Store.Close(epic.ID, "done")
@@ -222,33 +196,9 @@ func TestCmdReadyChildUnderNonReadyParent(t *testing.T) {
 		t.Fatalf("cmdReady: %v", err)
 	}
 	out := buf.String()
-	lines := strings.Split(out, "\n")
 
-	// The child should still appear, grouped under its parent as a header.
-	// Use " epic.ID " (with spaces) to match the epic line specifically,
-	// not the child line which contains the epic ID as a prefix.
-	epicIdx := -1
-	childIdx := -1
-	for i, line := range lines {
-		if strings.Contains(line, " "+epic.ID+" ") {
-			epicIdx = i
-		}
-		if strings.Contains(line, child.ID) {
-			childIdx = i
-		}
-	}
-	if childIdx < 0 {
-		t.Fatalf("child %s not found in output:\n%s", child.ID, out)
-	}
-	// Parent should appear as a group header even though it's not ready itself.
-	if epicIdx < 0 {
-		t.Fatalf("parent %s should appear as group header:\n%s", epic.ID, out)
-	}
-	if childIdx <= epicIdx {
-		t.Errorf("child should appear after parent header; epicIdx=%d childIdx=%d", epicIdx, childIdx)
-	}
-	if !strings.HasPrefix(lines[childIdx], "  ") {
-		t.Errorf("child line should be indented: %q", lines[childIdx])
+	if !strings.Contains(out, child.ID) {
+		t.Fatalf("child %s should appear in ready output:\n%s", child.ID, out)
 	}
 }
 
@@ -298,20 +248,19 @@ func TestCmdReadyJSONFlatWithParents(t *testing.T) {
 		t.Fatalf("JSON parse: %v", err)
 	}
 	// JSON should be a flat array — no nesting.
-	if len(issues) != 3 {
-		t.Errorf("expected 3 issues in flat JSON, got %d", len(issues))
+	// Children are suppressed as descendants, so only epic + standalone = 2.
+	if len(issues) != 2 {
+		t.Errorf("expected 2 issues in flat JSON (epic + standalone), got %d", len(issues))
 	}
 }
 
-func TestCmdReadyGroupsNotSeparatedByBlankLine(t *testing.T) {
+func TestCmdReadyNoBlankLinesBetweenIssues(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	epic1, _ := env.Store.Create("Epic one", issue.CreateOpts{})
-	env.Store.Create("Child of one", issue.CreateOpts{Parent: epic1.ID})
-	epic2, _ := env.Store.Create("Epic two", issue.CreateOpts{})
-	env.Store.Create("Child of two", issue.CreateOpts{Parent: epic2.ID})
-	env.Repo.Commit("create epics")
+	env.Store.Create("Issue one", issue.CreateOpts{})
+	env.Store.Create("Issue two", issue.CreateOpts{})
+	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
 	err := cmdReady(env.Store, []string{"--no-context"}, PlainWriter(&buf))
@@ -320,9 +269,9 @@ func TestCmdReadyGroupsNotSeparatedByBlankLine(t *testing.T) {
 	}
 	out := strings.TrimRight(buf.String(), " \n")
 
-	// No blank lines between groups (PlainWriter has no footer, context suppressed)
+	// No blank lines between issues (PlainWriter has no footer, context suppressed)
 	if strings.Contains(out, "\n\n") {
-		t.Errorf("groups should not be separated by blank lines, got:\n%s", out)
+		t.Errorf("issues should not be separated by blank lines, got:\n%s", out)
 	}
 }
 
