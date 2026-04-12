@@ -485,6 +485,27 @@ var commands = []Command{
 		Run:        cmdPrime,
 	},
 	{
+		Name:        "recap",
+		Summary:     "Show recent activity across issues",
+		Description: "Summarize beadwork activity in this repo (or --all for every registered repo).\nBy default, shows activity since the last recap — first-time recaps show the last 24 hours.\n\nWindow tokens: today, yesterday, week, 24h, 7d. Use --since for an explicit start.\n--dry-run shows activity without advancing the cursor.",
+		Flags: []Flag{
+			{Long: "--since", Value: "DATE", Help: "Start time (RFC3339 or YYYY-MM-DD)"},
+			{Long: "--dry-run", Help: "Show activity without advancing the cursor"},
+			{Long: "--all", Help: "Recap every registered repository"},
+			{Long: "--json", Help: "Output as JSON"},
+			{Long: "--ascii", Help: "Use plain ASCII tree characters"},
+		},
+		Examples: []Example{
+			{Cmd: "bw recap", Help: "Activity since last recap (or 24h if first-time)"},
+			{Cmd: "bw recap today"},
+			{Cmd: "bw recap week --json"},
+			{Cmd: "bw recap --since 2026-01-01"},
+			{Cmd: "bw recap --all", Help: "Across all registered repos"},
+			{Cmd: "bw recap --dry-run", Help: "Preview without advancing cursor"},
+		},
+		Run: cmdRecap,
+	},
+	{
 		Name:        "registry",
 		Summary:     "Manage the repository registry",
 		Description: "View and manage the host-local repository registry.\nSubcommands: list, prune. Use bw registry <sub> --help for details.",
@@ -530,7 +551,7 @@ var commandGroups = []struct {
 	{"Finding Work", []string{"ready", "blocked"}},
 	{"Dependencies", []string{"dep"}},
 	{"Sync & Data", []string{"sync", "export", "import"}},
-	{"Cross-Repo & Activity", []string{"registry"}},
+	{"Cross-Repo & Activity", []string{"recap", "registry"}},
 	{"Setup & Config", []string{"init", "config", "upgrade", "onboard", "prime"}},
 }
 
