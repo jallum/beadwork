@@ -257,10 +257,12 @@ func TestScaffoldingHelpers(t *testing.T) {
 		t.Errorf("registryContents() = %q, want %q", got, `{"repos":{}}`)
 	}
 
-	// registryContents on empty dir returns ""
+	// registryContents on a fresh env returns content from auto-registration
+	// (bw init triggers touchRegistry).
 	env2 := newBwEnv(t)
-	if c := env2.registryContents(); c != "" {
-		t.Errorf("registryContents() on fresh env = %q, want empty", c)
+	c := env2.registryContents()
+	if !strings.Contains(c, "last_seen_at") {
+		t.Errorf("registryContents() on fresh env missing auto-reg data: %q", c)
 	}
 
 	// newMultiRepoEnv creates n envs sharing a registry dir
@@ -324,6 +326,195 @@ func TestGoldenBasicScenario(t *testing.T) {
 	if exported != reimported {
 		t.Errorf("round-trip mismatch\n--- original ---\n%s\n--- reimported ---\n%s",
 			exported, reimported)
+	}
+}
+
+// TestAutoRegistrationOnAnyCommand verifies that running any bw command
+// in an initialized repo creates a registry entry.
+func TestAutoRegistrationOnAnyCommand(t *testing.T) {
+	env := newBwEnv(t)
+
+	// Even a read-only command should register.
+	env.bw("list")
+
+	got := env.registryContents()
+	if got == "" {
+		t.Fatal("registry file not created after bw list")
+	}
+	if !strings.Contains(got, env.dir) {
+		t.Errorf("registry does not contain repo path %q:\n%s", env.dir, got)
+	}
+	if !strings.Contains(got, "2026-01-15T10:00:00Z") {
+		t.Errorf("registry last_seen_at does not reflect BW_CLOCK:\n%s", got)
+	}
+}
+
+// TestAutoRegFiresForReadOnlyCommands verifies registration happens even
+// for commands that don't modify state.
+func TestAutoRegFiresForReadOnlyCommands(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("ready")
+
+	got := env.registryContents()
+	if got == "" {
+		t.Fatal("registry file not created after bw ready")
+	}
+}
+
+// TestAutoRegistrationSilentFailure verifies that if the registry dir is
+// unwritable, bw still runs the command successfully.
+func TestAutoRegistrationSilentFailure(t *testing.T) {
+	dir := t.TempDir()
+	env := &bwEnv{
+		t:           t,
+		dir:         dir,
+		registryDir: "/nonexistent/path/that/should/fail",
+		env: append(os.Environ(),
+			"BW_CLOCK="+fixedClock,
+			"GIT_AUTHOR_DATE="+fixedClock,
+			"GIT_COMMITTER_DATE="+fixedClock,
+			"NO_COLOR=1",
+			"BEADWORK_HOME=/nonexistent/path/that/should/fail",
+		),
+	}
+	env.git("init")
+	env.git("config", "user.email", "test@beadwork.dev")
+	env.git("config", "user.name", "Test User")
+	os.WriteFile(filepath.Join(dir, "README"), []byte("test"), 0644)
+	env.git("add", ".")
+	env.git("commit", "-m", "initial")
+	env.bw("init", "--prefix", "test")
+
+	// Should succeed despite unwritable registry dir.
+	out := env.bw("list")
+	_ = out
+}
+
+// TestWorktreeRegistersSameAsMain verifies that running bw from a worktree
+// registers the main repo path, not the worktree path.
+func TestWorktreeRegistersSameAsMain(t *testing.T) {
+	env := newBwEnv(t)
+
+	// Create a worktree.
+	wtDir := filepath.Join(filepath.Dir(env.dir), "worktree")
+	env.git("worktree", "add", wtDir, "-b", "wt-branch")
+	t.Cleanup(func() {
+		env.git("worktree", "remove", "--force", wtDir)
+	})
+
+	// Run bw from the worktree.
+	env.bwAt(wtDir, "list")
+
+	got := env.registryContents()
+	if got == "" {
+		t.Fatal("registry not created after bw list from worktree")
+	}
+	// Should contain the main repo dir, not the worktree dir.
+	if strings.Contains(got, wtDir) {
+		t.Errorf("registry should not contain worktree path %q:\n%s", wtDir, got)
+	}
+}
+
+// TestRegistryList verifies the registry list command shows registered repos.
+func TestRegistryList(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("list") // trigger auto-registration
+
+	out := env.bw("registry", "list")
+	if !strings.Contains(out, env.dir) {
+		t.Errorf("registry list missing repo dir:\n%s", out)
+	}
+}
+
+// TestRegistryListJSON verifies JSON output format.
+func TestRegistryListJSON(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("list") // trigger registration
+
+	out := env.bw("registry", "list", "--json")
+	if !strings.Contains(out, `"path"`) {
+		t.Errorf("registry list --json missing 'path' key:\n%s", out)
+	}
+}
+
+// TestRegistryListMissing verifies that deleted repos are flagged as MISSING.
+func TestRegistryListMissing(t *testing.T) {
+	env := newBwEnv(t)
+	// Seed a registry entry for a nonexistent path.
+	env.seedRegistry(`{"schema_version":1,"repos":{"/nonexistent/repo":{"last_seen_at":"2026-01-15T10:00:00Z"}}}`)
+
+	out := env.bw("registry", "list")
+	if !strings.Contains(out, "MISSING") {
+		t.Errorf("registry list should show MISSING for nonexistent path:\n%s", out)
+	}
+}
+
+// TestRegistryPruneYes verifies that prune --yes removes missing entries.
+func TestRegistryPruneYes(t *testing.T) {
+	env := newBwEnv(t)
+	env.seedRegistry(`{"schema_version":1,"repos":{"/nonexistent/repo":{"last_seen_at":"2026-01-15T10:00:00Z"}}}`)
+
+	out := env.bw("registry", "prune", "--yes")
+	if !strings.Contains(out, "pruned 1") {
+		t.Errorf("expected 'pruned 1' in output:\n%s", out)
+	}
+
+	// Verify it's actually gone.
+	contents := env.registryContents()
+	if strings.Contains(contents, "/nonexistent/repo") {
+		t.Errorf("pruned entry still in registry:\n%s", contents)
+	}
+}
+
+// TestRegistryPruneNonTTY verifies prune refuses without --yes in non-TTY.
+func TestRegistryPruneNonTTY(t *testing.T) {
+	env := newBwEnv(t)
+	env.seedRegistry(`{"schema_version":1,"repos":{"/nonexistent/repo":{"last_seen_at":"2026-01-15T10:00:00Z"}}}`)
+
+	out := env.bwFail("registry", "prune")
+	if !strings.Contains(out, "non-interactive") {
+		t.Errorf("expected non-interactive error:\n%s", out)
+	}
+}
+
+// TestRegistryPruneHalfWarning verifies the half-removal warning.
+func TestRegistryPruneHalfWarning(t *testing.T) {
+	env := newBwEnv(t)
+	// 3 out of 4 missing (real repo auto-registered = 1 existing).
+	env.seedRegistry(`{"schema_version":1,"repos":{"/missing1":{"last_seen_at":"2026-01-15T10:00:00Z"},"/missing2":{"last_seen_at":"2026-01-15T10:00:00Z"},"/missing3":{"last_seen_at":"2026-01-15T10:00:00Z"},"` + env.dir + `":{"last_seen_at":"2026-01-15T10:00:00Z"}}}`)
+
+	out := env.bw("registry", "prune", "--yes")
+	if !strings.Contains(out, "more than half") {
+		t.Errorf("expected half-removal warning:\n%s", out)
+	}
+}
+
+// TestRegistryPruneShortFlag verifies -y works as shorthand for --yes.
+func TestRegistryPruneShortFlag(t *testing.T) {
+	env := newBwEnv(t)
+	env.seedRegistry(`{"schema_version":1,"repos":{"/nonexistent/repo":{"last_seen_at":"2026-01-15T10:00:00Z"}}}`)
+
+	out := env.bw("registry", "prune", "-y")
+	if !strings.Contains(out, "pruned 1") {
+		t.Errorf("expected 'pruned 1' with -y:\n%s", out)
+	}
+}
+
+// TestRegistryHelp verifies the help output.
+func TestRegistryHelp(t *testing.T) {
+	env := newBwEnv(t)
+	out := env.bw("registry", "--help")
+	if !strings.Contains(out, "list") || !strings.Contains(out, "prune") {
+		t.Errorf("registry help missing subcommands:\n%s", out)
+	}
+}
+
+// TestRegistryInBwHelp verifies registry appears in top-level help.
+func TestRegistryInBwHelp(t *testing.T) {
+	env := newBwEnv(t)
+	out := env.bw("--help")
+	if !strings.Contains(out, "registry") {
+		t.Errorf("bw --help missing registry:\n%s", out)
 	}
 }
 

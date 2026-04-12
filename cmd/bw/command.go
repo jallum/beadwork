@@ -484,6 +484,21 @@ var commands = []Command{
 		NeedsStore: true,
 		Run:        cmdPrime,
 	},
+	{
+		Name:        "registry",
+		Summary:     "Manage the repository registry",
+		Description: "View and manage the host-local repository registry.\nSubcommands: list, prune. Use bw registry <sub> --help for details.",
+		Positionals: []Positional{
+			{Name: "list|prune", Required: true, Help: "Subcommand"},
+		},
+		Examples: []Example{
+			{Cmd: "bw registry list", Help: "Show all registered repos"},
+			{Cmd: "bw registry list --json", Help: "JSON output"},
+			{Cmd: "bw registry prune", Help: "Remove entries for deleted repos"},
+			{Cmd: "bw registry prune --yes", Help: "Skip confirmation"},
+		},
+		Run: cmdRegistry,
+	},
 }
 
 // wrapNoArgs adapts a func(Writer) error to the standard command signature.
@@ -515,6 +530,7 @@ var commandGroups = []struct {
 	{"Finding Work", []string{"ready", "blocked"}},
 	{"Dependencies", []string{"dep"}},
 	{"Sync & Data", []string{"sync", "export", "import"}},
+	{"Cross-Repo & Activity", []string{"registry"}},
 	{"Setup & Config", []string{"init", "config", "upgrade", "onboard", "prime"}},
 }
 
