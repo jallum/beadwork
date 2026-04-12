@@ -1,0 +1,17 @@
+{
+  "annotations": [],
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "comments": [],
+  "created": "2026-04-12T16:26:20.002912Z",
+  "description": "Add optional positional arg to `bw ready`. When given, filter the ready output to only children/descendants of that parent. The parent itself should not appear — only its actionable children. TDD: write test first. Cross-ref: octo-ptf.1",
+  "id": "bw-ftu",
+  "labels": [],
+  "parent": "",
+  "priority": 2,
+  "status": "open",
+  "title": "bw ready <parent-id>: scope ready list to a subtree",
+  "type": "feature",
+  "updated_at": "2026-04-12T16:26:20.002912Z"
+}
