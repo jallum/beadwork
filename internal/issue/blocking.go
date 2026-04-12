@@ -206,67 +206,43 @@ func (s *Store) Tips(roots []string, edges map[string][]string) ([]*Issue, error
 
 func (s *Store) Ready() ([]*Issue, error) {
 	now := s.Now()
+	overlay := s.buildSubtreeOverlay()
 
-	// Open issues with all blockers resolved.
-	openIDs := s.IDsWithStatus("open")
 	var ready []*Issue
-	for _, id := range openIDs {
+
+	for _, id := range s.IDsWithStatus("open") {
+		if overlay.descendants[id] {
+			continue
+		}
 		iss, err := s.readIssue(id)
 		if err != nil {
 			continue
 		}
-		if allBlockersResolved(s, iss) {
+		if allResolved(s, overlay.effectiveBlockedBy(iss)) {
 			ready = append(ready, iss)
 		}
 	}
 
-	// Deferred issues whose deferral has expired, with all blockers resolved.
-	deferredIDs := s.IDsWithStatus("deferred")
-	for _, id := range deferredIDs {
+	for _, id := range s.IDsWithStatus("deferred") {
+		if overlay.descendants[id] {
+			continue
+		}
 		iss, err := s.readIssue(id)
 		if err != nil {
 			continue
 		}
-		if IsDeferralExpired(iss.DeferUntil, now) && allBlockersResolved(s, iss) {
+		if IsDeferralExpired(iss.DeferUntil, now) && allResolved(s, overlay.effectiveBlockedBy(iss)) {
 			ready = append(ready, iss)
 		}
-	}
-
-	// Subtree-aware reclassification
-	if adj := s.analyzeSubtrees(); adj != nil {
-		readySet := make(map[string]bool, len(ready))
-		var filtered []*Issue
-		for _, iss := range ready {
-			readySet[iss.ID] = true
-			if adj.blockedRoots[iss.ID] != nil {
-				continue // root has external blockers → not ready
-			}
-			if _, ok := adj.descendants[iss.ID]; ok {
-				continue // descendant — part of its root ticket
-			}
-			filtered = append(filtered, iss)
-		}
-		// Add subtree roots that are only internally blocked
-		for rootID := range adj.readyRoots {
-			if readySet[rootID] {
-				continue // already in ready
-			}
-			iss, err := s.readIssue(rootID)
-			if err != nil || iss.Status != "open" {
-				continue
-			}
-			filtered = append(filtered, iss)
-		}
-		ready = filtered
 	}
 
 	sortIssues(ready, now)
 	return ready, nil
 }
 
-func allBlockersResolved(s *Store, iss *Issue) bool {
-	for _, blockerID := range iss.BlockedBy {
-		if !s.IsClosed(blockerID) {
+func allResolved(s *Store, blockerIDs []string) bool {
+	for _, id := range blockerIDs {
+		if !s.IsClosed(id) {
 			return false
 		}
 	}
@@ -287,21 +263,24 @@ type CloseResult struct {
 
 // Blocked returns non-closed issues that have at least one open blocker.
 func (s *Store) Blocked() ([]BlockedIssue, error) {
+	overlay := s.buildSubtreeOverlay()
+
 	var ids []string
 	ids = append(ids, s.IDsWithStatus("open")...)
 	ids = append(ids, s.IDsWithStatus("in_progress")...)
 
 	var blocked []BlockedIssue
 	for _, id := range ids {
+		if overlay.descendants[id] {
+			continue
+		}
 		iss, err := s.readIssue(id)
 		if err != nil {
 			continue
 		}
-		if len(iss.BlockedBy) == 0 {
-			continue
-		}
+		effective := overlay.effectiveBlockedBy(iss)
 		var open []string
-		for _, blockerID := range iss.BlockedBy {
+		for _, blockerID := range effective {
 			if !s.IsClosed(blockerID) {
 				open = append(open, blockerID)
 			}
@@ -309,39 +288,6 @@ func (s *Store) Blocked() ([]BlockedIssue, error) {
 		if len(open) > 0 {
 			blocked = append(blocked, BlockedIssue{Issue: iss, OpenBlockers: open})
 		}
-	}
-
-	// Subtree-aware reclassification
-	if adj := s.analyzeSubtrees(); adj != nil {
-		var filtered []BlockedIssue
-		for _, bi := range blocked {
-			if _, ok := adj.descendants[bi.ID]; ok {
-				continue // suppress descendants
-			}
-			if adj.readyRoots[bi.ID] {
-				continue // only internal blockers → ready, not blocked
-			}
-			if ext, ok := adj.blockedRoots[bi.ID]; ok {
-				bi.OpenBlockers = uniqueStrings(append(bi.OpenBlockers, ext...))
-			}
-			filtered = append(filtered, bi)
-		}
-		// Add subtree roots with external blockers not already in blocked
-		blockedSet := make(map[string]bool, len(filtered))
-		for _, bi := range filtered {
-			blockedSet[bi.ID] = true
-		}
-		for rootID, ext := range adj.blockedRoots {
-			if blockedSet[rootID] {
-				continue
-			}
-			iss, err := s.readIssue(rootID)
-			if err != nil || iss.Status == "closed" {
-				continue
-			}
-			filtered = append(filtered, BlockedIssue{Issue: iss, OpenBlockers: ext})
-		}
-		blocked = filtered
 	}
 
 	return blocked, nil
@@ -409,26 +355,37 @@ func (s *Store) ClosedBlockerSet(issues []*Issue) map[string]bool {
 // display: closed blockers plus internal (within-subtree) blockers.
 func (s *Store) HiddenBlockerSet(issues []*Issue) map[string]bool {
 	set := s.ClosedBlockerSet(issues)
-	if adj := s.analyzeSubtrees(); adj != nil {
-		for id := range adj.descendants {
-			set[id] = true
-		}
+	overlay := s.buildSubtreeOverlay()
+	for id := range overlay.descendants {
+		set[id] = true
 	}
 	return set
 }
 
-// subtreeAdjustment holds the result of analyzing parent-child subtrees
-// for blocked/ready reclassification.
-type subtreeAdjustment struct {
-	blockedRoots map[string][]string // root ID → external blocker IDs
-	readyRoots   map[string]bool     // roots with no external blockers
-	descendants  map[string]bool     // all non-root subtree members
+// subtreeOverlay maps each subtree root to its effective (external-only)
+// blockers and tracks all non-root subtree members as descendants.
+type subtreeOverlay struct {
+	descendants      map[string]bool     // non-root subtree members
+	externalBlockers map[string][]string // root ID → external blocker IDs (empty = no external blockers)
 }
 
-// analyzeSubtrees builds subtrees from parent fields and classifies each
-// root as ready (no external blockers) or blocked (has external blockers).
-// Returns nil when no subtrees exist.
-func (s *Store) analyzeSubtrees() *subtreeAdjustment {
+// effectiveBlockedBy returns the external blockers for a subtree root,
+// or the issue's raw BlockedBy for non-root issues.
+func (o *subtreeOverlay) effectiveBlockedBy(iss *Issue) []string {
+	if ext, ok := o.externalBlockers[iss.ID]; ok {
+		return ext
+	}
+	return iss.BlockedBy
+}
+
+// buildSubtreeOverlay builds subtrees from parent fields, collects
+// external blockers per root, and marks all descendants.
+func (s *Store) buildSubtreeOverlay() *subtreeOverlay {
+	overlay := &subtreeOverlay{
+		descendants:      make(map[string]bool),
+		externalBlockers: make(map[string][]string),
+	}
+
 	// Load all non-closed issues
 	var allIDs []string
 	for _, status := range []string{"open", "in_progress", "in_review", "deferred"} {
@@ -448,58 +405,40 @@ func (s *Store) analyzeSubtrees() *subtreeAdjustment {
 		}
 	}
 
-	// Find roots: issues with children whose parent is absent or not in the set
-	var roots []string
+	// Find roots and process each subtree
 	for parentID := range children {
 		iss, ok := issues[parentID]
 		if !ok {
 			continue
 		}
-		if iss.Parent == "" || issues[iss.Parent] == nil {
-			roots = append(roots, parentID)
+		if iss.Parent != "" && issues[iss.Parent] != nil {
+			continue // not a root
 		}
-	}
-	if len(roots) == 0 {
-		return nil
-	}
 
-	adj := &subtreeAdjustment{
-		blockedRoots: make(map[string][]string),
-		readyRoots:   make(map[string]bool),
-		descendants:  make(map[string]bool),
-	}
-
-	for _, rootID := range roots {
-		subtree := buildSubtreeSet(rootID, children)
+		subtree := buildSubtreeSet(parentID, children)
 
 		for id := range subtree {
-			if id != rootID {
-				adj.descendants[id] = true
+			if id != parentID {
+				overlay.descendants[id] = true
 			}
 		}
 
 		var ext []string
 		for id := range subtree {
-			iss := issues[id]
-			if iss == nil {
+			member := issues[id]
+			if member == nil {
 				continue
 			}
-			for _, blockerID := range iss.BlockedBy {
+			for _, blockerID := range member.BlockedBy {
 				if !subtree[blockerID] && !s.IsClosed(blockerID) {
 					ext = append(ext, blockerID)
 				}
 			}
 		}
-		ext = uniqueStrings(ext)
-
-		if len(ext) > 0 {
-			adj.blockedRoots[rootID] = ext
-		} else {
-			adj.readyRoots[rootID] = true
-		}
+		overlay.externalBlockers[parentID] = uniqueStrings(ext)
 	}
 
-	return adj
+	return overlay
 }
 
 func buildSubtreeSet(rootID string, children map[string][]string) map[string]bool {
