@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 var bwBin string // path to built bw binary
@@ -34,9 +35,10 @@ func TestMain(m *testing.M) {
 // bwEnv is a self-contained environment for running bw commands against
 // a deterministic git repo.
 type bwEnv struct {
-	t   *testing.T
-	dir string
-	env []string
+	t           *testing.T
+	dir         string
+	registryDir string
+	env         []string
 }
 
 const fixedClock = "2026-01-15T10:00:00Z"
@@ -44,15 +46,18 @@ const fixedClock = "2026-01-15T10:00:00Z"
 func newBwEnv(t *testing.T) *bwEnv {
 	t.Helper()
 	dir := t.TempDir()
+	registryDir := t.TempDir()
 
 	env := &bwEnv{
-		t:   t,
-		dir: dir,
+		t:           t,
+		dir:         dir,
+		registryDir: registryDir,
 		env: append(os.Environ(),
 			"BW_CLOCK="+fixedClock,
 			"GIT_AUTHOR_DATE="+fixedClock,
 			"GIT_COMMITTER_DATE="+fixedClock,
 			"NO_COLOR=1",
+			"BEADWORK_HOME="+registryDir,
 		),
 	}
 
@@ -97,6 +102,23 @@ func (e *bwEnv) bw(args ...string) string {
 	return stdout.String()
 }
 
+// bwFail runs a bw command that is expected to fail.
+// Returns combined stdout+stderr. Fatals if the command succeeds.
+func (e *bwEnv) bwFail(args ...string) string {
+	e.t.Helper()
+	cmd := exec.Command(bwBin, args...)
+	cmd.Dir = e.dir
+	cmd.Env = e.env
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err == nil {
+		e.t.Fatalf("bw %s: expected failure but succeeded\nstdout: %s",
+			strings.Join(args, " "), stdout.String())
+	}
+	return stdout.String() + stderr.String()
+}
+
 // bwAt runs bw from a custom directory instead of the default e.dir.
 func (e *bwEnv) bwAt(dir string, args ...string) string {
 	e.t.Helper()
@@ -118,25 +140,142 @@ func (e *bwEnv) bwAt(dir string, args ...string) string {
 func (e *bwEnv) goldenCompare(name string) {
 	e.t.Helper()
 	got := e.bw("export")
+	compareGolden(e.t, name+".golden.jsonl", got)
+}
 
-	goldenPath := filepath.Join("testdata", name+".golden.jsonl")
+// compareGolden compares got against a golden file in testdata/.
+// If UPDATE_GOLDEN=1, writes got as the new golden file instead.
+func compareGolden(t *testing.T, name, got string) {
+	t.Helper()
+	goldenPath := filepath.Join("testdata", name)
 
 	if os.Getenv("UPDATE_GOLDEN") == "1" {
 		if err := os.WriteFile(goldenPath, []byte(got), 0644); err != nil {
-			e.t.Fatalf("write golden file: %v", err)
+			t.Fatalf("write golden file: %v", err)
 		}
-		e.t.Logf("updated golden file: %s", goldenPath)
+		t.Logf("updated golden file: %s", goldenPath)
 		return
 	}
 
 	want, err := os.ReadFile(goldenPath)
 	if err != nil {
-		e.t.Fatalf("read golden file (run with UPDATE_GOLDEN=1 to create): %v", err)
+		t.Fatalf("read golden file (run with UPDATE_GOLDEN=1 to create): %v", err)
 	}
 
 	if got != string(want) {
-		e.t.Errorf("export output does not match golden file %s\n--- want ---\n%s\n--- got ---\n%s",
+		t.Errorf("output does not match golden file %s\n--- want ---\n%s\n--- got ---\n%s",
 			goldenPath, string(want), got)
+	}
+}
+
+// newMultiRepoEnv creates n independent bwEnv instances that share the same
+// registry directory, simulating multiple repos registered in a single registry.
+func newMultiRepoEnv(t *testing.T, n int) []*bwEnv {
+	t.Helper()
+	registryDir := t.TempDir()
+	envs := make([]*bwEnv, n)
+	for i := range n {
+		dir := t.TempDir()
+		env := &bwEnv{
+			t:           t,
+			dir:         dir,
+			registryDir: registryDir,
+			env: append(os.Environ(),
+				"BW_CLOCK="+fixedClock,
+				"GIT_AUTHOR_DATE="+fixedClock,
+				"GIT_COMMITTER_DATE="+fixedClock,
+				"NO_COLOR=1",
+				"BEADWORK_HOME="+registryDir,
+			),
+		}
+		env.git("init")
+		env.git("config", "user.email", "test@beadwork.dev")
+		env.git("config", "user.name", "Test User")
+		os.WriteFile(filepath.Join(dir, "README"), []byte(fmt.Sprintf("repo %d", i)), 0644)
+		env.git("add", ".")
+		env.git("commit", "-m", "initial")
+		env.bw("init", "--prefix", fmt.Sprintf("r%d", i))
+		envs[i] = env
+	}
+	return envs
+}
+
+// seedRegistry writes raw JSON content to a file named "registry.json" in
+// the env's registry directory. Use this to set up registry state before
+// running commands that read the registry.
+func (e *bwEnv) seedRegistry(content string) {
+	e.t.Helper()
+	path := filepath.Join(e.registryDir, "registry.json")
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		e.t.Fatalf("seedRegistry: %v", err)
+	}
+}
+
+// registryContents reads and returns the raw content of the registry file.
+// Returns an empty string if the file does not exist.
+func (e *bwEnv) registryContents() string {
+	e.t.Helper()
+	path := filepath.Join(e.registryDir, "registry.json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return ""
+		}
+		e.t.Fatalf("registryContents: %v", err)
+	}
+	return string(data)
+}
+
+// bwNow returns the time that bw commands will use as "now", respecting BW_CLOCK.
+// Panics if BW_CLOCK is set but not parseable (test setup error).
+func bwNow() time.Time {
+	t, err := time.Parse(time.RFC3339, fixedClock)
+	if err != nil {
+		panic("fixedClock is not valid RFC3339: " + err.Error())
+	}
+	return t.UTC()
+}
+
+// TestScaffoldingHelpers verifies that the test scaffolding helpers work correctly.
+func TestScaffoldingHelpers(t *testing.T) {
+	// bwNow should match fixedClock
+	now := bwNow()
+	if now.Format(time.RFC3339) != fixedClock {
+		t.Errorf("bwNow() = %v, want %v", now.Format(time.RFC3339), fixedClock)
+	}
+
+	// newBwEnv should set up a registry dir
+	env := newBwEnv(t)
+	if env.registryDir == "" {
+		t.Fatal("registryDir not set")
+	}
+
+	// seedRegistry + registryContents round-trip
+	env.seedRegistry(`{"repos":{}}`)
+	got := env.registryContents()
+	if got != `{"repos":{}}` {
+		t.Errorf("registryContents() = %q, want %q", got, `{"repos":{}}`)
+	}
+
+	// registryContents on empty dir returns ""
+	env2 := newBwEnv(t)
+	if c := env2.registryContents(); c != "" {
+		t.Errorf("registryContents() on fresh env = %q, want empty", c)
+	}
+
+	// newMultiRepoEnv creates n envs sharing a registry dir
+	envs := newMultiRepoEnv(t, 3)
+	if len(envs) != 3 {
+		t.Fatalf("newMultiRepoEnv(3) returned %d envs", len(envs))
+	}
+	sharedDir := envs[0].registryDir
+	for i, e := range envs {
+		if e.registryDir != sharedDir {
+			t.Errorf("env[%d].registryDir = %q, want %q (shared)", i, e.registryDir, sharedDir)
+		}
+		// Each env should be an independent bw repo
+		out := e.bw("list")
+		_ = out // no issues yet, just verify it runs
 	}
 }
 
