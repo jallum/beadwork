@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.2 — 2026-04-12
+
+- **Subtree blocker display fix** — `bw ready` epics with children no longer show `[blocked by: ...]` annotations for their own descendants. The subtree-aware classification added in 0.12.1 correctly identified these epics as ready, but the display layer still rendered internal blocker IDs, making ready epics look blocked. Internal blockers are now filtered from annotations alongside closed blockers.
+
 ## 0.12.1 — 2026-04-07
 
 - **Subtree-aware `bw ready` and `bw blocked`** — epics with children are now classified based on their full subtree instead of individually. If all blockers are internal to the subtree, the parent shows as ready and descendants are suppressed from both lists. If any descendant has an external blocker, the parent shows as blocked with those external blocker IDs aggregated. This reduces noise for projects with deep issue hierarchies — you see the actionable root, not every leaf.
