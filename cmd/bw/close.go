@@ -1,12 +1,14 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/jallum/beadwork/internal/config"
 
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/md"
+	"github.com/jallum/beadwork/internal/treefs"
 )
 
 type CloseArgs struct {
@@ -30,28 +32,53 @@ func parseCloseArgs(raw []string) (CloseArgs, error) {
 	}, nil
 }
 
+const closeMaxRetries = 3
+
 func cmdClose(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	ca, err := parseCloseArgs(args)
 	if err != nil {
 		return nil, err
 	}
 
-	iss, err := store.Close(ca.ID, ca.Reason)
-	if err != nil {
-		return nil, err
-	}
+	var iss *issue.Issue
+	var unblocked []*issue.Issue
 
-	unblocked, err := store.NewlyUnblocked(iss.ID)
-	if err != nil {
-		return nil, err
-	}
+	for attempt := range closeMaxRetries {
+		if attempt > 0 {
+			store.ClearCache()
+			if err := store.Refresh(); err != nil {
+				return nil, fmt.Errorf("refresh after conflict: %w", err)
+			}
+		}
 
-	intent := fmt.Sprintf("close %s", iss.ID)
-	if ca.Reason != "" {
-		intent += fmt.Sprintf(" reason=%q", ca.Reason)
+		iss, err = store.Close(ca.ID, ca.Reason)
+		if err != nil {
+			return nil, err
+		}
+
+		unblocked, err = store.NewlyUnblocked(iss.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		intent := fmt.Sprintf("close %s", iss.ID)
+		if ca.Reason != "" {
+			intent += fmt.Sprintf(" reason=%q", ca.Reason)
+		}
+		for _, u := range unblocked {
+			intent += fmt.Sprintf("\nunblocked %s", u.ID)
+		}
+
+		err = store.Commit(intent)
+		if err == nil {
+			break
+		}
+		if !errors.Is(err, treefs.ErrRefMoved) {
+			return nil, fmt.Errorf("commit failed: %w", err)
+		}
 	}
-	if err := store.Commit(intent); err != nil {
-		return nil, fmt.Errorf("commit failed: %w", err)
+	if err != nil {
+		return nil, fmt.Errorf("commit failed after %d attempts: %w", closeMaxRetries, err)
 	}
 
 	if ca.JSON {
