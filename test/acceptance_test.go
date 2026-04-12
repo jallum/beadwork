@@ -518,6 +518,73 @@ func TestRegistryInBwHelp(t *testing.T) {
 	}
 }
 
+// TestCloseStampsUnblockedEvents verifies that closing an issue stamps
+// "unblocked <id>" lines into the commit message for each newly unblocked issue.
+func TestCloseStampsUnblockedEvents(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "blocker", "--id", "bl-1")
+	env.bw("create", "blocked", "--id", "bl-2")
+	env.bw("dep", "add", "bl-1", "blocks", "bl-2")
+
+	out := env.bw("close", "bl-1")
+	if !strings.Contains(out, "unblocked") {
+		t.Fatalf("close output missing unblocked info:\n%s", out)
+	}
+
+	// Check the commit message on the beadwork branch.
+	log := env.git("log", "-1", "--format=%B", "beadwork")
+	if !strings.Contains(log, "unblocked bl-2") {
+		t.Errorf("close commit missing 'unblocked bl-2':\n%s", log)
+	}
+}
+
+// TestCloseChainStampsOnlyRemainingDep verifies that when an issue has
+// multiple blockers, closing one does NOT stamp an unblocked event for
+// the still-blocked dependent.
+func TestCloseChainStampsOnlyRemainingDep(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "blocker A", "--id", "ca-1")
+	env.bw("create", "blocker B", "--id", "ca-2")
+	env.bw("create", "dependent", "--id", "ca-3")
+	env.bw("dep", "add", "ca-1", "blocks", "ca-3")
+	env.bw("dep", "add", "ca-2", "blocks", "ca-3")
+
+	// Close only ca-1; ca-3 still blocked by ca-2.
+	env.bw("close", "ca-1")
+	log := env.git("log", "-1", "--format=%B", "beadwork")
+	if strings.Contains(log, "unblocked ca-3") {
+		t.Errorf("close commit should NOT contain 'unblocked ca-3' (still blocked by ca-2):\n%s", log)
+	}
+
+	// Now close ca-2; ca-3 should be unblocked.
+	env.bw("close", "ca-2")
+	log = env.git("log", "-1", "--format=%B", "beadwork")
+	if !strings.Contains(log, "unblocked ca-3") {
+		t.Errorf("close commit should contain 'unblocked ca-3':\n%s", log)
+	}
+}
+
+// TestCloseReasonContainingUnblockedWord verifies that a close reason
+// containing the word "unblocked" does not create a spurious unblocked event.
+func TestCloseReasonContainingUnblockedWord(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "solo issue", "--id", "cu-1")
+
+	env.bw("close", "cu-1", "--reason", "unblocked by external team")
+	log := env.git("log", "-1", "--format=%B", "beadwork")
+	// The reason appears in the first line (close intent), but there should be
+	// no second line matching "unblocked <id>".
+	lines := strings.Split(strings.TrimSpace(log), "\n")
+	for _, line := range lines[1:] {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "unblocked ") && !strings.Contains(line, "=") {
+			// This looks like a stamped event, but it's just the reason text
+			// on the first line. Additional lines should not match.
+			t.Errorf("spurious unblocked line in commit: %q", line)
+		}
+	}
+}
+
 // TestWorktreeRefWrites verifies that bw operations run from inside a git
 // worktree write refs to the shared git dir, so tickets are visible from
 // the main checkout.
