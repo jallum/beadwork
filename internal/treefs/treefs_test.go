@@ -1,6 +1,7 @@
 package treefs
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -383,8 +384,8 @@ func TestCASConflict(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected CAS conflict error")
 	}
-	if !containsStr(err.Error(), "conflict") {
-		t.Fatalf("expected conflict error, got: %v", err)
+	if !errors.Is(err, ErrRefMoved) {
+		t.Fatalf("expected ErrRefMoved, got: %v", err)
 	}
 }
 
