@@ -1,0 +1,17 @@
+{
+  "annotations": [],
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "comments": [],
+  "created": "2026-04-12T15:53:38.921034Z",
+  "description": "In `cmdReady`, the dep annotation on readyRoot epics shows `[blocked by: child1, child2, ...]` even though those are internal (within-subtree) blockers. This makes ready epics look blocked.\\n\\nFix: compute the descendant/internal-blocker set from `analyzeSubtrees` and merge it into the filter set passed to `FormatDepsFiltered`. Internal blockers should be hidden from the ready display.\\n\\nCross-ref: octo-8lz.1 in octopus repo.",
+  "id": "bw-qxs",
+  "labels": [],
+  "parent": "",
+  "priority": 1,
+  "status": "open",
+  "title": "Strip internal blocker IDs from ready display",
+  "type": "bug",
+  "updated_at": "2026-04-12T15:53:38.921034Z"
+}
