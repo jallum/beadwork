@@ -4,9 +4,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
+	"time"
 
 	"github.com/jallum/beadwork/internal/config"
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/registry"
+	"github.com/jallum/beadwork/internal/repo"
 	"golang.org/x/term"
 )
 
@@ -105,6 +109,46 @@ func main() {
 			fatal(err.Error())
 		}
 	}
+
+	touchRegistry(bwNow())
+}
+
+var registryOnce sync.Once
+
+func touchRegistry(now time.Time) {
+	r, err := repo.FindRepoAt(repoDir)
+	if err != nil {
+		return
+	}
+	if !r.IsInitialized() {
+		return
+	}
+	repoPath, err := registry.CanonicalRepoPath(r.RepoDir())
+	if err != nil {
+		return
+	}
+	dir := registry.DefaultDir()
+	reg, err := registry.Load(dir)
+	if err != nil {
+		registryOnce.Do(func() {
+			fmt.Fprintf(os.Stderr, "warning: could not load registry: %v\n", err)
+		})
+		return
+	}
+	if err := reg.TouchAndSave(repoPath, now); err != nil {
+		registryOnce.Do(func() {
+			fmt.Fprintf(os.Stderr, "warning: could not save registry: %v\n", err)
+		})
+	}
+}
+
+func bwNow() time.Time {
+	if v := os.Getenv("BW_CLOCK"); v != "" {
+		if t, err := time.Parse(time.RFC3339, v); err == nil {
+			return t.UTC()
+		}
+	}
+	return time.Now().UTC()
 }
 
 // extractDirFlag removes all -C <dir> pairs from args and sets repoDir.
