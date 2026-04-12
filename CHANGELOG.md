@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.3 — 2026-04-12
+
+- **`bw ready <parent-id>`** — scope the ready list to a single subtree. Pass any issue ID as a positional argument and `bw ready` returns only the actionable descendants of that parent (the parent itself is excluded). Useful for focusing on what's unblocked within a specific epic or workstream without seeing every ready item in the repo. Without an argument, behavior is unchanged.
+
 ## 0.12.2 — 2026-04-12
 
 - **Subtree blocker display fix** — `bw ready` epics with children no longer show `[blocked by: ...]` annotations for their own descendants. The subtree-aware classification added in 0.12.1 correctly identified these epics as ready, but the display layer still rendered internal blocker IDs, making ready epics look blocked. Internal blockers are now filtered from annotations alongside closed blockers.
