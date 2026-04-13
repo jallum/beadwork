@@ -2,6 +2,8 @@ package recap
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -49,13 +51,101 @@ func ParseWindow(tokens []string, since string, now time.Time) (Window, error) {
 	case "week", "this week":
 		start := startOfWeek(now, loc)
 		return Window{Start: start, End: now, Label: "this week"}, nil
-	case "24h":
-		return Window{Start: now.Add(-24 * time.Hour), End: now, Label: "last 24h"}, nil
-	case "7d":
-		return Window{Start: now.AddDate(0, 0, -7), End: now, Label: "last 7 days"}, nil
-	default:
-		return Window{}, fmt.Errorf("unknown window %q (expected: today, yesterday, week, 24h, 7d)", token)
 	}
+
+	if d, ok := parseDurationToken(token); ok {
+		return Window{Start: now.Add(-d), End: now, Label: "last " + formatDuration(d)}, nil
+	}
+
+	return Window{}, fmt.Errorf("unknown window %q (expected: today, yesterday, week, or duration like 15m, 1h, 24h, 7d, 2w)", token)
+}
+
+// durationPartRe matches a single duration component like "15m", "3h", "2d", "1w".
+var durationPartRe = regexp.MustCompile(`^(\d+)(m|h|d|w)$`)
+
+// parseDurationToken parses tokens like "15m", "1h", "3h30m", "24h", "7d", "2w".
+// Returns (duration, true) on success. Accepts Go's time.ParseDuration syntax
+// for minute/hour combinations (so "3h30m" works) and extends with d/w for
+// days and weeks.
+func parseDurationToken(s string) (time.Duration, bool) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return 0, false
+	}
+
+	// First try Go's built-in parser (handles combinations like 3h30m).
+	if d, err := time.ParseDuration(s); err == nil && d > 0 {
+		return d, true
+	}
+
+	// Fall back to our extended parser that supports d (day) and w (week).
+	// Split into consecutive <digits><unit> chunks.
+	var total time.Duration
+	rest := s
+	for rest != "" {
+		m := durationPartRe.FindStringSubmatch(rest)
+		if m == nil {
+			// Try a multi-part match by scanning.
+			i := 0
+			for i < len(rest) && rest[i] >= '0' && rest[i] <= '9' {
+				i++
+			}
+			if i == 0 || i == len(rest) {
+				return 0, false
+			}
+			n, err := strconv.Atoi(rest[:i])
+			if err != nil {
+				return 0, false
+			}
+			unit := rest[i]
+			rest = rest[i+1:]
+			switch unit {
+			case 'm':
+				total += time.Duration(n) * time.Minute
+			case 'h':
+				total += time.Duration(n) * time.Hour
+			case 'd':
+				total += time.Duration(n) * 24 * time.Hour
+			case 'w':
+				total += time.Duration(n) * 7 * 24 * time.Hour
+			default:
+				return 0, false
+			}
+			continue
+		}
+		n, _ := strconv.Atoi(m[1])
+		switch m[2] {
+		case "m":
+			total += time.Duration(n) * time.Minute
+		case "h":
+			total += time.Duration(n) * time.Hour
+		case "d":
+			total += time.Duration(n) * 24 * time.Hour
+		case "w":
+			total += time.Duration(n) * 7 * 24 * time.Hour
+		}
+		rest = ""
+	}
+
+	if total <= 0 {
+		return 0, false
+	}
+	return total, true
+}
+
+// formatDuration renders a Duration as a compact label ("15m", "3h", "2d", "1w").
+func formatDuration(d time.Duration) string {
+	switch {
+	case d%(7*24*time.Hour) == 0 && d >= 7*24*time.Hour:
+		return fmt.Sprintf("%dw", d/(7*24*time.Hour))
+	case d%(24*time.Hour) == 0 && d >= 24*time.Hour:
+		return fmt.Sprintf("%dd", d/(24*time.Hour))
+	case d%time.Hour == 0 && d >= time.Hour:
+		return fmt.Sprintf("%dh", d/time.Hour)
+	case d%time.Minute == 0 && d >= time.Minute:
+		return fmt.Sprintf("%dm", d/time.Minute)
+	}
+	return d.String()
 }
 
 func startOfDay(t time.Time, loc *time.Location) time.Time {
