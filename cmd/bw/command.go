@@ -487,17 +487,21 @@ var commands = []Command{
 	{
 		Name:        "recap",
 		Summary:     "Show recent activity across issues",
-		Description: "Summarize beadwork activity in this repo (or --all for every registered repo).\nBy default, shows activity since the last recap — first-time recaps show the last 24 hours.\n\nWindow tokens: today, yesterday, week, 24h, 7d. Use --since for an explicit start.\n--dry-run shows activity without advancing the cursor.",
+		Description: "Summarize beadwork activity in this repo (or --all for every registered repo).\nBy default, shows activity since the last recap — first-time recaps show the last 24 hours.\nOutput is condensed (one line per issue). Use --verbose for per-event detail.\n\nWindow tokens:\n  today, yesterday, week\n  durations: 15m, 1h, 3h30m, 24h, 2d, 7d, 2w\nUse --since for an explicit start (RFC3339 or YYYY-MM-DD).\n--dry-run shows activity without advancing the cursor.",
 		Flags: []Flag{
 			{Long: "--since", Value: "DATE", Help: "Start time (RFC3339 or YYYY-MM-DD)"},
 			{Long: "--dry-run", Help: "Show activity without advancing the cursor"},
 			{Long: "--all", Help: "Recap every registered repository"},
+			{Long: "--verbose", Short: "-v", Help: "Per-event detail tree (default is condensed)"},
 			{Long: "--json", Help: "Output as JSON"},
-			{Long: "--ascii", Help: "Use plain ASCII tree characters"},
+			{Long: "--ascii", Help: "Use plain ASCII tree characters (with --verbose)"},
 		},
 		Examples: []Example{
 			{Cmd: "bw recap", Help: "Activity since last recap (or 24h if first-time)"},
+			{Cmd: "bw recap 15m", Help: "Last 15 minutes"},
+			{Cmd: "bw recap 1h"},
 			{Cmd: "bw recap today"},
+			{Cmd: "bw recap 7d --verbose", Help: "Full per-event tree"},
 			{Cmd: "bw recap week --json"},
 			{Cmd: "bw recap --since 2026-01-01"},
 			{Cmd: "bw recap --all", Help: "Across all registered repos"},
