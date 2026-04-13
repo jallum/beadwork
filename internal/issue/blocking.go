@@ -24,6 +24,11 @@ func (s *Store) Link(blockerID, blockedID string) error {
 		return fmt.Errorf("circular dependency: %s is already transitively blocked by %s", blockerID, blockedID)
 	}
 
+	// Ancestor check: a descendant cannot block its ancestor.
+	if s.isAncestor(blockerID, blockedID) {
+		return fmt.Errorf("child cannot block ancestor: %s is a descendant of %s", blockerID, blockedID)
+	}
+
 	// Create marker file: blocks/<blocker>/<blocked>
 	s.FS.MkdirAll("blocks/" + blockerID)
 	if err := s.FS.WriteFile("blocks/"+blockerID+"/"+blockedID, []byte{}); err != nil {
@@ -520,6 +525,22 @@ func uniqueStrings(ss []string) []string {
 		}
 	}
 	return result
+}
+
+// isAncestor reports whether candidateAncestor is an ancestor of id
+// by walking up the Parent chain.
+func (s *Store) isAncestor(id, candidateAncestor string) bool {
+	current := id
+	for {
+		iss, err := s.readIssue(current)
+		if err != nil || iss.Parent == "" {
+			return false
+		}
+		if iss.Parent == candidateAncestor {
+			return true
+		}
+		current = iss.Parent
+	}
 }
 
 // wouldCycle reports whether target is reachable from start by following

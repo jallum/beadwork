@@ -143,6 +143,60 @@ func TestLinkSelfBlocking(t *testing.T) {
 	}
 }
 
+func TestLinkChildBlocksParent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	parent, _ := env.Store.Create("Parent", issue.CreateOpts{})
+	env.CommitIntent("create parent")
+	child, _ := env.Store.Create("Child", issue.CreateOpts{Parent: parent.ID})
+	env.CommitIntent("create child")
+
+	err := env.Store.Link(child.ID, parent.ID)
+	if err == nil {
+		t.Fatal("expected error for child blocking parent")
+	}
+	if !strings.Contains(err.Error(), "ancestor") {
+		t.Errorf("error = %q, want mention of ancestor", err)
+	}
+}
+
+func TestLinkGrandchildBlocksGrandparent(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	gp, _ := env.Store.Create("Grandparent", issue.CreateOpts{})
+	env.CommitIntent("create gp")
+	parent, _ := env.Store.Create("Parent", issue.CreateOpts{Parent: gp.ID})
+	env.CommitIntent("create parent")
+	child, _ := env.Store.Create("Child", issue.CreateOpts{Parent: parent.ID})
+	env.CommitIntent("create child")
+
+	err := env.Store.Link(child.ID, gp.ID)
+	if err == nil {
+		t.Fatal("expected error for grandchild blocking grandparent")
+	}
+	if !strings.Contains(err.Error(), "ancestor") {
+		t.Errorf("error = %q, want mention of ancestor", err)
+	}
+}
+
+func TestLinkSiblingDepsAllowed(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	parent, _ := env.Store.Create("Parent", issue.CreateOpts{})
+	env.CommitIntent("create parent")
+	a, _ := env.Store.Create("A", issue.CreateOpts{Parent: parent.ID})
+	env.CommitIntent("create a")
+	b, _ := env.Store.Create("B", issue.CreateOpts{Parent: parent.ID})
+	env.CommitIntent("create b")
+
+	if err := env.Store.Link(a.ID, b.ID); err != nil {
+		t.Fatalf("sibling link should be allowed: %v", err)
+	}
+}
+
 func TestReady(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
