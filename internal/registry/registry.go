@@ -19,9 +19,10 @@ const registryFile = "registry.json"
 
 // Entry represents a single tracked repository.
 type Entry struct {
-	LastSeenAt string `json:"last_seen_at"`
-	Cursor     string `json:"cursor,omitempty"`
-	Prefix     string `json:"prefix,omitempty"`
+	LastSeenAt   string `json:"last_seen_at"`
+	LastRecapAt  string `json:"last_recap_at,omitempty"`
+	Cursor       string `json:"cursor,omitempty"`
+	Prefix       string `json:"prefix,omitempty"`
 }
 
 // Registry holds the in-memory state of the registry file.
@@ -150,6 +151,22 @@ func (r *Registry) AdvanceCursorAndSave(repoPath, cursor string) error {
 
 	e := r.Repos[repoPath]
 	e.Cursor = cursor
+	r.Repos[repoPath] = e
+	return r.saveLocked()
+}
+
+// StampRecapAndSave records that a recap ran for the repo at `now` and
+// optionally advances the cursor. Pass cursor="" to leave the cursor
+// untouched (e.g. when there were no new commits).
+func (r *Registry) StampRecapAndSave(repoPath, cursor string, now time.Time) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	e := r.Repos[repoPath]
+	e.LastRecapAt = now.UTC().Format(time.RFC3339)
+	if cursor != "" {
+		e.Cursor = cursor
+	}
 	r.Repos[repoPath] = e
 	return r.saveLocked()
 }

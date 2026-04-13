@@ -435,8 +435,8 @@ func TestWorktreeRegistersSameAsMain(t *testing.T) {
 func TestRecapEmpty(t *testing.T) {
 	env := newBwEnv(t)
 	out := env.bw("recap", "today")
-	if !strings.Contains(out, "caught up") {
-		t.Errorf("expected 'caught up' message:\n%s", out)
+	if !strings.Contains(out, "nothing to report") {
+		t.Errorf("expected 'nothing to report' message:\n%s", out)
 	}
 }
 
@@ -482,6 +482,72 @@ func TestRecapDryRun(t *testing.T) {
 	}
 }
 
+// TestRecapCursorIsIncremental verifies that after a first recap, a second
+// recap with no window flag only shows NEW events, not everything again.
+func TestRecapCursorIsIncremental(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "first", "--id", "ic-1")
+
+	// First recap advances the cursor.
+	out1 := env.bw("recap")
+	if !strings.Contains(out1, "ic-1") {
+		t.Fatalf("first recap missing ic-1:\n%s", out1)
+	}
+
+	// Second recap with no new activity should report nothing.
+	out2 := env.bw("recap")
+	if strings.Contains(out2, "ic-1") {
+		t.Errorf("second recap should not re-report ic-1:\n%s", out2)
+	}
+	if !strings.Contains(out2, "nothing to report") {
+		t.Errorf("second recap should show 'nothing to report':\n%s", out2)
+	}
+
+	// Create new activity — it must show up on the next recap.
+	env.bw("create", "second", "--id", "ic-2")
+	out3 := env.bw("recap")
+	if !strings.Contains(out3, "ic-2") {
+		t.Errorf("third recap missing new ic-2:\n%s", out3)
+	}
+	if strings.Contains(out3, "ic-1") {
+		t.Errorf("third recap should not re-show ic-1:\n%s", out3)
+	}
+}
+
+// TestRecapStampsLastRecapAtWithNoCommits verifies that running recap with
+// nothing new still updates last_recap_at, so repeated recaps update the
+// "since last recap" label even against an unchanged HEAD.
+func TestRecapStampsLastRecapAtWithNoCommits(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "x", "--id", "lr-1")
+	env.bw("recap") // initial — stamps last_recap_at
+
+	before := env.registryContents()
+	if !strings.Contains(before, `"last_recap_at"`) {
+		t.Fatalf("first recap did not set last_recap_at:\n%s", before)
+	}
+
+	// Run again with nothing new. last_recap_at should still be rewritten
+	// (same value under BW_CLOCK, but the field must exist and be stamped).
+	env.bw("recap")
+	after := env.registryContents()
+	if !strings.Contains(after, `"last_recap_at"`) {
+		t.Errorf("second recap lost last_recap_at:\n%s", after)
+	}
+}
+
+// TestRecapDryRunDoesNotStamp verifies --dry-run leaves last_recap_at alone.
+func TestRecapDryRunDoesNotStamp(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "x", "--id", "dr-2")
+
+	env.bw("recap", "--dry-run")
+	contents := env.registryContents()
+	if strings.Contains(contents, `"last_recap_at"`) {
+		t.Errorf("--dry-run should not stamp last_recap_at:\n%s", contents)
+	}
+}
+
 // TestRecapAdvancesCursor verifies that a non-dry-run recap advances the cursor.
 func TestRecapAdvancesCursor(t *testing.T) {
 	env := newBwEnv(t)
@@ -514,15 +580,191 @@ func TestRecapSinceInvalid(t *testing.T) {
 	}
 }
 
-// TestRecapASCII verifies that --ascii uses plain tree characters.
+// TestRecapASCII verifies that --ascii uses plain tree characters
+// (only affects --verbose tree output).
 func TestRecapASCII(t *testing.T) {
 	env := newBwEnv(t)
 	env.bw("create", "ascii test", "--id", "as-1")
 
-	out := env.bw("recap", "today", "--ascii")
+	out := env.bw("recap", "today", "--ascii", "--verbose")
 	// ASCII tree should use | and ` and -, not ├ └ │
 	if strings.ContainsRune(out, '├') || strings.ContainsRune(out, '│') {
 		t.Errorf("--ascii output contains unicode box chars:\n%s", out)
+	}
+}
+
+// TestRecapTodayLocalTimezone verifies that "today" honors the caller's
+// local timezone, not UTC. Simulates a user at 1am US/Eastern (which is
+// 5am UTC): work done the previous local evening (e.g. 10pm ET = 2am UTC
+// "today" UTC) should fall into "today" local.
+func TestRecapTodayLocalTimezone(t *testing.T) {
+	// Local wall clock: 2026-01-15 01:00:00 -0500 (EST).
+	// That's 2026-01-15 06:00:00 UTC — safely inside UTC "today" as well,
+	// but the start of local "today" is 2026-01-15 00:00:00 -0500
+	// (= 2026-01-15 05:00:00 UTC), while start of UTC "today" would be
+	// 2026-01-15 00:00:00 UTC — a 5-hour difference. Seed an event at
+	// 2026-01-15 00:30:00 -0500 (= 05:30 UTC): inside local today,
+	// inside UTC today too. Then seed 2026-01-14 23:30:00 -0500
+	// (= 2026-01-15 04:30:00 UTC): inside local *yesterday*, but inside
+	// UTC *today*. A TZ-correct "today" must EXCLUDE the second event.
+	envEarlyLocal := "2026-01-15T00:30:00-05:00" // inside local today
+	envLateYesterdayLocal := "2026-01-14T23:30:00-05:00"
+
+	dir := t.TempDir()
+	registryDir := t.TempDir()
+	baseEnv := append(os.Environ(),
+		"GIT_AUTHOR_NAME=Test",
+		"GIT_AUTHOR_EMAIL=test@test.com",
+		"GIT_COMMITTER_NAME=Test",
+		"GIT_COMMITTER_EMAIL=test@test.com",
+		"NO_COLOR=1",
+		"BEADWORK_HOME="+registryDir,
+	)
+
+	run := func(clock string, args ...string) string {
+		cmd := exec.Command(bwBin, args...)
+		cmd.Dir = dir
+		cmd.Env = append(baseEnv,
+			"BW_CLOCK="+clock,
+			"GIT_AUTHOR_DATE="+clock,
+			"GIT_COMMITTER_DATE="+clock,
+		)
+		var stdout, stderr bytes.Buffer
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		if err := cmd.Run(); err != nil {
+			t.Fatalf("bw %s:\nstderr: %s\nerr: %v",
+				strings.Join(args, " "), stderr.String(), err)
+		}
+		return stdout.String()
+	}
+	gitRun := func(args ...string) {
+		cmd := exec.Command("git", args...)
+		cmd.Dir = dir
+		cmd.Env = baseEnv
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %s: %s: %v", strings.Join(args, " "), out, err)
+		}
+	}
+
+	// Setup
+	gitRun("init")
+	gitRun("config", "user.email", "test@test.com")
+	gitRun("config", "user.name", "Test")
+	os.WriteFile(filepath.Join(dir, "README"), []byte("t"), 0644)
+	gitRun("add", ".")
+	gitRun("commit", "-m", "initial")
+	run("2026-01-15T00:00:00-05:00", "init", "--prefix", "tz")
+
+	// Seed one issue "today local" and one "yesterday local, today UTC".
+	run(envLateYesterdayLocal, "create", "yday-local", "--id", "ytd-1")
+	run(envEarlyLocal, "create", "today-local", "--id", "tdy-1")
+
+	// Now ask for today at 1am local on 2026-01-15.
+	out := run("2026-01-15T01:00:00-05:00", "recap", "today", "--dry-run")
+
+	if !strings.Contains(out, "tdy-1") {
+		t.Errorf("today-local event missing from 'today' recap:\n%s", out)
+	}
+	if strings.Contains(out, "ytd-1") {
+		t.Errorf("yesterday-local event leaked into 'today' recap (UTC bug):\n%s", out)
+	}
+}
+
+// TestRecapDurationToken verifies support for duration tokens like 1h, 15m.
+func TestRecapDurationToken(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "recent", "--id", "dt-1")
+
+	for _, token := range []string{"1h", "15m", "2d", "1w", "3h30m"} {
+		out := env.bw("recap", token)
+		if !strings.Contains(out, "dt-1") {
+			t.Errorf("recap %s missing event:\n%s", token, out)
+		}
+	}
+}
+
+// TestRecapNoANSIWhenPiped verifies that piped output (non-TTY) has no
+// ANSI escape sequences. LLM consumers (Claude Code, etc.) rely on this.
+// Same treatment as `bw prime`.
+func TestRecapNoANSIWhenPiped(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "noansi", "--id", "na-1")
+	env.bw("start", "na-1")
+	env.bw("close", "na-1")
+
+	// env.bw() executes bw with stdout captured to a buffer → non-TTY.
+	out := env.bw("recap", "today")
+	if strings.ContainsRune(out, '\x1b') {
+		t.Errorf("recap piped output contains ANSI escape (\\x1b):\n%q", out)
+	}
+	if strings.Contains(out, "use --verbose") {
+		t.Errorf("recap piped output leaks TTY-only hint:\n%s", out)
+	}
+
+	// Verbose must also be ANSI-free when piped.
+	vOut := env.bw("recap", "today", "--verbose")
+	if strings.ContainsRune(vOut, '\x1b') {
+		t.Errorf("recap --verbose piped output contains ANSI escape:\n%q", vOut)
+	}
+}
+
+// TestRecapCondensedDefault verifies default output is condensed.
+func TestRecapCondensedDefault(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "Task One", "--id", "co-1")
+	env.bw("start", "co-1")
+	env.bw("close", "co-1")
+	env.bw("comment", "co-1", "done")
+
+	out := env.bw("recap", "today")
+	// Default should be one-line-per-issue (not full tree).
+	// So it should NOT contain unicode box chars or per-leaf timestamps.
+	if strings.ContainsRune(out, '├') {
+		t.Errorf("default output should not be a tree:\n%s", out)
+	}
+	// Should contain the issue, title, and a state hint ("closed").
+	if !strings.Contains(out, "co-1") || !strings.Contains(out, "Task One") {
+		t.Errorf("condensed output missing id/title:\n%s", out)
+	}
+	if !strings.Contains(out, "closed") {
+		t.Errorf("condensed output should show 'closed' state:\n%s", out)
+	}
+	// Count lines — should be much shorter than verbose.
+	lines := strings.Count(out, "\n")
+	if lines > 5 {
+		t.Errorf("condensed output too long (%d lines):\n%s", lines, out)
+	}
+}
+
+// TestRecapVerbose verifies --verbose gives the full tree.
+func TestRecapVerbose(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "Task One", "--id", "vb-1")
+	env.bw("start", "vb-1")
+	env.bw("close", "vb-1")
+
+	out := env.bw("recap", "today", "--verbose")
+	// Verbose should be a tree — one leaf per event.
+	if !strings.ContainsRune(out, '├') && !strings.ContainsRune(out, '└') {
+		t.Errorf("--verbose should render a tree:\n%s", out)
+	}
+	// Should contain each event type.
+	for _, ev := range []string{"create", "start", "close"} {
+		if !strings.Contains(out, ev) {
+			t.Errorf("--verbose missing event %q:\n%s", ev, out)
+		}
+	}
+}
+
+// TestRecapVerboseShortFlag verifies -v is a shorthand for --verbose.
+func TestRecapVerboseShortFlag(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "v test", "--id", "sv-1")
+
+	out := env.bw("recap", "today", "-v")
+	if !strings.ContainsRune(out, '├') && !strings.ContainsRune(out, '└') {
+		t.Errorf("-v should render a tree:\n%s", out)
 	}
 }
 

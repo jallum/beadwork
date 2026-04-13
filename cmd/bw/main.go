@@ -156,13 +156,17 @@ func touchRegistry(now time.Time) {
 }
 
 // bwNow returns the current time respecting BW_CLOCK.
+// The returned Time preserves its original location (local time when no
+// BW_CLOCK is set; whatever offset BW_CLOCK carries otherwise) so that
+// day-boundary math ("today", "yesterday") uses the user's local zone.
+// Callers that need UTC for storage should .UTC() themselves.
 func bwNow() time.Time {
 	if v := os.Getenv("BW_CLOCK"); v != "" {
 		if t, err := time.Parse(time.RFC3339, v); err == nil {
-			return t.UTC()
+			return t
 		}
 	}
-	return time.Now().UTC()
+	return time.Now()
 }
 
 // extractDirFlag removes all -C <dir> pairs from args and sets repoDir.

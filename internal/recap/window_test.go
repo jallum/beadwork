@@ -83,8 +83,9 @@ func TestWindowDefault24h(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if w.Label != "last 24h" {
-		t.Errorf("default label = %q, want 'last 24h'", w.Label)
+	wantStart := now.Add(-24 * time.Hour)
+	if !w.Start.Equal(wantStart) {
+		t.Errorf("default window start = %v, want %v", w.Start, wantStart)
 	}
 }
 
@@ -158,6 +159,44 @@ func TestWindowYesterdayLocalTZ(t *testing.T) {
 	}
 	if !w.End.Equal(wantEnd) {
 		t.Errorf("end = %v, want %v", w.End, wantEnd)
+	}
+}
+
+func TestWindowDurationTokens(t *testing.T) {
+	now := time.Date(2026, 1, 15, 10, 0, 0, 0, time.UTC)
+	cases := []struct {
+		token string
+		want  time.Duration
+	}{
+		{"15m", 15 * time.Minute},
+		{"30m", 30 * time.Minute},
+		{"1h", 1 * time.Hour},
+		{"3h30m", 3*time.Hour + 30*time.Minute},
+		{"24h", 24 * time.Hour},
+		{"2d", 48 * time.Hour},
+		{"1w", 7 * 24 * time.Hour},
+		{"2w", 14 * 24 * time.Hour},
+	}
+	for _, tc := range cases {
+		w, err := ParseWindow([]string{tc.token}, "", now)
+		if err != nil {
+			t.Errorf("ParseWindow(%q): %v", tc.token, err)
+			continue
+		}
+		wantStart := now.Add(-tc.want)
+		if !w.Start.Equal(wantStart) {
+			t.Errorf("token %q: start = %v, want %v", tc.token, w.Start, wantStart)
+		}
+	}
+}
+
+func TestWindowDurationRejects(t *testing.T) {
+	now := time.Date(2026, 1, 15, 10, 0, 0, 0, time.UTC)
+	bad := []string{"abc", "1x", ""}
+	for _, token := range bad {
+		if _, err := ParseWindow([]string{token}, "", now); err == nil {
+			t.Errorf("expected error for token %q", token)
+		}
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/jallum/beadwork/internal/recap"
 	"github.com/jallum/beadwork/internal/registry"
 	"github.com/jallum/beadwork/internal/repo"
+	"github.com/jallum/beadwork/internal/treefs"
 )
 
 // storeLookup adapts an *issue.Store to the recap.IssueLookup interface.
@@ -28,29 +29,40 @@ func (s *storeLookup) Title(id string) string {
 }
 
 type recapArgs struct {
-	Tokens []string
-	Since  string
-	JSON   bool
-	ASCII  bool
-	DryRun bool
-	All    bool
+	Tokens  []string
+	Since   string
+	JSON    bool
+	ASCII   bool
+	DryRun  bool
+	All     bool
+	Verbose bool
 }
 
 func parseRecapArgs(raw []string) (recapArgs, error) {
-	a, err := ParseArgs(raw,
+	// Expand -v to --verbose before generic parsing.
+	expanded := make([]string, len(raw))
+	for i, tok := range raw {
+		if tok == "-v" {
+			expanded[i] = "--verbose"
+		} else {
+			expanded[i] = tok
+		}
+	}
+	a, err := ParseArgs(expanded,
 		[]string{"--since"},
-		[]string{"--json", "--ascii", "--dry-run", "--all"},
+		[]string{"--json", "--ascii", "--dry-run", "--all", "--verbose"},
 	)
 	if err != nil {
 		return recapArgs{}, err
 	}
 	return recapArgs{
-		Tokens: a.Pos(),
-		Since:  a.String("--since"),
-		JSON:   a.Bool("--json"),
-		ASCII:  a.Bool("--ascii") || globalNoColor,
-		DryRun: a.Bool("--dry-run") || globalDryRun,
-		All:    a.Bool("--all"),
+		Tokens:  a.Pos(),
+		Since:   a.String("--since"),
+		JSON:    a.Bool("--json"),
+		ASCII:   a.Bool("--ascii") || globalNoColor,
+		DryRun:  a.Bool("--dry-run") || globalDryRun,
+		All:     a.Bool("--all"),
+		Verbose: a.Bool("--verbose"),
 	}, nil
 }
 
@@ -90,44 +102,71 @@ func runRecapSingle(ra recapArgs, w Writer, dir string) error {
 	regDir := registry.DefaultDir()
 	reg, regErr := registry.Load(regDir)
 
-	// Resolve the window.
+	// Resolve the window + commits. Three cases:
+	//   1. User gave an explicit window → filter AllCommits by time.
+	//   2. No cursor yet (first recap)  → last 24h backfill.
+	//   3. Cursor present                → use CommitsSince(cursor) so the
+	//      rendered set is EXACTLY the commits newer than the last recap,
+	//      independent of any wall-clock window.
 	now := bwNow()
 	var window recap.Window
+	var commits []treefs.CommitInfo
 
-	if ra.Since != "" || len(ra.Tokens) > 0 {
+	explicit := ra.Since != "" || len(ra.Tokens) > 0
+	var cursor string
+	if !explicit && regErr == nil {
+		if e, ok := reg.Entries()[repoPath]; ok {
+			cursor = e.Cursor
+		}
+	}
+
+	switch {
+	case explicit:
 		window, err = recap.ParseWindow(ra.Tokens, ra.Since, now)
 		if err != nil {
 			return err
 		}
-	} else {
-		// No explicit window: use cursor-based incremental recap.
-		// First-recap (no cursor) = 24h backfill per D1.
-		var cursor string
-		if regErr == nil {
-			if e, ok := reg.Entries()[repoPath]; ok {
-				cursor = e.Cursor
-			}
+		commits, err = r.AllCommits()
+		if err != nil {
+			return fmt.Errorf("read commits: %w", err)
 		}
-		if cursor == "" {
-			window = recap.Window{
-				Start: now.Add(-24 * time.Hour),
-				End:   now,
-				Label: "last 24h (first recap)",
-			}
-		} else {
-			// Use the commits since the cursor.
-			window = recap.Window{
-				Start: time.Unix(0, 0),
-				End:   now,
-				Label: "since last recap",
-			}
-		}
-	}
 
-	// Gather commits.
-	commits, err := r.AllCommits()
-	if err != nil {
-		return fmt.Errorf("read commits: %w", err)
+	case cursor == "":
+		// First recap on this repo — 24h backfill.
+		window = recap.Window{
+			Start: now.Add(-24 * time.Hour),
+			End:   now,
+			Label: "last 24h (first recap)",
+		}
+		commits, err = r.AllCommits()
+		if err != nil {
+			return fmt.Errorf("read commits: %w", err)
+		}
+
+	default:
+		// Cursor-driven incremental recap.
+		commits, err = r.TreeFS().CommitsSince(cursor)
+		if err != nil {
+			return fmt.Errorf("read commits: %w", err)
+		}
+		// Window bounds: earliest commit → now. If CommitsSince returned
+		// nothing (cursor == HEAD), Start stays at now and Build shows empty.
+		start := now
+		if len(commits) > 0 {
+			start = commits[len(commits)-1].Time
+		}
+		// Label reflects when the user LAST RAN recap (not the cursor
+		// commit time) so repeated runs update monotonically even when
+		// there's nothing new.
+		label := "since last recap"
+		if regErr == nil {
+			if e, ok := reg.Entries()[repoPath]; ok && e.LastRecapAt != "" {
+				if t, perr := time.Parse(time.RFC3339, e.LastRecapAt); perr == nil {
+					label = fmt.Sprintf("since last recap (%s)", relativeTimeSince(t, now))
+				}
+			}
+		}
+		window = recap.Window{Start: start, End: now, Label: label}
 	}
 
 	// Build recap.
@@ -138,11 +177,16 @@ func runRecapSingle(ra recapArgs, w Writer, dir string) error {
 		return err
 	}
 
-	// Advance the cursor unless --dry-run.
-	if !ra.DryRun && regErr == nil && len(commits) > 0 {
-		newCursor := commits[0].Hash
-		// Silent failure: advancing cursor is best-effort.
-		_ = reg.AdvanceCursorAndSave(repoPath, newCursor)
+	// Stamp last_recap_at on every non-dry-run recap, even when there are
+	// no new commits — otherwise "since last recap" would never update.
+	// Advance the cursor only when there are new commits to mark as seen.
+	if !ra.DryRun && regErr == nil {
+		newCursor := ""
+		if len(commits) > 0 {
+			newCursor = commits[0].Hash
+		}
+		// Silent failure: updating registry is best-effort.
+		_ = reg.StampRecapAndSave(repoPath, newCursor, now)
 	}
 
 	return nil
@@ -195,31 +239,43 @@ func cmdRecapAll(ra recapArgs, w Writer) error {
 		store := issue.NewStore(r.TreeFS(), r.Prefix)
 		store.Committer = r
 
-		// Resolve window per-repo (cursor-based unless user overrode).
+		// Resolve window + commits per-repo. Same three cases as single-repo.
+		explicit := ra.Since != "" || len(ra.Tokens) > 0
+		cursor := ""
+		if !explicit {
+			cursor = entries[p].Cursor
+		}
+
 		var window recap.Window
-		if ra.Since != "" || len(ra.Tokens) > 0 {
+		var commits []treefs.CommitInfo
+		switch {
+		case explicit:
 			window, err = recap.ParseWindow(ra.Tokens, ra.Since, now)
 			if err != nil {
 				return err
 			}
-		} else {
-			cursor := entries[p].Cursor
-			if cursor == "" {
-				window = recap.Window{
-					Start: now.Add(-24 * time.Hour),
-					End:   now,
-					Label: "last 24h (first recap)",
-				}
-			} else {
-				window = recap.Window{
-					Start: time.Unix(0, 0),
-					End:   now,
-					Label: "since last recap",
+			commits, err = r.AllCommits()
+		case cursor == "":
+			window = recap.Window{
+				Start: now.Add(-24 * time.Hour),
+				End:   now,
+				Label: "last 24h (first recap)",
+			}
+			commits, err = r.AllCommits()
+		default:
+			commits, err = r.TreeFS().CommitsSince(cursor)
+			start := now
+			if err == nil && len(commits) > 0 {
+				start = commits[len(commits)-1].Time
+			}
+			label := "since last recap"
+			if lr := entries[p].LastRecapAt; lr != "" {
+				if t, perr := time.Parse(time.RFC3339, lr); perr == nil {
+					label = fmt.Sprintf("since last recap (%s)", relativeTimeSince(t, now))
 				}
 			}
+			window = recap.Window{Start: start, End: now, Label: label}
 		}
-
-		commits, err := r.AllCommits()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "skipping %s: read commits: %v\n", p, err)
 			continue
@@ -228,9 +284,13 @@ func cmdRecapAll(ra recapArgs, w Writer) error {
 		rcp := recap.Build(commits, window, &storeLookup{store: store})
 		all = append(all, repoRecap{Path: p, Recap: rcp})
 
-		// Advance cursor per repo unless dry-run.
-		if !ra.DryRun && len(commits) > 0 {
-			_ = reg.AdvanceCursorAndSave(p, commits[0].Hash)
+		// Stamp + optionally advance cursor per repo unless dry-run.
+		if !ra.DryRun {
+			newCursor := ""
+			if len(commits) > 0 {
+				newCursor = commits[0].Hash
+			}
+			_ = reg.StampRecapAndSave(p, newCursor, now)
 		}
 	}
 
