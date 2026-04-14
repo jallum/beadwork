@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 	"time"
 )
@@ -134,14 +135,35 @@ func (r *Registry) Touch(repoPath string, now time.Time) {
 }
 
 // TouchAndSave is a convenience that calls Touch then Save.
-func (r *Registry) TouchAndSave(repoPath string, now time.Time) error {
+// If prefix is non-empty and differs from the stored prefix, it's updated.
+func (r *Registry) TouchAndSave(repoPath, prefix string, now time.Time) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	e := r.Repos[repoPath]
 	e.LastSeenAt = now.UTC().Format(time.RFC3339)
+	if prefix != "" {
+		e.Prefix = prefix
+	}
 	r.Repos[repoPath] = e
 	return r.saveLocked()
+}
+
+// LookupPrefix returns all repo paths registered under the given prefix.
+// Used for cross-repo ID resolution. Returning a slice lets callers
+// detect ambiguous prefix collisions (multiple repos sharing the same
+// prefix) instead of silently picking one in random map order.
+func (r *Registry) LookupPrefix(prefix string) []string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	var paths []string
+	for path, e := range r.Repos {
+		if e.Prefix == prefix {
+			paths = append(paths, path)
+		}
+	}
+	sort.Strings(paths)
+	return paths
 }
 
 // AdvanceCursorAndSave updates the cursor for a repo and saves atomically.

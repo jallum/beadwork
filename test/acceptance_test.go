@@ -58,6 +58,10 @@ func newBwEnv(t *testing.T) *bwEnv {
 			"GIT_COMMITTER_DATE="+fixedClock,
 			"NO_COLOR=1",
 			"BEADWORK_HOME="+registryDir,
+			// Suppress any global commit-signing config (1Password,
+			// gpg, etc.) so tests don't depend on the user's keyring.
+			"GIT_CONFIG_GLOBAL=/dev/null",
+			"GIT_CONFIG_SYSTEM=/dev/null",
 		),
 	}
 
@@ -240,6 +244,8 @@ func newMultiRepoEnv(t *testing.T, n int) []*bwEnv {
 				"GIT_COMMITTER_DATE="+fixedClock,
 				"NO_COLOR=1",
 				"BEADWORK_HOME="+registryDir,
+				"GIT_CONFIG_GLOBAL=/dev/null",
+				"GIT_CONFIG_SYSTEM=/dev/null",
 			),
 		}
 		env.git("init")
@@ -429,6 +435,8 @@ func TestAutoRegistrationSilentFailure(t *testing.T) {
 			"GIT_COMMITTER_DATE="+fixedClock,
 			"NO_COLOR=1",
 			"BEADWORK_HOME=/nonexistent/path/that/should/fail",
+			"GIT_CONFIG_GLOBAL=/dev/null",
+			"GIT_CONFIG_SYSTEM=/dev/null",
 		),
 	}
 	env.git("init")
@@ -657,6 +665,8 @@ func TestRecapTodayLocalTimezone(t *testing.T) {
 		"GIT_COMMITTER_EMAIL=test@test.com",
 		"NO_COLOR=1",
 		"BEADWORK_HOME="+registryDir,
+		"GIT_CONFIG_GLOBAL=/dev/null",
+		"GIT_CONFIG_SYSTEM=/dev/null",
 	)
 
 	run := func(clock string, args ...string) string {
@@ -866,6 +876,266 @@ func TestRecapInBwHelp(t *testing.T) {
 	out := env.bw("--help")
 	if !strings.Contains(out, "recap") {
 		t.Errorf("bw --help missing recap:\n%s", out)
+	}
+}
+
+// TestCrossRepoShow verifies `bw show <other-prefix>-<id>` routes to the
+// repo registered for that prefix.
+func TestCrossRepoShow(t *testing.T) {
+	envs := newMultiRepoEnv(t, 2)
+	envs[0].bw("list")
+	envs[1].bw("list")
+	envs[1].bw("create", "Foreign task", "--id", "r1-x1")
+
+	// From envs[0] (prefix r0), run `bw show r1-x1` — should resolve to envs[1].
+	out := envs[0].bw("show", "r1-x1")
+	if !strings.Contains(out, "Foreign task") {
+		t.Errorf("cross-repo show failed to resolve r1-x1:\n%s", out)
+	}
+}
+
+// TestCrossRepoCloseAndComment verifies mutations route cross-repo.
+func TestCrossRepoCloseAndComment(t *testing.T) {
+	envs := newMultiRepoEnv(t, 2)
+	envs[0].bw("list")
+	envs[1].bw("list")
+	envs[1].bw("create", "To close", "--id", "r1-x9")
+
+	// From envs[0], comment + close on the other repo's issue.
+	envs[0].bw("comment", "r1-x9", "from other repo")
+	envs[0].bw("close", "r1-x9")
+
+	// Verify state landed in envs[1].
+	out := envs[1].bw("show", "r1-x9", "--json")
+	if !strings.Contains(out, `"status": "closed"`) && !strings.Contains(out, `"status":"closed"`) {
+		t.Errorf("cross-repo close did not land:\n%s", out)
+	}
+	if !strings.Contains(out, "from other repo") {
+		t.Errorf("cross-repo comment did not land:\n%s", out)
+	}
+}
+
+// TestCrossRepoExplicitCWins verifies -C is honored and cross-repo resolver
+// does not override it.
+func TestCrossRepoExplicitCWins(t *testing.T) {
+	envs := newMultiRepoEnv(t, 2)
+	envs[0].bw("list")
+	envs[1].bw("list")
+	envs[1].bw("create", "target", "--id", "r1-x5")
+
+	// Pass -C to envs[0] AND an id that belongs to envs[1]. -C should win,
+	// which means the command fails because r1-x5 doesn't exist in envs[0].
+	out := envs[0].bwFail("-C", envs[0].dir, "show", "r1-x5")
+	if !strings.Contains(out, "no issue found") && !strings.Contains(out, "not found") {
+		t.Errorf("expected not-found error with -C:\n%s", out)
+	}
+}
+
+// TestCrossRepoMixedPrefixesRejected verifies mixing prefixes in a single
+// command (e.g. dep add linking across repos) fails loudly.
+func TestCrossRepoMixedPrefixesRejected(t *testing.T) {
+	envs := newMultiRepoEnv(t, 2)
+	envs[0].bw("list")
+	envs[1].bw("list")
+
+	envs[0].bw("create", "local", "--id", "r0-l1")
+	envs[1].bw("create", "remote", "--id", "r1-r1")
+
+	// Try to link a local and remote issue: should error.
+	out := envs[0].bwFail("dep", "add", "r0-l1", "blocks", "r1-r1")
+	if !strings.Contains(out, "cross-repo") && !strings.Contains(out, "prefixes") {
+		t.Errorf("expected cross-repo rejection:\n%s", out)
+	}
+}
+
+// TestCrossRepoFromNonBeadworkDir verifies that cross-repo commands work
+// from a directory that isn't a beadwork repo (or even a git repo). The
+// prefix alone is enough to route.
+func TestCrossRepoFromNonBeadworkDir(t *testing.T) {
+	envs := newMultiRepoEnv(t, 1)
+	envs[0].bw("list")
+	envs[0].bw("create", "remote task", "--id", "r0-nb1")
+
+	// Use a plain temp dir (no git, no beadwork).
+	nonRepo := t.TempDir()
+	caller := &bwEnv{
+		t:           t,
+		dir:         nonRepo,
+		registryDir: envs[0].registryDir,
+		env: append(os.Environ(),
+			"BW_CLOCK="+fixedClock,
+			"GIT_AUTHOR_DATE="+fixedClock,
+			"GIT_COMMITTER_DATE="+fixedClock,
+			"NO_COLOR=1",
+			"BEADWORK_HOME="+envs[0].registryDir,
+			"GIT_CONFIG_GLOBAL=/dev/null",
+			"GIT_CONFIG_SYSTEM=/dev/null",
+		),
+	}
+
+	// From a non-beadwork dir, show should resolve via the registry.
+	out := caller.bw("show", "r0-nb1")
+	if !strings.Contains(out, "remote task") {
+		t.Errorf("cross-repo show from non-beadwork dir failed:\n%s", out)
+	}
+
+	// And mutations should work too.
+	caller.bw("close", "r0-nb1")
+	out2 := envs[0].bw("show", "r0-nb1", "--json")
+	if !strings.Contains(out2, `"closed"`) {
+		t.Errorf("cross-repo close from non-beadwork dir did not land:\n%s", out2)
+	}
+}
+
+// TestCrossRepoRecapAllFromNonBeadworkDir verifies --all works from
+// anywhere, not just inside a beadwork repo.
+func TestCrossRepoRecapAllFromNonBeadworkDir(t *testing.T) {
+	envs := newMultiRepoEnv(t, 2)
+	envs[0].bw("create", "a", "--id", "r0-a1")
+	envs[1].bw("create", "b", "--id", "r1-b1")
+
+	nonRepo := t.TempDir()
+	caller := &bwEnv{
+		t:           t,
+		dir:         nonRepo,
+		registryDir: envs[0].registryDir,
+		env: append(os.Environ(),
+			"BW_CLOCK="+fixedClock,
+			"GIT_AUTHOR_DATE="+fixedClock,
+			"GIT_COMMITTER_DATE="+fixedClock,
+			"NO_COLOR=1",
+			"BEADWORK_HOME="+envs[0].registryDir,
+			"GIT_CONFIG_GLOBAL=/dev/null",
+			"GIT_CONFIG_SYSTEM=/dev/null",
+		),
+	}
+
+	out := caller.bw("recap", "today", "--all")
+	for _, id := range []string{"r0-a1", "r1-b1"} {
+		if !strings.Contains(out, id) {
+			t.Errorf("recap --all from non-beadwork dir missing %s:\n%s", id, out)
+		}
+	}
+}
+
+// TestCFlagAcceptsPrefix verifies that `bw -C <prefix>` resolves through
+// the registry to the repo's real path.
+func TestCFlagAcceptsPrefix(t *testing.T) {
+	envs := newMultiRepoEnv(t, 2)
+	envs[0].bw("list")
+	envs[1].bw("list")
+	envs[1].bw("create", "via prefix", "--id", "r1-p1")
+
+	// From envs[0], use -C r1 (the prefix of envs[1]) to show r1-p1.
+	out := envs[0].bw("-C", "r1", "show", "r1-p1")
+	if !strings.Contains(out, "via prefix") {
+		t.Errorf("-C <prefix> did not expand correctly:\n%s", out)
+	}
+}
+
+// TestCFlagAcceptsAlias verifies -C works with an alias after a rename.
+func TestCFlagAcceptsAlias(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "legacy", "--id", "test-lg1")
+	env.bw("close", "test-lg1")
+	env.bw("config", "set", "prefix", "renamed")
+
+	// The old prefix "test" is now an alias. -C test should still find it.
+	out := env.bw("-C", "test", "show", "test-lg1")
+	if !strings.Contains(out, "legacy") {
+		t.Errorf("-C <alias> did not resolve:\n%s", out)
+	}
+}
+
+// TestCFlagPathFallsThroughWhenNotPrefix verifies that an explicit path
+// (absolute or relative) still works even if it isn't a registered prefix.
+func TestCFlagPathFallsThroughWhenNotPrefix(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("create", "here", "--id", "test-p1")
+
+	// Absolute path — has '/' so can't be a prefix, must fall through.
+	out := env.bw("-C", env.dir, "show", "test-p1")
+	if !strings.Contains(out, "here") {
+		t.Errorf("-C <abs path> did not work:\n%s", out)
+	}
+}
+
+// TestCFlagCollisionErrors verifies -C errors when a prefix resolves to
+// multiple repos.
+func TestCFlagCollisionErrors(t *testing.T) {
+	envs := newMultiRepoEnv(t, 1)
+	envs[0].bw("list")
+
+	// Inject a duplicate prefix in the registry.
+	otherPath := filepath.Join(filepath.Dir(envs[0].dir), "twin")
+	os.MkdirAll(otherPath, 0755)
+	contents := envs[0].registryContents()
+	inject := `"` + otherPath + `": {"last_seen_at":"2026-01-15T10:00:00Z","prefix":"r0"},`
+	contents = strings.Replace(contents, `"repos": {`, `"repos": {`+"\n    "+inject, 1)
+	envs[0].seedRegistry(contents)
+
+	out := envs[0].bwFail("-C", "r0", "list")
+	if !strings.Contains(out, "registered for 2 repositories") {
+		t.Errorf("expected -C collision error:\n%s", out)
+	}
+}
+
+// TestCrossRepoPrefixCollision verifies that when two repos share the
+// same prefix, the resolver fails with a clear error listing both paths
+// and pointing the user at -C, instead of silently picking one.
+func TestCrossRepoPrefixCollision(t *testing.T) {
+	envs := newMultiRepoEnv(t, 1)
+	envs[0].bw("list")
+
+	// Manually inject a second registry entry with the same prefix as envs[0].
+	// envs[0]'s prefix is "r0". Add a second path under the same prefix.
+	otherPath := filepath.Join(filepath.Dir(envs[0].dir), "twin")
+	os.MkdirAll(otherPath, 0755)
+	contents := envs[0].registryContents()
+	// Insert a sibling entry by string-rewriting the JSON.
+	inject := `"` + otherPath + `": {"last_seen_at":"2026-01-15T10:00:00Z","prefix":"r0"},`
+	contents = strings.Replace(contents, `"repos": {`, `"repos": {`+"\n    "+inject, 1)
+	envs[0].seedRegistry(contents)
+
+	envs[0].bw("create", "duped", "--id", "r0-d1")
+
+	// Use a non-beadwork dir to force the resolver to look up the prefix
+	// (when called from within envs[0], the local prefix matches and
+	// resolver short-circuits — no cross-repo lookup happens).
+	nonRepo := t.TempDir()
+	caller := &bwEnv{
+		t:           t,
+		dir:         nonRepo,
+		registryDir: envs[0].registryDir,
+		env: append(os.Environ(),
+			"BW_CLOCK="+fixedClock,
+			"NO_COLOR=1",
+			"BEADWORK_HOME="+envs[0].registryDir,
+			"GIT_CONFIG_GLOBAL=/dev/null",
+			"GIT_CONFIG_SYSTEM=/dev/null",
+		),
+	}
+
+	out := caller.bwFail("show", "r0-d1")
+	if !strings.Contains(out, "registered for 2 repositories") {
+		t.Errorf("expected collision error mentioning both repos:\n%s", out)
+	}
+	if !strings.Contains(out, "use -C <path>") {
+		t.Errorf("collision error should suggest -C:\n%s", out)
+	}
+}
+
+// TestCrossRepoUnknownPrefixFallsThrough verifies an unrecognized prefix
+// is not rewritten (command runs against current repo and fails normally).
+func TestCrossRepoUnknownPrefixFallsThrough(t *testing.T) {
+	env := newBwEnv(t)
+	env.bw("list")
+
+	// "bogus-1" has a prefix that's not registered anywhere. The command
+	// should just run locally and fail with the local repo's normal error.
+	out := env.bwFail("show", "bogus-1")
+	if strings.Contains(out, "cross-repo") {
+		t.Errorf("unexpected cross-repo path taken:\n%s", out)
 	}
 }
 

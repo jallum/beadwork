@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -100,6 +99,11 @@ func main() {
 		return
 	}
 
+	// Cross-repo routing: if the first ID-shaped positional references a
+	// different registered prefix, rewrite repoDir so the command targets
+	// that repo. Never overrides an explicit -C.
+	resolveCrossRepo(args)
+
 	var store *issue.Store
 	if c.NeedsStore {
 		var err error
@@ -148,7 +152,7 @@ func touchRegistry(now time.Time) {
 		})
 		return
 	}
-	if err := reg.TouchAndSave(repoPath, now); err != nil {
+	if err := reg.TouchAndSave(repoPath, r.Prefix, now); err != nil {
 		registryOnce.Do(func() {
 			fmt.Fprintf(os.Stderr, "warning: could not save registry: %v\n", err)
 		})
@@ -177,12 +181,8 @@ func extractDirFlag(args []string) []string {
 			if i+1 >= len(args) {
 				fatal("-C requires an argument")
 			}
-			abs, err := filepath.Abs(args[i+1])
-			if err != nil {
-				fatal(fmt.Sprintf("-C %s: %s", args[i+1], err))
-			}
-			repoDir = abs
-			i++ // skip value
+			repoDir = resolveCFlag(args[i+1])
+			i++
 		} else {
 			out = append(out, args[i])
 		}

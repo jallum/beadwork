@@ -99,7 +99,10 @@ func cmdRegistryList(args []string, w Writer) error {
 	}
 
 	// Build sorted list with live prefix read and missing detection.
+	// Persist any prefixes we discover live so the cross-repo resolver has
+	// them available without needing the user to run bw in each repo.
 	var list []registryListEntry
+	persistNeeded := false
 	for path, e := range entries {
 		le := registryListEntry{
 			Path:       path,
@@ -112,10 +115,14 @@ func cmdRegistryList(args []string, w Writer) error {
 		} else if le.Prefix == "" {
 			if r, err := repo.FindRepoAt(path); err == nil && r.IsInitialized() {
 				le.Prefix = r.Prefix
+				// Write it back so future commands (resolver) have it.
+				_ = reg.TouchAndSave(path, r.Prefix, bwNow())
+				persistNeeded = true
 			}
 		}
 		list = append(list, le)
 	}
+	_ = persistNeeded // future: could batch-save once instead of per-entry
 
 	sort.Slice(list, func(i, j int) bool {
 		return list[i].Path < list[j].Path

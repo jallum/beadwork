@@ -96,7 +96,7 @@ func TestTouchAndSave(t *testing.T) {
 	r, _ := Load(dir)
 
 	now := time.Date(2026, 1, 15, 10, 0, 0, 0, time.UTC)
-	if err := r.TouchAndSave("/tmp/repo", now); err != nil {
+	if err := r.TouchAndSave("/tmp/repo", "", now); err != nil {
 		t.Fatalf("TouchAndSave: %v", err)
 	}
 
@@ -207,7 +207,7 @@ func TestConcurrentSave(t *testing.T) {
 		go func(n int) {
 			defer wg.Done()
 			now := time.Date(2026, 1, 15, 10, 0, 0, 0, time.UTC).Add(time.Duration(n) * time.Second)
-			r.TouchAndSave("/repo/"+string(rune('a'+n)), now)
+			r.TouchAndSave("/repo/"+string(rune('a'+n)), "", now)
 		}(i)
 	}
 	wg.Wait()
