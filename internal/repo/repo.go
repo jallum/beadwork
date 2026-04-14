@@ -322,6 +322,41 @@ func (r *Repo) SetConfig(key, value string) error {
 	return r.tfs.WriteFile(".bwconfig", []byte(data))
 }
 
+// Aliases returns former prefixes this repo has used, read from the
+// "aliases" key in .bwconfig (comma-separated). Returns nil if unset.
+func (r *Repo) Aliases() []string {
+	raw, ok := r.GetConfig("aliases")
+	if !ok || raw == "" {
+		return nil
+	}
+	parts := strings.Split(raw, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p = strings.TrimSpace(p); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+// SetAliases writes the aliases list to .bwconfig. Pass an empty slice
+// to clear aliases. Callers are expected to commit afterward.
+func (r *Repo) SetAliases(aliases []string) error {
+	if len(aliases) == 0 {
+		// Clear by writing all config minus aliases.
+		cfg := r.ListConfig()
+		delete(cfg, "aliases")
+		var lines []string
+		for k, v := range cfg {
+			lines = append(lines, k+"="+v)
+		}
+		sort.Strings(lines)
+		data := strings.Join(lines, "\n") + "\n"
+		return r.tfs.WriteFile(".bwconfig", []byte(data))
+	}
+	return r.SetConfig("aliases", strings.Join(aliases, ","))
+}
+
 // ListConfig reads all key=value pairs from .bwconfig.
 func (r *Repo) ListConfig() map[string]string {
 	cfg := make(map[string]string)

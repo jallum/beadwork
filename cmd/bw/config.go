@@ -41,7 +41,7 @@ func parseConfigArgs(raw []string) (ConfigArgs, error) {
 	return ca, nil
 }
 
-func cmdConfig(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
+func cmdConfig(store *issue.Store, args []string, w Writer, cfg *config.Config) (*config.Config, error) {
 	ca, err := parseConfigArgs(args)
 	if err != nil {
 		return nil, err
@@ -57,6 +57,12 @@ func cmdConfig(store *issue.Store, args []string, w Writer, _ *config.Config) (*
 		fmt.Fprintln(w, val)
 
 	case "set":
+		// Prefix changes are special: they atomically rename the active
+		// (open + in_progress) issues so cross-repo lookups stay consistent.
+		// Closed issues keep their old prefix as a historical record.
+		if ca.Key == "prefix" {
+			return renamePrefix(store, r, ca.Value, w, cfg)
+		}
 		if err := r.SetConfig(ca.Key, ca.Value); err != nil {
 			return nil, err
 		}
