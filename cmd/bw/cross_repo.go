@@ -77,13 +77,18 @@ func resolveCrossRepo(args []string) {
 		return
 	}
 
-	// Build the set of known prefixes. A token only counts as a potential
-	// cross-repo ID if its prefix is registered AND at most 16 chars — that
-	// keeps date-shaped args (2026-06-01) and similar noise out.
+	// Build the set of known prefixes — primary prefix + historical
+	// aliases for each repo, plus the local repo's prefix. A token only
+	// counts as a potential cross-repo ID if its prefix is in this set.
+	// That keeps date-shaped args (2026-06-01) and similar hyphenated
+	// tokens from being mistaken for IDs.
 	known := map[string]bool{}
 	for _, e := range reg.Entries() {
 		if e.Prefix != "" {
 			known[e.Prefix] = true
+		}
+		for _, a := range e.Aliases {
+			known[a] = true
 		}
 	}
 	if localPrefix != "" {

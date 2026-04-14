@@ -152,7 +152,9 @@ func touchRegistry(now time.Time) {
 		})
 		return
 	}
-	if err := reg.TouchAndSave(repoPath, r.Prefix, now); err != nil {
+	// Pass aliases so other machines (that only see the committed
+	// .bwconfig) inherit the full prefix → path mapping automatically.
+	if err := reg.TouchAndSave(repoPath, r.Prefix, r.Aliases(), now); err != nil {
 		registryOnce.Do(func() {
 			fmt.Fprintf(os.Stderr, "warning: could not save registry: %v\n", err)
 		})

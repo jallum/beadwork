@@ -116,7 +116,7 @@ func cmdRegistryList(args []string, w Writer) error {
 			if r, err := repo.FindRepoAt(path); err == nil && r.IsInitialized() {
 				le.Prefix = r.Prefix
 				// Write it back so future commands (resolver) have it.
-				_ = reg.TouchAndSave(path, r.Prefix, bwNow())
+				_ = reg.TouchAndSave(path, r.Prefix, r.Aliases(), bwNow())
 				persistNeeded = true
 			}
 		}

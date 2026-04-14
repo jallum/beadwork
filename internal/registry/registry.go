@@ -20,10 +20,14 @@ const registryFile = "registry.json"
 
 // Entry represents a single tracked repository.
 type Entry struct {
-	LastSeenAt   string `json:"last_seen_at"`
-	LastRecapAt  string `json:"last_recap_at,omitempty"`
-	Cursor       string `json:"cursor,omitempty"`
-	Prefix       string `json:"prefix,omitempty"`
+	LastSeenAt  string   `json:"last_seen_at"`
+	LastRecapAt string   `json:"last_recap_at,omitempty"`
+	Cursor      string   `json:"cursor,omitempty"`
+	Prefix      string   `json:"prefix,omitempty"`
+	// Aliases are former prefixes this repo has used. Cross-repo lookups
+	// match against Prefix and Aliases so closed issues with the old
+	// prefix remain reachable after a rename.
+	Aliases []string `json:"aliases,omitempty"`
 }
 
 // Registry holds the in-memory state of the registry file.
@@ -135,8 +139,10 @@ func (r *Registry) Touch(repoPath string, now time.Time) {
 }
 
 // TouchAndSave is a convenience that calls Touch then Save.
-// If prefix is non-empty and differs from the stored prefix, it's updated.
-func (r *Registry) TouchAndSave(repoPath, prefix string, now time.Time) error {
+// If prefix is non-empty, it replaces the stored Prefix.
+// aliases replaces the stored Aliases list when non-nil (pass nil to
+// leave Aliases unchanged; pass []string{} to clear them explicitly).
+func (r *Registry) TouchAndSave(repoPath, prefix string, aliases []string, now time.Time) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -145,14 +151,21 @@ func (r *Registry) TouchAndSave(repoPath, prefix string, now time.Time) error {
 	if prefix != "" {
 		e.Prefix = prefix
 	}
+	if aliases != nil {
+		cp := make([]string, len(aliases))
+		copy(cp, aliases)
+		sort.Strings(cp)
+		e.Aliases = cp
+	}
 	r.Repos[repoPath] = e
 	return r.saveLocked()
 }
 
-// LookupPrefix returns all repo paths registered under the given prefix.
-// Used for cross-repo ID resolution. Returning a slice lets callers
-// detect ambiguous prefix collisions (multiple repos sharing the same
-// prefix) instead of silently picking one in random map order.
+// LookupPrefix returns all repo paths whose primary Prefix or Aliases
+// list contains the given prefix. Used for cross-repo ID resolution.
+// Returning a slice lets callers detect ambiguous prefix collisions
+// (multiple repos sharing the same prefix) instead of silently picking
+// one in random map order.
 func (r *Registry) LookupPrefix(prefix string) []string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -160,11 +173,19 @@ func (r *Registry) LookupPrefix(prefix string) []string {
 	for path, e := range r.Repos {
 		if e.Prefix == prefix {
 			paths = append(paths, path)
+			continue
+		}
+		for _, a := range e.Aliases {
+			if a == prefix {
+				paths = append(paths, path)
+				break
+			}
 		}
 	}
 	sort.Strings(paths)
 	return paths
 }
+
 
 // AdvanceCursorAndSave updates the cursor for a repo and saves atomically.
 func (r *Registry) AdvanceCursorAndSave(repoPath, cursor string) error {
