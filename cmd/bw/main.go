@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/jallum/beadwork/internal/config"
@@ -55,8 +54,13 @@ func main() {
 		w = PlainWriter(os.Stdout)
 	}
 
+	cfg, err := config.Load(config.DefaultPath())
+	if err != nil {
+		fatal(err.Error())
+	}
+
 	allArgs := os.Args[1:]
-	allArgs = extractDirFlag(allArgs)
+	allArgs = extractDirFlag(cfg, allArgs)
 
 	if len(allArgs) < 1 {
 		printUsage(w)
@@ -100,6 +104,11 @@ func main() {
 		return
 	}
 
+	// Cross-repo routing: if the first ID-shaped positional references a
+	// different registered prefix, rewrite repoDir so the command targets
+	// that repo. Never overrides an explicit -C.
+	resolveCrossRepo(cfg, args)
+
 	var store *issue.Store
 	if c.NeedsStore {
 		var err error
@@ -109,11 +118,6 @@ func main() {
 		}
 		store.DryRun = dryRun
 		maybeCheckForUpgrade(store, w)
-	}
-
-	cfg, err := config.Load(config.DefaultPath())
-	if err != nil {
-		fatal(err.Error())
 	}
 
 	originalCfg := cfg
@@ -151,19 +155,15 @@ func bwNow() time.Time {
 }
 
 // extractDirFlag removes all -C <dir> pairs from args and sets repoDir.
-func extractDirFlag(args []string) []string {
+func extractDirFlag(cfg *config.Config, args []string) []string {
 	out := make([]string, 0, len(args))
 	for i := 0; i < len(args); i++ {
 		if args[i] == "-C" {
 			if i+1 >= len(args) {
 				fatal("-C requires an argument")
 			}
-			abs, err := filepath.Abs(args[i+1])
-			if err != nil {
-				fatal(fmt.Sprintf("-C %s: %s", args[i+1], err))
-			}
-			repoDir = abs
-			i++ // skip value
+			repoDir = resolveCFlag(cfg, args[i+1])
+			i++
 		} else {
 			out = append(out, args[i])
 		}
