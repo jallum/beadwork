@@ -114,7 +114,7 @@ func runRecapSingle(ra recapArgs, w Writer, dir string) error {
 
 	explicit := ra.Since != "" || len(ra.Tokens) > 0
 	var cursor string
-	if !explicit && regErr == nil {
+	if regErr == nil {
 		if e, ok := reg.Entries()[repoPath]; ok {
 			cursor = e.Cursor
 		}
@@ -177,10 +177,23 @@ func runRecapSingle(ra recapArgs, w Writer, dir string) error {
 		return err
 	}
 
-	// Stamp last_recap_at on every non-dry-run recap, even when there are
-	// no new commits — otherwise "since last recap" would never update.
-	// Advance the cursor only when there are new commits to mark as seen.
+	// Cursor advance and last_recap_at stamping.
+	//
+	// Normally we stamp last_recap_at on every non-dry-run recap and advance
+	// the cursor to HEAD when there are new commits. Exception: an explicit
+	// window that starts AFTER the current cursor (a "gap") would strand
+	// commits between cursor_time and window.Start — they'd never render and
+	// would be marked seen. See ADR
+	// recap-explicit-window-conditional-advance: on a gapped explicit run we
+	// stamp neither field and print a stderr notice.
 	if !ra.DryRun && regErr == nil {
+		if explicit && cursor != "" {
+			gap, cursorKnown := countGap(commits, cursor, window.Start)
+			if cursorKnown && gap > 0 {
+				fmt.Fprint(os.Stderr, gapNoticeLine("", gap))
+				return nil
+			}
+		}
 		newCursor := ""
 		if len(commits) > 0 {
 			newCursor = commits[0].Hash
@@ -190,6 +203,48 @@ func runRecapSingle(ra recapArgs, w Writer, dir string) error {
 	}
 
 	return nil
+}
+
+// gapNoticeLine builds the stderr line printed on a gapped explicit recap.
+// If prefix is non-empty (the --all fan-out case), it's rendered as "<prefix>: ".
+func gapNoticeLine(prefix string, gap int) string {
+	noun := "commits"
+	if gap == 1 {
+		noun = "commit"
+	}
+	lead := ""
+	if prefix != "" {
+		lead = prefix + ": "
+	}
+	return fmt.Sprintf("%s%d %s older than this window and newer than your last recap were not shown. Run 'bw recap' to see them.\n",
+		lead, gap, noun)
+}
+
+// countGap returns the number of commits in `commits` that are newer than the
+// commit identified by `cursor` and strictly older than `windowStart`. It also
+// reports whether the cursor hash was found in `commits` at all. If the cursor
+// isn't found (e.g. registry is stale or commits has been trimmed), the caller
+// should fall back to the normal stamping path.
+func countGap(commits []treefs.CommitInfo, cursor string, windowStart time.Time) (int, bool) {
+	var cursorTime time.Time
+	found := false
+	for _, c := range commits {
+		if c.Hash == cursor {
+			cursorTime = c.Time
+			found = true
+			break
+		}
+	}
+	if !found {
+		return 0, false
+	}
+	gap := 0
+	for _, c := range commits {
+		if c.Time.After(cursorTime) && c.Time.Before(windowStart) {
+			gap++
+		}
+	}
+	return gap, true
 }
 
 // cmdRecapAll is the cross-repo fan-out (S7).
@@ -241,10 +296,7 @@ func cmdRecapAll(ra recapArgs, w Writer) error {
 
 		// Resolve window + commits per-repo. Same three cases as single-repo.
 		explicit := ra.Since != "" || len(ra.Tokens) > 0
-		cursor := ""
-		if !explicit {
-			cursor = entries[p].Cursor
-		}
+		cursor := entries[p].Cursor
 
 		var window recap.Window
 		var commits []treefs.CommitInfo
@@ -284,8 +336,17 @@ func cmdRecapAll(ra recapArgs, w Writer) error {
 		rcp := recap.Build(commits, window, &storeLookup{store: store})
 		all = append(all, repoRecap{Path: p, Recap: rcp})
 
-		// Stamp + optionally advance cursor per repo unless dry-run.
+		// Stamp + optionally advance cursor per repo unless dry-run. See
+		// ADR recap-explicit-window-conditional-advance: a gapped explicit
+		// run stamps neither field and emits a per-repo stderr notice.
 		if !ra.DryRun {
+			if explicit && cursor != "" {
+				gap, cursorKnown := countGap(commits, cursor, window.Start)
+				if cursorKnown && gap > 0 {
+					fmt.Fprint(os.Stderr, gapNoticeLine(p, gap))
+					continue
+				}
+			}
 			newCursor := ""
 			if len(commits) > 0 {
 				newCursor = commits[0].Hash
