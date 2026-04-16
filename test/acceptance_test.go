@@ -1273,11 +1273,15 @@ func TestConfigSetPrefixSkipsAliasWhenCollides(t *testing.T) {
 	// Seed both repos with an issue so rename has something to log.
 	envs[1].bw("create", "target", "--id", "r1-t1")
 
-	// Inject an extra registry entry simulating a second repo with
-	// prefix=r1 at envs[0].dir — this is the collision scenario.
+	// Force the prefix collision by flipping envs[0]'s recorded prefix
+	// from r0 to r1 directly. Mutating the existing entry avoids
+	// OS-specific path canonicalization (macOS resolves /var/folders/…
+	// to /private/var/folders/…, so injecting a new entry keyed on
+	// envs[0].dir produces a distinct key on macOS but a duplicate key
+	// on Linux — and Go's JSON parser gives duplicate-key wins to the
+	// last one, silently dropping the injection on Linux).
 	contents := envs[1].registryContents()
-	inject := `"` + envs[0].dir + `": {"last_seen_at":"2026-01-15T10:00:00Z","prefix":"r1"},`
-	contents = strings.Replace(contents, `"repos": {`, `"repos": {`+"\n    "+inject, 1)
+	contents = strings.Replace(contents, `"prefix": "r0"`, `"prefix": "r1"`, 1)
 	envs[1].seedRegistry(contents)
 
 	// Rename envs[1] from r1 -> newr1.
