@@ -139,6 +139,44 @@ func (e *bwEnv) bwFail(args ...string) string {
 	return stdout.String() + stderr.String()
 }
 
+// bwAtClock runs bw with BW_CLOCK (and git commit-date envs) overridden.
+// Returns stdout; fatals on non-zero exit.
+func (e *bwEnv) bwAtClock(clock string, args ...string) string {
+	out, _ := e.bwAtClockCapture(clock, args...)
+	return out
+}
+
+// bwAtClockCapture is bwAtClock that also returns stderr.
+func (e *bwEnv) bwAtClockCapture(clock string, args ...string) (string, string) {
+	e.t.Helper()
+	cmd := exec.Command(bwBin, args...)
+	cmd.Dir = e.dir
+	overridden := make([]string, 0, len(e.env)+3)
+	for _, kv := range e.env {
+		switch {
+		case strings.HasPrefix(kv, "BW_CLOCK="),
+			strings.HasPrefix(kv, "GIT_AUTHOR_DATE="),
+			strings.HasPrefix(kv, "GIT_COMMITTER_DATE="):
+			continue
+		}
+		overridden = append(overridden, kv)
+	}
+	overridden = append(overridden,
+		"BW_CLOCK="+clock,
+		"GIT_AUTHOR_DATE="+clock,
+		"GIT_COMMITTER_DATE="+clock,
+	)
+	cmd.Env = overridden
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		e.t.Fatalf("bw %s (clock=%s):\nstdout: %s\nstderr: %s\nerr: %v",
+			strings.Join(args, " "), clock, stdout.String(), stderr.String(), err)
+	}
+	return stdout.String(), stderr.String()
+}
+
 // bwAt runs bw from a custom directory instead of the default e.dir.
 func (e *bwEnv) bwAt(dir string, args ...string) string {
 	e.t.Helper()
@@ -1138,5 +1176,124 @@ func TestWorktreeRefWrites(t *testing.T) {
 	log := env.git("log", "--oneline", "beadwork")
 	if !strings.Contains(log, "wt-1") {
 		t.Fatalf("worktree commit not visible in beadwork log from main:\n%s", log)
+	}
+}
+
+// TestRecapExplicitWindowGapSkipsAdvance verifies that an explicit window
+// that starts AFTER the current cursor leaves both cursor and last_recap_at
+// untouched, and prints a gap notice on stderr naming the unrendered count.
+// See ADR: recap-explicit-window-conditional-advance.
+func TestRecapExplicitWindowGapSkipsAdvance(t *testing.T) {
+	env := newBwEnv(t)
+
+	const (
+		day1 = "2026-04-10T09:00:00Z" // cursor gets set here
+		day2 = "2026-04-12T09:00:00Z" // gap commit (older than window, newer than cursor)
+		day3 = "2026-04-14T12:00:00Z" // explicit "today" is day3 midnight → day3 noon
+	)
+
+	// Day 1: create an issue, run bare recap → cursor advances to this commit.
+	env.bwAtClock(day1, "create", "gap-origin", "--id", "gp-1")
+	env.bwAtClock(day1, "recap")
+	cursor1 := registryField(t, env.registryContents(), "cursor")
+	lastRecap1 := registryField(t, env.registryContents(), "last_recap_at")
+	if cursor1 == "" {
+		t.Fatalf("day1 bare recap did not stamp cursor:\n%s", env.registryContents())
+	}
+	if lastRecap1 == "" {
+		t.Fatalf("day1 bare recap did not stamp last_recap_at:\n%s", env.registryContents())
+	}
+
+	// Day 2: another commit lands. This is the "gap" — it's newer than the
+	// day-1 cursor and older than the day-3 "today" window.
+	env.bwAtClock(day2, "create", "gap-middle", "--id", "gp-2")
+
+	// Day 3: explicit `recap today`. Window = day3 00:00 → day3 12:00. The
+	// day-2 gp-2 commit is in the gap. gp-2 is NOT rendered, cursor must
+	// NOT advance, stderr must carry the gap notice.
+	stdout, stderr := env.bwAtClockCapture(day3, "recap", "today")
+
+	// Output: gp-2 should not appear (it's older than the window).
+	if strings.Contains(stdout, "gp-2") {
+		t.Errorf("explicit window should not render gap commit gp-2:\n%s", stdout)
+	}
+
+	// Stderr notice must mention the gap count (1).
+	if !strings.Contains(stderr, "1 commit older than this window") {
+		t.Errorf("expected gap notice on stderr, got:\n%s", stderr)
+	}
+	if !strings.Contains(stderr, "bw recap") {
+		t.Errorf("gap notice should reference 'bw recap':\n%s", stderr)
+	}
+
+	// Registry: cursor + last_recap_at must still match the day-1 snapshot.
+	// (last_seen_at moves on every command via the auto-register hook; that's
+	// orthogonal to the recap-stamp behavior under test.)
+	cursor3 := registryField(t, env.registryContents(), "cursor")
+	lastRecap3 := registryField(t, env.registryContents(), "last_recap_at")
+	if cursor3 != cursor1 {
+		t.Errorf("gapped explicit run advanced cursor\n  was: %s\n  now: %s", cursor1, cursor3)
+	}
+	if lastRecap3 != lastRecap1 {
+		t.Errorf("gapped explicit run stamped last_recap_at\n  was: %s\n  now: %s", lastRecap1, lastRecap3)
+	}
+}
+
+// registryField extracts a top-level string field from a single-repo
+// registry JSON blob. Test helper only — assumes exactly one repo entry.
+func registryField(t *testing.T, raw, field string) string {
+	t.Helper()
+	needle := `"` + field + `":`
+	i := strings.Index(raw, needle)
+	if i < 0 {
+		return ""
+	}
+	rest := raw[i+len(needle):]
+	// Skip whitespace then expect a quoted string.
+	for len(rest) > 0 && (rest[0] == ' ' || rest[0] == '\t' || rest[0] == '\n') {
+		rest = rest[1:]
+	}
+	if len(rest) == 0 || rest[0] != '"' {
+		return ""
+	}
+	rest = rest[1:]
+	end := strings.Index(rest, `"`)
+	if end < 0 {
+		return ""
+	}
+	return rest[:end]
+}
+
+// TestRecapExplicitWindowNoGapAdvances verifies that an explicit window that
+// covers the full unseen range (window.Start <= cursor_time) advances the
+// cursor to HEAD exactly like a bare recap.
+func TestRecapExplicitWindowNoGapAdvances(t *testing.T) {
+	env := newBwEnv(t)
+
+	const (
+		day1 = "2026-04-14T03:00:00Z" // cursor here, inside day-1
+		day2 = "2026-04-14T05:00:00Z" // new commit, later same day
+		now  = "2026-04-14T12:00:00Z" // `recap today` fires here → window covers both
+	)
+
+	env.bwAtClock(day1, "create", "first", "--id", "ng-1")
+	env.bwAtClock(day1, "recap")
+	before := env.registryContents()
+
+	env.bwAtClock(day2, "create", "second", "--id", "ng-2")
+
+	// `recap today` at noon. Window start is midnight (before day1 cursor),
+	// so no gap — cursor should advance and stderr should be clean.
+	stdout, stderr := env.bwAtClockCapture(now, "recap", "today")
+	if !strings.Contains(stdout, "ng-2") {
+		t.Errorf("no-gap explicit recap missing ng-2:\n%s", stdout)
+	}
+	if strings.Contains(stderr, "older than this window") {
+		t.Errorf("no-gap explicit recap should not emit gap notice:\n%s", stderr)
+	}
+
+	after := env.registryContents()
+	if after == before {
+		t.Errorf("no-gap explicit recap should advance cursor; registry unchanged:\n%s", after)
 	}
 }
