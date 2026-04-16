@@ -182,22 +182,3 @@ func extractPrefixCandidates(args []string, known map[string]bool) []string {
 	return prefixes
 }
 
-// isPrefixCandidate reports whether s looks like a beadwork prefix token.
-// Matches repo.ValidatePrefix: alphanumerics + _/- allowed, length ≤ 16.
-func isPrefixCandidate(s string) bool {
-	if s == "" || len(s) > 16 {
-		return false
-	}
-	for i := 0; i < len(s); i++ {
-		c := s[i]
-		switch {
-		case c >= 'a' && c <= 'z':
-		case c >= 'A' && c <= 'Z':
-		case c >= '0' && c <= '9':
-		case c == '_' || c == '-':
-		default:
-			return false
-		}
-	}
-	return true
-}
