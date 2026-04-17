@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-17T11:19:02Z",
+  "description": "Beadwork has subtree traversal primitives for `ready`/`blocked` (`buildSubtreeOverlay`, `buildSubtreeSet`, `LoadEdges` in `internal/issue/blocking.go`). These are not exposed via a generic show verb.\n\n**Fix:** Add either `bw tree \u003cid\u003e` or `bw show \u003cid\u003e --recursive` that walks the subtree and renders:\n- parent/child hierarchy as an indented tree\n- blocked_by/blocks edges (DAG) as annotations on nodes\n- optional `--json` for machine consumption (same shape that MCP wrappers would relay)\n\n**Acceptance:**\n- Epic with 3 levels of descendants renders as a readable tree.\n- DAG mode shows external blocker arrows (a child blocked by a ticket outside the subtree).\n- JSON output is enough for a downstream MCP tool to render the tree client-side in one call.",
+  "id": "bw-m9v.2",
+  "labels": [],
+  "parent": "bw-m9v",
+  "priority": 2,
+  "status": "open",
+  "title": "bw show --recursive / bw tree \u003cid\u003e — subtree/DAG rendering",
+  "type": "task",
+  "updated_at": "2026-04-17T11:19:02Z"
+}
