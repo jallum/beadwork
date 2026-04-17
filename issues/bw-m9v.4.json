@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-17T11:19:14Z",
+  "description": "`list.go:95` defaults `Statuses: [\"open\", \"in_progress\"]` when `--status` is not given. When a user passes `--status in_review` alone (without `--all`), the filter behavior is non-obvious — the explicit user argument may intersect with the default rather than replace it, returning empty for statuses outside the default whitelist.\n\n**Fix:** User-specified `--status` (one or more) **replaces** the default whitelist. Document the precedence in `bw list --help`. If the current behavior is intentional, clarify it in the help text and in a comment at `list.go:95`.\n\n**Acceptance:**\n- `bw list --status in_review` on a repo containing `in_review` tickets returns those tickets, not empty.\n- `bw list` (no `--status`) still defaults to open+in_progress.\n- `bw list --all` still overrides to show everything.",
+  "id": "bw-m9v.4",
+  "labels": [],
+  "parent": "bw-m9v",
+  "priority": 2,
+  "status": "open",
+  "title": "bw list --status X default-whitelist semantics",
+  "type": "task",
+  "updated_at": "2026-04-17T11:19:14Z"
+}
