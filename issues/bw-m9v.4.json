@@ -14,9 +14,9 @@
   "id": "bw-m9v.4",
   "labels": [],
   "parent": "bw-m9v",
-  "priority": 2,
+  "priority": 3,
   "status": "open",
   "title": "bw list --status X default-whitelist semantics",
   "type": "task",
-  "updated_at": "2026-04-17T12:12:31.970512Z"
+  "updated_at": "2026-04-17T12:12:34.742027Z"
 }
