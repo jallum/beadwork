@@ -10,7 +10,7 @@
     }
   ],
   "created": "2026-04-17T11:19:02Z",
-  "description": "Beadwork has subtree traversal primitives for `ready`/`blocked` (`buildSubtreeOverlay`, `buildSubtreeSet`, `LoadEdges` in `internal/issue/blocking.go`). These are not exposed via a generic show verb.\n\n**Fix:** Add either `bw tree <id>` or `bw show <id> --recursive` that walks the subtree and renders:\n- parent/child hierarchy as an indented tree\n- blocked_by/blocks edges (DAG) as annotations on nodes\n- optional `--json` for machine consumption (same shape that MCP wrappers would relay)\n\n**Acceptance:**\n- Epic with 3 levels of descendants renders as a readable tree.\n- DAG mode shows external blocker arrows (a child blocked by a ticket outside the subtree).\n- JSON output is enough for a downstream MCP tool to render the tree client-side in one call.",
+  "description": "Beadwork has subtree traversal primitives for `ready`/`blocked` (`buildSubtreeOverlay`, `buildSubtreeSet`, `LoadEdges` in `internal/issue/blocking.go`). These are not exposed via a generic show verb.\n\n**Fix:** Add either `bw tree <id>` or `bw show <id> --recursive` that walks the subtree and renders in one of three formats:\n\n- **`--format markdown` (default)** — human-readable output for terminals: indented tree with status/priority badges, followed by a DAG section calling out blocked_by/blocks edges (including external blockers). Intended for `bw` CLI users eyeballing an epic.\n- **`--format json`** — machine-readable `{root, tickets, tree, deps, ready}` payload with `tree`/`deps` as embedded graphviz DOT strings (same shape Octopus `ticket_show --recursive` returns, so CLI and MCP outputs align).\n- **`--format dot`** — raw graphviz output, single graph combining parent/child + blocks edges (distinct edge styles) so users can pipe straight into `dot -Tpng`.\n\n**Acceptance:**\n- `bw show <epic> --recursive` (no `--format`) prints the markdown tree with DAG callouts.\n- `bw show <epic> --recursive --format json` matches Octopus's `ticket_show(recursive: true)` payload shape byte-for-byte where possible (at minimum same top-level keys).\n- `bw show <epic> --recursive --format dot | dot -Tpng -o epic.png` produces a renderable graph.\n- Epic with 3 levels of descendants renders correctly in all three modes.\n- DAG view shows external blocker arrows (a child blocked by a ticket outside the subtree).",
   "id": "bw-m9v.2",
   "labels": [],
   "parent": "bw-m9v",
@@ -18,5 +18,5 @@
   "status": "open",
   "title": "bw show --recursive / bw tree <id> — subtree/DAG rendering",
   "type": "task",
-  "updated_at": "2026-04-17T12:12:17.961474Z"
+  "updated_at": "2026-04-17T12:15:22.771625Z"
 }
