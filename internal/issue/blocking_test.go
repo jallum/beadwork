@@ -1433,6 +1433,157 @@ func TestReadySubtreeReadyRootDescendantsExcluded(t *testing.T) {
 	}
 }
 
+// An in_progress epic is claimed work — its ready children should surface in
+// Ready(), since they're the next actionable step inside the epic.
+func TestReadySurfacesChildrenOfInProgressRoot(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{Type: "epic"})
+	child, _ := env.Store.Create("Child", issue.CreateOpts{Parent: epic.ID})
+	env.CommitIntent("setup")
+
+	if _, err := env.Store.Start(epic.ID, ""); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	env.CommitIntent("start " + epic.ID)
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[child.ID] {
+		t.Errorf("child should surface in ready when root epic is in_progress, got %v", ids)
+	}
+	if ids[epic.ID] {
+		t.Errorf("in_progress epic should not appear in ready, got %v", ids)
+	}
+}
+
+// When the epic is in_progress AND the epic-child is also in_progress, Ready()
+// should drill past both and surface the open grandchild.
+func TestReadyDrillsPastInProgressIntermediateNodes(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{Type: "epic"})
+	child, _ := env.Store.Create("Child", issue.CreateOpts{Parent: epic.ID})
+	grandchild, _ := env.Store.Create("Grandchild", issue.CreateOpts{Parent: child.ID})
+	env.CommitIntent("setup")
+
+	if _, err := env.Store.Start(epic.ID, ""); err != nil {
+		t.Fatalf("Start epic: %v", err)
+	}
+	if _, err := env.Store.Start(child.ID, ""); err != nil {
+		t.Fatalf("Start child: %v", err)
+	}
+	env.CommitIntent("start chain")
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[grandchild.ID] {
+		t.Errorf("grandchild should surface in ready, got %v", ids)
+	}
+}
+
+// When an intermediate node is open (not started), it represents the unit of
+// work and surfaces — its descendants should stay hidden.
+func TestReadyStopsAtOpenIntermediateNode(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{Type: "epic"})
+	child, _ := env.Store.Create("Child", issue.CreateOpts{Parent: epic.ID})
+	grandchild, _ := env.Store.Create("Grandchild", issue.CreateOpts{Parent: child.ID})
+	env.CommitIntent("setup")
+
+	if _, err := env.Store.Start(epic.ID, ""); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	env.CommitIntent("start " + epic.ID)
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[child.ID] {
+		t.Errorf("open child should surface, got %v", ids)
+	}
+	if ids[grandchild.ID] {
+		t.Errorf("grandchild should be hidden under open child, got %v", ids)
+	}
+}
+
+// External blockers should bubble to the display root (which can be a deeper
+// node than the top-level epic when the epic is in_progress).
+func TestReadyExternalBlockerBubblesToDisplayRoot(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{Type: "epic"})
+	child, _ := env.Store.Create("Child", issue.CreateOpts{Parent: epic.ID})
+	grandchild, _ := env.Store.Create("Grandchild", issue.CreateOpts{Parent: child.ID})
+	ext, _ := env.Store.Create("External", issue.CreateOpts{})
+	env.Store.Link(ext.ID, grandchild.ID)
+	env.CommitIntent("setup")
+
+	if _, err := env.Store.Start(epic.ID, ""); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	env.CommitIntent("start " + epic.ID)
+
+	// Epic is in_progress → child is the display root. Child has a descendant
+	// (grandchild) with an external blocker, so child should appear as blocked,
+	// not ready.
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	for _, r := range ready {
+		if r.ID == child.ID {
+			t.Errorf("child should NOT be ready — grandchild has external blocker")
+		}
+	}
+
+	blocked, err := env.Store.Blocked()
+	if err != nil {
+		t.Fatalf("Blocked: %v", err)
+	}
+	var childBlocked *issue.BlockedIssue
+	for i := range blocked {
+		if blocked[i].ID == child.ID {
+			childBlocked = &blocked[i]
+			break
+		}
+	}
+	if childBlocked == nil {
+		t.Fatal("child should appear in blocked list (external blocker bubbles from grandchild)")
+	}
+	found := false
+	for _, ob := range childBlocked.OpenBlockers {
+		if ob == ext.ID {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("child blockers = %v, should contain %s", childBlocked.OpenBlockers, ext.ID)
+	}
+}
+
 func TestHiddenBlockerSetIncludesDescendants(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
