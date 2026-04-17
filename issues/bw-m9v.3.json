@@ -2,6 +2,13 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "comments": [
+    {
+      "author": "",
+      "text": "Descoped for Octopus (octo-h7b shipped bdd7536f): projection (`fields`) and paging (`offset`, `limit`) now live in the Elixir Query layer, applied after the filter stage and stable `{priority, id}` sort. Still useful for `bw` CLI users; demoting to P3.",
+      "timestamp": "2026-04-17T12:12:22.777294Z"
+    }
+  ],
   "created": "2026-04-17T11:19:09Z",
   "description": "`bw list` today accepts `--limit` (default 10) but no `--offset`, no `--fields`/`--select`. Large ticket stores either get truncated silently or dumped in full. MCP wrappers hitting a ~1000-ticket store see 994KB responses that overflow context windows.\n\n**Fix:**\n- Add `--offset N`.\n- Add `--fields id,title,status,type,priority,parent` (comma-separated; default stays current behavior).\n- Provide a terse default format (`--format short`) that emits one line per ticket: `id  status  type  priority  title`.\n\n**Acceptance:**\n- `bw list --fields id,title --limit 5 --offset 10` returns exactly 5 rows, tickets 11–15, id+title only.\n- JSON mode with `--fields` returns projected objects (not full Issue structs).\n- Default behavior unchanged.",
   "id": "bw-m9v.3",
@@ -11,5 +18,5 @@
   "status": "open",
   "title": "bw list projection + paging (--fields, --offset)",
   "type": "task",
-  "updated_at": "2026-04-17T11:19:09Z"
+  "updated_at": "2026-04-17T12:12:22.777294Z"
 }
