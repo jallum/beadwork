@@ -14,9 +14,9 @@
   "id": "bw-m9v.3",
   "labels": [],
   "parent": "bw-m9v",
-  "priority": 2,
+  "priority": 3,
   "status": "open",
   "title": "bw list projection + paging (--fields, --offset)",
   "type": "task",
-  "updated_at": "2026-04-17T12:12:22.777294Z"
+  "updated_at": "2026-04-17T12:12:25.891879Z"
 }
