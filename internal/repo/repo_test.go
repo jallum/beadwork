@@ -128,6 +128,61 @@ func TestFindRepoAtEmpty(t *testing.T) {
 	}
 }
 
+func TestFindRepoAtWithWorktreeConfigExtension(t *testing.T) {
+	dir := t.TempDir()
+
+	gitRun(t, dir, "init")
+	gitRun(t, dir, "config", "user.email", "test@test.com")
+	gitRun(t, dir, "config", "user.name", "Test")
+	os.WriteFile(filepath.Join(dir, "README"), []byte("test"), 0644)
+	gitRun(t, dir, "add", ".")
+	gitRun(t, dir, "commit", "-m", "initial")
+
+	// Simulate the state real git creates after `git config --worktree ...`:
+	// format version bumped to 1, worktreeConfig extension enabled.
+	gitRun(t, dir, "config", "core.repositoryFormatVersion", "1")
+	gitRun(t, dir, "config", "extensions.worktreeConfig", "true")
+
+	if _, err := repo.FindRepoAt(dir); err != nil {
+		t.Fatalf("FindRepoAt with worktreeConfig extension: %v", err)
+	}
+}
+
+func TestFindRepoAtFromWorktreeWithWorktreeConfig(t *testing.T) {
+	base, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatalf("EvalSymlinks: %v", err)
+	}
+	main := filepath.Join(base, "main")
+	if err := os.MkdirAll(main, 0755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+
+	gitRun(t, main, "init")
+	gitRun(t, main, "config", "user.email", "test@test.com")
+	gitRun(t, main, "config", "user.name", "Test")
+	os.WriteFile(filepath.Join(main, "README"), []byte("test"), 0644)
+	gitRun(t, main, "add", ".")
+	gitRun(t, main, "commit", "-m", "initial")
+
+	wt := filepath.Join(base, "wt")
+	gitRun(t, main, "worktree", "add", wt)
+
+	// Enable worktreeConfig extension (mirrors what git does automatically
+	// when a user runs `git config --worktree ...`).
+	gitRun(t, main, "config", "core.repositoryFormatVersion", "1")
+	gitRun(t, main, "config", "extensions.worktreeConfig", "true")
+	gitRun(t, wt, "config", "--worktree", "core.sparseCheckout", "true")
+
+	r, err := repo.FindRepoAt(wt)
+	if err != nil {
+		t.Fatalf("FindRepoAt from worktree: %v", err)
+	}
+	if r.RepoDir() != main {
+		t.Errorf("RepoDir() = %q, want %q", r.RepoDir(), main)
+	}
+}
+
 func TestInitInvalidPrefix(t *testing.T) {
 	dir := t.TempDir()
 

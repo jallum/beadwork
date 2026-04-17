@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/jallum/beadwork/internal/treefs"
 )
@@ -53,7 +52,7 @@ func FindRepoAt(dir string) (*Repo, error) {
 	}
 
 	repoDir := filepath.Dir(gitDir)
-	goRepo, err := git.PlainOpen(repoDir)
+	goRepo, err := openGitRepo(repoDir)
 	if err != nil {
 		return nil, fmt.Errorf("open repo: %w", err)
 	}
