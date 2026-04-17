@@ -2,6 +2,13 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "comments": [
+    {
+      "author": "",
+      "text": "octo-h7b shipped (octopus commit bdd7536f): Octopus now reads `annotations`, `reviewer`, and `index` directly from the JSON on the **read path**, so this ticket is specifically the **write-side** guarantee — preventing `bw update`/`bw close` or any CLI-mediated edit from silently dropping those fields on round-trip. Priority stays P1.",
+      "timestamp": "2026-04-17T12:12:06.959421Z"
+    }
+  ],
   "created": "2026-04-17T11:18:56Z",
   "description": "Issue at `internal/issue/issue.go:18–37` is a closed struct. Default json unmarshal silently drops unknown keys, so any downstream consumer writing domain-specific fields (e.g., review-type tickets carrying `annotations`, `index`, `reviewer`) loses them the moment `bw update` or any bw-mediated edit touches the ticket.\n\n**Fix:** Add `Extra map[string]json.RawMessage` to Issue. Implement custom `UnmarshalJSON` that dumps keys outside the known set into Extra, and `MarshalJSON` that splats Extra back out alongside known fields. Collisions (a key appearing in both Extra and known fields) should be a unit-tested error or a documented precedence.\n\n**Acceptance:**\n- Round-trip test: unmarshal a JSON blob with `annotations: [...]` + known fields → marshal → byte-equal to input (modulo key ordering).\n- `bw update --status closed` on a ticket carrying `annotations` preserves the array.\n- Unit test for collision between a future known field and an existing Extra entry.\n\n**Convention note** (no code — documented in `docs/` or AGENTS.md): downstream consumers should namespace their extensions (e.g. `extensions.octopus.*`) to avoid colliding with future beadwork-owned field names.\n\nPriority 1: unblocks every downstream consumer.",
   "id": "bw-m9v.1",
@@ -11,5 +18,5 @@
   "status": "open",
   "title": "Preserve unknown fields on Issue round-trip — lossless JSON",
   "type": "task",
-  "updated_at": "2026-04-17T11:18:56Z"
+  "updated_at": "2026-04-17T12:12:06.959421Z"
 }
