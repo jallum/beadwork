@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-04-17T02:20:45Z",
   "created": "2026-04-17T02:12:26Z",
   "description": "bw fails to open any git repository that has the worktreeconfig extension enabled:\n\n```\nerror: open repo: core.repositoryformatversion does not support extension: worktreeconfig\n```\n\nThis extension is standard git — it's automatically enabled when you use `git worktree add` and configure per-worktree settings. Any project that uses git worktrees with per-worktree config is completely unusable with bw.\n\n## Reproduce\n\n1. Create a repo with worktrees: `git worktree add ../foo`\n2. Set any per-worktree config: `git config --worktree core.sparseCheckout true`\n3. Run `bw list` — fails with the extension error\n\n## Expected\n\nbw should either support the worktreeconfig extension or ignore extensions it doesn't need to understand. The worktreeconfig extension just means \"look for per-worktree config files\" — it doesn't change the object format or anything bw cares about.\n\n## Impact\n\nCan't use bw at all from the Octopus project or any of its worktrees. Have to use `-C ../beadwork` workaround which can't see Octopus tickets.",
   "id": "bw-pqi",
   "labels": [],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Support git worktreeconfig extension in repo open",
   "type": "bug",
-  "updated_at": "2026-04-17T02:17:18Z"
+  "updated_at": "2026-04-17T02:20:45Z"
 }
