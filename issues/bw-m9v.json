@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-17T11:18:43Z",
+  "description": "Downstream consumers (Octopus) are hitting four classes of friction when using beadwork as a backing store for MCP-mediated ticket workflows. Each child addresses one:\n\n1. Lossless JSON round-trip — Issue struct silently drops unknown fields, so any downstream consumer extending the schema (e.g. review-type tickets carrying annotations/index/reviewer) loses them on the next bw update.\n2. Subtree/DAG rendering — beadwork has traversal primitives internally (buildSubtreeOverlay, buildSubtreeSet, LoadEdges) but no generic show-tree verb exposing them.\n3. list projection + paging — --limit is the only knob; no --offset, no --fields. ~1000-ticket stores produce ~994KB responses that overflow MCP/LLM context windows.\n4. --status filter semantics — default whitelist (open, in_progress) interacts confusingly with explicit --status args; users passing --status in_review alone can get empty results.\n\nCross-repo companion epic in Octopus: \u003ccompanion-epic-id\u003e (to be filled in after Octopus side is created and cross-linked).",
+  "id": "bw-m9v",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "[EPIC] MCP-consumer ergonomics (lossless storage, subtree show, projection, filter semantics)",
+  "type": "epic",
+  "updated_at": "2026-04-17T11:18:43Z"
+}
