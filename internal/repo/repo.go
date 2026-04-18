@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/jallum/beadwork/internal/treefs"
 )
 
@@ -28,6 +29,29 @@ type Repo struct {
 	Prefix      string
 	tfs         *treefs.TreeFS
 	initialized bool
+
+	// preReplayHash, when non-zero, is the local ref hash captured just
+	// before Sync reset to the remote tip in the "needs replay" branch.
+	// Attachment replay walks this commit's tree (via Store.SourceHash)
+	// to recover blobs that are still in the ODB but no longer reachable
+	// from the current local ref. Cleared by callers once replay is
+	// complete via ClearPreReplayHash.
+	preReplayHash plumbing.Hash
+}
+
+// PreReplayHash returns the local ref hash captured by the most recent
+// Sync call on its "needs replay" path. Zero if Sync has not yet taken
+// that path (or it has been cleared). Callers should use this to set
+// Store.SourceHash before invoking intent.Replay so the attach handler
+// can recover pre-reset blobs.
+func (r *Repo) PreReplayHash() plumbing.Hash {
+	return r.preReplayHash
+}
+
+// ClearPreReplayHash resets the captured pre-replay hash. Callers use
+// this after replay + push succeeds so a subsequent Sync starts fresh.
+func (r *Repo) ClearPreReplayHash() {
+	r.preReplayHash = plumbing.ZeroHash
 }
 
 // FindRepo discovers the repository from the current working directory.
@@ -402,7 +426,11 @@ func (r *Repo) Sync() (status string, replayed []string, err error) {
 		return "rebased and pushed", nil, nil
 	}
 
-	// Merge had conflicts — fall back to intent replay
+	// Merge had conflicts — fall back to intent replay.
+	// Capture the pre-reset local hash so the caller can expose it to
+	// intent replay for attachment-blob recovery. Git keeps the blob
+	// objects in the ODB until gc, even after the ref is reset.
+	r.preReplayHash = localHash
 	if err := r.tfs.Reset(remoteHash); err != nil {
 		return "", nil, fmt.Errorf("reset to remote: %w", err)
 	}

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/testutil"
 )
 
@@ -106,5 +107,75 @@ func TestCmdAttachMissingFile(t *testing.T) {
 	err := cmdAttach(env.Store, []string{"bw-x", filepath.Join(env.Dir, "no-such-file")}, PlainWriter(&buf))
 	if err == nil {
 		t.Fatal("expected error for missing source file")
+	}
+}
+
+// TestAttachSurvivesSyncConflictReplay is the end-to-end integration
+// test for Step 7: make a tree with attachments via `bw attach`, force a
+// diverged remote so `bw sync` falls back to conflict replay, and
+// verify the attachment bytes survive untouched at their original path.
+//
+// The conflict is forced by mutating the same issue JSON on both sides
+// (local adds an assignee; remote moves to in_progress). That mutation
+// makes MergeCommit return false, the local ref is Reset to the remote
+// tip, and Replay runs. During Replay the "attach" intent line must
+// recover the blob from the ODB via Store.SourceHash — the very path
+// exercised by this test.
+func TestAttachSurvivesSyncConflictReplay(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	bare := env.NewBareRemote()
+
+	// Seed a shared issue and push so both sides agree on a base.
+	shared, _ := env.Store.Create("Shared work", issue.CreateOpts{})
+	env.Repo.Commit(`create ` + shared.ID + ` p2 task "Shared work"`)
+	env.Repo.Sync()
+
+	// Remote side: update the shared issue and push.
+	env2 := env.CloneEnv(bare)
+	defer env2.Cleanup()
+
+	env2.SwitchTo()
+	statusIP := "in_progress"
+	env2.Store.Update(shared.ID, issue.UpdateOpts{Status: &statusIP})
+	env2.Repo.Commit("update " + shared.ID + " status=in_progress")
+	env2.Repo.Sync()
+
+	// Local side: same issue gets a different assignee, AND we attach
+	// a file with a distinctive payload that must survive the replay.
+	env.SwitchTo()
+	assignee := "agent-42"
+	env.Store.Update(shared.ID, issue.UpdateOpts{Assignee: &assignee})
+	env.Repo.Commit("update " + shared.ID + " assignee=agent-42")
+
+	src := filepath.Join(env.Dir, "survives.txt")
+	payload := []byte("attachment payload must survive replay")
+	if err := os.WriteFile(src, payload, 0644); err != nil {
+		t.Fatalf("write src: %v", err)
+	}
+	var buf bytes.Buffer
+	if err := cmdAttach(env.Store, []string{shared.ID, src}, PlainWriter(&buf)); err != nil {
+		t.Fatalf("cmdAttach: %v", err)
+	}
+
+	// Sync — this must take the conflict-replay path.
+	buf.Reset()
+	if err := cmdSync(env.Store, []string{}, PlainWriter(&buf)); err != nil {
+		t.Fatalf("cmdSync: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "replayed") {
+		t.Fatalf("expected sync to replay; got output: %q", out)
+	}
+
+	// The attachment must be reachable from the fresh tree after replay.
+	env.Store.ClearCache()
+	got, err := env.Store.GetAttachment(shared.ID, "survives.txt")
+	if err != nil {
+		t.Fatalf("GetAttachment after replay: %v", err)
+	}
+	if string(got) != string(payload) {
+		t.Errorf("contents after replay = %q, want %q", got, payload)
 	}
 }
