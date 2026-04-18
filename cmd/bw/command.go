@@ -237,6 +237,24 @@ var commands = []Command{
 		Run:        cmdComment,
 	},
 	{
+		Name:        "attach",
+		Summary:     "Attach a file to an issue",
+		Description: "Read <file-path> from disk and store its bytes at attachments/<ticket-id>/<stored-path>.\n\nWith no --name, the stored path defaults to filepath.Base of <file-path>.\nWith --name, the stored path is taken verbatim (may contain \"/\").\n\nCommits a single-line intent: \"attach <ticket-id> <stored-path>\". See docs/design.md for details.",
+		Positionals: []Positional{
+			{Name: "<id>", Required: true, Help: "Issue ID"},
+			{Name: "<file-path>", Required: true, Help: "Path to the local file to attach"},
+		},
+		Flags: []Flag{
+			{Long: "--name", Value: "PATH", Help: "Stored path under attachments/<id>/ (default: basename of <file-path>)"},
+		},
+		Examples: []Example{
+			{Cmd: "bw attach bw-a3f8 design.png"},
+			{Cmd: "bw attach bw-a3f8 /tmp/out.log --name logs/out.log"},
+		},
+		NeedsStore: true,
+		Run:        cmdAttach,
+	},
+	{
 		Name:    "reopen",
 		Summary: "Reopen a closed or in-progress issue",
 		Positionals: []Positional{
@@ -493,7 +511,7 @@ var commandGroups = []struct {
 	name string
 	cmds []string
 }{
-	{"Working With Issues", []string{"create", "show", "list", "update", "start", "close", "reopen", "delete", "comment", "label", "defer", "undefer", "history"}},
+	{"Working With Issues", []string{"create", "show", "list", "update", "start", "close", "reopen", "delete", "comment", "label", "defer", "undefer", "history", "attach"}},
 	{"Finding Work", []string{"ready", "blocked"}},
 	{"Dependencies", []string{"dep"}},
 	{"Sync & Data", []string{"sync", "export", "import"}},
