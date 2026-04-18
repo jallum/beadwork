@@ -33,6 +33,26 @@ func validateAttachmentPath(p string) error {
 	return nil
 }
 
+// GetAttachment returns the bytes stored at
+// attachments/<ticketID>/<path> in the current Beadwork tree. Paths
+// are looked up verbatim, matching the storage layout described in
+// docs/design.md. Returns an error wrapping ErrAttachmentNotFound when
+// the path is absent.
+func (s *Store) GetAttachment(ticketID string, path string) ([]byte, error) {
+	if ticketID == "" {
+		return nil, fmt.Errorf("ticket id is empty")
+	}
+	if err := validateAttachmentPath(path); err != nil {
+		return nil, err
+	}
+	p := attachmentPath(ticketID, path)
+	data, err := s.FS.ReadFile(p)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrAttachmentNotFound, p)
+	}
+	return data, nil
+}
+
 // Attach writes content as a blob under attachments/<ticketID>/<storedPath>.
 // It stages the tree entry via the existing TreeFS helpers; the caller is
 // responsible for forming the matching `attach <ticketID> <storedPath>`

@@ -1,9 +1,11 @@
 package issue_test
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
+	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/testutil"
 )
 
@@ -59,5 +61,43 @@ func TestAttachSupportsNestedPaths(t *testing.T) {
 	}
 	if string(got) != "payload" {
 		t.Errorf("nested contents = %q, want %q", got, "payload")
+	}
+}
+
+// TestGetAttachmentRoundTrip covers the reader API: writing through the
+// internal Attach helper + Commit, then reading back through the public
+// GetAttachment, returns the same bytes.
+func TestGetAttachmentRoundTrip(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	want := []byte("hello world")
+	if err := env.Store.Attach("bw-rt", "notes.txt", want); err != nil {
+		t.Fatalf("Attach: %v", err)
+	}
+	env.CommitIntent("attach bw-rt notes.txt")
+
+	got, err := env.Store.GetAttachment("bw-rt", "notes.txt")
+	if err != nil {
+		t.Fatalf("GetAttachment: %v", err)
+	}
+	if string(got) != string(want) {
+		t.Errorf("contents = %q, want %q", got, want)
+	}
+}
+
+// TestGetAttachmentMissingReturnsSentinel covers the sentinel error
+// contract: a missing attachment returns an error that matches
+// ErrAttachmentNotFound via errors.Is.
+func TestGetAttachmentMissingReturnsSentinel(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	_, err := env.Store.GetAttachment("bw-nope", "missing.bin")
+	if err == nil {
+		t.Fatal("expected error for missing attachment")
+	}
+	if !errors.Is(err, issue.ErrAttachmentNotFound) {
+		t.Errorf("err = %v, want errors.Is(err, ErrAttachmentNotFound)", err)
 	}
 }
