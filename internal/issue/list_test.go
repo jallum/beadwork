@@ -58,6 +58,51 @@ func TestListFilters(t *testing.T) {
 }
 
 
+// TestListFreshRepoEmpty covers the listing-tolerance half of the
+// .gitkeep cleanup: a repo that was just initialized has no status
+// index directories for any state, yet listings must return empty
+// (not error). This mirrors the deferred case, which has always
+// worked without a .gitkeep seed.
+func TestListFreshRepoEmpty(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	for _, status := range []string{"open", "in_progress", "deferred", "closed"} {
+		got, err := env.Store.List(issue.Filter{Status: status})
+		if err != nil {
+			t.Fatalf("List(%s): %v", status, err)
+		}
+		if len(got) != 0 {
+			t.Errorf("List(%s) = %d, want 0 on fresh repo", status, len(got))
+		}
+	}
+}
+
+// TestListOnlyOneStateSeeded confirms that seeding a single state's
+// tickets leaves listings for the other three states returning empty,
+// even though none of them has a .gitkeep placeholder any more.
+func TestListOnlyOneStateSeeded(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	a, _ := env.Store.Create("Only open", issue.CreateOpts{})
+	env.CommitIntent("create " + a.ID)
+
+	for _, status := range []string{"in_progress", "deferred", "closed"} {
+		got, err := env.Store.List(issue.Filter{Status: status})
+		if err != nil {
+			t.Fatalf("List(%s): %v", status, err)
+		}
+		if len(got) != 0 {
+			t.Errorf("List(%s) = %d, want 0 (only open was seeded)", status, len(got))
+		}
+	}
+	open, _ := env.Store.List(issue.Filter{Status: "open"})
+	if len(open) != 1 {
+		t.Errorf("open = %d, want 1", len(open))
+	}
+}
+
 func TestListByStatus(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()

@@ -177,12 +177,13 @@ func (r *Repo) Init(prefix string) error {
 		}
 		r.Prefix = prefix
 
-		// Write skeleton
+		// Write skeleton. Only directories that listing code does NOT
+		// tolerate missing get a .gitkeep placeholder. Status index
+		// directories (status/open, status/in_progress, status/closed,
+		// status/deferred) are created on demand by setStatus; list
+		// functions treat a missing directory as empty.
 		dirs := []string{
 			"issues",
-			"status/open",
-			"status/in_progress",
-			"status/closed",
 			"labels",
 			"blocks",
 			"parent",
