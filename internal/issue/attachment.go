@@ -1,7 +1,10 @@
 package issue
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
+	"os"
 	"strings"
 )
 
@@ -53,4 +56,26 @@ func (s *Store) Attach(ticketID string, storedPath string, content []byte) error
 // attachmentPath returns the tree path for an attachment.
 func attachmentPath(ticketID, storedPath string) string {
 	return attachmentsRoot + "/" + ticketID + "/" + storedPath
+}
+
+// ReadAttachmentSource returns the bytes of an attachment blob, looking
+// first in the current TreeFS overlay/base and then falling back to
+// SourceHash when set. Returns an error wrapping fs.ErrNotExist when
+// the attachment is unreachable from either source. Used by the intent
+// replay handler for the `attach` verb.
+func (s *Store) ReadAttachmentSource(ticketID, storedPath string) ([]byte, error) {
+	p := attachmentPath(ticketID, storedPath)
+	if data, err := s.FS.ReadFile(p); err == nil {
+		return data, nil
+	}
+	if !s.SourceHash.IsZero() {
+		data, err := s.FS.ReadFileAt(s.SourceHash, p)
+		if err == nil {
+			return data, nil
+		}
+		if !errors.Is(err, os.ErrNotExist) && !errors.Is(err, fs.ErrNotExist) {
+			return nil, fmt.Errorf("read attachment from source tree: %w", err)
+		}
+	}
+	return nil, fmt.Errorf("%w: %s", ErrAttachmentNotFound, p)
 }

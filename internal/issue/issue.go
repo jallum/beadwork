@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/jallum/beadwork/internal/treefs"
 )
 
@@ -49,8 +50,17 @@ type Store struct {
 	DefaultPriority *int
 	IDRetries       int       // retries per length before bumping; 0 means 10
 	RandReader      io.Reader // random source; nil means crypto/rand.Reader
-	cache           map[string]*Issue
-	idSet           map[string]bool // lazily populated on first resolveID/ExistingIDs call
+
+	// SourceHash, when non-zero, designates an additional commit whose
+	// tree may be consulted to resolve attachment blobs during intent
+	// replay. Set by sync.go before invoking intent.Replay so that
+	// `attach` intents can recover blobs that lived on the pre-reset
+	// local tip. The blob objects survive the ref reset because git
+	// keeps them in the ODB. See docs/design.md for replay semantics.
+	SourceHash plumbing.Hash
+
+	cache map[string]*Issue
+	idSet map[string]bool // lazily populated on first resolveID/ExistingIDs call
 }
 
 // Commit persists pending mutations with the given intent message.
