@@ -15,13 +15,22 @@ func repoFrom(store *issue.Store) *repo.Repo {
 }
 
 // Replay executes a list of intent strings against the current state.
-// Each intent is a structured commit message like "create bw-a1b2 p1 task \"title\"".
-// Returns a list of errors for intents that failed (non-fatal).
+// Each entry is a structured commit message like
+// "create bw-a1b2 p1 task \"title\"". A single commit message may carry
+// multiple intents on separate lines (e.g. a primary intent followed
+// by one or more "attach" lines); each non-empty line is replayed in
+// order. Returns a list of errors for intents that failed (non-fatal).
 func Replay(store *issue.Store, intents []string) []error {
 	var errors []error
 	for _, raw := range intents {
-		if err := replayOne(store, raw); err != nil {
-			errors = append(errors, fmt.Errorf("replay %q: %w", raw, err))
+		for _, line := range strings.Split(raw, "\n") {
+			line = strings.TrimRight(line, " \t\r")
+			if line == "" {
+				continue
+			}
+			if err := replayOne(store, line); err != nil {
+				errors = append(errors, fmt.Errorf("replay %q: %w", line, err))
+			}
 		}
 	}
 	return errors
@@ -61,11 +70,50 @@ func replayOne(store *issue.Store, raw string) error {
 		return replayDefer(store, parts[1:], raw)
 	case "undefer":
 		return replayUndefer(store, parts[1:], raw)
+	case "attach":
+		return replayAttach(store, parts[1:], raw)
 	case "init":
 		return nil // skip init intents
 	default:
 		return nil // unknown intent, skip
 	}
+}
+
+// replayAttach recovers the blob for an attach intent and re-stages it
+// at attachments/<ticketID>/<storedPath>. The blob is sourced from the
+// current TreeFS first, then from store.SourceHash (the pre-reset local
+// commit) — git keeps the object in the ODB even after the local ref is
+// reset to the remote tip. If the blob is unreachable from either
+// source, the replay fails loudly: attachments are never silently
+// dropped. See docs/design.md for the full grammar and semantics.
+func replayAttach(store *issue.Store, parts []string, raw string) error {
+	// raw form: "attach <ticket-id> <path-verbatim>"
+	if len(parts) < 2 {
+		return fmt.Errorf("malformed attach intent")
+	}
+	ticketID := parts[0]
+	// The path is everything after the verb + ticket id, taken verbatim
+	// from the raw line. We can't just join parts[1:] with single spaces
+	// because ParseIntent collapses runs of whitespace; the spec forbids
+	// embedded newlines and trailing whitespace, but the path may contain
+	// any other characters including spaces. Slice raw past "<verb> <id> ".
+	prefix := "attach " + ticketID + " "
+	if !strings.HasPrefix(raw, prefix) {
+		return fmt.Errorf("malformed attach intent: cannot extract path")
+	}
+	storedPath := raw[len(prefix):]
+	if storedPath == "" {
+		return fmt.Errorf("malformed attach intent: empty path")
+	}
+
+	data, err := store.ReadAttachmentSource(ticketID, storedPath)
+	if err != nil {
+		return err
+	}
+	if err := store.Attach(ticketID, storedPath, data); err != nil {
+		return err
+	}
+	return store.Commit(raw)
 }
 
 func replayCreate(store *issue.Store, parts []string, raw string) error {

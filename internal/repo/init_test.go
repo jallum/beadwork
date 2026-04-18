@@ -170,6 +170,40 @@ func TestDerivePrefixStripsInvalidChars(t *testing.T) {
 	}
 }
 
+// TestInitNoStatusGitkeeps asserts that Init does not seed any
+// status/<state>/.gitkeep placeholders. The listing code tolerates
+// absent directories, so these placeholders are dead weight in the
+// tree. Matches the Elixir port's on-disk layout exactly.
+func TestInitNoStatusGitkeeps(t *testing.T) {
+	dir := t.TempDir()
+
+	gitRun(t, dir, "init")
+	gitRun(t, dir, "config", "user.email", "test@test.com")
+	gitRun(t, dir, "config", "user.name", "Test")
+	os.WriteFile(filepath.Join(dir, "README"), []byte("test"), 0644)
+	gitRun(t, dir, "add", ".")
+	gitRun(t, dir, "commit", "-m", "initial")
+
+	orig, _ := os.Getwd()
+	os.Chdir(dir)
+	defer os.Chdir(orig)
+
+	r, err := repo.FindRepo()
+	if err != nil {
+		t.Fatalf("FindRepo: %v", err)
+	}
+	if err := r.Init(""); err != nil {
+		t.Fatalf("Init: %v", err)
+	}
+
+	for _, state := range []string{"open", "in_progress", "closed", "deferred"} {
+		p := "status/" + state + "/.gitkeep"
+		if _, err := r.TreeFS().Stat(p); err == nil {
+			t.Errorf("unexpected %s seeded at init", p)
+		}
+	}
+}
+
 func TestValidatePrefix(t *testing.T) {
 	tests := []struct {
 		prefix string

@@ -678,6 +678,45 @@ func (t *TreeFS) writeBlob(s storer.EncodedObjectStorer, data []byte) (plumbing.
 	return s.SetEncodedObject(obj)
 }
 
+// ReadFileAt reads a blob at the given path from the tree of an arbitrary
+// commit. Used by intent replay to recover attachment blobs from a
+// pre-reset commit whose objects are still in the ODB but no longer
+// reachable from any ref. Returns os.ErrNotExist if the path is missing.
+func (t *TreeFS) ReadFileAt(commitHash plumbing.Hash, p string) ([]byte, error) {
+	if commitHash.IsZero() {
+		return nil, os.ErrNotExist
+	}
+	p = clean(p)
+	if p == "" {
+		return nil, os.ErrNotExist
+	}
+	commit, err := t.repo.CommitObject(commitHash)
+	if err != nil {
+		return nil, fmt.Errorf("read commit %s: %w", commitHash, err)
+	}
+	tree, err := commit.Tree()
+	if err != nil {
+		return nil, fmt.Errorf("read tree %s: %w", commitHash, err)
+	}
+	entry, err := tree.FindEntry(p)
+	if err != nil {
+		return nil, os.ErrNotExist
+	}
+	if entry.Mode == filemode.Dir {
+		return nil, fmt.Errorf("is a directory: %s", p)
+	}
+	blob, err := t.repo.BlobObject(entry.Hash)
+	if err != nil {
+		return nil, fmt.Errorf("read blob %s: %w", entry.Hash, err)
+	}
+	reader, err := blob.Reader()
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+	return io.ReadAll(reader)
+}
+
 // Reset moves the ref to a new commit hash, discarding any pending overlay.
 // Used by Sync to fast-forward or reset to the remote tip.
 func (t *TreeFS) Reset(hash plumbing.Hash) error {
