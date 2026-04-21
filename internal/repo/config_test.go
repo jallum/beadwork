@@ -152,6 +152,58 @@ func TestReadPrefixNoPrefixLine(t *testing.T) {
 	}
 }
 
+func TestRemoteNameDefault(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	if got := env.Repo.RemoteName(); got != "origin" {
+		t.Errorf("RemoteName() = %q, want %q", got, "origin")
+	}
+}
+
+func TestRemoteNameFromBwConfig(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	if err := env.Repo.SetConfig("remote", "upstream"); err != nil {
+		t.Fatalf("SetConfig: %v", err)
+	}
+	env.CommitIntent("config remote=upstream")
+
+	if got := env.Repo.RemoteName(); got != "upstream" {
+		t.Errorf("RemoteName() = %q, want %q", got, "upstream")
+	}
+}
+
+func TestRemoteNameGitConfigWinsOverBwConfig(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	// .bwconfig says "upstream"
+	if err := env.Repo.SetConfig("remote", "upstream"); err != nil {
+		t.Fatalf("SetConfig: %v", err)
+	}
+	env.CommitIntent("config remote=upstream")
+
+	// git config says "fork" — should win.
+	gitRun(t, env.Dir, "config", "beadwork.remote", "fork")
+
+	if got := env.Repo.RemoteName(); got != "fork" {
+		t.Errorf("RemoteName() = %q, want %q (git config should win)", got, "fork")
+	}
+}
+
+func TestRemoteNameGitConfigOnly(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	gitRun(t, env.Dir, "config", "beadwork.remote", "mirror")
+
+	if got := env.Repo.RemoteName(); got != "mirror" {
+		t.Errorf("RemoteName() = %q, want %q", got, "mirror")
+	}
+}
+
 func init() {
 	os.Setenv("GIT_AUTHOR_NAME", "Test")
 	os.Setenv("GIT_AUTHOR_EMAIL", "test@test.com")
