@@ -21,7 +21,6 @@ const BranchName = "beadwork"
 const CurrentVersion = 2
 
 const refLocal = "refs/heads/" + BranchName
-const refRemote = "refs/remotes/origin/" + BranchName
 
 type Repo struct {
 	GitDir      string
@@ -170,14 +169,14 @@ func (r *Repo) Init(prefix string) error {
 
 	if remoteExists {
 		// Fetch remote branch
-		refSpec := config.RefSpec(fmt.Sprintf("+%s:%s", refLocal, refRemote))
-		if err := r.fetch("origin", refSpec); err != nil {
+		refSpec := config.RefSpec(fmt.Sprintf("+%s:%s", refLocal, r.refRemote()))
+		if err := r.fetch(r.RemoteName(), refSpec); err != nil {
 			return fmt.Errorf("fetch failed: %w", err)
 		}
 
 		if !localExists {
 			// Create local branch from remote
-			remoteHash, err := r.tfs.LookupRef(refRemote)
+			remoteHash, err := r.tfs.LookupRef(r.refRemote())
 			if err != nil {
 				return fmt.Errorf("lookup remote ref: %w", err)
 			}
@@ -239,7 +238,7 @@ func (r *Repo) Commit(message string) error {
 }
 
 func (r *Repo) remoteBranchExists() bool {
-	_, err := r.tfs.LookupRef(refRemote)
+	_, err := r.tfs.LookupRef(r.refRemote())
 	if err == nil {
 		return true
 	}
@@ -250,7 +249,7 @@ func (r *Repo) remoteBranchExists() bool {
 		return false
 	}
 	// Use git CLI for ls-remote since go-git remote.List requires network
-	out, err := execGit(r.RepoDir(), "ls-remote", "--heads", "origin", BranchName)
+	out, err := execGit(r.RepoDir(), "ls-remote", "--heads", r.RemoteName(), BranchName)
 	if err != nil {
 		return false
 	}
@@ -299,6 +298,30 @@ func (r *Repo) Version() int {
 		return 0
 	}
 	return n
+}
+
+// RemoteName returns the name of the git remote beadwork should fetch from
+// and push to. Resolution order:
+//  1. git config beadwork.remote (per-clone override; readable before a
+//     beadwork branch exists locally)
+//  2. .bwconfig key "remote" (team-shared default, travels with the branch)
+//  3. "origin" (built-in default, preserves pre-configurable behavior)
+func (r *Repo) RemoteName() string {
+	if out, err := execGit(r.RepoDir(), "config", "--get", "beadwork.remote"); err == nil {
+		if name := strings.TrimSpace(out); name != "" {
+			return name
+		}
+	}
+	if v, ok := r.GetConfig("remote"); ok && v != "" {
+		return v
+	}
+	return "origin"
+}
+
+// refRemote returns the local ref path for the fetched remote beadwork
+// branch, e.g. "refs/remotes/upstream/beadwork".
+func (r *Repo) refRemote() string {
+	return "refs/remotes/" + r.RemoteName() + "/" + BranchName
 }
 
 // GetConfig reads a single key from .bwconfig.
@@ -350,16 +373,16 @@ func (r *Repo) readPrefix() string {
 	return r.derivePrefix()
 }
 
-// Sync fetches from origin, identifies local-only commits, and pushes or
-// returns intents for replay.
+// Sync fetches from the configured remote, identifies local-only commits,
+// and pushes or returns intents for replay.
 func (r *Repo) Sync() (status string, replayed []string, err error) {
 	if !r.hasRemote() {
 		return "no remote configured", nil, nil
 	}
 
 	// Try to fetch
-	refSpec := config.RefSpec(fmt.Sprintf("+%s:%s", refLocal, refRemote))
-	if fetchErr := r.fetch("origin", refSpec); fetchErr != nil {
+	refSpec := config.RefSpec(fmt.Sprintf("+%s:%s", refLocal, r.refRemote()))
+	if fetchErr := r.fetch(r.RemoteName(), refSpec); fetchErr != nil {
 		// Remote branch may not exist — just push
 		if err := r.push(); err != nil {
 			return "", nil, fmt.Errorf("push failed: %w", err)
@@ -367,7 +390,7 @@ func (r *Repo) Sync() (status string, replayed []string, err error) {
 		return "pushed", nil, nil
 	}
 
-	remoteHash, err := r.tfs.LookupRef(refRemote)
+	remoteHash, err := r.tfs.LookupRef(r.refRemote())
 	if err != nil {
 		// No remote ref after fetch — just push
 		if err := r.push(); err != nil {
@@ -437,14 +460,14 @@ func (r *Repo) Sync() (status string, replayed []string, err error) {
 	return "needs replay", localMsgs, nil
 }
 
-// Push pushes the beadwork branch to origin.
+// Push pushes the beadwork branch to the configured remote.
 func (r *Repo) Push() error {
 	return r.push()
 }
 
 func (r *Repo) push() error {
 	refSpec := config.RefSpec(refLocal + ":" + refLocal)
-	return r.gitPush("origin", refSpec)
+	return r.gitPush(r.RemoteName(), refSpec)
 }
 
 // RepoDir returns the repository root (the parent of the .git directory).

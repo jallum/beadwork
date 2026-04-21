@@ -2,6 +2,7 @@ package repo_test
 
 import (
 	"os"
+	"os/exec"
 	"testing"
 
 	"github.com/jallum/beadwork/internal/intent"
@@ -432,6 +433,70 @@ func TestPushNoRemote(t *testing.T) {
 	err := env.Repo.Push()
 	if err == nil {
 		t.Error("expected error when pushing with no remote")
+	}
+}
+
+// TestSyncWithNonOriginRemoteViaBwConfig exercises the case where the only
+// git remote is named "upstream" (no origin exists) and beadwork has been
+// told to use it via .bwconfig.
+func TestSyncWithNonOriginRemoteViaBwConfig(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	bare := env.Dir + "/remote.git"
+	gitRun(t, env.Dir, "init", "--bare", bare)
+	gitRun(t, env.Dir, "remote", "add", "upstream", bare)
+
+	if err := env.Repo.SetConfig("remote", "upstream"); err != nil {
+		t.Fatalf("SetConfig: %v", err)
+	}
+	env.CommitIntent("config remote=upstream")
+
+	env.Store.Create("Upstream issue", issue.CreateOpts{})
+	env.CommitIntent("create upstream issue")
+
+	status, _, err := env.Repo.Sync()
+	if err != nil {
+		t.Fatalf("Sync against upstream: %v", err)
+	}
+	if status != "pushed" {
+		t.Errorf("status = %q, want 'pushed'", status)
+	}
+
+	// Confirm the remote actually received the beadwork branch.
+	out, err := exec.Command("git", "-C", bare, "rev-parse", "refs/heads/beadwork").CombinedOutput()
+	if err != nil {
+		t.Fatalf("remote beadwork ref missing: %s: %v", out, err)
+	}
+}
+
+// TestSyncWithNonOriginRemoteViaGitConfig exercises the same case but with
+// the remote name set through git config (beadwork.remote), which should
+// take precedence over anything in .bwconfig.
+func TestSyncWithNonOriginRemoteViaGitConfig(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	bare := env.Dir + "/remote.git"
+	gitRun(t, env.Dir, "init", "--bare", bare)
+	gitRun(t, env.Dir, "remote", "add", "upstream", bare)
+
+	gitRun(t, env.Dir, "config", "beadwork.remote", "upstream")
+
+	env.Store.Create("Upstream issue", issue.CreateOpts{})
+	env.CommitIntent("create upstream issue")
+
+	status, _, err := env.Repo.Sync()
+	if err != nil {
+		t.Fatalf("Sync against upstream: %v", err)
+	}
+	if status != "pushed" {
+		t.Errorf("status = %q, want 'pushed'", status)
+	}
+
+	out, err := exec.Command("git", "-C", bare, "rev-parse", "refs/heads/beadwork").CombinedOutput()
+	if err != nil {
+		t.Fatalf("remote beadwork ref missing: %s: %v", out, err)
 	}
 }
 
