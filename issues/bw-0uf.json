@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:53Z",
+  "description": "",
+  "id": "bw-0uf",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Download progress indicator renders garbled output during upgrade",
+  "type": "bug",
+  "updated_at": "2026-04-22T16:12:53Z"
+}
