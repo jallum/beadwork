@@ -9,12 +9,13 @@
     "bw-c84c",
     "bw-d88a"
   ],
+  "closed_at": "2026-04-22T16:12:48Z",
   "created": "2026-04-22T16:12:47Z",
   "description": "",
   "id": "bw-4ebc",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Add Command/Flag/Positional types and registry dispatch",
   "type": "task",
   "updated_at": "2026-04-22T16:12:48Z"
