@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-04-22T16:13:29Z",
@@ -7,7 +7,7 @@
   "id": "bw-0rs",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "in_progress",
   "title": "DRY up writer initialization in main.go",
   "type": "task",
   "updated_at": "2026-04-22T16:13:29Z"
