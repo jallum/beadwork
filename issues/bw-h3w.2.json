@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [
     "bw-srj"
@@ -9,7 +9,7 @@
   "id": "bw-h3w.2",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Add --x-render-as hidden debug flag",
   "type": "task",
   "updated_at": "2026-04-22T16:13:15Z"
