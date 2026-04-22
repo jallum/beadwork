@@ -2,6 +2,7 @@
   "assignee": "agent-u9r",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-04-22T16:13:06Z",
   "created": "2026-04-22T16:13:05Z",
   "description": "",
   "id": "bw-u9r",
@@ -13,7 +14,7 @@
     }
   ],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Hide --id flag from help output",
   "type": "task",
   "updated_at": "2026-04-22T16:13:06Z"
