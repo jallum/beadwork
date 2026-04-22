@@ -468,7 +468,7 @@ func TestSyncReplayPreservesStartDeferState(t *testing.T) {
 	env.CommitIntent(`create ` + issA.ID + ` p2 task "Issue A"`)
 	issB, _ := env.Store.Create("Issue B", issue.CreateOpts{})
 	env.CommitIntent(`create ` + issB.ID + ` p2 task "Issue B"`)
-	env.Repo.Sync()
+	env.Repo.Sync(nil)
 
 	// Clone and make a conflicting change on the remote.
 	env2 := env.CloneEnv(bare)
@@ -478,7 +478,7 @@ func TestSyncReplayPreservesStartDeferState(t *testing.T) {
 	p := 1
 	env2.Store.Update(issA.ID, issue.UpdateOpts{Priority: &p})
 	env2.CommitIntent(`update ` + issA.ID + ` priority=1`)
-	env2.Repo.Sync()
+	env2.Repo.Sync(nil)
 
 	// On the original side: start issA, defer issB.
 	env.SwitchTo()
@@ -491,7 +491,7 @@ func TestSyncReplayPreservesStartDeferState(t *testing.T) {
 	env.CommitIntent(`defer ` + issB.ID + ` until 2026-12-01`)
 
 	// Sync should trigger conflict replay.
-	syncStatus, intents, err := env.Repo.Sync()
+	syncStatus, intents, err := env.Repo.Sync(nil)
 	if err != nil {
 		t.Fatalf("Sync: %v", err)
 	}
@@ -503,7 +503,7 @@ func TestSyncReplayPreservesStartDeferState(t *testing.T) {
 		for _, e := range errs {
 			t.Logf("replay error: %v", e)
 		}
-		env.Repo.Push()
+		env.Repo.Push(nil)
 	}
 
 	// Verify start state was preserved.

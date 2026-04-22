@@ -3,6 +3,7 @@ package repo_test
 import (
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/jallum/beadwork/internal/intent"
@@ -16,7 +17,7 @@ func TestSyncNoRemote(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	status, intents, err := env.Repo.Sync()
+	status, intents, err := env.Repo.Sync(nil)
 	if err != nil {
 		t.Fatalf("Sync: %v", err)
 	}
@@ -38,7 +39,7 @@ func TestSyncPushToEmpty(t *testing.T) {
 	env.Store.Create("Test issue", issue.CreateOpts{})
 	env.CommitIntent("create test")
 
-	status, _, err := env.Repo.Sync()
+	status, _, err := env.Repo.Sync(nil)
 	if err != nil {
 		t.Fatalf("Sync: %v", err)
 	}
@@ -56,7 +57,7 @@ func TestSyncCleanRebase(t *testing.T) {
 	// Push initial state
 	env.Store.Create("Initial", issue.CreateOpts{})
 	env.CommitIntent("create initial")
-	env.Repo.Sync()
+	env.Repo.Sync(nil)
 
 	// Clone and make a change on the remote side
 	env2 := env.CloneEnv(bare)
@@ -65,14 +66,14 @@ func TestSyncCleanRebase(t *testing.T) {
 	env2.SwitchTo()
 	iss2, _ := env2.Store.Create("Remote issue", issue.CreateOpts{Priority: intPtr(1)})
 	env2.CommitIntent("create " + iss2.ID)
-	env2.Repo.Sync()
+	env2.Repo.Sync(nil)
 
 	// Back to original, make a non-conflicting change
 	env.SwitchTo()
 	iss1, _ := env.Store.Create("Local issue", issue.CreateOpts{Priority: intPtr(2)})
 	env.CommitIntent("create " + iss1.ID)
 
-	status, _, err := env.Repo.Sync()
+	status, _, err := env.Repo.Sync(nil)
 	if err != nil {
 		t.Fatalf("Sync: %v", err)
 	}
@@ -96,7 +97,7 @@ func TestSyncDirtyRebaseIntentReplay(t *testing.T) {
 	// Create a shared issue and push
 	shared, _ := env.Store.Create("Shared issue", issue.CreateOpts{})
 	env.CommitIntent("create " + shared.ID + " p3 task \"Shared issue\"")
-	env.Repo.Sync()
+	env.Repo.Sync(nil)
 
 	// Clone and modify the shared issue
 	env2 := env.CloneEnv(bare)
@@ -106,7 +107,7 @@ func TestSyncDirtyRebaseIntentReplay(t *testing.T) {
 	statusIP := "in_progress"
 	env2.Store.Update(shared.ID, issue.UpdateOpts{Status: &statusIP})
 	env2.CommitIntent("update " + shared.ID + " status=in_progress")
-	env2.Repo.Sync()
+	env2.Repo.Sync(nil)
 
 	// Back to original, also modify the same issue (will conflict)
 	env.SwitchTo()
@@ -114,7 +115,7 @@ func TestSyncDirtyRebaseIntentReplay(t *testing.T) {
 	env.Store.Update(shared.ID, issue.UpdateOpts{Assignee: &assignee})
 	env.CommitIntent("update " + shared.ID + " assignee=local-agent")
 
-	status, intents, err := env.Repo.Sync()
+	status, intents, err := env.Repo.Sync(nil)
 	if err != nil {
 		t.Fatalf("Sync: %v", err)
 	}
@@ -130,7 +131,7 @@ func TestSyncDirtyRebaseIntentReplay(t *testing.T) {
 				t.Logf("replay error: %v", e)
 			}
 		}
-		if err := env.Repo.Push(); err != nil {
+		if err := env.Repo.Push(nil); err != nil {
 			t.Fatalf("Push after replay: %v", err)
 		}
 
@@ -163,7 +164,7 @@ func TestSyncMultipleIntentsReplay(t *testing.T) {
 	bare := env.NewBareRemote()
 
 	// Push initial state
-	env.Repo.Sync()
+	env.Repo.Sync(nil)
 
 	// Clone and make a change
 	env2 := env.CloneEnv(bare)
@@ -172,7 +173,7 @@ func TestSyncMultipleIntentsReplay(t *testing.T) {
 	env2.SwitchTo()
 	blocker, _ := env2.Store.Create("Remote blocker", issue.CreateOpts{Priority: intPtr(1)})
 	env2.CommitIntent("create " + blocker.ID + " p1 task \"Remote blocker\"")
-	env2.Repo.Sync()
+	env2.Repo.Sync(nil)
 
 	// Local side: create multiple issues, link them, label one
 	env.SwitchTo()
@@ -185,7 +186,7 @@ func TestSyncMultipleIntentsReplay(t *testing.T) {
 	env.Store.Label(a.ID, []string{"urgent"}, nil)
 	env.CommitIntent("label " + a.ID + " +urgent")
 
-	status, intents, err := env.Repo.Sync()
+	status, intents, err := env.Repo.Sync(nil)
 	if err != nil {
 		t.Fatalf("Sync: %v", err)
 	}
@@ -195,7 +196,7 @@ func TestSyncMultipleIntentsReplay(t *testing.T) {
 		for _, e := range errs {
 			t.Logf("replay error: %v", e)
 		}
-		env.Repo.Push()
+		env.Repo.Push(nil)
 	}
 
 	// Verify everything landed: remote blocker + local A + local B + link + label
@@ -222,10 +223,10 @@ func TestSyncUpToDate(t *testing.T) {
 
 	env.Store.Create("Test", issue.CreateOpts{})
 	env.CommitIntent("create test")
-	env.Repo.Sync() // push
+	env.Repo.Sync(nil) // push
 
 	// Sync again with no new changes
-	status, _, err := env.Repo.Sync()
+	status, _, err := env.Repo.Sync(nil)
 	if err != nil {
 		t.Fatalf("Sync: %v", err)
 	}
@@ -239,7 +240,7 @@ func TestSyncPicksUpRemoteChanges(t *testing.T) {
 	defer env.Cleanup()
 
 	bare := env.NewBareRemote()
-	env.Repo.Sync() // push initial
+	env.Repo.Sync(nil) // push initial
 
 	// Clone, create issue, push
 	env2 := env.CloneEnv(bare)
@@ -248,11 +249,11 @@ func TestSyncPicksUpRemoteChanges(t *testing.T) {
 	env2.SwitchTo()
 	remote, _ := env2.Store.Create("From remote", issue.CreateOpts{})
 	env2.CommitIntent("create " + remote.ID)
-	env2.Repo.Sync()
+	env2.Repo.Sync(nil)
 
 	// Original syncs — should pick up the remote issue
 	env.SwitchTo()
-	env.Repo.Sync()
+	env.Repo.Sync(nil)
 
 	got, err := env.Store.Get(remote.ID)
 	if err != nil {
@@ -299,13 +300,13 @@ func TestPush(t *testing.T) {
 	// Push initial (to create remote branch)
 	env.Store.Create("Initial", issue.CreateOpts{})
 	env.CommitIntent("create initial")
-	env.Repo.Sync()
+	env.Repo.Sync(nil)
 
 	// Create another issue and push
 	env.Store.Create("Push test", issue.CreateOpts{Priority: intPtr(1)})
 	env.CommitIntent("create push test")
 
-	if err := env.Repo.Push(); err != nil {
+	if err := env.Repo.Push(nil); err != nil {
 		t.Fatalf("Push: %v", err)
 	}
 
@@ -325,7 +326,7 @@ func TestSyncFetchOnly(t *testing.T) {
 	defer env.Cleanup()
 
 	bare := env.NewBareRemote()
-	env.Repo.Sync() // push initial
+	env.Repo.Sync(nil) // push initial
 
 	// Clone, create issue, push
 	env2 := env.CloneEnv(bare)
@@ -334,11 +335,11 @@ func TestSyncFetchOnly(t *testing.T) {
 	env2.SwitchTo()
 	remote, _ := env2.Store.Create("Remote only", issue.CreateOpts{Priority: intPtr(1)})
 	env2.CommitIntent("create " + remote.ID)
-	env2.Repo.Sync()
+	env2.Repo.Sync(nil)
 
 	// Original: no local changes, should fast-forward
 	env.SwitchTo()
-	status, _, err := env.Repo.Sync()
+	status, _, err := env.Repo.Sync(nil)
 	if err != nil {
 		t.Fatalf("Sync: %v", err)
 	}
@@ -376,13 +377,13 @@ func TestSyncLocalAheadNoDiverge(t *testing.T) {
 	// Push initial
 	env.Store.Create("Initial", issue.CreateOpts{})
 	env.CommitIntent("create initial")
-	env.Repo.Sync()
+	env.Repo.Sync(nil)
 
 	// Create another issue locally (remote hasn't changed)
 	env.Store.Create("Local only", issue.CreateOpts{Priority: intPtr(2)})
 	env.CommitIntent("create local only")
 
-	status, _, err := env.Repo.Sync()
+	status, _, err := env.Repo.Sync(nil)
 	if err != nil {
 		t.Fatalf("Sync: %v", err)
 	}
@@ -401,7 +402,7 @@ func TestSyncMultipleLocalCommits(t *testing.T) {
 	// Push initial
 	env.Store.Create("Initial", issue.CreateOpts{})
 	env.CommitIntent("create initial")
-	env.Repo.Sync()
+	env.Repo.Sync(nil)
 
 	// Create several local issues
 	for i := 0; i < 3; i++ {
@@ -409,7 +410,7 @@ func TestSyncMultipleLocalCommits(t *testing.T) {
 		env.CommitIntent("create " + iss.ID)
 	}
 
-	status, _, err := env.Repo.Sync()
+	status, _, err := env.Repo.Sync(nil)
 	if err != nil {
 		t.Fatalf("Sync: %v", err)
 	}
@@ -430,49 +431,15 @@ func TestPushNoRemote(t *testing.T) {
 	env.Store.Create("No remote", issue.CreateOpts{})
 	env.CommitIntent("create no remote")
 
-	err := env.Repo.Push()
+	err := env.Repo.Push(nil)
 	if err == nil {
 		t.Error("expected error when pushing with no remote")
 	}
 }
 
-// TestSyncWithNonOriginRemoteViaBwConfig exercises the case where the only
-// git remote is named "upstream" (no origin exists) and beadwork has been
-// told to use it via .bwconfig.
-func TestSyncWithNonOriginRemoteViaBwConfig(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	bare := env.Dir + "/remote.git"
-	gitRun(t, env.Dir, "init", "--bare", bare)
-	gitRun(t, env.Dir, "remote", "add", "upstream", bare)
-
-	if err := env.Repo.SetConfig("remote", "upstream"); err != nil {
-		t.Fatalf("SetConfig: %v", err)
-	}
-	env.CommitIntent("config remote=upstream")
-
-	env.Store.Create("Upstream issue", issue.CreateOpts{})
-	env.CommitIntent("create upstream issue")
-
-	status, _, err := env.Repo.Sync()
-	if err != nil {
-		t.Fatalf("Sync against upstream: %v", err)
-	}
-	if status != "pushed" {
-		t.Errorf("status = %q, want 'pushed'", status)
-	}
-
-	// Confirm the remote actually received the beadwork branch.
-	out, err := exec.Command("git", "-C", bare, "rev-parse", "refs/heads/beadwork").CombinedOutput()
-	if err != nil {
-		t.Fatalf("remote beadwork ref missing: %s: %v", out, err)
-	}
-}
-
-// TestSyncWithNonOriginRemoteViaGitConfig exercises the same case but with
-// the remote name set through git config (beadwork.remote), which should
-// take precedence over anything in .bwconfig.
+// TestSyncWithNonOriginRemoteViaGitConfig exercises the case where the
+// only git remote is named "upstream" (no origin) and beadwork has been
+// told to use it via git config beadwork.remote.
 func TestSyncWithNonOriginRemoteViaGitConfig(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -486,7 +453,7 @@ func TestSyncWithNonOriginRemoteViaGitConfig(t *testing.T) {
 	env.Store.Create("Upstream issue", issue.CreateOpts{})
 	env.CommitIntent("create upstream issue")
 
-	status, _, err := env.Repo.Sync()
+	status, _, err := env.Repo.Sync(nil)
 	if err != nil {
 		t.Fatalf("Sync against upstream: %v", err)
 	}
@@ -497,6 +464,205 @@ func TestSyncWithNonOriginRemoteViaGitConfig(t *testing.T) {
 	out, err := exec.Command("git", "-C", bare, "rev-parse", "refs/heads/beadwork").CombinedOutput()
 	if err != nil {
 		t.Fatalf("remote beadwork ref missing: %s: %v", out, err)
+	}
+}
+
+// beadworkTip reads the beadwork branch tip from a bare repo, returning
+// an empty string if the branch doesn't exist. Used by multi-remote tests
+// to assert which bare repos have the branch after sync.
+func beadworkTip(t *testing.T, bare string) string {
+	t.Helper()
+	out, err := exec.Command("git", "-C", bare, "rev-parse", "refs/heads/beadwork").CombinedOutput()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
+}
+
+// TestSyncMultiRemoteBothHaveBeadwork covers the core new behavior: when
+// more than one remote has the beadwork branch, sync pushes new commits
+// to every one of them.
+func TestSyncMultiRemoteBothHaveBeadwork(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	bare1 := env.Dir + "/bare1.git"
+	bare2 := env.Dir + "/bare2.git"
+	gitRun(t, env.Dir, "init", "--bare", bare1)
+	gitRun(t, env.Dir, "init", "--bare", bare2)
+	gitRun(t, env.Dir, "remote", "add", "alpha", bare1)
+	gitRun(t, env.Dir, "remote", "add", "beta", bare2)
+
+	// Initial push via git config beadwork.remote; only alpha has beadwork now.
+	gitRun(t, env.Dir, "config", "beadwork.remote", "alpha")
+	env.Store.Create("Seed", issue.CreateOpts{})
+	env.CommitIntent("create seed")
+	if _, _, err := env.Repo.Sync(nil); err != nil {
+		t.Fatalf("initial sync: %v", err)
+	}
+	// Seed beta so both have beadwork.
+	gitRun(t, env.Dir, "push", "beta", "refs/heads/beadwork:refs/heads/beadwork")
+	seedTip := beadworkTip(t, bare1)
+	if seedTip == "" || seedTip != beadworkTip(t, bare2) {
+		t.Fatalf("pre-test seed failed: alpha=%q beta=%q", seedTip, beadworkTip(t, bare2))
+	}
+
+	// New commit locally, then sync — should push to both remotes.
+	env.Store.Create("Multi", issue.CreateOpts{})
+	env.CommitIntent("create multi")
+
+	status, _, err := env.Repo.Sync(nil)
+	if err != nil {
+		t.Fatalf("multi-remote sync: %v", err)
+	}
+	if status != "pushed" {
+		t.Errorf("status = %q, want 'pushed'", status)
+	}
+
+	tip1, tip2 := beadworkTip(t, bare1), beadworkTip(t, bare2)
+	if tip1 == seedTip {
+		t.Errorf("alpha tip did not advance: still %q", tip1)
+	}
+	if tip2 == seedTip {
+		t.Errorf("beta tip did not advance: still %q", tip2)
+	}
+	if tip1 != tip2 {
+		t.Errorf("tips diverged after sync: alpha=%q beta=%q", tip1, tip2)
+	}
+}
+
+// TestSyncMultiRemoteOnlyOneHasBeadwork covers the mixed case: two
+// remotes exist, one has beadwork and one does not. Sync must push only
+// to the one that has it; the bare remote without beadwork stays empty.
+func TestSyncMultiRemoteOnlyOneHasBeadwork(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	bare1 := env.Dir + "/bare1.git"
+	bare2 := env.Dir + "/bare2.git"
+	gitRun(t, env.Dir, "init", "--bare", bare1)
+	gitRun(t, env.Dir, "init", "--bare", bare2)
+	gitRun(t, env.Dir, "remote", "add", "alpha", bare1)
+	gitRun(t, env.Dir, "remote", "add", "beta", bare2)
+
+	gitRun(t, env.Dir, "config", "beadwork.remote", "alpha")
+	env.Store.Create("Only alpha", issue.CreateOpts{})
+	env.CommitIntent("create only alpha")
+	if _, _, err := env.Repo.Sync(nil); err != nil {
+		t.Fatalf("initial sync: %v", err)
+	}
+	if beadworkTip(t, bare1) == "" {
+		t.Fatal("alpha did not receive beadwork on initial sync")
+	}
+	if beadworkTip(t, bare2) != "" {
+		t.Fatal("beta unexpectedly has beadwork after initial sync")
+	}
+
+	// Add another commit. alpha has beadwork, beta still doesn't — sync
+	// should push only to alpha.
+	env.Store.Create("Second", issue.CreateOpts{})
+	env.CommitIntent("create second")
+
+	if _, _, err := env.Repo.Sync(nil); err != nil {
+		t.Fatalf("second sync: %v", err)
+	}
+	if beadworkTip(t, bare2) != "" {
+		t.Errorf("beta received beadwork but it had none before sync")
+	}
+}
+
+// TestSyncMultiRemoteConflictFansOutAfterReplay confirms that when a
+// conflict on one remote triggers `needs replay`, replaying and
+// re-invoking sync fans the merged state out to every target remote.
+func TestSyncMultiRemoteConflictFansOutAfterReplay(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	bare1 := env.Dir + "/bare1.git"
+	bare2 := env.Dir + "/bare2.git"
+	gitRun(t, env.Dir, "init", "--bare", bare1)
+	gitRun(t, env.Dir, "init", "--bare", bare2)
+	gitRun(t, env.Dir, "remote", "add", "alpha", bare1)
+	gitRun(t, env.Dir, "remote", "add", "beta", bare2)
+	gitRun(t, env.Dir, "config", "beadwork.remote", "alpha")
+
+	// Seed a shared issue on both remotes.
+	shared, _ := env.Store.Create("Shared", issue.CreateOpts{})
+	env.CommitIntent("create " + shared.ID + " p3 task \"Shared\"")
+	if _, _, err := env.Repo.Sync(nil); err != nil {
+		t.Fatalf("seed sync: %v", err)
+	}
+	gitRun(t, env.Dir, "push", "beta", "refs/heads/beadwork:refs/heads/beadwork")
+
+	// Clone the alpha bare, modify the shared issue, push back to alpha.
+	// This makes alpha diverge from local.
+	env2 := env.CloneEnv(bare1)
+	defer env2.Cleanup()
+	env2.SwitchTo()
+	statusIP := "in_progress"
+	env2.Store.Update(shared.ID, issue.UpdateOpts{Status: &statusIP})
+	env2.CommitIntent("update " + shared.ID + " status=in_progress")
+	if _, _, err := env2.Repo.Sync(nil); err != nil {
+		t.Fatalf("clone sync: %v", err)
+	}
+
+	// Back to original, make a conflicting edit locally.
+	env.SwitchTo()
+	assignee := "local-agent"
+	env.Store.Update(shared.ID, issue.UpdateOpts{Assignee: &assignee})
+	env.CommitIntent("update " + shared.ID + " assignee=local-agent")
+
+	// First sync: alpha diverged → needs replay (or clean rebase if git
+	// happens to auto-merge). Either way, after handling it the state
+	// must fan out to beta too.
+	status, intents, err := env.Repo.Sync(nil)
+	if err != nil {
+		t.Fatalf("first sync: %v", err)
+	}
+	env.Store.ClearCache()
+
+	if status == "needs replay" {
+		errs := intent.Replay(env.Store, intents)
+		for _, e := range errs {
+			t.Logf("replay error: %v", e)
+		}
+		if _, _, err := env.Repo.Sync(nil); err != nil {
+			t.Fatalf("post-replay sync: %v", err)
+		}
+	}
+
+	// After everything settles, alpha and beta should agree.
+	if a, b := beadworkTip(t, bare1), beadworkTip(t, bare2); a != b || a == "" {
+		t.Errorf("remotes did not converge after replay: alpha=%q beta=%q", a, b)
+	}
+}
+
+// TestSyncStaleBeadworkRemoteConfig ensures that a beadwork.remote value
+// pointing at a non-existent remote produces a clear error, not a
+// misleading git-level failure.
+func TestSyncStaleBeadworkRemoteConfig(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	bare1 := env.Dir + "/bare1.git"
+	bare2 := env.Dir + "/bare2.git"
+	gitRun(t, env.Dir, "init", "--bare", bare1)
+	gitRun(t, env.Dir, "init", "--bare", bare2)
+	gitRun(t, env.Dir, "remote", "add", "alpha", bare1)
+	gitRun(t, env.Dir, "remote", "add", "beta", bare2)
+
+	// Config names a remote that doesn't exist.
+	gitRun(t, env.Dir, "config", "beadwork.remote", "ghost")
+
+	env.Store.Create("Stale", issue.CreateOpts{})
+	env.CommitIntent("create stale")
+
+	_, _, err := env.Repo.Sync(nil)
+	if err == nil {
+		t.Fatal("expected error for stale beadwork.remote")
+	}
+	if !strings.Contains(err.Error(), "ghost") {
+		t.Errorf("error should name the missing remote: %v", err)
 	}
 }
 
