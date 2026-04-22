@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:13:05Z",
+  "description": "",
+  "id": "bw-r9m",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Use full formatted date-time in bw show for comments",
+  "type": "task",
+  "updated_at": "2026-04-22T16:13:05Z"
+}
