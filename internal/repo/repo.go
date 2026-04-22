@@ -345,6 +345,27 @@ func (r *Repo) SetConfig(key, value string) error {
 	return r.tfs.WriteFile(".bwconfig", []byte(data))
 }
 
+// UnsetConfig removes a key from .bwconfig. Returns true if the key was
+// present and removed, false if it was not present.
+func (r *Repo) UnsetConfig(key string) (bool, error) {
+	cfg := r.ListConfig()
+	if _, ok := cfg[key]; !ok {
+		return false, nil
+	}
+	delete(cfg, key)
+
+	var lines []string
+	for k, v := range cfg {
+		lines = append(lines, k+"="+v)
+	}
+	sort.Strings(lines)
+	data := strings.Join(lines, "\n")
+	if len(lines) > 0 {
+		data += "\n"
+	}
+	return true, r.tfs.WriteFile(".bwconfig", []byte(data))
+}
+
 // ListConfig reads all key=value pairs from .bwconfig.
 func (r *Repo) ListConfig() map[string]string {
 	cfg := make(map[string]string)
