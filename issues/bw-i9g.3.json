@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:13:02Z",
+  "description": "",
+  "id": "bw-i9g.3",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Remove legacy worktree cleanup from ForceReinit",
+  "type": "task",
+  "updated_at": "2026-04-22T16:13:02Z"
+}
