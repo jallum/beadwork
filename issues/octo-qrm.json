@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:13:32Z",
+  "description": "",
+  "id": "octo-qrm",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Verify ref writes use common git dir when running inside a worktree",
+  "type": "idea",
+  "updated_at": "2026-04-22T16:13:32Z"
+}
