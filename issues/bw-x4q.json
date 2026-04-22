@@ -6,6 +6,12 @@
   "description": "",
   "id": "bw-x4q",
   "labels": [],
+  "comments": [
+    {
+      "text": "Superseded by epic bw-d5l which breaks this into phased child tickets.",
+      "timestamp": "2026-04-22T16:12:56Z"
+    }
+  ],
   "priority": 1,
   "status": "open",
   "title": "Inject store into commands and add write-through cache",
