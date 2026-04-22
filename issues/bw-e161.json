@@ -4,12 +4,13 @@
     "bw-ebfc"
   ],
   "blocks": [],
+  "closed_at": "2026-04-22T16:12:46Z",
   "created": "2026-04-22T16:12:46Z",
   "description": "",
   "id": "bw-e161",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Test deep chain C",
   "type": "task",
   "updated_at": "2026-04-22T16:12:46Z"
