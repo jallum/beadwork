@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:47Z",
+  "description": "",
+  "id": "bw-035e",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Improve test coverage for cmd/bw/link.go",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:47Z"
+}
