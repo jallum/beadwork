@@ -28,7 +28,7 @@ func TestForceReinit(t *testing.T) {
 	}
 
 	// First init
-	if err := r.Init("old"); err != nil {
+	if err := r.Init("old", nil); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 	if r.Prefix != "old" {
@@ -37,13 +37,13 @@ func TestForceReinit(t *testing.T) {
 
 	// Regular init should fail
 	r2, _ := repo.FindRepo()
-	if err := r2.Init("new"); err == nil {
+	if err := r2.Init("new", nil); err == nil {
 		t.Fatal("Init should fail when already initialized")
 	}
 
 	// Force reinit with new prefix
 	r3, _ := repo.FindRepo()
-	if err := r3.ForceReinit("new"); err != nil {
+	if err := r3.ForceReinit("new", nil); err != nil {
 		t.Fatalf("ForceReinit: %v", err)
 	}
 	if r3.Prefix != "new" {
@@ -75,11 +75,11 @@ func TestForceReinitKeepsPrefix(t *testing.T) {
 	defer os.Chdir(orig)
 
 	r, _ := repo.FindRepo()
-	r.Init("keep")
+	r.Init("keep", nil)
 
 	// Force reinit with empty prefix should derive a new one (not keep old)
 	r2, _ := repo.FindRepo()
-	if err := r2.ForceReinit(""); err != nil {
+	if err := r2.ForceReinit("", nil); err != nil {
 		t.Fatalf("ForceReinit: %v", err)
 	}
 	// Should derive prefix from dir name, not be empty
@@ -106,7 +106,7 @@ func TestDerivePrefixLength(t *testing.T) {
 	defer os.Chdir(orig)
 
 	r, _ := repo.FindRepo()
-	if err := r.Init(""); err != nil {
+	if err := r.Init("", nil); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 	// Should truncate to 8 chars max
@@ -136,7 +136,7 @@ func TestDerivePrefixPreservesCase(t *testing.T) {
 	defer os.Chdir(orig)
 
 	r, _ := repo.FindRepo()
-	if err := r.Init(""); err != nil {
+	if err := r.Init("", nil); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 	if r.Prefix != "MyApp" {
@@ -161,7 +161,7 @@ func TestDerivePrefixStripsInvalidChars(t *testing.T) {
 	defer os.Chdir(orig)
 
 	r, _ := repo.FindRepo()
-	if err := r.Init(""); err != nil {
+	if err := r.Init("", nil); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 	// Dots and spaces stripped, should be "mycoolap" (8 char truncation of "mycoolapp")
@@ -192,7 +192,7 @@ func TestInitNoStatusGitkeeps(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FindRepo: %v", err)
 	}
-	if err := r.Init(""); err != nil {
+	if err := r.Init("", nil); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 
@@ -231,7 +231,7 @@ func TestInitWithNonOriginRemoteViaGitConfig(t *testing.T) {
 		os.Chdir(orig)
 		t.Fatalf("FindRepo src: %v", err)
 	}
-	if err := srcRepo.Init("test"); err != nil {
+	if err := srcRepo.Init("test", nil); err != nil {
 		os.Chdir(orig)
 		t.Fatalf("Init src: %v", err)
 	}
@@ -259,7 +259,7 @@ func TestInitWithNonOriginRemoteViaGitConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FindRepo clone: %v", err)
 	}
-	if err := r.Init("test"); err != nil {
+	if err := r.Init("test", nil); err != nil {
 		t.Fatalf("Init against upstream-only remote: %v", err)
 	}
 

@@ -198,7 +198,7 @@ func TestInitInvalidPrefix(t *testing.T) {
 	defer os.Chdir(orig)
 
 	r, _ := repo.FindRepo()
-	err := r.Init("has space")
+	err := r.Init("has space", nil)
 	if err == nil {
 		t.Error("expected error for invalid prefix")
 	}
@@ -222,7 +222,7 @@ func TestDerivePrefixFallback(t *testing.T) {
 	defer os.Chdir(orig)
 
 	r, _ := repo.FindRepo()
-	if err := r.Init(""); err != nil {
+	if err := r.Init("", nil); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 	// Should fallback to "bw" when dir name has no valid chars
@@ -246,7 +246,7 @@ func TestCommitWithChanges(t *testing.T) {
 	defer os.Chdir(orig)
 
 	r, _ := repo.FindRepo()
-	r.Init("test")
+	r.Init("test", nil)
 
 	// Create a file and commit
 	r.TreeFS().WriteFile("issues/test.json", []byte(`{"id":"test"}`))
