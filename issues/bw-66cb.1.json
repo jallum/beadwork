@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:55Z",
+  "description": "",
+  "id": "bw-66cb.1",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Extract shared edge-loading and tip-walking primitives in Store",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:55Z"
+}
