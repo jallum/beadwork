@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:47Z",
+  "description": "",
+  "id": "bw-b806",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Improve test coverage for cmd/bw/config.go",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:47Z"
+}
