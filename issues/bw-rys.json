@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:59Z",
+  "description": "",
+  "id": "bw-rys",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Show children and dependency graph in epic view",
+  "type": "feature",
+  "updated_at": "2026-04-22T16:12:59Z"
+}
