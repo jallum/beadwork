@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "agent-589",
   "blocked_by": [],
   "blocks": [
     "bw-589.3"
@@ -9,8 +9,8 @@
   "id": "bw-589.1",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "in_progress",
   "title": "Add --id flag to bw create",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:02Z"
+  "updated_at": "2026-04-22T16:13:04Z"
 }
