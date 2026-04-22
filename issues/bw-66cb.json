@@ -6,9 +6,15 @@
   "description": "",
   "id": "bw-66cb",
   "labels": [],
+  "comments": [
+    {
+      "text": "test comment for debugging show output",
+      "timestamp": "2026-04-22T16:12:54Z"
+    }
+  ],
   "priority": 3,
   "status": "open",
   "title": "Evaluate bd dep tree equivalent",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:52Z"
+  "updated_at": "2026-04-22T16:12:54Z"
 }
