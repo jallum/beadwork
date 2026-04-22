@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:46Z",
+  "description": "",
+  "id": "bw-2e6a",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Add GitHub Actions CI workflow",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:46Z"
+}
