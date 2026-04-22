@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:46Z",
+  "description": "",
+  "id": "bw-bdfc",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Implement bw link and bw unlink commands",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:46Z"
+}
