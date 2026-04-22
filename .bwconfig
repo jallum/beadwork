@@ -1,5 +1,6 @@
 default.priority=3
 prefix=beadwork
+remote=upstream
 version=2
 workflow.agents=multi
 workflow.review=pr
