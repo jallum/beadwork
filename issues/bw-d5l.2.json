@@ -11,6 +11,12 @@
   "description": "...",
   "id": "bw-d5l.2",
   "labels": [],
+  "comments": [
+    {
+      "text": "Already completed as part of bw-d5l.1 — test updates were required by the signature change.",
+      "timestamp": "2026-04-22T16:12:57Z"
+    }
+  ],
   "priority": 1,
   "status": "closed",
   "title": "Update tests to inject store instead of relying on getInitializedRepo",
