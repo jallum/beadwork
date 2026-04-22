@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:49Z",
+  "description": "",
+  "id": "bw-5ddd",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Reject unknown flags",
+  "type": "bug",
+  "updated_at": "2026-04-22T16:12:49Z"
+}
