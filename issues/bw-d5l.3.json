@@ -6,12 +6,13 @@
   "blocks": [
     "bw-d5l.4"
   ],
+  "closed_at": "2026-04-22T16:12:57Z",
   "created": "2026-04-22T16:12:56Z",
   "description": "...",
   "id": "bw-d5l.3",
   "labels": [],
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add write-through cache to Store",
   "type": "task",
   "updated_at": "2026-04-22T16:12:57Z"
