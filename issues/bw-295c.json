@@ -7,12 +7,13 @@
   "blocks": [
     "bw-6d5d"
   ],
+  "closed_at": "2026-04-22T16:12:48Z",
   "created": "2026-04-22T16:12:48Z",
   "description": "",
   "id": "bw-295c",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Fix help output to stdout with exit 0",
   "type": "task",
   "updated_at": "2026-04-22T16:12:48Z"
