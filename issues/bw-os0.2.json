@@ -7,12 +7,13 @@
     "bw-os0.3",
     "bw-os0.5"
   ],
+  "closed_at": "2026-04-22T16:13:01Z",
   "created": "2026-04-22T16:13:00Z",
   "description": "",
   "id": "bw-os0.2",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Rewrite Ready() and Blocked() to query indexes directly",
   "type": "task",
   "updated_at": "2026-04-22T16:13:01Z"
