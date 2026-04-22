@@ -4,13 +4,14 @@
   "blocks": [
     "bw-i9g.4"
   ],
+  "closed_at": "2026-04-22T16:13:05Z",
   "created": "2026-04-22T16:13:01Z",
   "description": "",
   "id": "bw-i9g.1",
   "labels": [],
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Replace findGitDir() with pure-Go directory walk",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:04Z"
+  "updated_at": "2026-04-22T16:13:05Z"
 }
