@@ -3,7 +3,9 @@
   "blocked_by": [
     "bw-i7k"
   ],
-  "blocks": [],
+  "blocks": [
+    "bw-jki"
+  ],
   "created": "2026-04-22T16:12:54Z",
   "description": "",
   "id": "bw-kqn",
