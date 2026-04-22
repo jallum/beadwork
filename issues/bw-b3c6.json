@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:46Z",
+  "description": "",
+  "id": "bw-b3c6",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Set project version to 0.1.0 and start CHANGELOG.md",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:46Z"
+}
