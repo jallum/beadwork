@@ -2,6 +2,7 @@
   "assignee": "agent-snapshot",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-04-22T16:13:00Z",
   "created": "2026-04-22T16:12:59Z",
   "description": "",
   "id": "bw-ccl.4",
@@ -13,8 +14,8 @@
     }
   ],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add lazy ID set to Store for resolveID/ExistingIDs",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:59Z"
+  "updated_at": "2026-04-22T16:13:00Z"
 }
