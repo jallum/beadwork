@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-04-22T16:12:50Z",
   "created": "2026-04-22T16:12:49Z",
   "description": "",
   "id": "bw-a458",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "Rename getInitialized to getInitializedRepo",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:49Z"
+  "updated_at": "2026-04-22T16:12:50Z"
 }
