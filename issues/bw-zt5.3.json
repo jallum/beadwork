@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:13:10Z",
+  "description": "Call maybeCheckForUpgrade(store, w) in main.go after store initialization (line ~63). Only runs for commands where NeedsStore is true, so --version, --help, upgrade itself, etc. are unaffected.\\n\\nThe call must be non-blocking to the user's actual command — if the check errors internally, it's swallowed silently.",
+  "id": "bw-zt5.3",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Wire check into main.go",
+  "type": "task",
+  "updated_at": "2026-04-22T16:13:10Z"
+}
