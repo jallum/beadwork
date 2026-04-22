@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [
     "bw-vf1.2"
   ],
@@ -9,7 +9,7 @@
   "id": "bw-vf1.3",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "in_progress",
   "title": "Add test for closed blocker filtering in bw list",
   "type": "task",
   "updated_at": "2026-04-22T16:13:14Z"
