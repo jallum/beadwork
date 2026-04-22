@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:13:32Z",
+  "description": "",
+  "id": "octo-qrm.1",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Add acceptance test: bw operations from a git worktree",
+  "type": "task",
+  "updated_at": "2026-04-22T16:13:32Z"
+}
