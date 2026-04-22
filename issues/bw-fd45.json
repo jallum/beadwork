@@ -6,12 +6,13 @@
   "blocks": [
     "bw-d505"
   ],
+  "closed_at": "2026-04-22T16:12:46Z",
   "created": "2026-04-22T16:12:46Z",
   "description": "",
   "id": "bw-fd45",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Update onboard.md template and cmdOnboard to use embedded AGENTS.md",
   "type": "task",
   "updated_at": "2026-04-22T16:12:46Z"
