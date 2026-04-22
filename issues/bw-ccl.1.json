@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "agent-snapshot",
   "blocked_by": [],
   "blocks": [
     "bw-ccl.2",
@@ -17,7 +17,7 @@
     }
   ],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Add Snapshot struct and constructor",
   "type": "task",
   "updated_at": "2026-04-22T16:12:59Z"
