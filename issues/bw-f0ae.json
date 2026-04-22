@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:46Z",
+  "description": "",
+  "id": "bw-f0ae",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Add .bwconfig with commands to set/view config options",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:46Z"
+}
