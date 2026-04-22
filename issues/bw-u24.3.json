@@ -1,8 +1,6 @@
 {
   "assignee": "",
-  "blocked_by": [
-    "bw-u24.5"
-  ],
+  "blocked_by": [],
   "blocks": [],
   "created": "2026-04-22T16:13:02Z",
   "description": "",
@@ -12,5 +10,5 @@
   "status": "open",
   "title": "Fix close reason, description, and defer in intent encoding/parsing",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:03Z"
+  "updated_at": "2026-04-22T16:13:06Z"
 }
