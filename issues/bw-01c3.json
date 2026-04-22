@@ -2,13 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-04-22T16:12:56Z",
+  "close_reason": "Moot — graph command removed; output format exploration no longer needed",
   "created": "2026-04-22T16:12:49Z",
   "description": "",
   "id": "bw-01c3",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "Evaluate bd graph output formats",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:52Z"
+  "updated_at": "2026-04-22T16:12:56Z"
 }
