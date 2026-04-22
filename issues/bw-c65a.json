@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-04-22T16:12:51Z",
   "created": "2026-04-22T16:12:50Z",
   "description": "",
   "id": "bw-c65a",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "Increase code coverage for blocked",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:50Z"
+  "updated_at": "2026-04-22T16:12:51Z"
 }
