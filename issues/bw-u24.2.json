@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-u24.5"
+  ],
   "blocks": [],
   "created": "2026-04-22T16:13:02Z",
   "description": "",
@@ -10,5 +12,5 @@
   "status": "open",
   "title": "Add replay handlers for start, defer, undefer",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:02Z"
+  "updated_at": "2026-04-22T16:13:03Z"
 }
