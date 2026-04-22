@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:13:07Z",
+  "description": "",
+  "id": "bw-0n7",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "bw show displays wrong blocker in human-readable output",
+  "type": "bug",
+  "updated_at": "2026-04-22T16:13:07Z"
+}
