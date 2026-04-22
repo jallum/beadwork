@@ -7,12 +7,14 @@
     "bw-fba5",
     "bw-fdc5"
   ],
+  "closed_at": "2026-04-22T16:12:49Z",
+  "close_reason": "done",
   "created": "2026-04-22T16:12:48Z",
   "description": "",
   "id": "bw-172e",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Reorganize help groups and rename link/unlink to dep add/remove",
   "type": "epic",
   "updated_at": "2026-04-22T16:12:49Z"
