@@ -6,13 +6,14 @@
   "blocks": [
     "bw-d5l.3"
   ],
+  "closed_at": "2026-04-22T16:12:57Z",
   "created": "2026-04-22T16:12:56Z",
   "description": "...",
   "id": "bw-d5l.2",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Update tests to inject store instead of relying on getInitializedRepo",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:56Z"
+  "updated_at": "2026-04-22T16:12:57Z"
 }
