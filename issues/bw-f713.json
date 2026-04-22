@@ -5,7 +5,10 @@
   "created": "2026-04-22T16:12:46Z",
   "description": "",
   "id": "bw-f713",
-  "labels": [],
+  "labels": [
+    "cli",
+    "v1"
+  ],
   "priority": 2,
   "status": "in_progress",
   "title": "Implement bw label command",
