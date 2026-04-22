@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-h3w.1"
+  ],
   "blocks": [],
   "created": "2026-04-22T16:13:15Z",
   "description": "Lightweight eval to verify prime prompt changes influence agent behavior. Manual version exists (tmux + second claude instance). Scope TBD.",
