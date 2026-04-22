@@ -10,6 +10,12 @@
   "description": "",
   "id": "bw-ccl.1",
   "labels": [],
+  "comments": [
+    {
+      "text": "Snapshot struct: Issues map[string]*Issue, Forward/Reverse map[string][]string (edge maps), Closed map[string]bool, IDs map[string]bool. Constructor calls List(Filter{}) + LoadEdges() once. Lives in internal/issue/. Tips() should operate on snapshot data instead of per-node readIssue() calls.",
+      "timestamp": "2026-04-22T16:12:59Z"
+    }
+  ],
   "priority": 2,
   "status": "open",
   "title": "Add Snapshot struct and constructor",
