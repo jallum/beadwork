@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-04-22T16:13:09Z",
   "created": "2026-04-22T16:13:02Z",
   "description": "",
   "id": "bw-u24",
   "labels": [],
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Fix intent replay fidelity",
   "type": "epic",
-  "updated_at": "2026-04-22T16:13:08Z"
+  "updated_at": "2026-04-22T16:13:09Z"
 }
