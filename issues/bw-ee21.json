@@ -4,13 +4,14 @@
     "bw-45d2"
   ],
   "blocks": [],
+  "closed_at": "2026-04-22T16:12:48Z",
   "created": "2026-04-22T16:12:47Z",
   "description": "",
   "id": "bw-ee21",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "Cleanup: remove worktree code, update testutil to go-git",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:47Z"
+  "updated_at": "2026-04-22T16:12:48Z"
 }
