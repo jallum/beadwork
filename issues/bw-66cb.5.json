@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:55Z",
+  "description": "",
+  "id": "bw-66cb.5",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Remove bw graph command",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:55Z"
+}
