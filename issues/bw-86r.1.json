@@ -8,6 +8,12 @@
   "labels": [
     "experiment"
   ],
+  "comments": [
+    {
+      "text": "Baseline established from bw-exq.1: 0/3 on Opus 4.6. All 3 runs went straight to code exploration without calling bw prime.",
+      "timestamp": "2026-04-22T16:13:20Z"
+    }
+  ],
   "priority": 3,
   "status": "open",
   "title": "T1: Baseline — current agents.md on Opus",
