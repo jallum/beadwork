@@ -5,7 +5,9 @@
   "created": "2026-04-22T16:13:26Z",
   "description": "Agents rationalize non-trivial work as 'quick fix' and edit the main working tree, blocking the user and other agents. The current definition ('just make the change in the working tree, no ticket needed') is too loose. Test variants that anchor the definition on observable signals: ticket existence, time to complete, whether user is actively waiting. Key principle: don't assume you're the only instance.",
   "id": "bw-tnz",
-  "labels": [],
+  "labels": [
+    "experiment"
+  ],
   "priority": 2,
   "status": "open",
   "title": "Experiment: sharpen quick-fix definition to prevent working-tree misuse",
