@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-04-22T16:12:58Z",
@@ -13,7 +13,7 @@
     }
   ],
   "priority": 1,
-  "status": "open",
+  "status": "in_progress",
   "title": "bw start crashes with nil pointer when store.Committer is nil",
   "type": "bug",
   "updated_at": "2026-04-22T16:12:58Z"
