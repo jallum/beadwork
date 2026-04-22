@@ -99,7 +99,15 @@ func makeRemoteResolver(r *repo.Repo, w Writer) repo.RemoteResolver {
 // promptForRemote presents a numbered menu and reads a selection from
 // syncStdin. Re-prompts up to 3 times on invalid input.
 func promptForRemote(candidates []string, w Writer) (string, error) {
-	reader := bufio.NewReader(syncStdin)
+	return promptForRemoteWithReader(candidates, w, syncStdin)
+}
+
+// promptForRemoteWithReader is the shared implementation behind both the
+// sync and init prompts. The caller supplies the input source so init
+// can use initStdin and sync can use syncStdin without either depending
+// on the other's package-level variable.
+func promptForRemoteWithReader(candidates []string, w Writer, source io.Reader) (string, error) {
+	reader := bufio.NewReader(source)
 	for attempt := 0; attempt < 3; attempt++ {
 		fmt.Fprintln(w, "multiple remotes — pick one for bw to sync with:")
 		for i, name := range candidates {

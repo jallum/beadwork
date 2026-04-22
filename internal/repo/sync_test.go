@@ -361,7 +361,7 @@ func TestForceReinitInvalidPrefix(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	err := env.Repo.ForceReinit("has space")
+	err := env.Repo.ForceReinit("has space", nil)
 	if err == nil {
 		t.Error("expected error for invalid prefix")
 	}

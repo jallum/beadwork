@@ -133,7 +133,7 @@ func ValidatePrefix(prefix string) error {
 }
 
 // ForceReinit destroys the existing beadwork branch and reinitializes.
-func (r *Repo) ForceReinit(prefix string) error {
+func (r *Repo) ForceReinit(prefix string, resolve RemoteResolver) error {
 	if err := ValidatePrefix(prefix); err != nil {
 		return err
 	}
@@ -152,10 +152,24 @@ func (r *Repo) ForceReinit(prefix string) error {
 	}
 	r.tfs = tfs
 
-	return r.Init(prefix)
+	return r.Init(prefix, resolve)
 }
 
-func (r *Repo) Init(prefix string) error {
+// Init creates (or bootstraps from a remote) the beadwork branch.
+//
+// When any git remote already has the beadwork branch, Init fetches from
+// one of them (selected via the same sync precedence: single-only, then
+// git config beadwork.remote, then a remote named origin, then
+// alphabetically first) and creates the local tracking branch from that
+// tip.
+//
+// When no remote has the branch yet and multiple remotes exist, Init
+// invokes resolve to let the caller pick which remote should be the
+// project's default going forward; the selection is persisted to
+// git config beadwork.remote. Passing nil skips that step — useful for
+// tests and for the single-remote common case where no choice is
+// needed.
+func (r *Repo) Init(prefix string, resolve RemoteResolver) error {
 	if r.initialized {
 		return fmt.Errorf("beadwork already initialized")
 	}
@@ -164,19 +178,32 @@ func (r *Repo) Init(prefix string) error {
 		return err
 	}
 
-	remoteExists := r.remoteBranchExists()
+	allRemotes, err := r.tfs.RemoteNames()
+	if err != nil {
+		return fmt.Errorf("list remotes: %w", err)
+	}
+	var hasBW []string
+	for _, name := range allRemotes {
+		if r.remoteHasBeadwork(name) {
+			hasBW = append(hasBW, name)
+		}
+	}
+	sort.Strings(hasBW)
+
 	localExists := r.localBranchExists()
 
-	if remoteExists {
-		// Fetch remote branch
-		refSpec := config.RefSpec(fmt.Sprintf("+%s:%s", refLocal, r.refRemote()))
-		if err := r.fetch(r.RemoteName(), refSpec); err != nil {
+	if len(hasBW) > 0 {
+		// At least one remote has beadwork — bootstrap from it. Init
+		// never prompts in this branch; it picks deterministically.
+		fetchFrom := initFetchRemote(r, hasBW)
+		remoteRef := "refs/remotes/" + fetchFrom + "/" + BranchName
+		refSpec := config.RefSpec(fmt.Sprintf("+%s:%s", refLocal, remoteRef))
+		if err := r.fetch(fetchFrom, refSpec); err != nil {
 			return fmt.Errorf("fetch failed: %w", err)
 		}
 
 		if !localExists {
-			// Create local branch from remote
-			remoteHash, err := r.tfs.LookupRef(r.refRemote())
+			remoteHash, err := r.tfs.LookupRef(remoteRef)
 			if err != nil {
 				return fmt.Errorf("lookup remote ref: %w", err)
 			}
@@ -193,6 +220,22 @@ func (r *Repo) Init(prefix string) error {
 		r.tfs = tfs
 		r.Prefix = r.readPrefix()
 	} else if !localExists {
+		// No remote has beadwork yet and we're about to seed a new
+		// local branch. If multiple remotes exist AND sync's deterministic
+		// short-circuits (existing git config, a remote named origin)
+		// wouldn't already pick one, ask the user now so future
+		// `bw sync` / `bw push` runs don't have to. Short-circuit cases
+		// aren't persisted — sync re-applies the same rules on its own.
+		if len(allRemotes) >= 2 && resolve != nil && initNeedsPrompt(r, allRemotes) {
+			chosen, err := resolve(allRemotes)
+			if err != nil {
+				return err
+			}
+			if _, err := execGit(r.RepoDir(), "config", "beadwork.remote", chosen); err != nil {
+				return fmt.Errorf("persist beadwork.remote: %w", err)
+			}
+		}
+
 		// No branch anywhere — TreeFS will create it on first Commit
 		// (baseRef is zero, so Commit creates the ref)
 		if prefix == "" {
@@ -228,6 +271,53 @@ func (r *Repo) Init(prefix string) error {
 	return nil
 }
 
+// initNeedsPrompt returns true when the "seed a fresh local branch in a
+// multi-remote repo" path actually needs to ask the user. Returns false
+// when git config beadwork.remote is already set to one of the remotes
+// or when a remote named "origin" exists — in both cases sync will
+// make the same pick on its own, so there's nothing useful to persist.
+func initNeedsPrompt(r *Repo, allRemotes []string) bool {
+	if out, err := execGit(r.RepoDir(), "config", "--get", "beadwork.remote"); err == nil {
+		if cfg := strings.TrimSpace(out); cfg != "" {
+			for _, name := range allRemotes {
+				if name == cfg {
+					return false
+				}
+			}
+		}
+	}
+	for _, name := range allRemotes {
+		if name == "origin" {
+			return false
+		}
+	}
+	return true
+}
+
+// initFetchRemote picks one remote from a non-empty list of remotes that
+// have the beadwork branch, using the sync precedence but silently
+// falling back to alphabetically-first when neither git config nor
+// origin is a usable match. Never prompts.
+func initFetchRemote(r *Repo, hasBW []string) string {
+	if len(hasBW) == 1 {
+		return hasBW[0]
+	}
+	if out, err := execGit(r.RepoDir(), "config", "--get", "beadwork.remote"); err == nil {
+		cfg := strings.TrimSpace(out)
+		for _, name := range hasBW {
+			if name == cfg {
+				return cfg
+			}
+		}
+	}
+	for _, name := range hasBW {
+		if name == "origin" {
+			return "origin"
+		}
+	}
+	return hasBW[0]
+}
+
 // AllCommits returns all commits on the beadwork branch, newest-first.
 func (r *Repo) AllCommits() ([]treefs.CommitInfo, error) {
 	return r.tfs.AllCommits()
@@ -235,25 +325,6 @@ func (r *Repo) AllCommits() ([]treefs.CommitInfo, error) {
 
 func (r *Repo) Commit(message string) error {
 	return r.tfs.Commit(message)
-}
-
-func (r *Repo) remoteBranchExists() bool {
-	_, err := r.tfs.LookupRef(r.refRemote())
-	if err == nil {
-		return true
-	}
-	// Also check via ls-remote for freshly cloned repos where we haven't
-	// fetched yet but the remote has the branch
-	has, _ := r.tfs.HasRemotes()
-	if !has {
-		return false
-	}
-	// Use git CLI for ls-remote since go-git remote.List requires network
-	out, err := execGit(r.RepoDir(), "ls-remote", "--heads", r.RemoteName(), BranchName)
-	if err != nil {
-		return false
-	}
-	return strings.TrimSpace(out) != ""
 }
 
 func (r *Repo) localBranchExists() bool {
@@ -311,12 +382,6 @@ func (r *Repo) RemoteName() string {
 		}
 	}
 	return "origin"
-}
-
-// refRemote returns the local ref path for the fetched remote beadwork
-// branch, e.g. "refs/remotes/upstream/beadwork".
-func (r *Repo) refRemote() string {
-	return "refs/remotes/" + r.RemoteName() + "/" + BranchName
 }
 
 // GetConfig reads a single key from .bwconfig.
