@@ -4,12 +4,13 @@
   "blocks": [
     "bw-wdi"
   ],
+  "closed_at": "2026-04-22T16:12:51Z",
   "created": "2026-04-22T16:12:51Z",
   "description": "",
   "id": "bw-17q",
   "labels": [],
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Default bw list to show open and in_progress issues",
   "type": "feature",
   "updated_at": "2026-04-22T16:12:51Z"
