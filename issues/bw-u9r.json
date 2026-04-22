@@ -6,6 +6,12 @@
   "description": "",
   "id": "bw-u9r",
   "labels": [],
+  "comments": [
+    {
+      "text": "We could have a flag in the data structure to suppress printing out something in the help.",
+      "timestamp": "2026-04-22T16:13:05Z"
+    }
+  ],
   "priority": 3,
   "status": "open",
   "title": "Hide --id flag from help output",
