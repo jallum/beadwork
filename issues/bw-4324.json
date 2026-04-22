@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:49Z",
+  "description": "",
+  "id": "bw-4324",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Shift priority scale to 0-4 (P0=highest)",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:49Z"
+}
