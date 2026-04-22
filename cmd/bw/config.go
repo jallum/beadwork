@@ -16,7 +16,7 @@ type ConfigArgs struct {
 
 func parseConfigArgs(raw []string) (ConfigArgs, error) {
 	if len(raw) == 0 {
-		return ConfigArgs{}, fmt.Errorf("usage: bw config get|set|unset|list")
+		return ConfigArgs{}, fmt.Errorf("usage: bw config get|set|list")
 	}
 	ca := ConfigArgs{Subcmd: raw[0]}
 	switch ca.Subcmd {
@@ -31,15 +31,10 @@ func parseConfigArgs(raw []string) (ConfigArgs, error) {
 		}
 		ca.Key = raw[1]
 		ca.Value = raw[2]
-	case "unset":
-		if len(raw) < 2 {
-			return ca, fmt.Errorf("usage: bw config unset <key>")
-		}
-		ca.Key = raw[1]
 	case "list":
 		// no additional args
 	default:
-		return ca, fmt.Errorf("usage: bw config get|set|unset|list")
+		return ca, fmt.Errorf("usage: bw config get|set|list")
 	}
 	return ca, nil
 }
@@ -68,20 +63,6 @@ func cmdConfig(store *issue.Store, args []string, w Writer) error {
 			return fmt.Errorf("commit failed: %w", err)
 		}
 		fmt.Fprintf(w, "%s=%s\n", ca.Key, ca.Value)
-
-	case "unset":
-		removed, err := r.UnsetConfig(ca.Key)
-		if err != nil {
-			return err
-		}
-		if !removed {
-			return fmt.Errorf("key not found: %s", ca.Key)
-		}
-		intent := fmt.Sprintf("config unset %s", ca.Key)
-		if err := r.Commit(intent); err != nil {
-			return fmt.Errorf("commit failed: %w", err)
-		}
-		fmt.Fprintf(w, "unset %s\n", ca.Key)
 
 	case "list":
 		cfg := r.ListConfig()

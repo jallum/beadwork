@@ -729,23 +729,6 @@ func TestParseConfigArgsSetNoValue(t *testing.T) {
 	}
 }
 
-func TestParseConfigArgsUnset(t *testing.T) {
-	a, err := parseConfigArgs([]string{"unset", "remote"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if a.Subcmd != "unset" || a.Key != "remote" {
-		t.Errorf("got %+v, want {Subcmd:unset Key:remote}", a)
-	}
-}
-
-func TestParseConfigArgsUnsetNoKey(t *testing.T) {
-	_, err := parseConfigArgs([]string{"unset"})
-	if err == nil {
-		t.Error("expected error for unset without key")
-	}
-}
-
 // --- parseInitArgs ---
 
 func TestParseInitArgs(t *testing.T) {
