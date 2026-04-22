@@ -235,7 +235,7 @@ func TestInitWithNonOriginRemoteViaGitConfig(t *testing.T) {
 		os.Chdir(orig)
 		t.Fatalf("Init src: %v", err)
 	}
-	if _, _, err := srcRepo.Sync(); err != nil {
+	if _, _, err := srcRepo.Sync(nil); err != nil {
 		os.Chdir(orig)
 		t.Fatalf("Sync src: %v", err)
 	}
