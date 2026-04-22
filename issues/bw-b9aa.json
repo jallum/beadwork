@@ -6,13 +6,14 @@
   "blocks": [
     "bw-c60e"
   ],
+  "closed_at": "2026-04-22T16:12:48Z",
   "created": "2026-04-22T16:12:47Z",
   "description": "",
   "id": "bw-b9aa",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Add TreeFS package with go-git backend",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:47Z"
+  "updated_at": "2026-04-22T16:12:48Z"
 }
