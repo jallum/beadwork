@@ -7,12 +7,14 @@
   "blocks": [
     "bw-a459"
   ],
+  "closed_at": "2026-04-22T16:12:49Z",
+  "close_reason": "done",
   "created": "2026-04-22T16:12:49Z",
   "description": "",
   "id": "bw-fdc5",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Update integration and CLI tests for dep",
   "type": "task",
   "updated_at": "2026-04-22T16:12:49Z"
