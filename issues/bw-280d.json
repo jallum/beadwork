@@ -5,12 +5,13 @@
     "bw-d505",
     "bw-fd45"
   ],
+  "closed_at": "2026-04-22T16:12:46Z",
   "created": "2026-04-22T16:12:46Z",
   "description": "",
   "id": "bw-280d",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Add go:generate directive and embed AGENTS.md in prompts package",
   "type": "task",
   "updated_at": "2026-04-22T16:12:46Z"
