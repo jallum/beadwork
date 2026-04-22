@@ -6,13 +6,14 @@
   "blocks": [
     "bw-45d2"
   ],
+  "closed_at": "2026-04-22T16:12:48Z",
   "created": "2026-04-22T16:12:47Z",
   "description": "",
   "id": "bw-c60e",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Refactor Store to use TreeFS instead of os.*",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:47Z"
+  "updated_at": "2026-04-22T16:12:48Z"
 }
