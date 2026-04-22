@@ -7,7 +7,7 @@
   "id": "octo-qrm.1",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Add acceptance test: bw operations from a git worktree",
   "type": "task",
   "updated_at": "2026-04-22T16:13:32Z"
