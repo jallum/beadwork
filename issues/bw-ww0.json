@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:13:11Z",
+  "description": "",
+  "id": "bw-ww0",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Upgrade bw to 0.10.0",
+  "type": "task",
+  "updated_at": "2026-04-22T16:13:11Z"
+}
