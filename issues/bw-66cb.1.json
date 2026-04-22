@@ -5,12 +5,14 @@
     "bw-66cb.2",
     "bw-66cb.4"
   ],
+  "closed_at": "2026-04-22T16:12:55Z",
+  "close_reason": "LoadEdges and Tips primitives added with 6 passing tests",
   "created": "2026-04-22T16:12:55Z",
   "description": "",
   "id": "bw-66cb.1",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Extract shared edge-loading and tip-walking primitives in Store",
   "type": "task",
   "updated_at": "2026-04-22T16:12:55Z"
