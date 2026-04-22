@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [
     "bw-hlv.3"
   ],
@@ -9,8 +9,8 @@
   "id": "bw-hlv.4",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Extract design docs to docs/",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:12Z"
+  "updated_at": "2026-04-22T16:13:13Z"
 }
