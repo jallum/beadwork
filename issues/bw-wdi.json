@@ -9,7 +9,7 @@
   "id": "bw-wdi",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Add --grep flag to bw list",
   "type": "feature",
   "updated_at": "2026-04-22T16:12:51Z"
