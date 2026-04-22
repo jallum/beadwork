@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-04-22T16:12:47Z",
   "created": "2026-04-22T16:12:46Z",
   "description": "",
   "id": "bw-8907",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "Another test issue",
   "type": "bug",
-  "updated_at": "2026-04-22T16:12:46Z"
+  "updated_at": "2026-04-22T16:12:47Z"
 }
