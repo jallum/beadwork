@@ -5,12 +5,13 @@
     "bw-96c4"
   ],
   "blocks": [],
+  "closed_at": "2026-04-22T16:12:47Z",
   "created": "2026-04-22T16:12:47Z",
   "description": "",
   "id": "bw-69e5",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Convert cmdClose, cmdReopen, cmdExport, cmdImport, cmdReady, cmdUpgrade to ParseArgs",
   "type": "task",
   "updated_at": "2026-04-22T16:12:47Z"
