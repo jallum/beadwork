@@ -4,7 +4,8 @@
     "bw-os0.1"
   ],
   "blocks": [
-    "bw-os0.3"
+    "bw-os0.3",
+    "bw-os0.5"
   ],
   "created": "2026-04-22T16:13:00Z",
   "description": "",
@@ -14,5 +15,5 @@
   "status": "open",
   "title": "Rewrite Ready() and Blocked() to query indexes directly",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:00Z"
+  "updated_at": "2026-04-22T16:13:01Z"
 }

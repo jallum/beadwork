@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-os0.2"
+  ],
   "blocks": [],
   "created": "2026-04-22T16:13:00Z",
   "description": "",
@@ -10,5 +12,5 @@
   "status": "open",
   "title": "Delete snapshot.go and snapshot_test.go",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:00Z"
+  "updated_at": "2026-04-22T16:13:01Z"
 }
