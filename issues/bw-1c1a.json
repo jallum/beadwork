@@ -6,12 +6,13 @@
   "blocks": [
     "bw-7328"
   ],
+  "closed_at": "2026-04-22T16:12:47Z",
   "created": "2026-04-22T16:12:47Z",
   "description": "",
   "id": "bw-1c1a",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Add Args struct and ParseArgs to helpers.go with tests",
   "type": "task",
   "updated_at": "2026-04-22T16:12:47Z"
