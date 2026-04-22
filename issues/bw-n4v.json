@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-04-22T16:13:17Z",
   "created": "2026-04-22T16:13:16Z",
   "description": "Testing the show command output",
   "id": "bw-n4v",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "closed",
   "title": "Test issue for show command",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:16Z"
+  "updated_at": "2026-04-22T16:13:17Z"
 }
