@@ -2,7 +2,6 @@
   "assignee": "agent-u24",
   "blocked_by": [],
   "blocks": [
-    "bw-u24.1",
     "bw-u24.2",
     "bw-u24.3",
     "bw-u24.4"
@@ -16,5 +15,5 @@
   "status": "closed",
   "title": "Add regression tests for intent replay fidelity",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:05Z"
+  "updated_at": "2026-04-22T16:13:06Z"
 }
