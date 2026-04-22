@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-04-22T16:13:06Z",
   "created": "2026-04-22T16:13:02Z",
   "description": "",
   "id": "bw-589",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Binary-level acceptance testing with deterministic state",
   "type": "epic",
-  "updated_at": "2026-04-22T16:13:02Z"
+  "updated_at": "2026-04-22T16:13:06Z"
 }
