@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-04-22T16:12:47Z",
   "created": "2026-04-22T16:12:46Z",
   "description": "",
   "id": "bw-6e2f",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Redesign bw ready and bw list output with status icons and priority colors",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:46Z"
+  "updated_at": "2026-04-22T16:12:47Z"
 }
