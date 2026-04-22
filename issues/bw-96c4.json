@@ -7,12 +7,13 @@
     "bw-69e5",
     "bw-7328"
   ],
+  "closed_at": "2026-04-22T16:12:47Z",
   "created": "2026-04-22T16:12:47Z",
   "description": "",
   "id": "bw-96c4",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "DRY up CLI argument parsing with Args helper",
   "type": "task",
   "updated_at": "2026-04-22T16:12:47Z"
