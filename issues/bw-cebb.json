@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:46Z",
+  "description": "",
+  "id": "bw-cebb",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Implement bw sync command",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:46Z"
+}
