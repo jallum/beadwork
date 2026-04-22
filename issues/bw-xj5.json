@@ -6,6 +6,12 @@
   "description": "",
   "id": "bw-xj5",
   "labels": [],
+  "comments": [
+    {
+      "text": "## Revised plan: centralize repo-root derivation\\n\\nThe fix is in repo.go, not main.go. Repo owns the git directory concept.\\n\\nThere's already a repoDir() method (line 403) but three call sites bypass it. The work:\\n\\n1. Fix findGitDir() — swap --git-dir for --git-common-dir\\n2. Consolidate internal callers — ForceReinit (line 95), remoteBranchExists (line 209), and derivePrefix (line 230) should all go through repoDir() instead of filepath.Dir(r.GitDir) directly\\n3. Export RepoDir() — rename the method so gitUserName in helpers.go can use it instead of taking GitDir and deriving the path itself\\n\\nAfter this, repo-root derivation exists in exactly two places: FindRepo() (before struct creation) and RepoDir() (after).",
+      "timestamp": "2026-04-22T16:13:01Z"
+    }
+  ],
   "priority": 2,
   "status": "open",
   "title": "Support running from git worktrees",
