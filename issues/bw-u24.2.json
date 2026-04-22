@@ -4,13 +4,14 @@
     "bw-u24.1"
   ],
   "blocks": [],
+  "closed_at": "2026-04-22T16:13:09Z",
   "created": "2026-04-22T16:13:02Z",
   "description": "",
   "id": "bw-u24.2",
   "labels": [],
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add replay handlers for start, defer, undefer",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:08Z"
+  "updated_at": "2026-04-22T16:13:09Z"
 }
