@@ -3,7 +3,9 @@
   "blocked_by": [
     "bw-280d"
   ],
-  "blocks": [],
+  "blocks": [
+    "bw-d505"
+  ],
   "created": "2026-04-22T16:12:46Z",
   "description": "",
   "id": "bw-fd45",
