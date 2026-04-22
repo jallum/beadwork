@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:13:31Z",
+  "description": "",
+  "id": "bw-al7",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Simplify show to single ID, return JSON object not array",
+  "type": "enhancement",
+  "updated_at": "2026-04-22T16:13:31Z"
+}
