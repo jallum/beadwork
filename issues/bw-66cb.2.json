@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:55Z",
+  "description": "",
+  "id": "bw-66cb.2",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Add BLOCKED BY / BLOCKS sections to show using tip-walking",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:55Z"
+}
