@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:13:01Z",
+  "description": "",
+  "id": "bw-xj5",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Support running from git worktrees",
+  "type": "bug",
+  "updated_at": "2026-04-22T16:13:01Z"
+}
