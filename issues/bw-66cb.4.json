@@ -6,13 +6,15 @@
   "blocks": [
     "bw-66cb.5"
   ],
+  "closed_at": "2026-04-22T16:12:56Z",
+  "close_reason": "Ready() refactored to use LoadEdges; tip-chain tests added",
   "created": "2026-04-22T16:12:55Z",
   "description": "",
   "id": "bw-66cb.4",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Update bw ready to use tip-walking (surface only actionable tips)",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:55Z"
+  "updated_at": "2026-04-22T16:12:56Z"
 }
