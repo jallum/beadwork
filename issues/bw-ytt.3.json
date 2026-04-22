@@ -4,12 +4,13 @@
   "blocks": [
     "bw-ytt.1"
   ],
+  "closed_at": "2026-04-22T16:13:03Z",
   "created": "2026-04-22T16:13:03Z",
   "description": "",
   "id": "bw-ytt.3",
   "labels": [],
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add tests for grouped ready output",
   "type": "task",
   "updated_at": "2026-04-22T16:13:03Z"
