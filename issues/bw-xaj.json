@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:13:24Z",
+  "description": "Add a --reverse flag to the bw list command that flips the output order.",
+  "id": "bw-xaj",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Add --reverse flag to bw list",
+  "type": "task",
+  "updated_at": "2026-04-22T16:13:24Z"
+}
