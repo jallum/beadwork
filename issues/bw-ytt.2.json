@@ -4,13 +4,14 @@
     "bw-ytt.1"
   ],
   "blocks": [],
+  "closed_at": "2026-04-22T16:13:04Z",
   "created": "2026-04-22T16:13:03Z",
   "description": "",
   "id": "bw-ytt.2",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Render grouped output with indented children",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:03Z"
+  "updated_at": "2026-04-22T16:13:04Z"
 }
