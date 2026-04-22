@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "bw-os0.5"
+  ],
   "created": "2026-04-22T16:13:00Z",
   "description": "",
   "id": "bw-os0.4",
@@ -10,5 +12,5 @@
   "status": "open",
   "title": "Update Delete to use Store.Children() instead of Snapshot",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:00Z"
+  "updated_at": "2026-04-22T16:13:01Z"
 }
