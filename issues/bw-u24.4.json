@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-u24.1"
+  ],
   "blocks": [],
   "created": "2026-04-22T16:13:03Z",
   "description": "",
@@ -10,5 +12,5 @@
   "status": "open",
   "title": "Fix multi-word values in update intent format",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:06Z"
+  "updated_at": "2026-04-22T16:13:07Z"
 }
