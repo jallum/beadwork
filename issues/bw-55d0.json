@@ -2,13 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-04-22T16:12:52Z",
+  "close_reason": "done",
   "created": "2026-04-22T16:12:49Z",
   "description": "",
   "id": "bw-55d0",
   "labels": [],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add --labels flag to create",
   "type": "feature",
-  "updated_at": "2026-04-22T16:12:50Z"
+  "updated_at": "2026-04-22T16:12:52Z"
 }
