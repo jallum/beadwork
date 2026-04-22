@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:59Z",
+  "description": "",
+  "id": "bw-ezs",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Remove ANSI escape codes from issue/status.go",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:59Z"
+}
