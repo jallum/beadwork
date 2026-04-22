@@ -7,12 +7,13 @@
   "blocks": [
     "bw-589.4"
   ],
+  "closed_at": "2026-04-22T16:13:05Z",
   "created": "2026-04-22T16:13:02Z",
   "description": "",
   "id": "bw-589.3",
   "labels": [],
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Build acceptance test harness",
   "type": "task",
   "updated_at": "2026-04-22T16:13:05Z"
