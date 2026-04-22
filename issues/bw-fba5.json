@@ -3,7 +3,9 @@
   "blocked_by": [
     "bw-172e"
   ],
-  "blocks": [],
+  "blocks": [
+    "bw-7408"
+  ],
   "created": "2026-04-22T16:12:49Z",
   "description": "",
   "id": "bw-fba5",
