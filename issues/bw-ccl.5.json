@@ -4,6 +4,7 @@
     "bw-ccl.1"
   ],
   "blocks": [],
+  "closed_at": "2026-04-22T16:13:00Z",
   "created": "2026-04-22T16:12:59Z",
   "description": "",
   "id": "bw-ccl.5",
@@ -15,7 +16,7 @@
     }
   ],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Update Delete to use Snapshot for child lookup",
   "type": "task",
   "updated_at": "2026-04-22T16:13:00Z"
