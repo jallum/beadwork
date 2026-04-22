@@ -1,12 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
-	"strconv"
 	"strings"
 
 	"github.com/go-git/go-git/v5/plumbing"
@@ -82,7 +79,7 @@ func makeRemoteResolver(r *repo.Repo, w Writer) repo.RemoteResolver {
 			return "", fmt.Errorf("no default remote — multiple remotes, none have the %q branch, no remote is named \"origin\", and git config beadwork.remote is unset. Set one with: git config beadwork.remote <name> (remotes: %s)",
 				"beadwork", strings.Join(candidates, ", "))
 		}
-		chosen, err := promptForRemote(candidates, w)
+		chosen, err := promptForRemoteWithReader(candidates, w, syncStdin)
 		if err != nil {
 			return "", err
 		}
@@ -92,51 +89,4 @@ func makeRemoteResolver(r *repo.Repo, w Writer) repo.RemoteResolver {
 		fmt.Fprintf(w, "saved: git config beadwork.remote=%s\n", chosen)
 		return chosen, nil
 	}
-}
-
-// promptForRemote presents a numbered menu and reads a selection from
-// syncStdin. Re-prompts up to 3 times on invalid input.
-func promptForRemote(candidates []string, w Writer) (string, error) {
-	return promptForRemoteWithReader(candidates, w, syncStdin)
-}
-
-// promptForRemoteWithReader is the shared implementation behind both the
-// sync and init prompts. The caller supplies the input source so init
-// can use initStdin and sync can use syncStdin without either depending
-// on the other's package-level variable.
-func promptForRemoteWithReader(candidates []string, w Writer, source io.Reader) (string, error) {
-	reader := bufio.NewReader(source)
-	for attempt := 0; attempt < 3; attempt++ {
-		fmt.Fprintln(w, "multiple remotes — pick one for bw to sync with:")
-		for i, name := range candidates {
-			fmt.Fprintf(w, "  %d) %s\n", i+1, name)
-		}
-		fmt.Fprint(w, "select [1]: ")
-
-		line, err := reader.ReadString('\n')
-		if err != nil && line == "" {
-			return "", fmt.Errorf("read input: %w", err)
-		}
-		line = strings.TrimSpace(line)
-		if line == "" {
-			line = "1"
-		}
-		n, convErr := strconv.Atoi(line)
-		if convErr != nil || n < 1 || n > len(candidates) {
-			fmt.Fprintf(w, "invalid selection %q; expected a number between 1 and %d\n", line, len(candidates))
-			continue
-		}
-		return candidates[n-1], nil
-	}
-	return "", fmt.Errorf("too many invalid selections")
-}
-
-func gitConfigSet(repoDir, key, value string) error {
-	cmd := exec.Command("git", "config", key, value)
-	cmd.Dir = repoDir
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("git config %s %s: %s: %w", key, value, strings.TrimSpace(string(out)), err)
-	}
-	return nil
 }
