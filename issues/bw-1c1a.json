@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-96c4"
+  ],
   "blocks": [
     "bw-7328"
   ],
