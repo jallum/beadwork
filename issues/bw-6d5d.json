@@ -5,12 +5,13 @@
     "bw-97ee"
   ],
   "blocks": [],
+  "closed_at": "2026-04-22T16:12:48Z",
   "created": "2026-04-22T16:12:48Z",
   "description": "",
   "id": "bw-6d5d",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Populate descriptions and examples for all commands",
   "type": "task",
   "updated_at": "2026-04-22T16:12:48Z"
