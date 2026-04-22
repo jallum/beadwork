@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-04-22T16:13:17Z",
@@ -17,8 +17,8 @@
     }
   ],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Fix line wrapping for bullet items and dep annotations",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:17Z"
+  "updated_at": "2026-04-22T16:13:25Z"
 }
