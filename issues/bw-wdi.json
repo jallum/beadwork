@@ -4,12 +4,13 @@
     "bw-17q"
   ],
   "blocks": [],
+  "closed_at": "2026-04-22T16:12:51Z",
   "created": "2026-04-22T16:12:51Z",
   "description": "",
   "id": "bw-wdi",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add --grep flag to bw list",
   "type": "feature",
   "updated_at": "2026-04-22T16:12:51Z"
