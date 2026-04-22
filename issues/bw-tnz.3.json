@@ -2,13 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-04-22T16:13:28Z",
+  "close_reason": "not tested — A solved the defined case",
   "created": "2026-04-22T16:13:26Z",
   "description": "Quick fix = change that takes under 30 seconds and needs no build/test cycle. Everything else gets a worktree. Tests: same as A.",
   "id": "bw-tnz.3",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Variant C: time-based definition",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:26Z"
+  "updated_at": "2026-04-22T16:13:28Z"
 }
