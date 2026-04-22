@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "agent-u24",
   "blocked_by": [],
   "blocks": [
     "bw-u24.1",
@@ -12,8 +12,8 @@
   "id": "bw-u24.5",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "in_progress",
   "title": "Add regression tests for intent replay fidelity",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:03Z"
+  "updated_at": "2026-04-22T16:13:04Z"
 }
