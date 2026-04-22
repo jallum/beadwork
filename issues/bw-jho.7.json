@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:53Z",
+  "description": "",
+  "id": "bw-jho.7",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "prime.go: write dynamic section directly to Writer instead of strings.Builder",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:53Z"
+}
