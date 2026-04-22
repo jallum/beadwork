@@ -26,7 +26,7 @@
   ],
   "priority": 3,
   "status": "in_progress",
-  "title": "Evaluate bd dep tree equivalent",
-  "type": "task",
+  "title": "Dependency",
+  "type": "epic",
   "updated_at": "2026-04-22T16:12:55Z"
 }
