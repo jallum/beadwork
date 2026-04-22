@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:52Z",
+  "description": "",
+  "id": "bw-mnq",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Improve upgrade command: progress, narration, changelog",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:52Z"
+}
