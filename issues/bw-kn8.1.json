@@ -2,13 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-04-22T16:13:27Z",
+  "close_reason": "completed — tested and landed as part of epic",
   "created": "2026-04-22T16:13:25Z",
   "description": "Add branch naming to the worktree workflow step in prime.md. Change step 1 from: **Worktree**: \"I'll work in a worktree for bw-xyz\" to something like: **Worktree**: Create a worktree. Branch name: `\u003cid\u003e/\u003cshort-description\u003e` (e.g. `bw-9s8/fix-wrap-bullets`). Test: does the agent create branches matching the pattern?",
   "id": "bw-kn8.1",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Variant A: naming in workflow step",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:25Z"
+  "updated_at": "2026-04-22T16:13:27Z"
 }
