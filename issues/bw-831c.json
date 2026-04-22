@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-38ae"
+  ],
   "blocks": [],
   "created": "2026-04-22T16:12:47Z",
   "description": "",
@@ -10,5 +12,5 @@
   "status": "open",
   "title": "Add typed parse functions for custom-positional commands (label, link/unlink, config, init, upgrade)",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:47Z"
+  "updated_at": "2026-04-22T16:12:48Z"
 }
