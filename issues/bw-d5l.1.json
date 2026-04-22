@@ -4,13 +4,14 @@
   "blocks": [
     "bw-d5l.2"
   ],
+  "closed_at": "2026-04-22T16:12:57Z",
   "created": "2026-04-22T16:12:56Z",
   "description": "...",
   "id": "bw-d5l.1",
   "labels": [],
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Change Command.Run signature to accept repo and store",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:56Z"
+  "updated_at": "2026-04-22T16:12:57Z"
 }
