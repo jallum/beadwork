@@ -2,6 +2,7 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-04-22T16:12:46Z",
   "created": "2026-04-22T16:12:46Z",
   "description": "",
   "id": "bw-f713",
@@ -9,7 +10,7 @@
     "cli"
   ],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Implement bw label command",
   "type": "task",
   "updated_at": "2026-04-22T16:12:46Z"
