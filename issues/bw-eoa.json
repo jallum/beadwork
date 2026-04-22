@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:13:05Z",
+  "description": "",
+  "id": "bw-eoa",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Enhance bw start with rich context and landing instructions",
+  "type": "task",
+  "updated_at": "2026-04-22T16:13:05Z"
+}
