@@ -4,13 +4,14 @@
     "bw-d5l.3"
   ],
   "blocks": [],
+  "closed_at": "2026-04-22T16:12:57Z",
   "created": "2026-04-22T16:12:56Z",
   "description": "...",
   "id": "bw-d5l.4",
   "labels": [],
   "priority": 1,
-  "status": "open",
+  "status": "closed",
   "title": "Acceptance: verify epic completion criteria",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:56Z"
+  "updated_at": "2026-04-22T16:12:57Z"
 }
