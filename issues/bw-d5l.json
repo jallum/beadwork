@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:56Z",
+  "description": "",
+  "id": "bw-d5l",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Inject store into commands and add write-through cache",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:56Z"
+}
