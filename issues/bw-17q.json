@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "bw-wdi"
+  ],
   "created": "2026-04-22T16:12:51Z",
   "description": "",
   "id": "bw-17q",
