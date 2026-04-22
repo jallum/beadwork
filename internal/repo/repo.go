@@ -21,7 +21,6 @@ const BranchName = "beadwork"
 const CurrentVersion = 2
 
 const refLocal = "refs/heads/" + BranchName
-const refRemote = "refs/remotes/origin/" + BranchName
 
 type Repo struct {
 	GitDir      string
@@ -134,7 +133,7 @@ func ValidatePrefix(prefix string) error {
 }
 
 // ForceReinit destroys the existing beadwork branch and reinitializes.
-func (r *Repo) ForceReinit(prefix string) error {
+func (r *Repo) ForceReinit(prefix string, resolve RemoteResolver) error {
 	if err := ValidatePrefix(prefix); err != nil {
 		return err
 	}
@@ -153,10 +152,24 @@ func (r *Repo) ForceReinit(prefix string) error {
 	}
 	r.tfs = tfs
 
-	return r.Init(prefix)
+	return r.Init(prefix, resolve)
 }
 
-func (r *Repo) Init(prefix string) error {
+// Init creates (or bootstraps from a remote) the beadwork branch.
+//
+// When any git remote already has the beadwork branch, Init fetches from
+// one of them (selected via the same sync precedence: single-only, then
+// git config beadwork.remote, then a remote named origin, then
+// alphabetically first) and creates the local tracking branch from that
+// tip.
+//
+// When no remote has the branch yet and multiple remotes exist, Init
+// invokes resolve to let the caller pick which remote should be the
+// project's default going forward; the selection is persisted to
+// git config beadwork.remote. Passing nil skips that step — useful for
+// tests and for the single-remote common case where no choice is
+// needed.
+func (r *Repo) Init(prefix string, resolve RemoteResolver) error {
 	if r.initialized {
 		return fmt.Errorf("beadwork already initialized")
 	}
@@ -165,19 +178,32 @@ func (r *Repo) Init(prefix string) error {
 		return err
 	}
 
-	remoteExists := r.remoteBranchExists()
+	allRemotes, err := r.tfs.RemoteNames()
+	if err != nil {
+		return fmt.Errorf("list remotes: %w", err)
+	}
+	var hasBW []string
+	for _, name := range allRemotes {
+		if r.remoteHasBeadwork(name) {
+			hasBW = append(hasBW, name)
+		}
+	}
+	sort.Strings(hasBW)
+
 	localExists := r.localBranchExists()
 
-	if remoteExists {
-		// Fetch remote branch
-		refSpec := config.RefSpec(fmt.Sprintf("+%s:%s", refLocal, refRemote))
-		if err := r.fetch("origin", refSpec); err != nil {
+	if len(hasBW) > 0 {
+		// At least one remote has beadwork — bootstrap from it. Init
+		// never prompts in this branch; it picks deterministically.
+		fetchFrom := initFetchRemote(r, hasBW)
+		remoteRef := "refs/remotes/" + fetchFrom + "/" + BranchName
+		refSpec := config.RefSpec(fmt.Sprintf("+%s:%s", refLocal, remoteRef))
+		if err := r.fetch(fetchFrom, refSpec); err != nil {
 			return fmt.Errorf("fetch failed: %w", err)
 		}
 
 		if !localExists {
-			// Create local branch from remote
-			remoteHash, err := r.tfs.LookupRef(refRemote)
+			remoteHash, err := r.tfs.LookupRef(remoteRef)
 			if err != nil {
 				return fmt.Errorf("lookup remote ref: %w", err)
 			}
@@ -194,6 +220,22 @@ func (r *Repo) Init(prefix string) error {
 		r.tfs = tfs
 		r.Prefix = r.readPrefix()
 	} else if !localExists {
+		// No remote has beadwork yet and we're about to seed a new
+		// local branch. If multiple remotes exist AND sync's deterministic
+		// short-circuits (existing git config, a remote named origin)
+		// wouldn't already pick one, ask the user now so future
+		// `bw sync` / `bw push` runs don't have to. Short-circuit cases
+		// aren't persisted — sync re-applies the same rules on its own.
+		if len(allRemotes) >= 2 && resolve != nil && initNeedsPrompt(r, allRemotes) {
+			chosen, err := resolve(allRemotes)
+			if err != nil {
+				return err
+			}
+			if _, err := execGit(r.RepoDir(), "config", "beadwork.remote", chosen); err != nil {
+				return fmt.Errorf("persist beadwork.remote: %w", err)
+			}
+		}
+
 		// No branch anywhere — TreeFS will create it on first Commit
 		// (baseRef is zero, so Commit creates the ref)
 		if prefix == "" {
@@ -229,6 +271,53 @@ func (r *Repo) Init(prefix string) error {
 	return nil
 }
 
+// initNeedsPrompt returns true when the "seed a fresh local branch in a
+// multi-remote repo" path actually needs to ask the user. Returns false
+// when git config beadwork.remote is already set to one of the remotes
+// or when a remote named "origin" exists — in both cases sync will
+// make the same pick on its own, so there's nothing useful to persist.
+func initNeedsPrompt(r *Repo, allRemotes []string) bool {
+	if out, err := execGit(r.RepoDir(), "config", "--get", "beadwork.remote"); err == nil {
+		if cfg := strings.TrimSpace(out); cfg != "" {
+			for _, name := range allRemotes {
+				if name == cfg {
+					return false
+				}
+			}
+		}
+	}
+	for _, name := range allRemotes {
+		if name == "origin" {
+			return false
+		}
+	}
+	return true
+}
+
+// initFetchRemote picks one remote from a non-empty list of remotes that
+// have the beadwork branch, using the sync precedence but silently
+// falling back to alphabetically-first when neither git config nor
+// origin is a usable match. Never prompts.
+func initFetchRemote(r *Repo, hasBW []string) string {
+	if len(hasBW) == 1 {
+		return hasBW[0]
+	}
+	if out, err := execGit(r.RepoDir(), "config", "--get", "beadwork.remote"); err == nil {
+		cfg := strings.TrimSpace(out)
+		for _, name := range hasBW {
+			if name == cfg {
+				return cfg
+			}
+		}
+	}
+	for _, name := range hasBW {
+		if name == "origin" {
+			return "origin"
+		}
+	}
+	return hasBW[0]
+}
+
 // AllCommits returns all commits on the beadwork branch, newest-first.
 func (r *Repo) AllCommits() ([]treefs.CommitInfo, error) {
 	return r.tfs.AllCommits()
@@ -236,25 +325,6 @@ func (r *Repo) AllCommits() ([]treefs.CommitInfo, error) {
 
 func (r *Repo) Commit(message string) error {
 	return r.tfs.Commit(message)
-}
-
-func (r *Repo) remoteBranchExists() bool {
-	_, err := r.tfs.LookupRef(refRemote)
-	if err == nil {
-		return true
-	}
-	// Also check via ls-remote for freshly cloned repos where we haven't
-	// fetched yet but the remote has the branch
-	has, _ := r.tfs.HasRemotes()
-	if !has {
-		return false
-	}
-	// Use git CLI for ls-remote since go-git remote.List requires network
-	out, err := execGit(r.RepoDir(), "ls-remote", "--heads", "origin", BranchName)
-	if err != nil {
-		return false
-	}
-	return strings.TrimSpace(out) != ""
 }
 
 func (r *Repo) localBranchExists() bool {
@@ -299,6 +369,19 @@ func (r *Repo) Version() int {
 		return 0
 	}
 	return n
+}
+
+// RemoteName returns the name of the git remote beadwork should use as a
+// single-remote fallback (primarily for Init's bootstrap fetch). It reads
+// git config beadwork.remote, defaulting to "origin" when unset. The
+// richer multi-remote resolution for Sync/Push lives elsewhere.
+func (r *Repo) RemoteName() string {
+	if out, err := execGit(r.RepoDir(), "config", "--get", "beadwork.remote"); err == nil {
+		if name := strings.TrimSpace(out); name != "" {
+			return name
+		}
+	}
+	return "origin"
 }
 
 // GetConfig reads a single key from .bwconfig.
@@ -350,101 +433,238 @@ func (r *Repo) readPrefix() string {
 	return r.derivePrefix()
 }
 
-// Sync fetches from origin, identifies local-only commits, and pushes or
-// returns intents for replay.
-func (r *Repo) Sync() (status string, replayed []string, err error) {
+// RemoteResolver picks a single remote name from a list of candidate
+// remotes. It is invoked by Sync/Push in the "no remote has beadwork yet"
+// fallback when the deterministic rules (single remote, git config
+// beadwork.remote, a remote named "origin") don't produce an answer.
+// Passing nil to Sync/Push causes that fallback to return a non-interactive
+// error instead of prompting.
+type RemoteResolver func(candidates []string) (string, error)
+
+// remoteHasBeadwork returns true if the given remote has refs/heads/beadwork.
+// Uses `git ls-remote --heads <name> beadwork` for a live probe.
+func (r *Repo) remoteHasBeadwork(name string) bool {
+	out, err := execGit(r.RepoDir(), "ls-remote", "--heads", name, BranchName)
+	if err != nil {
+		return false
+	}
+	return strings.TrimSpace(out) != ""
+}
+
+// targetRemotes returns the list of remotes bw should act on.
+// If any remote has the beadwork branch, only those are returned. Otherwise
+// it resolves a single remote via resolveSingleRemote (short-circuit rules
+// first, then the resolver callback).
+func (r *Repo) targetRemotes(resolve RemoteResolver) ([]string, error) {
+	all, err := r.tfs.RemoteNames()
+	if err != nil {
+		return nil, err
+	}
+	if len(all) == 0 {
+		return nil, nil
+	}
+	var hasBW []string
+	for _, name := range all {
+		if r.remoteHasBeadwork(name) {
+			hasBW = append(hasBW, name)
+		}
+	}
+	if len(hasBW) > 0 {
+		sort.Strings(hasBW)
+		return hasBW, nil
+	}
+	chosen, err := r.resolveSingleRemote(all, resolve)
+	if err != nil {
+		return nil, err
+	}
+	return []string{chosen}, nil
+}
+
+// resolveSingleRemote applies the precedence rules for picking exactly one
+// remote when no remote has the beadwork branch yet.
+func (r *Repo) resolveSingleRemote(all []string, resolve RemoteResolver) (string, error) {
+	if len(all) == 1 {
+		return all[0], nil
+	}
+	if out, err := execGit(r.RepoDir(), "config", "--get", "beadwork.remote"); err == nil {
+		if cfg := strings.TrimSpace(out); cfg != "" {
+			for _, name := range all {
+				if name == cfg {
+					return cfg, nil
+				}
+			}
+			return "", fmt.Errorf("git config beadwork.remote is set to %q but no remote by that name exists (remotes: %s)", cfg, strings.Join(all, ", "))
+		}
+	}
+	for _, name := range all {
+		if name == "origin" {
+			return "origin", nil
+		}
+	}
+	if resolve != nil {
+		return resolve(all)
+	}
+	return "", fmt.Errorf("no default remote — multiple remotes, none have the %q branch, no remote is named \"origin\", and git config beadwork.remote is unset. Set one with: git config beadwork.remote <name> (remotes: %s)", BranchName, strings.Join(all, ", "))
+}
+
+// Sync fetches from every remote that has the beadwork branch, merges
+// their tips into local, and pushes the result back to every one of them.
+// If no remote has the branch yet, it resolves a single remote via the
+// precedence rules (single-remote auto-pick, git config beadwork.remote,
+// "origin" by name, or the resolver callback for interactive selection)
+// and pushes to just that one.
+//
+// On merge conflict against any remote, returns ("needs replay",
+// conflicting-local-commits, nil) with preReplayHash captured. Callers run
+// intent.Replay then re-invoke Sync to finish the fan-out.
+func (r *Repo) Sync(resolve RemoteResolver) (status string, replayed []string, err error) {
 	if !r.hasRemote() {
 		return "no remote configured", nil, nil
 	}
 
-	// Try to fetch
-	refSpec := config.RefSpec(fmt.Sprintf("+%s:%s", refLocal, refRemote))
-	if fetchErr := r.fetch("origin", refSpec); fetchErr != nil {
-		// Remote branch may not exist — just push
-		if err := r.push(); err != nil {
-			return "", nil, fmt.Errorf("push failed: %w", err)
-		}
-		return "pushed", nil, nil
-	}
-
-	remoteHash, err := r.tfs.LookupRef(refRemote)
-	if err != nil {
-		// No remote ref after fetch — just push
-		if err := r.push(); err != nil {
-			return "", nil, fmt.Errorf("push failed: %w", err)
-		}
-		return "pushed", nil, nil
-	}
-
-	localHash := r.tfs.RefHash()
-
-	// Check if we have local commits ahead of remote
-	localCommits, err := r.tfs.CommitsBetween(localHash, remoteHash)
+	remotes, err := r.targetRemotes(resolve)
 	if err != nil {
 		return "", nil, err
 	}
+	if len(remotes) == 0 {
+		return "no remote configured", nil, nil
+	}
 
-	if len(localCommits) == 0 {
-		// Nothing local — fast-forward to remote
-		if localHash != remoteHash {
-			if err := r.tfs.Reset(remoteHash); err != nil {
-				return "", nil, fmt.Errorf("fast-forward: %w", err)
-			}
+	return r.syncTo(remotes)
+}
+
+// syncTo runs the three-phase multi-remote sync across the given remotes:
+// fetch each, merge each into local in sorted order (stopping on conflict),
+// then push local to each.
+func (r *Repo) syncTo(remotes []string) (string, []string, error) {
+	// Phase A: fetch every target remote into its own tracking ref.
+	// A failure on one remote (e.g. network, missing beadwork branch)
+	// is warned-and-skipped so the rest of the sync can proceed.
+	fetched := make([]string, 0, len(remotes))
+	for _, name := range remotes {
+		refSpec := config.RefSpec(fmt.Sprintf("+%s:refs/remotes/%s/%s", refLocal, name, BranchName))
+		if err := r.fetch(name, refSpec); err != nil {
+			fmt.Fprintf(os.Stderr, "warning: fetch from %s failed: %v\n", name, err)
+			continue
 		}
+		fetched = append(fetched, name)
+	}
+	sort.Strings(fetched)
+
+	// Phase B: merge each fetched remote's tip into local.
+	didMerge := false
+	didFastForward := false
+	for _, name := range fetched {
+		remoteRef := "refs/remotes/" + name + "/" + BranchName
+		remoteHash, err := r.tfs.LookupRef(remoteRef)
+		if err != nil {
+			// Tracking ref missing despite successful fetch — skip.
+			continue
+		}
+		localHash := r.tfs.RefHash()
+
+		localCommits, err := r.tfs.CommitsBetween(localHash, remoteHash)
+		if err != nil {
+			return "", nil, err
+		}
+		if len(localCommits) == 0 {
+			if localHash != remoteHash {
+				if err := r.tfs.Reset(remoteHash); err != nil {
+					return "", nil, fmt.Errorf("fast-forward from %s: %w", name, err)
+				}
+				didFastForward = true
+			}
+			continue
+		}
+
+		remoteCommits, err := r.tfs.CommitsBetween(remoteHash, localHash)
+		if err != nil {
+			return "", nil, err
+		}
+		if len(remoteCommits) == 0 {
+			// Local strictly ahead of this remote — Phase C will push.
+			continue
+		}
+
+		// Diverged — attempt 3-way tree merge.
+		localMsgs := make([]string, 0, len(localCommits))
+		for _, c := range localCommits {
+			localMsgs = append(localMsgs, c.Message)
+		}
+		merged, err := r.tfs.MergeCommit(localHash, remoteHash, localMsgs)
+		if err != nil {
+			return "", nil, fmt.Errorf("merge with %s: %w", name, err)
+		}
+		if merged {
+			didMerge = true
+			continue
+		}
+
+		// Conflict: capture pre-reset hash for attachment-blob recovery
+		// (same as the single-remote path previously did), reset to this
+		// remote's tip, and bubble the conflicting intents out for replay.
+		r.preReplayHash = localHash
+		if err := r.tfs.Reset(remoteHash); err != nil {
+			return "", nil, fmt.Errorf("reset to %s: %w", name, err)
+		}
+		return "needs replay", localMsgs, nil
+	}
+
+	// Phase C: push local to every target remote. Only counts as "pushed"
+	// when local is actually ahead of (or unrelated to) the remote's tip.
+	pushRefSpec := config.RefSpec(refLocal + ":" + refLocal)
+	pushedCount := 0
+	for _, name := range remotes {
+		remoteRef := "refs/remotes/" + name + "/" + BranchName
+		localHash := r.tfs.RefHash()
+		remoteHash, refErr := r.tfs.LookupRef(remoteRef)
+		needsPush := refErr != nil || remoteHash != localHash
+		if !needsPush {
+			continue
+		}
+		if err := r.gitPush(name, pushRefSpec); err != nil {
+			return "", nil, fmt.Errorf("push to %s failed: %w", name, err)
+		}
+		pushedCount++
+	}
+
+	switch {
+	case didMerge && pushedCount > 0:
+		return "rebased and pushed", nil, nil
+	case pushedCount > 0:
+		return "pushed", nil, nil
+	case didFastForward:
+		return "up to date", nil, nil
+	default:
 		return "up to date", nil, nil
 	}
-
-	// Check if remote has diverged from local
-	remoteCommits, err := r.tfs.CommitsBetween(remoteHash, localHash)
-	if err != nil {
-		return "", nil, err
-	}
-
-	if len(remoteCommits) == 0 {
-		// Remote hasn't diverged — local is strictly ahead, just push
-		if err := r.push(); err != nil {
-			return "", nil, fmt.Errorf("push failed: %w", err)
-		}
-		return "pushed", nil, nil
-	}
-
-	// Diverged: try 3-way tree merge first
-	localMsgs := make([]string, 0, len(localCommits))
-	for _, c := range localCommits {
-		localMsgs = append(localMsgs, c.Message)
-	}
-
-	merged, err := r.tfs.MergeCommit(localHash, remoteHash, localMsgs)
-	if err != nil {
-		return "", nil, fmt.Errorf("merge: %w", err)
-	}
-
-	if merged {
-		if err := r.push(); err != nil {
-			return "", nil, fmt.Errorf("push after merge: %w", err)
-		}
-		return "rebased and pushed", nil, nil
-	}
-
-	// Merge had conflicts — fall back to intent replay.
-	// Capture the pre-reset local hash so the caller can expose it to
-	// intent replay for attachment-blob recovery. Git keeps the blob
-	// objects in the ODB until gc, even after the ref is reset.
-	r.preReplayHash = localHash
-	if err := r.tfs.Reset(remoteHash); err != nil {
-		return "", nil, fmt.Errorf("reset to remote: %w", err)
-	}
-	return "needs replay", localMsgs, nil
 }
 
-// Push pushes the beadwork branch to origin.
-func (r *Repo) Push() error {
-	return r.push()
+// Push pushes the beadwork branch to every remote that has the branch, or
+// to a single resolved remote if none of them do. See Sync for the
+// resolver semantics.
+func (r *Repo) Push(resolve RemoteResolver) error {
+	if !r.hasRemote() {
+		return fmt.Errorf("no remote configured")
+	}
+	remotes, err := r.targetRemotes(resolve)
+	if err != nil {
+		return err
+	}
+	if len(remotes) == 0 {
+		return fmt.Errorf("no remote configured")
+	}
+	return r.pushTo(remotes)
 }
 
-func (r *Repo) push() error {
+func (r *Repo) pushTo(remotes []string) error {
 	refSpec := config.RefSpec(refLocal + ":" + refLocal)
-	return r.gitPush("origin", refSpec)
+	for _, name := range remotes {
+		if err := r.gitPush(name, refSpec); err != nil {
+			return fmt.Errorf("push to %s failed: %w", name, err)
+		}
+	}
+	return nil
 }
 
 // RepoDir returns the repository root (the parent of the .git directory).

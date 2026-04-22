@@ -2,10 +2,17 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
 )
+
+// initStdin is the input source for the init remote-selection prompt.
+// Tests override it with a strings.Reader. Kept separate from syncStdin
+// so init and sync tests can drive their prompts independently.
+var initStdin io.Reader = os.Stdin
 
 type InitArgs struct {
 	Prefix string
@@ -33,8 +40,9 @@ func cmdInit(_ *issue.Store, args []string, w Writer) error {
 	if err != nil {
 		return err
 	}
+	resolver := makeRemoteResolver(r, w, initStdin)
 	if ia.Force {
-		if err := r.ForceReinit(ia.Prefix); err != nil {
+		if err := r.ForceReinit(ia.Prefix, resolver); err != nil {
 			return err
 		}
 		fmt.Fprintln(w, initMessage("reinitialized", r.Prefix))
@@ -43,7 +51,7 @@ func cmdInit(_ *issue.Store, args []string, w Writer) error {
 	if r.IsInitialized() {
 		return fmt.Errorf("beadwork already initialized")
 	}
-	if err := r.Init(ia.Prefix); err != nil {
+	if err := r.Init(ia.Prefix, resolver); err != nil {
 		return err
 	}
 	fmt.Fprintln(w, initMessage("initialized", r.Prefix))

@@ -2,18 +2,37 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"strings"
 
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/jallum/beadwork/internal/intent"
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/repo"
+	"golang.org/x/term"
 )
+
+// syncStdin is the input source for the interactive remote-selection
+// prompt. Tests override it via a strings.Reader the same way upgrade.go
+// uses upgradeStdin.
+var syncStdin io.Reader = os.Stdin
+
+// isInteractiveStdin decides whether the remote-selection prompt is
+// allowed. It is a var (not a function) so tests can stub it without
+// touching real stdin. When it returns false we must never prompt, even
+// if a controlling terminal is reachable via /dev/tty.
+var isInteractiveStdin = func() bool {
+	return term.IsTerminal(int(os.Stdin.Fd()))
+}
 
 func cmdSync(store *issue.Store, args []string, w Writer) error {
 	_ = args
 	r := store.Committer.(*repo.Repo)
 
-	status, intents, err := r.Sync()
+	resolver := makeRemoteResolver(r, w, syncStdin)
+
+	status, intents, err := r.Sync(resolver)
 	if err != nil {
 		return err
 	}
@@ -40,7 +59,7 @@ func cmdSync(store *issue.Store, args []string, w Writer) error {
 			}
 			w.Pop()
 		}
-		if err := r.Push(); err != nil {
+		if err := r.Push(resolver); err != nil {
 			return fmt.Errorf("push after replay failed: %w", err)
 		}
 		fmt.Fprintln(w, "replayed and pushed")
@@ -48,4 +67,27 @@ func cmdSync(store *issue.Store, args []string, w Writer) error {
 		fmt.Fprintln(w, status)
 	}
 	return nil
+}
+
+// makeRemoteResolver returns a RemoteResolver closed over the repo, the
+// CLI writer, and a stdin source. Shared by sync and init; each command
+// passes its own stdin var so tests can drive them independently. When
+// stdin isn't interactive we never prompt — the error message mirrors
+// what a nil resolver would produce from the repo layer.
+func makeRemoteResolver(r *repo.Repo, w Writer, source io.Reader) repo.RemoteResolver {
+	return func(candidates []string) (string, error) {
+		if !isInteractiveStdin() {
+			return "", fmt.Errorf("no default remote — multiple remotes, none have the %q branch, no remote is named \"origin\", and git config beadwork.remote is unset. Set one with: git config beadwork.remote <name> (remotes: %s)",
+				"beadwork", strings.Join(candidates, ", "))
+		}
+		chosen, err := promptForRemoteWithReader(candidates, w, source)
+		if err != nil {
+			return "", err
+		}
+		if err := gitConfigSet(r.RepoDir(), "beadwork.remote", chosen); err != nil {
+			return "", fmt.Errorf("set beadwork.remote: %w", err)
+		}
+		fmt.Fprintf(w, "saved: git config beadwork.remote=%s\n", chosen)
+		return chosen, nil
+	}
 }
