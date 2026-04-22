@@ -2,6 +2,7 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-04-22T16:12:53Z",
   "created": "2026-04-22T16:12:50Z",
   "description": "",
   "id": "bw-3433",
@@ -13,8 +14,8 @@
     }
   ],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add --silent flag to create",
   "type": "feature",
-  "updated_at": "2026-04-22T16:12:52Z"
+  "updated_at": "2026-04-22T16:12:53Z"
 }
