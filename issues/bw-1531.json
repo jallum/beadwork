@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:50Z",
+  "description": "",
+  "id": "bw-1531",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Increase code coverage for upgrade",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:50Z"
+}
