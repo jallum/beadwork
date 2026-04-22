@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-ccl.1"
+  ],
   "blocks": [],
   "created": "2026-04-22T16:12:58Z",
   "description": "",
@@ -10,5 +12,5 @@
   "status": "open",
   "title": "Rewrite prime to use single Snapshot with tips-based display",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:58Z"
+  "updated_at": "2026-04-22T16:12:59Z"
 }
