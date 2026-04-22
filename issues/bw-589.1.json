@@ -4,13 +4,14 @@
   "blocks": [
     "bw-589.3"
   ],
+  "closed_at": "2026-04-22T16:13:05Z",
   "created": "2026-04-22T16:13:02Z",
   "description": "",
   "id": "bw-589.1",
   "labels": [],
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add --id flag to bw create",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:04Z"
+  "updated_at": "2026-04-22T16:13:05Z"
 }
