@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:50Z",
+  "description": "",
+  "id": "bw-3fb5",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Repair parent-child linkage on import",
+  "type": "feature",
+  "updated_at": "2026-04-22T16:12:50Z"
+}
