@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:46Z",
+  "description": "",
+  "id": "bw-0eb0",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Add go generate step to CI workflow",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:46Z"
+}
