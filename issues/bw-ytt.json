@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:13:03Z",
+  "description": "",
+  "id": "bw-ytt",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Group child issues under parents in bw ready output",
+  "type": "epic",
+  "updated_at": "2026-04-22T16:13:03Z"
+}
