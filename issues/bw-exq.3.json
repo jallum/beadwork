@@ -10,9 +10,15 @@
   "labels": [
     "experiment"
   ],
+  "comments": [
+    {
+      "text": "Moot — already established in bw-u3u T4j that the delivery question is skipped for medium tasks on clean repos (0/4 twice).",
+      "timestamp": "2026-04-22T16:13:22Z"
+    }
+  ],
   "priority": 3,
   "status": "open",
   "title": "T3: Clean repo + medium task — control",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:19Z"
+  "updated_at": "2026-04-22T16:13:22Z"
 }
