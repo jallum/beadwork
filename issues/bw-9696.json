@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:46Z",
+  "description": "",
+  "id": "bw-9696",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Rewrite docs/proposal.md into root README.md",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:46Z"
+}
