@@ -6,13 +6,14 @@
   "blocks": [
     "bw-ee21"
   ],
+  "closed_at": "2026-04-22T16:12:48Z",
   "created": "2026-04-22T16:12:47Z",
   "description": "",
   "id": "bw-45d2",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Refactor Repo to use go-git instead of exec.Command",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:47Z"
+  "updated_at": "2026-04-22T16:12:48Z"
 }
