@@ -6,6 +6,7 @@
   "blocks": [
     "bw-ccl.3"
   ],
+  "closed_at": "2026-04-22T16:13:00Z",
   "created": "2026-04-22T16:12:58Z",
   "description": "",
   "id": "bw-ccl.2",
@@ -17,7 +18,7 @@
     }
   ],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Rewrite Ready() and Blocked() to use Snapshot",
   "type": "task",
   "updated_at": "2026-04-22T16:13:00Z"
