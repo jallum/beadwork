@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-86r.2"
+  ],
   "blocks": [],
   "created": "2026-04-22T16:13:21Z",
   "description": "Run the winning variant from T2 on Sonnet to confirm it doesn't regress. Previous Sonnet tests (bw-u3u) showed reliable bw prime activation with the current wording — stronger wording should still work.\\n\\n2 runs. Observable: did the agent call bw prime before any other action?",
