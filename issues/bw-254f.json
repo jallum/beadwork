@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:46Z",
+  "description": "",
+  "id": "bw-254f",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Redesign bw graph with layered box rendering",
+  "type": "task",
+  "updated_at": "2026-04-22T16:12:46Z"
+}
