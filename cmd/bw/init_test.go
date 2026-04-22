@@ -175,16 +175,21 @@ func setupFreshRepoWithRemotes(t *testing.T, remotes ...string) (string, func())
 	return dir, func() { os.Chdir(orig) }
 }
 
-// TestCmdInitMultiRemotePrompts exercises the new init prompt: multiple
+// TestCmdInitMultiRemotePrompts exercises the init prompt: multiple
 // remotes exist, none have the beadwork branch yet, no origin, no git
 // config — init must ask the user which remote to seed and persist the
-// choice. Unlike sync, init never consults isInteractiveStdin.
+// choice.
 func TestCmdInitMultiRemotePrompts(t *testing.T) {
 	dir, cleanup := setupFreshRepoWithRemotes(t, "alpha", "beta")
 	defer cleanup()
 
 	origStdin := initStdin
-	defer func() { initStdin = origStdin }()
+	origInteractive := isInteractiveStdin
+	defer func() {
+		initStdin = origStdin
+		isInteractiveStdin = origInteractive
+	}()
+	isInteractiveStdin = func() bool { return true }
 	initStdin = strings.NewReader("2\n") // pick beta
 
 	var buf bytes.Buffer
@@ -201,11 +206,13 @@ func TestCmdInitMultiRemotePrompts(t *testing.T) {
 	}
 }
 
-// TestCmdInitMultiRemoteIgnoresTTYStub confirms the init prompt fires
-// even when isInteractiveStdin (sync's gate) is stubbed to return false.
-// Init is human-initiated; the TTY check is sync's concern, not init's.
-func TestCmdInitMultiRemoteIgnoresTTYStub(t *testing.T) {
-	_, cleanup := setupFreshRepoWithRemotes(t, "alpha", "beta")
+// TestCmdInitNonInteractiveFailsWithoutPrompt confirms that init honors
+// the same TTY gate as sync: when isInteractiveStdin returns false and
+// no short-circuit rule resolves the remote, init errors out instead
+// of consuming piped input. The caller can set
+// `git config beadwork.remote <name>` beforehand to skip the prompt.
+func TestCmdInitNonInteractiveFailsWithoutPrompt(t *testing.T) {
+	dir, cleanup := setupFreshRepoWithRemotes(t, "alpha", "beta")
 	defer cleanup()
 
 	origStdin := initStdin
@@ -214,15 +221,23 @@ func TestCmdInitMultiRemoteIgnoresTTYStub(t *testing.T) {
 		initStdin = origStdin
 		isInteractiveStdin = origInteractive
 	}()
-	initStdin = strings.NewReader("1\n")
 	isInteractiveStdin = func() bool { return false }
+	primed := strings.NewReader("1\n")
+	initStdin = primed
 
 	var buf bytes.Buffer
-	if err := cmdInit(nil, []string{"--prefix", "alpha"}, PlainWriter(&buf)); err != nil {
-		t.Fatalf("cmdInit: %v: %s", err, buf.String())
+	err := cmdInit(nil, []string{"--prefix", "alpha"}, PlainWriter(&buf))
+	if err == nil {
+		t.Fatalf("expected error in non-interactive multi-remote init; output=%q", buf.String())
 	}
-	if !strings.Contains(buf.String(), "initialized") {
-		t.Errorf("output missing 'initialized': %q", buf.String())
+	if !strings.Contains(err.Error(), "no default remote") {
+		t.Errorf("error = %v, want a 'no default remote' message", err)
+	}
+	if primed.Len() == 0 {
+		t.Error("resolver consumed initStdin input despite non-interactive stdin")
+	}
+	if v := getGitConfig(t, dir, "beadwork.remote"); v != "" {
+		t.Errorf("git config beadwork.remote = %q, want unset", v)
 	}
 }
 

@@ -32,7 +32,7 @@ func cmdSync(store *issue.Store, args []string, w Writer, _ *config.Config) (*co
 	_ = args
 	r := store.Committer.(*repo.Repo)
 
-	resolver := makeRemoteResolver(r, w)
+	resolver := makeRemoteResolver(r, w, syncStdin)
 
 	status, intents, err := r.Sync(resolver)
 	if err != nil {
@@ -71,17 +71,18 @@ func cmdSync(store *issue.Store, args []string, w Writer, _ *config.Config) (*co
 	return nil, nil
 }
 
-// makeRemoteResolver returns a RemoteResolver closed over the repo and
-// the CLI writer. When stdin is interactive it prompts; otherwise it
-// returns the same non-interactive error that a nil resolver would
-// produce from the repo layer.
-func makeRemoteResolver(r *repo.Repo, w Writer) repo.RemoteResolver {
+// makeRemoteResolver returns a RemoteResolver closed over the repo, the
+// CLI writer, and a stdin source. Shared by sync and init; each command
+// passes its own stdin var so tests can drive them independently. When
+// stdin isn't interactive we never prompt — the error message mirrors
+// what a nil resolver would produce from the repo layer.
+func makeRemoteResolver(r *repo.Repo, w Writer, source io.Reader) repo.RemoteResolver {
 	return func(candidates []string) (string, error) {
 		if !isInteractiveStdin() {
 			return "", fmt.Errorf("no default remote — multiple remotes, none have the %q branch, no remote is named \"origin\", and git config beadwork.remote is unset. Set one with: git config beadwork.remote <name> (remotes: %s)",
 				"beadwork", strings.Join(candidates, ", "))
 		}
-		chosen, err := promptForRemoteWithReader(candidates, w, syncStdin)
+		chosen, err := promptForRemoteWithReader(candidates, w, source)
 		if err != nil {
 			return "", err
 		}
