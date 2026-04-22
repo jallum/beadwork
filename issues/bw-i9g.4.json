@@ -6,13 +6,14 @@
     "bw-i9g.3"
   ],
   "blocks": [],
+  "closed_at": "2026-04-22T16:13:05Z",
   "created": "2026-04-22T16:13:02Z",
   "description": "",
   "id": "bw-i9g.4",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Update execGit comment and remove os/exec from helpers.go",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:02Z"
+  "updated_at": "2026-04-22T16:13:05Z"
 }
