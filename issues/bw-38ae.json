@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "bw-4ebc"
+  ],
   "created": "2026-04-22T16:12:47Z",
   "description": "",
   "id": "bw-38ae",
@@ -10,5 +12,5 @@
   "status": "open",
   "title": "Command registry with typed parsing and struct-driven help",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:47Z"
+  "updated_at": "2026-04-22T16:12:48Z"
 }
