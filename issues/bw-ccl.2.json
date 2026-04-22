@@ -3,7 +3,9 @@
   "blocked_by": [
     "bw-ccl.1"
   ],
-  "blocks": [],
+  "blocks": [
+    "bw-ccl.3"
+  ],
   "created": "2026-04-22T16:12:58Z",
   "description": "",
   "id": "bw-ccl.2",
