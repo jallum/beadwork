@@ -4,13 +4,14 @@
   "blocks": [
     "bw-b9aa"
   ],
+  "closed_at": "2026-04-22T16:12:48Z",
   "created": "2026-04-22T16:12:47Z",
   "description": "",
   "id": "bw-8a22",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Replace git CLI + worktree with go-git for atomic operations",
   "type": "epic",
-  "updated_at": "2026-04-22T16:12:47Z"
+  "updated_at": "2026-04-22T16:12:48Z"
 }
