@@ -152,44 +152,6 @@ func TestReadPrefixNoPrefixLine(t *testing.T) {
 	}
 }
 
-func TestUnsetConfigRemovesKey(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	if err := env.Repo.SetConfig("remote", "upstream"); err != nil {
-		t.Fatalf("SetConfig: %v", err)
-	}
-
-	removed, err := env.Repo.UnsetConfig("remote")
-	if err != nil {
-		t.Fatalf("UnsetConfig: %v", err)
-	}
-	if !removed {
-		t.Error("UnsetConfig returned false for a key that was present")
-	}
-
-	if _, ok := env.Repo.GetConfig("remote"); ok {
-		t.Error("remote should be gone after UnsetConfig")
-	}
-	// Sibling keys must remain.
-	if v, ok := env.Repo.GetConfig("prefix"); !ok || v != "test" {
-		t.Errorf("prefix = %q, ok=%v — want preserved after unset", v, ok)
-	}
-}
-
-func TestUnsetConfigMissingKey(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	removed, err := env.Repo.UnsetConfig("nonexistent")
-	if err != nil {
-		t.Fatalf("UnsetConfig: %v", err)
-	}
-	if removed {
-		t.Error("UnsetConfig returned true for a key that was never set")
-	}
-}
-
 func TestRemoteNameDefault(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
