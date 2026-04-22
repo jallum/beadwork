@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [
     "bw-ccl.1",
     "bw-ccl.2"
@@ -16,8 +16,8 @@
     }
   ],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Rewrite prime to use single Snapshot with tips-based display",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:59Z"
+  "updated_at": "2026-04-22T16:13:00Z"
 }
