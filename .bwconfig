@@ -1,3 +1,4 @@
 default.priority=3
 prefix=beadwork
 version=2
+workflow.agents=multi
