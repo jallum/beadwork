@@ -7,14 +7,11 @@ import (
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
-	"github.com/jallum/beadwork/internal/repo"
 )
 
 // initStdin is the input source for the init remote-selection prompt.
-// Tests override it with a strings.Reader. Unlike sync's syncStdin, the
-// init prompt is never gated on a TTY check: `bw init` is a
-// user-initiated setup command, so we always prompt when there's an
-// ambiguous seed-remote choice.
+// Tests override it with a strings.Reader. Kept separate from syncStdin
+// so init and sync tests can drive their prompts independently.
 var initStdin io.Reader = os.Stdin
 
 type InitArgs struct {
@@ -43,7 +40,7 @@ func cmdInit(_ *issue.Store, args []string, w Writer) error {
 	if err != nil {
 		return err
 	}
-	resolver := makeInitRemoteResolver(r, w)
+	resolver := makeRemoteResolver(r, w, initStdin)
 	if ia.Force {
 		if err := r.ForceReinit(ia.Prefix, resolver); err != nil {
 			return err
@@ -60,27 +57,6 @@ func cmdInit(_ *issue.Store, args []string, w Writer) error {
 	fmt.Fprintln(w, initMessage("initialized", r.Prefix))
 	return nil
 }
-
-// makeInitRemoteResolver returns a RemoteResolver that unconditionally
-// prompts (no TTY check) and persists the choice via git config. Init
-// is a human-driven setup step, so there's no non-interactive path to
-// guard against — if someone really can't interact, they can set
-// git config beadwork.remote <name> before running bw init and the
-// resolver will never be called.
-func makeInitRemoteResolver(r *repo.Repo, w Writer) repo.RemoteResolver {
-	return func(candidates []string) (string, error) {
-		chosen, err := promptForRemoteWithReader(candidates, w, initStdin)
-		if err != nil {
-			return "", err
-		}
-		if err := gitConfigSet(r.RepoDir(), "beadwork.remote", chosen); err != nil {
-			return "", fmt.Errorf("set beadwork.remote: %w", err)
-		}
-		fmt.Fprintf(w, "saved: git config beadwork.remote=%s\n", chosen)
-		return chosen, nil
-	}
-}
-
 
 func initMessage(verb, prefix string) string {
 	var b strings.Builder
