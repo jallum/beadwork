@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-22T16:12:51Z",
+  "description": "",
+  "id": "bw-ep9",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Add bw delete command",
+  "type": "feature",
+  "updated_at": "2026-04-22T16:12:51Z"
+}
