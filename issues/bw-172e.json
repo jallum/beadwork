@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "bw-fba5"
+  ],
   "created": "2026-04-22T16:12:48Z",
   "description": "",
   "id": "bw-172e",
@@ -10,5 +12,5 @@
   "status": "open",
   "title": "Reorganize help groups and rename link/unlink to dep add/remove",
   "type": "epic",
-  "updated_at": "2026-04-22T16:12:48Z"
+  "updated_at": "2026-04-22T16:12:49Z"
 }
