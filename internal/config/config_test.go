@@ -23,8 +23,8 @@ func TestLoadEmpty(t *testing.T) {
 func TestLoadSaveRoundTrip(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "cfg.yml")
 	cfg, _ := Load(path)
-	cfg.Set("registry.auto_register", true)
-	cfg.Set("registry.repos", []string{"/a", "/b"})
+	cfg = cfg.Set("registry.auto_register", true)
+	cfg = cfg.Set("registry.repos", []string{"/a", "/b"})
 
 	if err := cfg.Save(); err != nil {
 		t.Fatalf("Save: %v", err)
@@ -46,7 +46,7 @@ func TestLoadSaveRoundTrip(t *testing.T) {
 func TestGetSetNested(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "cfg.yml")
 	cfg, _ := Load(path)
-	cfg.Set("a.b.c", "deep")
+	cfg = cfg.Set("a.b.c", "deep")
 
 	if cfg.String("a.b.c") != "deep" {
 		t.Errorf("String(a.b.c) = %q", cfg.String("a.b.c"))
@@ -64,12 +64,34 @@ func TestUnknownFieldPreservation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cfg.Set("registry.auto_register", true)
+	cfg = cfg.Set("registry.auto_register", true)
 	cfg.Save()
 
 	cfg2, _ := Load(path)
 	if cfg2.String("future_field") != "hello" {
 		t.Error("future_field not preserved")
+	}
+}
+
+func TestSetIsImmutable(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "cfg.yml")
+	original, _ := Load(path)
+	modified := original.Set("key", "value")
+
+	if original.String("key") != "" {
+		t.Error("Set mutated the original config")
+	}
+	if modified.String("key") != "value" {
+		t.Error("Set did not apply to the returned config")
+	}
+	if original == modified {
+		t.Error("Set returned the same pointer for a changed value")
+	}
+
+	// No-op Set returns the same pointer.
+	again := modified.Set("key", "value")
+	if again != modified {
+		t.Error("no-op Set returned a different pointer")
 	}
 }
 
@@ -83,8 +105,8 @@ func TestDefaultPathRespectsEnv(t *testing.T) {
 func TestSection(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "cfg.yml")
 	cfg, _ := Load(path)
-	cfg.Set("registry.repos", []string{"/a"})
-	cfg.Set("registry.auto_register", true)
+	cfg = cfg.Set("registry.repos", []string{"/a"})
+	cfg = cfg.Set("registry.auto_register", true)
 
 	sec := cfg.Section("registry")
 	if sec == nil {

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -102,20 +103,47 @@ func (c *Config) Get(key string) any {
 	return cur
 }
 
-// Set writes a value at a dot-separated key path, creating intermediate maps
-// as needed.
-func (c *Config) Set(key string, value any) {
+// Set returns a new Config with value written at the dot-separated key path.
+// If the value is unchanged, returns the receiver (same pointer). Only maps
+// along the modified path are copied; sibling subtrees are shared.
+func (c *Config) Set(key string, value any) *Config {
 	parts := strings.Split(key, ".")
-	m := c.data
-	for _, p := range parts[:len(parts)-1] {
-		next, ok := m[p].(map[string]any)
-		if !ok {
-			next = make(map[string]any)
-			m[p] = next
-		}
-		m = next
+	newData := setPath(c.data, parts, value)
+	if newData == nil {
+		return c
 	}
-	m[parts[len(parts)-1]] = value
+	return &Config{data: newData, path: c.path}
+}
+
+// setPath recursively walks parts, returning a new map with the value set at
+// the leaf. Returns nil if nothing changed.
+func setPath(m map[string]any, parts []string, value any) map[string]any {
+	key := parts[0]
+	if len(parts) == 1 {
+		if reflect.DeepEqual(m[key], value) {
+			return nil
+		}
+		out := make(map[string]any, len(m))
+		for k, v := range m {
+			out[k] = v
+		}
+		out[key] = value
+		return out
+	}
+	child, _ := m[key].(map[string]any)
+	if child == nil {
+		child = make(map[string]any)
+	}
+	newChild := setPath(child, parts[1:], value)
+	if newChild == nil {
+		return nil
+	}
+	out := make(map[string]any, len(m))
+	for k, v := range m {
+		out[k] = v
+	}
+	out[key] = newChild
+	return out
 }
 
 // String returns the string at key, or "" if missing or not a string.
