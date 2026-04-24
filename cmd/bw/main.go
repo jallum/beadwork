@@ -119,10 +119,6 @@ func touchRegistry() {
 	if err != nil || !r.IsInitialized() {
 		return
 	}
-	repoPath, err := registry.CanonicalRepoPath(r.RepoDir())
-	if err != nil {
-		return
-	}
 	reg, err := registry.Load(registry.DefaultPath())
 	if err != nil {
 		registryOnce.Do(func() {
@@ -130,7 +126,7 @@ func touchRegistry() {
 		})
 		return
 	}
-	if err := reg.Add(repoPath); err != nil {
+	if err := reg.Add(r.RepoDir()); err != nil {
 		registryOnce.Do(func() {
 			fmt.Fprintf(os.Stderr, "warning: could not save registry: %v\n", err)
 		})
