@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 )
 
@@ -39,18 +41,18 @@ func parseDepArgs(raw []string) (DepArgs, error) {
 	return da, nil
 }
 
-func cmdDep(store *issue.Store, args []string, w Writer) error {
+func cmdDep(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	da, err := parseDepArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	switch da.Subcmd {
 	case "add":
-		return cmdDepAdd(store, []string{da.BlockerID, "blocks", da.BlockedID}, w)
+		return cmdDepAdd(store, []string{da.BlockerID, "blocks", da.BlockedID}, w, nil)
 	case "remove":
-		return cmdDepRemove(store, []string{da.BlockerID, "blocks", da.BlockedID}, w)
+		return cmdDepRemove(store, []string{da.BlockerID, "blocks", da.BlockedID}, w, nil)
 	}
-	return nil
+	return nil, nil
 }
 
 type DepAddArgs struct {
@@ -65,14 +67,14 @@ func parseDepAddArgs(raw []string) (DepAddArgs, error) {
 	return DepAddArgs{BlockerID: raw[0], BlockedID: raw[2]}, nil
 }
 
-func cmdDepAdd(store *issue.Store, args []string, w Writer) error {
+func cmdDepAdd(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	la, err := parseDepAddArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := store.Link(la.BlockerID, la.BlockedID); err != nil {
-		return err
+		return nil, err
 	}
 
 	// Resolve full IDs for the commit message.
@@ -81,11 +83,11 @@ func cmdDepAdd(store *issue.Store, args []string, w Writer) error {
 	blocked, _ := store.Get(la.BlockedID)
 	intent := fmt.Sprintf("link %s blocks %s", blocker.ID, blocked.ID)
 	if err := store.Commit(intent); err != nil {
-		return fmt.Errorf("commit failed: %w", err)
+		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	fmt.Fprintf(w, "added dep %s blocks %s\n", blocker.ID, blocked.ID)
-	return nil
+	return nil, nil
 }
 
 type DepRemoveArgs struct {
@@ -100,18 +102,18 @@ func parseDepRemoveArgs(raw []string) (DepRemoveArgs, error) {
 	return DepRemoveArgs{BlockerID: raw[0], BlockedID: raw[2]}, nil
 }
 
-func cmdDepRemove(store *issue.Store, args []string, w Writer) error {
+func cmdDepRemove(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	ua, err := parseDepRemoveArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if !store.DepExists(ua.BlockerID, ua.BlockedID) {
-		return fmt.Errorf("no dependency: %s does not block %s", ua.BlockerID, ua.BlockedID)
+		return nil, fmt.Errorf("no dependency: %s does not block %s", ua.BlockerID, ua.BlockedID)
 	}
 
 	if err := store.Unlink(ua.BlockerID, ua.BlockedID); err != nil {
-		return err
+		return nil, err
 	}
 
 	blocker, _ := store.Get(ua.BlockerID)
@@ -119,9 +121,9 @@ func cmdDepRemove(store *issue.Store, args []string, w Writer) error {
 	// Intent verb stays "unlink" for replay compatibility.
 	intent := fmt.Sprintf("unlink %s blocks %s", blocker.ID, blocked.ID)
 	if err := store.Commit(intent); err != nil {
-		return fmt.Errorf("commit failed: %w", err)
+		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	fmt.Fprintf(w, "removed dep %s blocks %s\n", blocker.ID, blocked.ID)
-	return nil
+	return nil, nil
 }

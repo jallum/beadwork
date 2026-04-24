@@ -17,7 +17,7 @@ func TestCmdUpdatePriority(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUpdate(env.Store, []string{iss.ID, "--priority", "1"}, PlainWriter(&buf))
+	_, err := cmdUpdate(env.Store, []string{iss.ID, "--priority", "1"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdUpdate: %v", err)
 	}
@@ -36,7 +36,7 @@ func TestCmdUpdateMultipleFields(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUpdate(env.Store, []string{iss.ID, "--assignee", "bob", "--type", "bug", "--title", "Updated title"}, PlainWriter(&buf))
+	_, err := cmdUpdate(env.Store, []string{iss.ID, "--assignee", "bob", "--type", "bug", "--title", "Updated title"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdUpdate: %v", err)
 	}
@@ -61,7 +61,7 @@ func TestCmdUpdateJSON(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUpdate(env.Store, []string{iss.ID, "--assignee", "alice", "--json"}, PlainWriter(&buf))
+	_, err := cmdUpdate(env.Store, []string{iss.ID, "--assignee", "alice", "--json"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdUpdate: %v", err)
 	}
@@ -83,7 +83,7 @@ func TestCmdUpdateDescription(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUpdate(env.Store, []string{iss.ID, "--description", "new description"}, PlainWriter(&buf))
+	_, err := cmdUpdate(env.Store, []string{iss.ID, "--description", "new description"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdUpdate: %v", err)
 	}
@@ -102,7 +102,7 @@ func TestCmdUpdateStatus(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUpdate(env.Store, []string{iss.ID, "--status", "in_progress"}, PlainWriter(&buf))
+	_, err := cmdUpdate(env.Store, []string{iss.ID, "--status", "in_progress"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdUpdate: %v", err)
 	}
@@ -122,7 +122,7 @@ func TestCmdUpdateWithDue(t *testing.T) {
 
 	// Set a due date
 	var buf bytes.Buffer
-	err := cmdUpdate(env.Store, []string{iss.ID, "--due", "2027-09-15"}, PlainWriter(&buf))
+	_, err := cmdUpdate(env.Store, []string{iss.ID, "--due", "2027-09-15"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdUpdate --due: %v", err)
 	}
@@ -134,7 +134,7 @@ func TestCmdUpdateWithDue(t *testing.T) {
 
 	// Clear due date with empty string
 	buf.Reset()
-	err = cmdUpdate(env.Store, []string{iss.ID, "--due", ""}, PlainWriter(&buf))
+	_, err = cmdUpdate(env.Store, []string{iss.ID, "--due", ""}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdUpdate --due clear: %v", err)
 	}
@@ -150,7 +150,7 @@ func TestCmdUpdateNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdUpdate(env.Store, []string{"nonexistent", "--title", "x"}, PlainWriter(&buf))
+	_, err := cmdUpdate(env.Store, []string{"nonexistent", "--title", "x"}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Error("expected error for nonexistent issue")
 	}

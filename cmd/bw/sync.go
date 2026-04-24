@@ -3,19 +3,21 @@ package main
 import (
 	"fmt"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/jallum/beadwork/internal/intent"
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/repo"
 )
 
-func cmdSync(store *issue.Store, args []string, w Writer) error {
+func cmdSync(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	_ = args
 	r := store.Committer.(*repo.Repo)
 
 	status, intents, err := r.Sync()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// After sync the underlying tree may have changed; discard stale cache.
@@ -41,11 +43,11 @@ func cmdSync(store *issue.Store, args []string, w Writer) error {
 			w.Pop()
 		}
 		if err := r.Push(); err != nil {
-			return fmt.Errorf("push after replay failed: %w", err)
+			return nil, fmt.Errorf("push after replay failed: %w", err)
 		}
 		fmt.Fprintln(w, "replayed and pushed")
 	} else {
 		fmt.Fprintln(w, status)
 	}
-	return nil
+	return nil, nil
 }

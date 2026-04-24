@@ -19,7 +19,7 @@ func TestCmdDefer(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdDefer(env.Store, []string{iss.ID, "2027-06-01"}, PlainWriter(&buf))
+	_, err := cmdDefer(env.Store, []string{iss.ID, "2027-06-01"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdDefer: %v", err)
 	}
@@ -44,7 +44,7 @@ func TestCmdDeferJSON(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdDefer(env.Store, []string{iss.ID, "2027-06-01", "--json"}, PlainWriter(&buf))
+	_, err := cmdDefer(env.Store, []string{iss.ID, "2027-06-01", "--json"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdDefer --json: %v", err)
 	}
@@ -69,7 +69,7 @@ func TestCmdDeferInvalidDate(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdDefer(env.Store, []string{iss.ID, "not-a-date"}, PlainWriter(&buf))
+	_, err := cmdDefer(env.Store, []string{iss.ID, "not-a-date"}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Error("expected error for invalid date")
 	}
@@ -83,7 +83,7 @@ func TestCmdUndefer(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUndefer(env.Store, []string{iss.ID}, PlainWriter(&buf))
+	_, err := cmdUndefer(env.Store, []string{iss.ID}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdUndefer: %v", err)
 	}
@@ -108,7 +108,7 @@ func TestCmdUndeferJSON(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUndefer(env.Store, []string{iss.ID, "--json"}, PlainWriter(&buf))
+	_, err := cmdUndefer(env.Store, []string{iss.ID, "--json"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdUndefer --json: %v", err)
 	}
@@ -127,7 +127,7 @@ func TestCmdCreateWithDefer(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdCreate(env.Store, []string{"Deferred task", "--defer", "2027-03-15"}, PlainWriter(&buf))
+	_, err := cmdCreate(env.Store, []string{"Deferred task", "--defer", "2027-03-15"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdCreate --defer: %v", err)
 	}
@@ -149,7 +149,7 @@ func TestCmdUpdateWithDefer(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUpdate(env.Store, []string{iss.ID, "--defer", "2027-09-01"}, PlainWriter(&buf))
+	_, err := cmdUpdate(env.Store, []string{iss.ID, "--defer", "2027-09-01"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdUpdate --defer: %v", err)
 	}
@@ -173,7 +173,7 @@ func TestCmdListDeferred(t *testing.T) {
 
 	// Default list should show only open
 	var buf bytes.Buffer
-	err := cmdList(env.Store, []string{}, PlainWriter(&buf))
+	_, err := cmdList(env.Store, []string{}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdList: %v", err)
 	}
@@ -186,7 +186,7 @@ func TestCmdListDeferred(t *testing.T) {
 
 	// --deferred should show only deferred
 	buf.Reset()
-	err = cmdList(env.Store, []string{"--deferred"}, PlainWriter(&buf))
+	_, err = cmdList(env.Store, []string{"--deferred"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdList --deferred: %v", err)
 	}
@@ -206,7 +206,7 @@ func TestCmdShowDeferred(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdShow(env.Store, []string{iss.ID}, PlainWriter(&buf))
+	_, err := cmdShow(env.Store, []string{iss.ID}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdShow: %v", err)
 	}
@@ -224,7 +224,7 @@ func TestCmdDeferNoArgs(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdDefer(env.Store, []string{}, PlainWriter(&buf))
+	_, err := cmdDefer(env.Store, []string{}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Error("expected error for no args")
 	}
@@ -238,7 +238,7 @@ func TestCmdDeferOneArg(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdDefer(env.Store, []string{"bw-1234"}, PlainWriter(&buf))
+	_, err := cmdDefer(env.Store, []string{"bw-1234"}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Error("expected error for missing date arg")
 	}
@@ -249,7 +249,7 @@ func TestCmdDeferNonExistentIssue(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdDefer(env.Store, []string{"bw-0000", "2027-06-01"}, PlainWriter(&buf))
+	_, err := cmdDefer(env.Store, []string{"bw-0000", "2027-06-01"}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Error("expected error for non-existent issue")
 	}
@@ -273,7 +273,7 @@ func TestCmdDeferVariousInvalidDates(t *testing.T) {
 	}
 	for _, d := range invalidDates {
 		var buf bytes.Buffer
-		err := cmdDefer(env.Store, []string{iss.ID, d}, PlainWriter(&buf))
+		_, err := cmdDefer(env.Store, []string{iss.ID, d}, PlainWriter(&buf), nil)
 		if err == nil {
 			t.Errorf("expected error for invalid date %q", d)
 		}
@@ -289,7 +289,7 @@ func TestCmdDeferAlreadyDeferred(t *testing.T) {
 
 	// Defer again with a new date
 	var buf bytes.Buffer
-	err := cmdDefer(env.Store, []string{iss.ID, "2027-12-01"}, PlainWriter(&buf))
+	_, err := cmdDefer(env.Store, []string{iss.ID, "2027-12-01"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdDefer on already deferred: %v", err)
 	}
@@ -308,7 +308,7 @@ func TestCmdDeferUnknownFlag(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdDefer(env.Store, []string{iss.ID, "2027-06-01", "--unknown"}, PlainWriter(&buf))
+	_, err := cmdDefer(env.Store, []string{iss.ID, "2027-06-01", "--unknown"}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Error("expected error for unknown flag")
 	}
@@ -530,8 +530,8 @@ func TestParseTimeOfDay(t *testing.T) {
 	}{
 		{"3pm", 15, 0, false},
 		{"3PM", 15, 0, false},
-		{"12pm", 12, 0, false},  // noon
-		{"12am", 0, 0, false},   // midnight
+		{"12pm", 12, 0, false}, // noon
+		{"12am", 0, 0, false},  // midnight
 		{"9am", 9, 0, false},
 		{"3:30pm", 15, 30, false},
 		{"11:45am", 11, 45, false},
@@ -617,7 +617,7 @@ func TestCmdDeferRelativeDate(t *testing.T) {
 
 	// "2 weeks" is two positional args after the ID.
 	var buf bytes.Buffer
-	err := cmdDefer(env.Store, []string{iss.ID, "2", "weeks"}, PlainWriter(&buf))
+	_, err := cmdDefer(env.Store, []string{iss.ID, "2", "weeks"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdDefer with relative date: %v", err)
 	}
@@ -643,7 +643,7 @@ func TestCmdDeferTomorrow(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdDefer(env.Store, []string{iss.ID, "tomorrow"}, PlainWriter(&buf))
+	_, err := cmdDefer(env.Store, []string{iss.ID, "tomorrow"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdDefer with tomorrow: %v", err)
 	}
@@ -666,7 +666,7 @@ func TestCmdDeferNextMonday(t *testing.T) {
 
 	// "next monday" arrives as two tokens.
 	var buf bytes.Buffer
-	err := cmdDefer(env.Store, []string{iss.ID, "next", "monday"}, PlainWriter(&buf))
+	_, err := cmdDefer(env.Store, []string{iss.ID, "next", "monday"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdDefer with next monday: %v", err)
 	}
@@ -685,7 +685,7 @@ func TestCmdUndeferNoArgs(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdUndefer(env.Store, []string{}, PlainWriter(&buf))
+	_, err := cmdUndefer(env.Store, []string{}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Error("expected error for no args")
 	}
@@ -699,7 +699,7 @@ func TestCmdUndeferNonExistentIssue(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdUndefer(env.Store, []string{"bw-0000"}, PlainWriter(&buf))
+	_, err := cmdUndefer(env.Store, []string{"bw-0000"}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Error("expected error for non-existent issue")
 	}
@@ -714,7 +714,7 @@ func TestCmdUndeferAlreadyOpen(t *testing.T) {
 
 	// Undefer an issue that's already open (no defer_until set)
 	var buf bytes.Buffer
-	err := cmdUndefer(env.Store, []string{iss.ID}, PlainWriter(&buf))
+	_, err := cmdUndefer(env.Store, []string{iss.ID}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdUndefer on open issue: %v", err)
 	}
@@ -736,7 +736,7 @@ func TestCmdUndeferUnknownFlag(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUndefer(env.Store, []string{iss.ID, "--unknown"}, PlainWriter(&buf))
+	_, err := cmdUndefer(env.Store, []string{iss.ID, "--unknown"}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Error("expected error for unknown flag")
 	}
@@ -750,7 +750,7 @@ func TestCmdUndeferVerifyCommit(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdUndefer(env.Store, []string{iss.ID}, PlainWriter(&buf))
+	_, err := cmdUndefer(env.Store, []string{iss.ID}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdUndefer: %v", err)
 	}

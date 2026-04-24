@@ -18,7 +18,7 @@ func TestCmdReadyBasic(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdReady(env.Store, []string{}, PlainWriter(&buf))
+	_, err := cmdReady(env.Store, []string{}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -35,7 +35,7 @@ func TestCmdReadyJSON(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdReady(env.Store, []string{"--json"}, PlainWriter(&buf))
+	_, err := cmdReady(env.Store, []string{"--json"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -54,7 +54,7 @@ func TestCmdReadyEmpty(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdReady(env.Store, []string{}, PlainWriter(&buf))
+	_, err := cmdReady(env.Store, []string{}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -74,7 +74,7 @@ func TestCmdReadyExcludesInProgress(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdReady(env.Store, []string{}, PlainWriter(&buf))
+	_, err := cmdReady(env.Store, []string{}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -96,7 +96,7 @@ func TestCmdReadyExcludesDeferred(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdReady(env.Store, []string{}, PlainWriter(&buf))
+	_, err := cmdReady(env.Store, []string{}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -119,7 +119,7 @@ func TestCmdReadyShowsBlocksDeps(t *testing.T) {
 	env.Repo.Commit("create and link")
 
 	var buf bytes.Buffer
-	err := cmdReady(env.Store, []string{}, PlainWriter(&buf))
+	_, err := cmdReady(env.Store, []string{}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -139,7 +139,7 @@ func TestCmdReadyNoDepsNoBrackets(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdReady(env.Store, []string{}, PlainWriter(&buf))
+	_, err := cmdReady(env.Store, []string{}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -160,7 +160,7 @@ func TestCmdReadyEpicAppearsChildrenSuppressed(t *testing.T) {
 	env.Repo.Commit("create epic with children")
 
 	var buf bytes.Buffer
-	err := cmdReady(env.Store, []string{}, PlainWriter(&buf))
+	_, err := cmdReady(env.Store, []string{}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -191,7 +191,7 @@ func TestCmdReadyChildOfClosedParentStillShown(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdReady(env.Store, []string{}, PlainWriter(&buf))
+	_, err := cmdReady(env.Store, []string{}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -211,7 +211,7 @@ func TestCmdReadyStandaloneIssuesFlat(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdReady(env.Store, []string{}, PlainWriter(&buf))
+	_, err := cmdReady(env.Store, []string{}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -238,7 +238,7 @@ func TestCmdReadyJSONFlatWithParents(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdReady(env.Store, []string{"--json"}, PlainWriter(&buf))
+	_, err := cmdReady(env.Store, []string{"--json"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReady --json: %v", err)
 	}
@@ -263,7 +263,7 @@ func TestCmdReadyNoBlankLinesBetweenIssues(t *testing.T) {
 	env.Repo.Commit("create issues")
 
 	var buf bytes.Buffer
-	err := cmdReady(env.Store, []string{"--no-context"}, PlainWriter(&buf))
+	_, err := cmdReady(env.Store, []string{"--no-context"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -283,7 +283,7 @@ func TestCmdReadyTTYHasFooter(t *testing.T) {
 	env.Repo.Commit("create")
 
 	var buf bytes.Buffer
-	err := cmdReady(env.Store, []string{}, ColorWriter(&buf, 80))
+	_, err := cmdReady(env.Store, []string{}, ColorWriter(&buf, 80), nil)
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -304,7 +304,7 @@ func TestCmdReadyPlainNoFooter(t *testing.T) {
 	env.Repo.Commit("create")
 
 	var buf bytes.Buffer
-	err := cmdReady(env.Store, []string{}, PlainWriter(&buf))
+	_, err := cmdReady(env.Store, []string{}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReady: %v", err)
 	}
@@ -326,7 +326,7 @@ func TestCmdReadyScopedToParent(t *testing.T) {
 	env.Repo.Commit("create epic with children")
 
 	var buf bytes.Buffer
-	err := cmdReady(env.Store, []string{epic.ID}, PlainWriter(&buf))
+	_, err := cmdReady(env.Store, []string{epic.ID}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReady scoped: %v", err)
 	}
@@ -360,7 +360,7 @@ func TestCmdReadyScopedJSON(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdReady(env.Store, []string{epic.ID, "--json"}, PlainWriter(&buf))
+	_, err := cmdReady(env.Store, []string{epic.ID, "--json"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReady scoped --json: %v", err)
 	}
@@ -384,7 +384,7 @@ func TestCmdReadyScopedEmpty(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdReady(env.Store, []string{epic.ID}, PlainWriter(&buf))
+	_, err := cmdReady(env.Store, []string{epic.ID}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReady scoped: %v", err)
 	}

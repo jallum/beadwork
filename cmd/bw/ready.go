@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/md"
 	"github.com/jallum/beadwork/internal/repo"
@@ -23,14 +25,14 @@ func parseReadyArgs(raw []string) (ReadyArgs, error) {
 	return ReadyArgs{
 		ParentID:  a.PosFirst(),
 		JSON:      a.JSON(),
-		NoContext:  a.Bool("--no-context"),
+		NoContext: a.Bool("--no-context"),
 	}, nil
 }
 
-func cmdReady(store *issue.Store, args []string, w Writer) error {
+func cmdReady(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	ra, err := parseReadyArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var issues []*issue.Issue
@@ -40,17 +42,17 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 		issues, err = store.Ready()
 	}
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if ra.JSON {
 		fprintJSON(w, issues)
-		return nil
+		return nil, nil
 	}
 
 	if len(issues) == 0 {
 		fmt.Fprintln(w, "no ready issues")
-		return nil
+		return nil, nil
 	}
 
 	closedBlockers := store.HiddenBlockerSet(issues)
@@ -130,5 +132,5 @@ func cmdReady(store *issue.Store, args []string, w Writer) error {
 		}
 	}
 
-	return nil
+	return nil, nil
 }

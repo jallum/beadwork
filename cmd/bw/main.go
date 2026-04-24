@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/jallum/beadwork/internal/config"
 	"github.com/jallum/beadwork/internal/issue"
 	"golang.org/x/term"
 )
@@ -90,8 +91,19 @@ func main() {
 		maybeCheckForUpgrade(store, w)
 	}
 
-	if err := c.Run(store, args, w); err != nil {
+	cfg, err := config.Load(config.DefaultPath())
+	if err != nil {
 		fatal(err.Error())
+	}
+
+	newCfg, err := c.Run(store, args, w, cfg)
+	if err != nil {
+		fatal(err.Error())
+	}
+	if newCfg != nil {
+		if err := newCfg.Save(); err != nil {
+			fatal(err.Error())
+		}
 	}
 }
 

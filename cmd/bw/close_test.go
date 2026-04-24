@@ -18,7 +18,7 @@ func TestCmdCloseBasic(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdClose(env.Store, []string{iss.ID}, PlainWriter(&buf))
+	_, err := cmdClose(env.Store, []string{iss.ID}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdClose: %v", err)
 	}
@@ -40,7 +40,7 @@ func TestCmdCloseWithReason(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdClose(env.Store, []string{iss.ID, "--reason", "duplicate"}, PlainWriter(&buf))
+	_, err := cmdClose(env.Store, []string{iss.ID, "--reason", "duplicate"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdClose: %v", err)
 	}
@@ -54,7 +54,7 @@ func TestCmdCloseJSON(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdClose(env.Store, []string{iss.ID, "--json"}, PlainWriter(&buf))
+	_, err := cmdClose(env.Store, []string{iss.ID, "--json"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdClose --json: %v", err)
 	}
@@ -76,7 +76,7 @@ func TestCmdCloseNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdClose(env.Store, []string{"nonexistent"}, PlainWriter(&buf))
+	_, err := cmdClose(env.Store, []string{"nonexistent"}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Error("expected error for nonexistent issue")
 	}
@@ -91,7 +91,7 @@ func TestCmdReopenBasic(t *testing.T) {
 	env.Repo.Commit("create and close " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdReopen(env.Store, []string{iss.ID}, PlainWriter(&buf))
+	_, err := cmdReopen(env.Store, []string{iss.ID}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReopen: %v", err)
 	}
@@ -114,7 +114,7 @@ func TestCmdReopenJSON(t *testing.T) {
 	env.Repo.Commit("create and close " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdReopen(env.Store, []string{iss.ID, "--json"}, PlainWriter(&buf))
+	_, err := cmdReopen(env.Store, []string{iss.ID, "--json"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReopen --json: %v", err)
 	}
@@ -137,7 +137,7 @@ func TestCmdReopenInProgress(t *testing.T) {
 	env.Repo.Commit("create and start " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdReopen(env.Store, []string{iss.ID}, PlainWriter(&buf))
+	_, err := cmdReopen(env.Store, []string{iss.ID}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdReopen in_progress: %v", err)
 	}
@@ -159,7 +159,7 @@ func TestCmdReopenNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdReopen(env.Store, []string{"nonexistent"}, PlainWriter(&buf))
+	_, err := cmdReopen(env.Store, []string{"nonexistent"}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Error("expected error for nonexistent issue")
 	}
@@ -175,7 +175,7 @@ func TestCmdCloseUnblocked(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdClose(env.Store, []string{a.ID}, PlainWriter(&buf))
+	_, err := cmdClose(env.Store, []string{a.ID}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdClose: %v", err)
 	}
@@ -201,7 +201,7 @@ func TestCmdCloseUnblockedJSON(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdClose(env.Store, []string{a.ID, "--json"}, PlainWriter(&buf))
+	_, err := cmdClose(env.Store, []string{a.ID, "--json"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdClose --json: %v", err)
 	}

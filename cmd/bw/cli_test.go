@@ -84,6 +84,7 @@ func bw(t *testing.T, dir string, args ...string) string {
 		"GIT_AUTHOR_EMAIL=test@test.com",
 		"GIT_COMMITTER_NAME=Test",
 		"GIT_COMMITTER_EMAIL=test@test.com",
+		"BW_CONFIG="+filepath.Join(dir, ".bw"),
 		"GOCOVERDIR="+bwCoverDir,
 	)
 	out, err := cmd.CombinedOutput()
@@ -103,6 +104,7 @@ func bwFail(t *testing.T, dir string, args ...string) string {
 		"GIT_AUTHOR_EMAIL=test@test.com",
 		"GIT_COMMITTER_NAME=Test",
 		"GIT_COMMITTER_EMAIL=test@test.com",
+		"BW_CONFIG="+filepath.Join(dir, ".bw"),
 		"GOCOVERDIR="+bwCoverDir,
 	)
 	out, err := cmd.CombinedOutput()

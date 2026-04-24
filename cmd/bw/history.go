@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/repo"
 )
@@ -43,22 +45,22 @@ type commitEntry struct {
 	Intent    string `json:"intent"`
 }
 
-func cmdHistory(store *issue.Store, args []string, w Writer) error {
+func cmdHistory(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	ha, err := parseHistoryArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Resolve to full ID
 	iss, err := store.Get(ha.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	r := store.Committer.(*repo.Repo)
 	commits, err := r.AllCommits()
 	if err != nil {
-		return fmt.Errorf("reading history: %w", err)
+		return nil, fmt.Errorf("reading history: %w", err)
 	}
 
 	// Filter for this issue and reverse to chronological (oldest first)
@@ -82,16 +84,16 @@ func cmdHistory(store *issue.Store, args []string, w Writer) error {
 
 	if ha.JSON {
 		fprintJSON(w, matched)
-		return nil
+		return nil, nil
 	}
 
 	if len(matched) == 0 {
 		fmt.Fprintln(w, "no history found")
-		return nil
+		return nil, nil
 	}
 
 	for _, e := range matched {
 		fmt.Fprintf(w, "%s  %s  %s\n", e.Timestamp, e.Author, e.Intent)
 	}
-	return nil
+	return nil, nil
 }

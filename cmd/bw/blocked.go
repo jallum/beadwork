@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/md"
 )
@@ -20,25 +22,25 @@ func parseBlockedArgs(raw []string) (BlockedArgs, error) {
 	return BlockedArgs{JSON: a.JSON()}, nil
 }
 
-func cmdBlocked(store *issue.Store, args []string, w Writer) error {
+func cmdBlocked(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	ba, err := parseBlockedArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	blocked, err := store.Blocked()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if ba.JSON {
 		fprintJSON(w, blocked)
-		return nil
+		return nil, nil
 	}
 
 	if len(blocked) == 0 {
 		fmt.Fprintln(w, "no blocked issues")
-		return nil
+		return nil, nil
 	}
 
 	fmt.Fprintf(w, "\nBlocked (%d):\n", len(blocked))
@@ -60,5 +62,5 @@ func cmdBlocked(store *issue.Store, args []string, w Writer) error {
 		}
 		w.Pop()
 	}
-	return nil
+	return nil, nil
 }

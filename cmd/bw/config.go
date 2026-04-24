@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/repo"
 )
@@ -39,10 +41,10 @@ func parseConfigArgs(raw []string) (ConfigArgs, error) {
 	return ca, nil
 }
 
-func cmdConfig(store *issue.Store, args []string, w Writer) error {
+func cmdConfig(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	ca, err := parseConfigArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	r := store.Committer.(*repo.Repo)
 
@@ -50,17 +52,17 @@ func cmdConfig(store *issue.Store, args []string, w Writer) error {
 	case "get":
 		val, ok := r.GetConfig(ca.Key)
 		if !ok {
-			return fmt.Errorf("key not found: %s", ca.Key)
+			return nil, fmt.Errorf("key not found: %s", ca.Key)
 		}
 		fmt.Fprintln(w, val)
 
 	case "set":
 		if err := r.SetConfig(ca.Key, ca.Value); err != nil {
-			return err
+			return nil, err
 		}
 		intent := fmt.Sprintf("config %s=%s", ca.Key, ca.Value)
 		if err := r.Commit(intent); err != nil {
-			return fmt.Errorf("commit failed: %w", err)
+			return nil, fmt.Errorf("commit failed: %w", err)
 		}
 		fmt.Fprintf(w, "%s=%s\n", ca.Key, ca.Value)
 
@@ -75,5 +77,5 @@ func cmdConfig(store *issue.Store, args []string, w Writer) error {
 			fmt.Fprintf(w, "%s=%s\n", k, cfg[k])
 		}
 	}
-	return nil
+	return nil, nil
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/jallum/beadwork/internal/config"
 	"github.com/jallum/beadwork/internal/issue"
 )
 
@@ -38,7 +39,7 @@ type Command struct {
 	Flags       []Flag
 	Examples    []Example
 	NeedsStore  bool // when true, main injects an initialized store
-	Run         func(store *issue.Store, args []string, w Writer) error
+	Run         func(store *issue.Store, args []string, w Writer, cfg *config.Config) (*config.Config, error)
 }
 
 // valueFlags returns the long names of flags that take a value (non-boolean).
@@ -51,7 +52,6 @@ func (c *Command) valueFlags() []string {
 	}
 	return vf
 }
-
 
 // expandAliases replaces short flags with their long equivalents.
 func expandAliases(raw []string, flags []Flag) []string {
@@ -487,9 +487,9 @@ var commands = []Command{
 }
 
 // wrapNoArgs adapts a func(Writer) error to the standard command signature.
-func wrapNoArgs(fn func(w Writer) error) func(*issue.Store, []string, Writer) error {
-	return func(_ *issue.Store, _ []string, w Writer) error {
-		return fn(w)
+func wrapNoArgs(fn func(w Writer) error) func(*issue.Store, []string, Writer, *config.Config) (*config.Config, error) {
+	return func(_ *issue.Store, _ []string, w Writer, _ *config.Config) (*config.Config, error) {
+		return nil, fn(w)
 	}
 }
 

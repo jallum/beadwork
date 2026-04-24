@@ -18,7 +18,7 @@ func TestCmdStartBasic(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	_, err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdStart: %v", err)
 	}
@@ -58,7 +58,7 @@ func TestCmdStartJSON(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "bob", "--json"}, PlainWriter(&buf))
+	_, err := cmdStart(env.Store, []string{iss.ID, "--assignee", "bob", "--json"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdStart --json: %v", err)
 	}
@@ -85,7 +85,7 @@ func TestCmdStartShowsDescription(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	_, err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdStart: %v", err)
 	}
@@ -103,7 +103,7 @@ func TestCmdStartShowsComments(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	_, err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdStart: %v", err)
 	}
@@ -124,7 +124,7 @@ func TestCmdStartPRHint(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	_, err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdStart: %v", err)
 	}
@@ -141,7 +141,7 @@ func TestCmdStartNoPRHintByDefault(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	_, err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdStart: %v", err)
 	}
@@ -158,7 +158,7 @@ func TestCmdStartEpicLanding(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	_, err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdStart: %v", err)
 	}
@@ -180,7 +180,7 @@ func TestCmdStartTaskLanding(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	_, err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdStart: %v", err)
 	}
@@ -204,7 +204,7 @@ func TestCmdStartBlocked(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdStart(env.Store, []string{b.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	_, err := cmdStart(env.Store, []string{b.ID, "--assignee", "alice"}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Fatal("expected error for blocked issue")
 	}
@@ -226,7 +226,7 @@ func TestCmdStartAlreadyInProgress(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	_, err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Fatal("expected error for in_progress issue")
 	}
@@ -241,7 +241,7 @@ func TestCmdStartClosed(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	_, err := cmdStart(env.Store, []string{iss.ID, "--assignee", "alice"}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Fatal("expected error for closed issue")
 	}
@@ -252,7 +252,7 @@ func TestCmdStartNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdStart(env.Store, []string{"nonexistent", "--assignee", "alice"}, PlainWriter(&buf))
+	_, err := cmdStart(env.Store, []string{"nonexistent", "--assignee", "alice"}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Error("expected error for nonexistent issue")
 	}
@@ -263,7 +263,7 @@ func TestCmdStartNoArgs(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdStart(env.Store, nil, PlainWriter(&buf))
+	_, err := cmdStart(env.Store, nil, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Error("expected error for missing args")
 	}
@@ -279,7 +279,7 @@ func TestCmdStartEpicShowsChildren(t *testing.T) {
 	env.Repo.Commit("setup")
 
 	var buf bytes.Buffer
-	err := cmdStart(env.Store, []string{epic.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	_, err := cmdStart(env.Store, []string{epic.ID, "--assignee", "alice"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdStart: %v", err)
 	}
@@ -304,7 +304,7 @@ func TestCmdStartTaskShowsMap(t *testing.T) {
 
 	// Start "a" — it unblocks "b", so the map should mention "b".
 	var buf bytes.Buffer
-	err := cmdStart(env.Store, []string{a.ID, "--assignee", "alice"}, PlainWriter(&buf))
+	_, err := cmdStart(env.Store, []string{a.ID, "--assignee", "alice"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdStart: %v", err)
 	}

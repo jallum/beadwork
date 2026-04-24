@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/repo"
 	"github.com/jallum/beadwork/internal/tmpl"
@@ -41,10 +43,10 @@ type StartData struct {
 	WorkflowReview string
 }
 
-func cmdStart(store *issue.Store, args []string, w Writer) error {
+func cmdStart(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	sa, err := parseStartArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	r := store.Committer.(*repo.Repo)
@@ -69,19 +71,19 @@ func cmdStart(store *issue.Store, args []string, w Writer) error {
 				}
 			}
 			lines = append(lines, "\nuse bw ready to find available work")
-			return fmt.Errorf("%s", strings.Join(lines, "\n"))
+			return nil, fmt.Errorf("%s", strings.Join(lines, "\n"))
 		}
-		return err
+		return nil, err
 	}
 
 	intent := fmt.Sprintf("start %s assignee=%q", iss.ID, assignee)
 	if err := store.Commit(intent); err != nil {
-		return fmt.Errorf("commit failed: %w", err)
+		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	if sa.JSON {
 		fprintJSON(w, iss)
-		return nil
+		return nil, nil
 	}
 
 	// -- Rich output: issue context + template-driven briefing --
@@ -102,7 +104,7 @@ func cmdStart(store *issue.Store, args []string, w Writer) error {
 	bwFn := func(args ...string) string {
 		if cmd := commandMap[args[0]]; cmd != nil {
 			var buf bytes.Buffer
-			cmd.Run(store, args[1:], TokenWriter(&buf))
+			cmd.Run(store, args[1:], TokenWriter(&buf), nil)
 			return strings.TrimRight(buf.String(), "\n")
 		}
 		return ""
@@ -110,7 +112,7 @@ func cmdStart(store *issue.Store, args []string, w Writer) error {
 
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, "start", prompts.Start, data, bwFn); err != nil {
-		return err
+		return nil, err
 	}
 
 	out := strings.Trim(buf.String(), "\n")
@@ -120,5 +122,5 @@ func cmdStart(store *issue.Store, args []string, w Writer) error {
 		fmt.Fprintln(w)
 	}
 
-	return nil
+	return nil, nil
 }
