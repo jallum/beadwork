@@ -100,21 +100,16 @@ func cmdRegistryList(args []string, w Writer) error {
 		return nil
 	}
 
-	// Build sorted list with live prefix read and missing detection.
 	var list []registryListEntry
 	for path, e := range entries {
 		le := registryListEntry{
 			Path:       path,
 			LastSeenAt: e.LastSeenAt,
-			Prefix:     e.Prefix,
 		}
-		// Check if the repo still exists and try to read its prefix.
 		if _, err := os.Stat(path); err != nil {
 			le.Missing = true
-		} else if le.Prefix == "" {
-			if r, err := repo.FindRepoAt(path); err == nil && r.IsInitialized() {
-				le.Prefix = r.Prefix
-			}
+		} else if r, err := repo.FindRepoAt(path); err == nil && r.IsInitialized() {
+			le.Prefix = r.Prefix
 		}
 		list = append(list, le)
 	}

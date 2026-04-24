@@ -21,7 +21,6 @@ const registryFile = "registry.json"
 type Entry struct {
 	LastSeenAt string `json:"last_seen_at"`
 	Cursor     string `json:"cursor,omitempty"`
-	Prefix     string `json:"prefix,omitempty"`
 }
 
 // Registry holds the in-memory state of the registry file.
