@@ -8,9 +8,9 @@ import (
 const defaultFileName = ".bw"
 
 // DefaultPath returns the path to the registry file.
-// BEADWORK_HOME overrides it; otherwise it falls back to ~/.bw.
+// BW_REGISTRY overrides it; otherwise it falls back to ~/.bw.
 func DefaultPath() string {
-	if v := os.Getenv("BEADWORK_HOME"); v != "" {
+	if v := os.Getenv("BW_REGISTRY"); v != "" {
 		return v
 	}
 	home, err := os.UserHomeDir()
