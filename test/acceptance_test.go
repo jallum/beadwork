@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/jallum/beadwork/internal/config"
 )
 
 var bwBin string // path to built bw binary
@@ -34,10 +36,10 @@ func TestMain(m *testing.M) {
 // bwEnv is a self-contained environment for running bw commands against
 // a deterministic git repo.
 type bwEnv struct {
-	t           *testing.T
-	dir         string
-	registryDir string
-	env         []string
+	t       *testing.T
+	dir     string
+	cfgPath string
+	env     []string
 }
 
 const fixedClock = "2026-01-15T10:00:00Z"
@@ -45,19 +47,18 @@ const fixedClock = "2026-01-15T10:00:00Z"
 func newBwEnv(t *testing.T) *bwEnv {
 	t.Helper()
 	dir := t.TempDir()
-	registryFile := filepath.Join(t.TempDir(), ".bw")
+	cfgPath := filepath.Join(dir, ".bw")
 
 	env := &bwEnv{
-		t:           t,
-		dir:         dir,
-		registryDir: registryFile,
+		t:       t,
+		dir:     dir,
+		cfgPath: cfgPath,
 		env: append(os.Environ(),
 			"BW_CLOCK="+fixedClock,
-			"BW_CONFIG="+filepath.Join(dir, ".bw"),
+			"BW_CONFIG="+cfgPath,
 			"GIT_AUTHOR_DATE="+fixedClock,
 			"GIT_COMMITTER_DATE="+fixedClock,
 			"NO_COLOR=1",
-			"BW_REGISTRY="+registryFile,
 		),
 	}
 
@@ -169,24 +170,23 @@ func compareGolden(t *testing.T, name, got string) {
 }
 
 // newMultiRepoEnv creates n independent bwEnv instances that share the same
-// registry directory, simulating multiple repos registered in a single registry.
+// config file, simulating multiple repos registered in a single config.
 func newMultiRepoEnv(t *testing.T, n int) []*bwEnv {
 	t.Helper()
-	registryFile := filepath.Join(t.TempDir(), ".bw")
+	cfgPath := filepath.Join(t.TempDir(), ".bw")
 	envs := make([]*bwEnv, n)
 	for i := range n {
 		dir := t.TempDir()
 		env := &bwEnv{
-			t:           t,
-			dir:         dir,
-			registryDir: registryFile,
+			t:       t,
+			dir:     dir,
+			cfgPath: cfgPath,
 			env: append(os.Environ(),
 				"BW_CLOCK="+fixedClock,
-				"BW_CONFIG="+filepath.Join(dir, ".bw-config"),
+				"BW_CONFIG="+cfgPath,
 				"GIT_AUTHOR_DATE="+fixedClock,
 				"GIT_COMMITTER_DATE="+fixedClock,
 				"NO_COLOR=1",
-				"BW_REGISTRY="+registryFile,
 			),
 		}
 		env.git("init")
@@ -201,61 +201,61 @@ func newMultiRepoEnv(t *testing.T, n int) []*bwEnv {
 	return envs
 }
 
-// seedRegistry writes paths (one per line) to the registry file.
+// seedRegistry adds paths to the config's registry.repos key.
 func (e *bwEnv) seedRegistry(paths ...string) {
 	e.t.Helper()
-	content := strings.Join(paths, "\n") + "\n"
-	if err := os.WriteFile(e.registryDir, []byte(content), 0644); err != nil {
-		e.t.Fatalf("seedRegistry: %v", err)
+	cfg, err := config.Load(e.cfgPath)
+	if err != nil {
+		e.t.Fatalf("seedRegistry load: %v", err)
+	}
+	existing := cfg.StringSlice("registry.repos")
+	cfg = cfg.Set("registry.repos", append(existing, paths...))
+	if err := cfg.Save(); err != nil {
+		e.t.Fatalf("seedRegistry save: %v", err)
 	}
 }
 
-// registryContents reads and returns the raw content of the registry file.
-// Returns an empty string if the file does not exist.
-func (e *bwEnv) registryContents() string {
+// registryPaths returns the registered repo paths from the config.
+func (e *bwEnv) registryPaths() []string {
 	e.t.Helper()
-	data, err := os.ReadFile(e.registryDir)
+	cfg, err := config.Load(e.cfgPath)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return ""
-		}
-		e.t.Fatalf("registryContents: %v", err)
+		e.t.Fatalf("registryPaths load: %v", err)
 	}
-	return string(data)
+	return cfg.StringSlice("registry.repos")
 }
 
 // TestScaffoldingHelpers verifies that the test scaffolding helpers work correctly.
 func TestScaffoldingHelpers(t *testing.T) {
-	// newBwEnv should set up a registry file path
 	env := newBwEnv(t)
-	if env.registryDir == "" {
-		t.Fatal("registryDir not set")
+	if env.cfgPath == "" {
+		t.Fatal("cfgPath not set")
 	}
 
-	// seedRegistry + registryContents round-trip
+	// seedRegistry + registryPaths round-trip
 	env.seedRegistry("/a", "/b")
-	got := env.registryContents()
-	if !strings.Contains(got, "/a") || !strings.Contains(got, "/b") {
-		t.Errorf("registryContents() = %q, want /a and /b", got)
+	got := env.registryPaths()
+	found := strings.Join(got, " ")
+	if !strings.Contains(found, "/a") || !strings.Contains(found, "/b") {
+		t.Errorf("registryPaths() = %v, want /a and /b", got)
 	}
 
-	// registryContents on a fresh env returns content from auto-registration
-	// (bw init triggers touchRegistry).
+	// registryPaths on a fresh env returns entries from auto-registration
 	env2 := newBwEnv(t)
-	c := env2.registryContents()
-	if c == "" {
-		t.Errorf("registryContents() on fresh env is empty, expected auto-reg data")
+	paths := env2.registryPaths()
+	if len(paths) == 0 {
+		t.Errorf("registryPaths() on fresh env is empty, expected auto-reg data")
 	}
 
-	// newMultiRepoEnv creates n envs sharing a registry file
+	// newMultiRepoEnv creates n envs sharing a config file
 	envs := newMultiRepoEnv(t, 3)
 	if len(envs) != 3 {
 		t.Fatalf("newMultiRepoEnv(3) returned %d envs", len(envs))
 	}
-	sharedFile := envs[0].registryDir
+	sharedFile := envs[0].cfgPath
 	for i, e := range envs {
-		if e.registryDir != sharedFile {
-			t.Errorf("env[%d].registryDir = %q, want %q (shared)", i, e.registryDir, sharedFile)
+		if e.cfgPath != sharedFile {
+			t.Errorf("env[%d].cfgPath = %q, want %q (shared)", i, e.cfgPath, sharedFile)
 		}
 		out := e.bw("list")
 		_ = out
@@ -318,12 +318,19 @@ func TestAutoRegistrationOnAnyCommand(t *testing.T) {
 	// Even a read-only command should register.
 	env.bw("list")
 
-	got := env.registryContents()
-	if got == "" {
-		t.Fatal("registry file not created after bw list")
+	got := env.registryPaths()
+	if len(got) == 0 {
+		t.Fatal("registry empty after bw list")
 	}
-	if !strings.Contains(got, env.dir) {
-		t.Errorf("registry does not contain repo path %q:\n%s", env.dir, got)
+	canonDir, _ := filepath.EvalSymlinks(env.dir)
+	found := false
+	for _, p := range got {
+		if p == env.dir || p == canonDir {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("registry does not contain repo path %q: %v", env.dir, got)
 	}
 }
 
@@ -333,27 +340,27 @@ func TestAutoRegFiresForReadOnlyCommands(t *testing.T) {
 	env := newBwEnv(t)
 	env.bw("ready")
 
-	got := env.registryContents()
-	if got == "" {
-		t.Fatal("registry file not created after bw ready")
+	got := env.registryPaths()
+	if len(got) == 0 {
+		t.Fatal("registry empty after bw ready")
 	}
 }
 
-// TestAutoRegistrationSilentFailure verifies that if the registry dir is
+// TestAutoRegistrationSilentFailure verifies that if the config dir is
 // unwritable, bw still runs the command successfully.
 func TestAutoRegistrationSilentFailure(t *testing.T) {
 	dir := t.TempDir()
+	cfgPath := "/nonexistent/path/that/should/fail/.bw"
 	env := &bwEnv{
-		t:           t,
-		dir:         dir,
-		registryDir: "/nonexistent/path/that/should/fail/.bw",
+		t:       t,
+		dir:     dir,
+		cfgPath: cfgPath,
 		env: append(os.Environ(),
 			"BW_CLOCK="+fixedClock,
-			"BW_CONFIG="+filepath.Join(dir, ".bw-config"),
+			"BW_CONFIG="+cfgPath,
 			"GIT_AUTHOR_DATE="+fixedClock,
 			"GIT_COMMITTER_DATE="+fixedClock,
 			"NO_COLOR=1",
-			"BW_REGISTRY=/nonexistent/path/that/should/fail/.bw",
 		),
 	}
 	env.git("init")
@@ -364,7 +371,7 @@ func TestAutoRegistrationSilentFailure(t *testing.T) {
 	env.git("commit", "-m", "initial")
 	env.bw("init", "--prefix", "test")
 
-	// Should succeed despite unwritable registry dir.
+	// Should succeed despite unwritable config path.
 	out := env.bw("list")
 	_ = out
 }
@@ -384,13 +391,14 @@ func TestWorktreeRegistersSameAsMain(t *testing.T) {
 	// Run bw from the worktree.
 	env.bwAt(wtDir, "list")
 
-	got := env.registryContents()
-	if got == "" {
-		t.Fatal("registry not created after bw list from worktree")
+	got := env.registryPaths()
+	if len(got) == 0 {
+		t.Fatal("registry empty after bw list from worktree")
 	}
-	// Should contain the main repo dir, not the worktree dir.
-	if strings.Contains(got, wtDir) {
-		t.Errorf("registry should not contain worktree path %q:\n%s", wtDir, got)
+	for _, p := range got {
+		if p == wtDir {
+			t.Errorf("registry should not contain worktree path %q: %v", wtDir, got)
+		}
 	}
 }
 
@@ -439,9 +447,11 @@ func TestRegistryPruneYes(t *testing.T) {
 	}
 
 	// Verify it's actually gone.
-	contents := env.registryContents()
-	if strings.Contains(contents, "/nonexistent/repo") {
-		t.Errorf("pruned entry still in registry:\n%s", contents)
+	paths := env.registryPaths()
+	for _, p := range paths {
+		if p == "/nonexistent/repo" {
+			t.Errorf("pruned entry still in registry: %v", paths)
+		}
 	}
 }
 

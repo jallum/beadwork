@@ -82,7 +82,6 @@ func bwTestEnv(t *testing.T, dir string) []string {
 		"GIT_COMMITTER_NAME=Test",
 		"GIT_COMMITTER_EMAIL=test@test.com",
 		"BW_CONFIG="+filepath.Join(dir, ".bw"),
-		"BW_REGISTRY="+filepath.Join(t.TempDir(), ".bw"),
 		"GOCOVERDIR="+bwCoverDir,
 	)
 }
