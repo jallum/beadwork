@@ -5,22 +5,17 @@ import (
 	"path/filepath"
 )
 
-const dirName = ".beadwork"
+const defaultFileName = ".bw"
 
-// DefaultDir returns the beadwork home directory. BEADWORK_HOME overrides
-// it; otherwise it falls back to ~/.beadwork. os.UserHomeDir honors $HOME,
-// so callers who want a different home can point HOME at it.
-func DefaultDir() string {
-	return resolveFrom(os.Getenv("BEADWORK_HOME"), os.UserHomeDir)
-}
-
-func resolveFrom(envHome string, homeFn func() (string, error)) string {
-	if envHome != "" {
-		return envHome
+// DefaultPath returns the path to the registry file.
+// BEADWORK_HOME overrides it; otherwise it falls back to ~/.bw.
+func DefaultPath() string {
+	if v := os.Getenv("BEADWORK_HOME"); v != "" {
+		return v
 	}
-	home, err := homeFn()
+	home, err := os.UserHomeDir()
 	if err != nil {
-		return dirName
+		return defaultFileName
 	}
-	return filepath.Join(home, dirName)
+	return filepath.Join(home, defaultFileName)
 }

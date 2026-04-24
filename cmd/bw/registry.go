@@ -15,7 +15,6 @@ import (
 	"golang.org/x/term"
 )
 
-// registrySubcommands holds the dispatch table for `bw registry <sub>`.
 var registrySubcommands = map[string]struct {
 	summary string
 	run     func([]string, Writer) error
@@ -72,10 +71,9 @@ func printRegistrySubHelp(w Writer, name, summary string) error {
 }
 
 type registryListEntry struct {
-	Path       string `json:"path"`
-	Prefix     string `json:"prefix,omitempty"`
-	LastSeenAt string `json:"last_seen_at"`
-	Missing    bool   `json:"missing,omitempty"`
+	Path    string `json:"path"`
+	Prefix  string `json:"prefix,omitempty"`
+	Missing bool   `json:"missing,omitempty"`
 }
 
 func cmdRegistryList(args []string, w Writer) error {
@@ -84,14 +82,13 @@ func cmdRegistryList(args []string, w Writer) error {
 		return err
 	}
 
-	dir := registry.DefaultDir()
-	reg, err := registry.Load(dir)
+	reg, err := registry.Load(registry.DefaultPath())
 	if err != nil {
 		return fmt.Errorf("load registry: %w", err)
 	}
 
-	entries := reg.Entries()
-	if len(entries) == 0 {
+	paths := reg.Paths()
+	if len(paths) == 0 {
 		if a.JSON() {
 			fmt.Fprintln(w, "[]")
 		} else {
@@ -101,11 +98,8 @@ func cmdRegistryList(args []string, w Writer) error {
 	}
 
 	var list []registryListEntry
-	for path, e := range entries {
-		le := registryListEntry{
-			Path:       path,
-			LastSeenAt: e.LastSeenAt,
-		}
+	for _, path := range paths {
+		le := registryListEntry{Path: path}
 		if _, err := os.Stat(path); err != nil {
 			le.Missing = true
 		} else if r, err := repo.FindRepoAt(path); err == nil && r.IsInitialized() {
@@ -113,10 +107,6 @@ func cmdRegistryList(args []string, w Writer) error {
 		}
 		list = append(list, le)
 	}
-
-	sort.Slice(list, func(i, j int) bool {
-		return list[i].Path < list[j].Path
-	})
 
 	if a.JSON() {
 		data, _ := json.MarshalIndent(list, "", "  ")
@@ -129,8 +119,7 @@ func cmdRegistryList(args []string, w Writer) error {
 		if prefix == "" {
 			prefix = "?"
 		}
-		age := relativeTime(le.LastSeenAt)
-		line := fmt.Sprintf("[%s] %s  (%s)", prefix, le.Path, age)
+		line := fmt.Sprintf("[%s] %s", prefix, le.Path)
 		if le.Missing {
 			line += "  " + w.Style("MISSING", Red)
 		}
@@ -147,21 +136,19 @@ func cmdRegistryPrune(args []string, w Writer) error {
 
 	force := a.Bool("--yes") || a.Bool("-y")
 
-	dir := registry.DefaultDir()
-	reg, err := registry.Load(dir)
+	reg, err := registry.Load(registry.DefaultPath())
 	if err != nil {
 		return fmt.Errorf("load registry: %w", err)
 	}
 
-	entries := reg.Entries()
-	if len(entries) == 0 {
+	paths := reg.Paths()
+	if len(paths) == 0 {
 		fmt.Fprintln(w, "registry is empty, nothing to prune")
 		return nil
 	}
 
-	// Find missing entries.
 	var missing []string
-	for path := range entries {
+	for _, path := range paths {
 		if _, err := os.Stat(path); err != nil {
 			missing = append(missing, path)
 		}
@@ -173,10 +160,9 @@ func cmdRegistryPrune(args []string, w Writer) error {
 		return nil
 	}
 
-	// Half-removal warning.
-	if len(missing) > len(entries)/2 {
+	if len(missing) > len(paths)/2 {
 		fmt.Fprintf(w, "Warning: %d of %d entries would be removed (more than half).\n",
-			len(missing), len(entries))
+			len(missing), len(paths))
 	}
 
 	fmt.Fprintf(w, "Found %d missing repo(s):\n", len(missing))
@@ -187,7 +173,6 @@ func cmdRegistryPrune(args []string, w Writer) error {
 	w.Pop()
 
 	if !force {
-		// Check if stdin is a TTY for interactive confirmation.
 		if !term.IsTerminal(int(os.Stdin.Fd())) {
 			return fmt.Errorf("non-interactive: pass --yes to confirm")
 		}
@@ -201,19 +186,13 @@ func cmdRegistryPrune(args []string, w Writer) error {
 		}
 	}
 
-	missingSet := make(map[string]bool, len(missing))
 	for _, p := range missing {
-		missingSet[p] = true
+		reg.Remove(p)
 	}
-	removed := reg.Prune(func(path string, _ registry.Entry) bool {
-		return missingSet[path]
-	})
-
 	if err := reg.Save(); err != nil {
 		return fmt.Errorf("save registry: %w", err)
 	}
 
-	fmt.Fprintf(w, "pruned %d entries\n", len(removed))
-
+	fmt.Fprintf(w, "pruned %d entries\n", len(missing))
 	return nil
 }
