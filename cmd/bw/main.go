@@ -7,6 +7,7 @@ import (
 
 	"github.com/jallum/beadwork/internal/config"
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/registry"
 	"github.com/jallum/beadwork/internal/repo"
 	"golang.org/x/term"
 )
@@ -119,14 +120,7 @@ func autoRegister(cfg *config.Config) *config.Config {
 	if err != nil || !r.IsInitialized() {
 		return cfg
 	}
-	repoPath := r.RepoDir()
-	for _, p := range cfg.StringSlice("registry.repos") {
-		if p == repoPath {
-			return cfg
-		}
-	}
-	repos := append(cfg.StringSlice("registry.repos"), repoPath)
-	return cfg.Set("registry.repos", repos)
+	return registry.Register(cfg, r.RepoDir())
 }
 
 // extractDirFlag removes all -C <dir> pairs from args and sets repoDir.

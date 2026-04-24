@@ -9,6 +9,7 @@ import (
 
 	"github.com/jallum/beadwork/internal/config"
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/registry"
 	"github.com/jallum/beadwork/internal/repo"
 	"golang.org/x/term"
 )
@@ -80,7 +81,7 @@ func cmdRegistryList(args []string, w Writer, cfg *config.Config) (*config.Confi
 		return nil, err
 	}
 
-	paths := cfg.StringSlice("registry.repos")
+	paths := registry.Paths(cfg)
 	sort.Strings(paths)
 
 	if len(paths) == 0 {
@@ -131,7 +132,7 @@ func cmdRegistryPrune(args []string, w Writer, cfg *config.Config) (*config.Conf
 
 	force := a.Bool("--yes") || a.Bool("-y")
 
-	paths := cfg.StringSlice("registry.repos")
+	paths := registry.Paths(cfg)
 	if len(paths) == 0 {
 		fmt.Fprintln(w, "registry is empty, nothing to prune")
 		return nil, nil
