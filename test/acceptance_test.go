@@ -56,7 +56,7 @@ func newBwEnv(t *testing.T) *bwEnv {
 			"GIT_AUTHOR_DATE="+fixedClock,
 			"GIT_COMMITTER_DATE="+fixedClock,
 			"NO_COLOR=1",
-			"BEADWORK_HOME="+registryFile,
+			"BW_REGISTRY="+registryFile,
 		),
 	}
 
@@ -184,7 +184,7 @@ func newMultiRepoEnv(t *testing.T, n int) []*bwEnv {
 				"GIT_AUTHOR_DATE="+fixedClock,
 				"GIT_COMMITTER_DATE="+fixedClock,
 				"NO_COLOR=1",
-				"BEADWORK_HOME="+registryFile,
+				"BW_REGISTRY="+registryFile,
 			),
 		}
 		env.git("init")
@@ -350,7 +350,7 @@ func TestAutoRegistrationSilentFailure(t *testing.T) {
 			"GIT_AUTHOR_DATE="+fixedClock,
 			"GIT_COMMITTER_DATE="+fixedClock,
 			"NO_COLOR=1",
-			"BEADWORK_HOME=/nonexistent/path/that/should/fail/.bw",
+			"BW_REGISTRY=/nonexistent/path/that/should/fail/.bw",
 		),
 	}
 	env.git("init")
