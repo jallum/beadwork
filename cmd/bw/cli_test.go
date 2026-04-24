@@ -75,8 +75,8 @@ func mustCwd() string {
 }
 
 // bwTestEnv returns the env used by bw() and bwFail().
-// BEADWORK_HOME is set to an isolated temp dir so tests don't pollute
-// the user's real registry at ~/.beadwork.
+// BEADWORK_HOME is set to an isolated file path so tests don't pollute
+// the user's real registry at ~/.bw.
 func bwTestEnv(t *testing.T) []string {
 	t.Helper()
 	return append(os.Environ(),
@@ -85,7 +85,7 @@ func bwTestEnv(t *testing.T) []string {
 		"GIT_COMMITTER_NAME=Test",
 		"GIT_COMMITTER_EMAIL=test@test.com",
 		"GOCOVERDIR="+bwCoverDir,
-		"BEADWORK_HOME="+t.TempDir(),
+		"BEADWORK_HOME="+filepath.Join(t.TempDir(), ".bw"),
 	)
 }
 

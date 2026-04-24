@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-	"time"
 
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/registry"
@@ -98,54 +97,32 @@ func main() {
 		fatal(err.Error())
 	}
 
-	// Auto-register the repo after a successful command. Runs AFTER the
-	// command so `bw init` gets captured (IsInitialized flips during init).
-	// Gated on IsInitialized so non-beadwork git repos don't clutter the
-	// registry.
-	touchRegistry(bwNow())
+	touchRegistry()
 }
 
-// touchRegistry registers the current repo in the host-local registry.
-// It resolves the repo via FindRepoAt (not NeedsStore), resolves worktrees
-// to their main repo, and silently ignores errors. Runs on every command
-// so the registry stays up-to-date even for read-only operations.
 var registryOnce sync.Once
 
-func touchRegistry(now time.Time) {
+func touchRegistry() {
 	r, err := repo.FindRepoAt(repoDir)
-	if err != nil {
-		return // not in a git repo — nothing to register
-	}
-	if !r.IsInitialized() {
-		return // git repo but beadwork never ran `bw init` here
+	if err != nil || !r.IsInitialized() {
+		return
 	}
 	repoPath, err := registry.CanonicalRepoPath(r.RepoDir())
 	if err != nil {
 		return
 	}
-	dir := registry.DefaultDir()
-	reg, err := registry.Load(dir)
+	reg, err := registry.Load(registry.DefaultPath())
 	if err != nil {
 		registryOnce.Do(func() {
 			fmt.Fprintf(os.Stderr, "warning: could not load registry: %v\n", err)
 		})
 		return
 	}
-	if err := reg.TouchAndSave(repoPath, now); err != nil {
+	if err := reg.Add(repoPath); err != nil {
 		registryOnce.Do(func() {
 			fmt.Fprintf(os.Stderr, "warning: could not save registry: %v\n", err)
 		})
 	}
-}
-
-// bwNow returns the current time respecting BW_CLOCK.
-func bwNow() time.Time {
-	if v := os.Getenv("BW_CLOCK"); v != "" {
-		if t, err := time.Parse(time.RFC3339, v); err == nil {
-			return t.UTC()
-		}
-	}
-	return time.Now().UTC()
 }
 
 // extractDirFlag removes all -C <dir> pairs from args and sets repoDir.

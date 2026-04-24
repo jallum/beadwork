@@ -1,196 +1,124 @@
 package registry
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"sync"
 	"testing"
-	"time"
 )
 
 func TestLoadEmpty(t *testing.T) {
-	dir := t.TempDir()
-	r, err := Load(dir)
+	file := filepath.Join(t.TempDir(), "reg")
+	r, err := Load(file)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if r.SchemaVersion != SchemaVersion {
-		t.Errorf("SchemaVersion = %d, want %d", r.SchemaVersion, SchemaVersion)
-	}
-	if len(r.Repos) != 0 {
-		t.Errorf("Repos = %v, want empty", r.Repos)
+	if len(r.Paths()) != 0 {
+		t.Errorf("Paths = %v, want empty", r.Paths())
 	}
 }
 
 func TestLoadSaveRoundTrip(t *testing.T) {
-	dir := t.TempDir()
-	r, err := Load(dir)
+	file := filepath.Join(t.TempDir(), "reg")
+	r, err := Load(file)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	now := time.Date(2026, 1, 15, 10, 0, 0, 0, time.UTC)
-	r.Touch("/home/user/project-a", now)
-	r.Touch("/home/user/project-b", now.Add(time.Hour))
-
-	if err := r.Save(); err != nil {
-		t.Fatalf("Save: %v", err)
+	if err := r.Add("/home/user/project-a"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.Add("/home/user/project-b"); err != nil {
+		t.Fatal(err)
 	}
 
-	r2, err := Load(dir)
+	r2, err := Load(file)
 	if err != nil {
 		t.Fatalf("Load after save: %v", err)
 	}
-	if len(r2.Repos) != 2 {
-		t.Fatalf("Repos count = %d, want 2", len(r2.Repos))
+	paths := r2.Paths()
+	if len(paths) != 2 {
+		t.Fatalf("Paths count = %d, want 2", len(paths))
 	}
-
-	ea := r2.Repos["/home/user/project-a"]
-	if ea.LastSeenAt != "2026-01-15T10:00:00Z" {
-		t.Errorf("project-a LastSeenAt = %q", ea.LastSeenAt)
-	}
-}
-
-func TestSchemaVersionNewerRefused(t *testing.T) {
-	dir := t.TempDir()
-	data := `{"schema_version": 999, "repos": {}}`
-	os.WriteFile(filepath.Join(dir, registryFile), []byte(data), 0644)
-
-	_, err := Load(dir)
-	if err == nil {
-		t.Fatal("expected error for newer schema version")
+	if paths[0] != "/home/user/project-a" || paths[1] != "/home/user/project-b" {
+		t.Errorf("Paths = %v", paths)
 	}
 }
 
-func TestUnknownFieldPreservation(t *testing.T) {
-	dir := t.TempDir()
-	original := `{"schema_version":1,"repos":{},"future_field":"hello"}`
-	os.WriteFile(filepath.Join(dir, registryFile), []byte(original), 0644)
+func TestAddIdempotent(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "reg")
+	r, _ := Load(file)
 
-	r, err := Load(dir)
-	if err != nil {
-		t.Fatal(err)
-	}
+	r.Add("/repo")
+	r.Add("/repo")
 
-	now := time.Date(2026, 1, 15, 10, 0, 0, 0, time.UTC)
-	r.Touch("/tmp/repo", now)
-	if err := r.Save(); err != nil {
-		t.Fatal(err)
-	}
-
-	data, err := os.ReadFile(filepath.Join(dir, registryFile))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var raw map[string]json.RawMessage
-	json.Unmarshal(data, &raw)
-	if _, ok := raw["future_field"]; !ok {
-		t.Error("future_field not preserved after save")
+	if len(r.Paths()) != 1 {
+		t.Errorf("Paths count = %d, want 1", len(r.Paths()))
 	}
 }
 
-func TestTouchAndSave(t *testing.T) {
-	dir := t.TempDir()
-	r, _ := Load(dir)
+func TestRemove(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "reg")
+	r, _ := Load(file)
+	r.Add("/keep")
+	r.Add("/remove-me")
 
-	now := time.Date(2026, 1, 15, 10, 0, 0, 0, time.UTC)
-	if err := r.TouchAndSave("/tmp/repo", now); err != nil {
-		t.Fatalf("TouchAndSave: %v", err)
+	if !r.Remove("/remove-me") {
+		t.Error("Remove returned false for existing path")
 	}
-
-	r2, _ := Load(dir)
-	if len(r2.Repos) != 1 {
-		t.Fatalf("Repos count = %d, want 1", len(r2.Repos))
+	if r.Remove("/nonexistent") {
+		t.Error("Remove returned true for nonexistent path")
 	}
-}
-
-func TestAdvanceCursorAndSave(t *testing.T) {
-	dir := t.TempDir()
-	r, _ := Load(dir)
-
-	now := time.Date(2026, 1, 15, 10, 0, 0, 0, time.UTC)
-	r.Touch("/tmp/repo", now)
-	r.Save()
-
-	if err := r.AdvanceCursorAndSave("/tmp/repo", "abc123"); err != nil {
-		t.Fatalf("AdvanceCursorAndSave: %v", err)
-	}
-
-	r2, _ := Load(dir)
-	e := r2.Repos["/tmp/repo"]
-	if e.Cursor != "abc123" {
-		t.Errorf("Cursor = %q, want abc123", e.Cursor)
-	}
-	if e.LastSeenAt != "2026-01-15T10:00:00Z" {
-		t.Errorf("LastSeenAt lost after cursor advance: %q", e.LastSeenAt)
+	if len(r.Paths()) != 1 {
+		t.Errorf("Paths count = %d, want 1", len(r.Paths()))
 	}
 }
 
-func TestPrune(t *testing.T) {
-	dir := t.TempDir()
-	r, _ := Load(dir)
-
-	now := time.Date(2026, 1, 15, 10, 0, 0, 0, time.UTC)
-	r.Touch("/keep", now)
-	r.Touch("/remove-me", now.Add(-30*24*time.Hour))
-
-	cutoff := now.Add(-7 * 24 * time.Hour)
-	removed := r.Prune(func(path string, e Entry) bool {
-		t, err := time.Parse(time.RFC3339, e.LastSeenAt)
-		if err != nil {
-			return false
-		}
-		return t.Before(cutoff)
-	})
-
-	if len(removed) != 1 || removed[0] != "/remove-me" {
-		t.Errorf("Prune removed = %v, want [/remove-me]", removed)
-	}
-	if _, ok := r.Repos["/keep"]; !ok {
-		t.Error("/keep was incorrectly pruned")
-	}
-}
-
-func TestConcurrentSave(t *testing.T) {
-	dir := t.TempDir()
-	r, _ := Load(dir)
+func TestConcurrentAdd(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "reg")
+	r, _ := Load(file)
 
 	var wg sync.WaitGroup
 	for i := range 20 {
 		wg.Add(1)
 		go func(n int) {
 			defer wg.Done()
-			now := time.Date(2026, 1, 15, 10, 0, 0, 0, time.UTC).Add(time.Duration(n) * time.Second)
-			r.TouchAndSave("/repo/"+string(rune('a'+n)), now)
+			r.Add("/repo/" + string(rune('a'+n)))
 		}(i)
 	}
 	wg.Wait()
 
-	r2, err := Load(dir)
+	r2, err := Load(file)
 	if err != nil {
-		t.Fatalf("Load after concurrent saves: %v", err)
+		t.Fatalf("Load after concurrent adds: %v", err)
 	}
-	if len(r2.Repos) != 20 {
-		t.Errorf("Repos count = %d, want 20", len(r2.Repos))
+	if len(r2.Paths()) != 20 {
+		t.Errorf("Paths count = %d, want 20", len(r2.Paths()))
 	}
 }
 
-func TestEntries(t *testing.T) {
-	dir := t.TempDir()
-	r, _ := Load(dir)
-	now := time.Date(2026, 1, 15, 10, 0, 0, 0, time.UTC)
-	r.Touch("/a", now)
-	r.Touch("/b", now)
+func TestPathsSorted(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "reg")
+	r, _ := Load(file)
+	r.Add("/z")
+	r.Add("/a")
+	r.Add("/m")
 
-	entries := r.Entries()
-	if len(entries) != 2 {
-		t.Errorf("Entries count = %d, want 2", len(entries))
+	paths := r.Paths()
+	if paths[0] != "/a" || paths[1] != "/m" || paths[2] != "/z" {
+		t.Errorf("Paths not sorted: %v", paths)
 	}
-	// Mutating the snapshot should not affect the original.
-	delete(entries, "/a")
-	if len(r.Repos) != 2 {
-		t.Error("mutating Entries() snapshot affected original")
+}
+
+func TestLoadIgnoresBlankLines(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "reg")
+	os.WriteFile(file, []byte("/a\n\n  \n/b\n"), 0644)
+
+	r, err := Load(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(r.Paths()) != 2 {
+		t.Errorf("Paths count = %d, want 2", len(r.Paths()))
 	}
 }

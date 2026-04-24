@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 )
 
 var bwBin string // path to built bw binary
@@ -46,18 +45,18 @@ const fixedClock = "2026-01-15T10:00:00Z"
 func newBwEnv(t *testing.T) *bwEnv {
 	t.Helper()
 	dir := t.TempDir()
-	registryDir := t.TempDir()
+	registryFile := filepath.Join(t.TempDir(), ".bw")
 
 	env := &bwEnv{
 		t:           t,
 		dir:         dir,
-		registryDir: registryDir,
+		registryDir: registryFile,
 		env: append(os.Environ(),
 			"BW_CLOCK="+fixedClock,
 			"GIT_AUTHOR_DATE="+fixedClock,
 			"GIT_COMMITTER_DATE="+fixedClock,
 			"NO_COLOR=1",
-			"BEADWORK_HOME="+registryDir,
+			"BEADWORK_HOME="+registryFile,
 		),
 	}
 
@@ -172,20 +171,20 @@ func compareGolden(t *testing.T, name, got string) {
 // registry directory, simulating multiple repos registered in a single registry.
 func newMultiRepoEnv(t *testing.T, n int) []*bwEnv {
 	t.Helper()
-	registryDir := t.TempDir()
+	registryFile := filepath.Join(t.TempDir(), ".bw")
 	envs := make([]*bwEnv, n)
 	for i := range n {
 		dir := t.TempDir()
 		env := &bwEnv{
 			t:           t,
 			dir:         dir,
-			registryDir: registryDir,
+			registryDir: registryFile,
 			env: append(os.Environ(),
 				"BW_CLOCK="+fixedClock,
 				"GIT_AUTHOR_DATE="+fixedClock,
 				"GIT_COMMITTER_DATE="+fixedClock,
 				"NO_COLOR=1",
-				"BEADWORK_HOME="+registryDir,
+				"BEADWORK_HOME="+registryFile,
 			),
 		}
 		env.git("init")
@@ -200,13 +199,11 @@ func newMultiRepoEnv(t *testing.T, n int) []*bwEnv {
 	return envs
 }
 
-// seedRegistry writes raw JSON content to a file named "registry.json" in
-// the env's registry directory. Use this to set up registry state before
-// running commands that read the registry.
-func (e *bwEnv) seedRegistry(content string) {
+// seedRegistry writes paths (one per line) to the registry file.
+func (e *bwEnv) seedRegistry(paths ...string) {
 	e.t.Helper()
-	path := filepath.Join(e.registryDir, "registry.json")
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	content := strings.Join(paths, "\n") + "\n"
+	if err := os.WriteFile(e.registryDir, []byte(content), 0644); err != nil {
 		e.t.Fatalf("seedRegistry: %v", err)
 	}
 }
@@ -215,8 +212,7 @@ func (e *bwEnv) seedRegistry(content string) {
 // Returns an empty string if the file does not exist.
 func (e *bwEnv) registryContents() string {
 	e.t.Helper()
-	path := filepath.Join(e.registryDir, "registry.json")
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(e.registryDir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return ""
@@ -226,58 +222,41 @@ func (e *bwEnv) registryContents() string {
 	return string(data)
 }
 
-// bwNow returns the time that bw commands will use as "now", respecting BW_CLOCK.
-// Panics if BW_CLOCK is set but not parseable (test setup error).
-func bwNow() time.Time {
-	t, err := time.Parse(time.RFC3339, fixedClock)
-	if err != nil {
-		panic("fixedClock is not valid RFC3339: " + err.Error())
-	}
-	return t.UTC()
-}
-
 // TestScaffoldingHelpers verifies that the test scaffolding helpers work correctly.
 func TestScaffoldingHelpers(t *testing.T) {
-	// bwNow should match fixedClock
-	now := bwNow()
-	if now.Format(time.RFC3339) != fixedClock {
-		t.Errorf("bwNow() = %v, want %v", now.Format(time.RFC3339), fixedClock)
-	}
-
-	// newBwEnv should set up a registry dir
+	// newBwEnv should set up a registry file path
 	env := newBwEnv(t)
 	if env.registryDir == "" {
 		t.Fatal("registryDir not set")
 	}
 
 	// seedRegistry + registryContents round-trip
-	env.seedRegistry(`{"repos":{}}`)
+	env.seedRegistry("/a", "/b")
 	got := env.registryContents()
-	if got != `{"repos":{}}` {
-		t.Errorf("registryContents() = %q, want %q", got, `{"repos":{}}`)
+	if !strings.Contains(got, "/a") || !strings.Contains(got, "/b") {
+		t.Errorf("registryContents() = %q, want /a and /b", got)
 	}
 
 	// registryContents on a fresh env returns content from auto-registration
 	// (bw init triggers touchRegistry).
 	env2 := newBwEnv(t)
 	c := env2.registryContents()
-	if !strings.Contains(c, "last_seen_at") {
-		t.Errorf("registryContents() on fresh env missing auto-reg data: %q", c)
+	if c == "" {
+		t.Errorf("registryContents() on fresh env is empty, expected auto-reg data")
 	}
 
-	// newMultiRepoEnv creates n envs sharing a registry dir
+	// newMultiRepoEnv creates n envs sharing a registry file
 	envs := newMultiRepoEnv(t, 3)
 	if len(envs) != 3 {
 		t.Fatalf("newMultiRepoEnv(3) returned %d envs", len(envs))
 	}
-	sharedDir := envs[0].registryDir
+	sharedFile := envs[0].registryDir
 	for i, e := range envs {
-		if e.registryDir != sharedDir {
-			t.Errorf("env[%d].registryDir = %q, want %q (shared)", i, e.registryDir, sharedDir)
+		if e.registryDir != sharedFile {
+			t.Errorf("env[%d].registryDir = %q, want %q (shared)", i, e.registryDir, sharedFile)
 		}
-		// Each env should be an independent bw repo
 		out := e.bw("list")
-		_ = out // no issues yet, just verify it runs
+		_ = out
 	}
 }
 
@@ -344,9 +323,6 @@ func TestAutoRegistrationOnAnyCommand(t *testing.T) {
 	if !strings.Contains(got, env.dir) {
 		t.Errorf("registry does not contain repo path %q:\n%s", env.dir, got)
 	}
-	if !strings.Contains(got, "2026-01-15T10:00:00Z") {
-		t.Errorf("registry last_seen_at does not reflect BW_CLOCK:\n%s", got)
-	}
 }
 
 // TestAutoRegFiresForReadOnlyCommands verifies registration happens even
@@ -368,13 +344,13 @@ func TestAutoRegistrationSilentFailure(t *testing.T) {
 	env := &bwEnv{
 		t:           t,
 		dir:         dir,
-		registryDir: "/nonexistent/path/that/should/fail",
+		registryDir: "/nonexistent/path/that/should/fail/.bw",
 		env: append(os.Environ(),
 			"BW_CLOCK="+fixedClock,
 			"GIT_AUTHOR_DATE="+fixedClock,
 			"GIT_COMMITTER_DATE="+fixedClock,
 			"NO_COLOR=1",
-			"BEADWORK_HOME=/nonexistent/path/that/should/fail",
+			"BEADWORK_HOME=/nonexistent/path/that/should/fail/.bw",
 		),
 	}
 	env.git("init")
@@ -441,7 +417,7 @@ func TestRegistryListJSON(t *testing.T) {
 func TestRegistryListMissing(t *testing.T) {
 	env := newBwEnv(t)
 	// Seed a registry entry for a nonexistent path.
-	env.seedRegistry(`{"schema_version":1,"repos":{"/nonexistent/repo":{"last_seen_at":"2026-01-15T10:00:00Z"}}}`)
+	env.seedRegistry("/nonexistent/repo")
 
 	out := env.bw("registry", "list")
 	if !strings.Contains(out, "MISSING") {
@@ -452,7 +428,7 @@ func TestRegistryListMissing(t *testing.T) {
 // TestRegistryPruneYes verifies that prune --yes removes missing entries.
 func TestRegistryPruneYes(t *testing.T) {
 	env := newBwEnv(t)
-	env.seedRegistry(`{"schema_version":1,"repos":{"/nonexistent/repo":{"last_seen_at":"2026-01-15T10:00:00Z"}}}`)
+	env.seedRegistry("/nonexistent/repo")
 
 	out := env.bw("registry", "prune", "--yes")
 	if !strings.Contains(out, "pruned 1") {
@@ -469,7 +445,7 @@ func TestRegistryPruneYes(t *testing.T) {
 // TestRegistryPruneNonTTY verifies prune refuses without --yes in non-TTY.
 func TestRegistryPruneNonTTY(t *testing.T) {
 	env := newBwEnv(t)
-	env.seedRegistry(`{"schema_version":1,"repos":{"/nonexistent/repo":{"last_seen_at":"2026-01-15T10:00:00Z"}}}`)
+	env.seedRegistry("/nonexistent/repo")
 
 	out := env.bwFail("registry", "prune")
 	if !strings.Contains(out, "non-interactive") {
@@ -480,8 +456,8 @@ func TestRegistryPruneNonTTY(t *testing.T) {
 // TestRegistryPruneHalfWarning verifies the half-removal warning.
 func TestRegistryPruneHalfWarning(t *testing.T) {
 	env := newBwEnv(t)
-	// 3 out of 4 missing (real repo auto-registered = 1 existing).
-	env.seedRegistry(`{"schema_version":1,"repos":{"/missing1":{"last_seen_at":"2026-01-15T10:00:00Z"},"/missing2":{"last_seen_at":"2026-01-15T10:00:00Z"},"/missing3":{"last_seen_at":"2026-01-15T10:00:00Z"},"` + env.dir + `":{"last_seen_at":"2026-01-15T10:00:00Z"}}}`)
+	// 3 out of 4 missing (real repo dir = 1 existing).
+	env.seedRegistry("/missing1", "/missing2", "/missing3", env.dir)
 
 	out := env.bw("registry", "prune", "--yes")
 	if !strings.Contains(out, "more than half") {
@@ -492,7 +468,7 @@ func TestRegistryPruneHalfWarning(t *testing.T) {
 // TestRegistryPruneShortFlag verifies -y works as shorthand for --yes.
 func TestRegistryPruneShortFlag(t *testing.T) {
 	env := newBwEnv(t)
-	env.seedRegistry(`{"schema_version":1,"repos":{"/nonexistent/repo":{"last_seen_at":"2026-01-15T10:00:00Z"}}}`)
+	env.seedRegistry("/nonexistent/repo")
 
 	out := env.bw("registry", "prune", "-y")
 	if !strings.Contains(out, "pruned 1") {
