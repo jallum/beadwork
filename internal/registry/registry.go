@@ -1,6 +1,6 @@
 // Package registry tracks which repositories on this host use beadwork.
 // The registry is a plain text file (one absolute path per line) at
-// ~/.bw by default, overridden by $BEADWORK_HOME.
+// ~/.bw by default, overridden by $BW_REGISTRY.
 package registry
 
 import (
