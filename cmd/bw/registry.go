@@ -1,29 +1,27 @@
 package main
 
 import (
-	"github.com/jallum/beadwork/internal/config"
-
 	"encoding/json"
 	"fmt"
 	"os"
 	"sort"
 	"strings"
 
+	"github.com/jallum/beadwork/internal/config"
 	"github.com/jallum/beadwork/internal/issue"
-	"github.com/jallum/beadwork/internal/registry"
 	"github.com/jallum/beadwork/internal/repo"
 	"golang.org/x/term"
 )
 
 var registrySubcommands = map[string]struct {
 	summary string
-	run     func([]string, Writer) error
+	run     func([]string, Writer, *config.Config) (*config.Config, error)
 }{
 	"list":  {"List registered repositories", cmdRegistryList},
 	"prune": {"Remove stale registry entries", cmdRegistryPrune},
 }
 
-func cmdRegistry(_ *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
+func cmdRegistry(_ *issue.Store, args []string, w Writer, cfg *config.Config) (*config.Config, error) {
 	if len(args) == 0 {
 		return nil, printRegistryHelp(w)
 	}
@@ -44,7 +42,7 @@ func cmdRegistry(_ *issue.Store, args []string, w Writer, _ *config.Config) (*co
 		return nil, printRegistrySubHelp(w, sub, entry.summary)
 	}
 
-	return nil, entry.run(subArgs, w)
+	return entry.run(subArgs, w, cfg)
 }
 
 func printRegistryHelp(w Writer) error {
@@ -76,25 +74,22 @@ type registryListEntry struct {
 	Missing bool   `json:"missing,omitempty"`
 }
 
-func cmdRegistryList(args []string, w Writer) error {
+func cmdRegistryList(args []string, w Writer, cfg *config.Config) (*config.Config, error) {
 	a, err := ParseArgs(args, nil, []string{"--json"})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	reg, err := registry.Load(registry.DefaultPath())
-	if err != nil {
-		return fmt.Errorf("load registry: %w", err)
-	}
+	paths := cfg.StringSlice("registry.repos")
+	sort.Strings(paths)
 
-	paths := reg.Paths()
 	if len(paths) == 0 {
 		if a.JSON() {
 			fmt.Fprintln(w, "[]")
 		} else {
 			fmt.Fprintln(w, "no registered repositories")
 		}
-		return nil
+		return nil, nil
 	}
 
 	var list []registryListEntry
@@ -111,7 +106,7 @@ func cmdRegistryList(args []string, w Writer) error {
 	if a.JSON() {
 		data, _ := json.MarshalIndent(list, "", "  ")
 		fmt.Fprintln(w, string(data))
-		return nil
+		return nil, nil
 	}
 
 	for _, le := range list {
@@ -125,26 +120,21 @@ func cmdRegistryList(args []string, w Writer) error {
 		}
 		fmt.Fprintln(w, line)
 	}
-	return nil
+	return nil, nil
 }
 
-func cmdRegistryPrune(args []string, w Writer) error {
+func cmdRegistryPrune(args []string, w Writer, cfg *config.Config) (*config.Config, error) {
 	a, err := ParseArgs(args, nil, []string{"--yes", "-y"})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	force := a.Bool("--yes") || a.Bool("-y")
 
-	reg, err := registry.Load(registry.DefaultPath())
-	if err != nil {
-		return fmt.Errorf("load registry: %w", err)
-	}
-
-	paths := reg.Paths()
+	paths := cfg.StringSlice("registry.repos")
 	if len(paths) == 0 {
 		fmt.Fprintln(w, "registry is empty, nothing to prune")
-		return nil
+		return nil, nil
 	}
 
 	var missing []string
@@ -157,7 +147,7 @@ func cmdRegistryPrune(args []string, w Writer) error {
 
 	if len(missing) == 0 {
 		fmt.Fprintln(w, "all registered repos exist, nothing to prune")
-		return nil
+		return nil, nil
 	}
 
 	if len(missing) > len(paths)/2 {
@@ -174,7 +164,7 @@ func cmdRegistryPrune(args []string, w Writer) error {
 
 	if !force {
 		if !term.IsTerminal(int(os.Stdin.Fd())) {
-			return fmt.Errorf("non-interactive: pass --yes to confirm")
+			return nil, fmt.Errorf("non-interactive: pass --yes to confirm")
 		}
 		fmt.Fprint(w, "\nRemove these entries? [y/N] ")
 		var response string
@@ -182,17 +172,22 @@ func cmdRegistryPrune(args []string, w Writer) error {
 		response = strings.TrimSpace(strings.ToLower(response))
 		if response != "y" && response != "yes" {
 			fmt.Fprintln(w, "aborted")
-			return nil
+			return nil, nil
 		}
 	}
 
+	missingSet := make(map[string]bool, len(missing))
 	for _, p := range missing {
-		reg.Remove(p)
+		missingSet[p] = true
 	}
-	if err := reg.Save(); err != nil {
-		return fmt.Errorf("save registry: %w", err)
+	var kept []string
+	for _, p := range paths {
+		if !missingSet[p] {
+			kept = append(kept, p)
+		}
 	}
+	cfg = cfg.Set("registry.repos", kept)
 
 	fmt.Fprintf(w, "pruned %d entries\n", len(missing))
-	return nil
+	return cfg, nil
 }

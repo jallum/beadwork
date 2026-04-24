@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sync"
 
 	"github.com/jallum/beadwork/internal/config"
 	"github.com/jallum/beadwork/internal/issue"
-	"github.com/jallum/beadwork/internal/registry"
 	"github.com/jallum/beadwork/internal/repo"
 	"golang.org/x/term"
 )
@@ -99,38 +97,36 @@ func main() {
 		fatal(err.Error())
 	}
 
+	originalCfg := cfg
+
 	newCfg, err := c.Run(store, args, w, cfg)
 	if err != nil {
 		fatal(err.Error())
 	}
 	if newCfg != nil {
-		if err := newCfg.Save(); err != nil {
-			fatal(err.Error())
-		}
+		cfg = newCfg
 	}
 
-	touchRegistry()
+	cfg = autoRegister(cfg)
+
+	if cfg != originalCfg {
+		_ = cfg.Save()
+	}
 }
 
-var registryOnce sync.Once
-
-func touchRegistry() {
+func autoRegister(cfg *config.Config) *config.Config {
 	r, err := repo.FindRepoAt(repoDir)
 	if err != nil || !r.IsInitialized() {
-		return
+		return cfg
 	}
-	reg, err := registry.Load(registry.DefaultPath())
-	if err != nil {
-		registryOnce.Do(func() {
-			fmt.Fprintf(os.Stderr, "warning: could not load registry: %v\n", err)
-		})
-		return
+	repoPath := r.RepoDir()
+	for _, p := range cfg.StringSlice("registry.repos") {
+		if p == repoPath {
+			return cfg
+		}
 	}
-	if err := reg.Add(r.RepoDir()); err != nil {
-		registryOnce.Do(func() {
-			fmt.Fprintf(os.Stderr, "warning: could not save registry: %v\n", err)
-		})
-	}
+	repos := append(cfg.StringSlice("registry.repos"), repoPath)
+	return cfg.Set("registry.repos", repos)
 }
 
 // extractDirFlag removes all -C <dir> pairs from args and sets repoDir.
