@@ -298,6 +298,25 @@ func (e *bwEnv) registryPaths() []string {
 	return cfg.StringSlice("registry.repos")
 }
 
+// recapCursor reads the recap cursor ref from the git dir.
+func (e *bwEnv) recapCursor() string {
+	e.t.Helper()
+	path := filepath.Join(e.dir, ".git", "refs", "beadwork", "recap-cursor")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(data))
+}
+
+// recapCursorExists returns true if the recap cursor ref file exists.
+func (e *bwEnv) recapCursorExists() bool {
+	e.t.Helper()
+	path := filepath.Join(e.dir, ".git", "refs", "beadwork", "recap-cursor")
+	_, err := os.Stat(path)
+	return err == nil
+}
+
 // TestScaffoldingHelpers verifies that the test scaffolding helpers work correctly.
 func TestScaffoldingHelpers(t *testing.T) {
 	env := newBwEnv(t)
@@ -560,36 +579,36 @@ func TestRecapCursorIsIncremental(t *testing.T) {
 }
 
 // TestRecapStampsLastRecapAtWithNoCommits verifies that running recap with
-// nothing new still updates last_recap_at, so repeated recaps update the
-// "since last recap" label even against an unchanged HEAD.
+// nothing new still leaves the cursor ref in place so the "since last recap"
+// label can be derived from the ref file's mtime.
 func TestRecapStampsLastRecapAtWithNoCommits(t *testing.T) {
 	env := newBwEnv(t)
 	env.bw("create", "x", "--id", "lr-1")
-	env.bw("recap") // initial — stamps last_recap_at
-
-	before := env.registryContents()
-	if !strings.Contains(before, `"last_recap_at"`) {
-		t.Fatalf("first recap did not set last_recap_at:\n%s", before)
-	}
-
-	// Run again with nothing new. last_recap_at should still be rewritten
-	// (same value under BW_CLOCK, but the field must exist and be stamped).
 	env.bw("recap")
-	after := env.registryContents()
-	if !strings.Contains(after, `"last_recap_at"`) {
-		t.Errorf("second recap lost last_recap_at:\n%s", after)
+
+	if !env.recapCursorExists() {
+		t.Fatalf("first recap did not set cursor ref")
+	}
+	cursor1 := env.recapCursor()
+
+	// Run again with nothing new. Cursor ref should still exist.
+	env.bw("recap")
+	if !env.recapCursorExists() {
+		t.Errorf("second recap lost cursor ref")
+	}
+	if env.recapCursor() != cursor1 {
+		t.Errorf("cursor changed with no new commits")
 	}
 }
 
-// TestRecapDryRunDoesNotStamp verifies --dry-run leaves last_recap_at alone.
+// TestRecapDryRunDoesNotStamp verifies --dry-run leaves the cursor ref alone.
 func TestRecapDryRunDoesNotStamp(t *testing.T) {
 	env := newBwEnv(t)
 	env.bw("create", "x", "--id", "dr-2")
 
 	env.bw("recap", "--dry-run")
-	contents := env.registryContents()
-	if strings.Contains(contents, `"last_recap_at"`) {
-		t.Errorf("--dry-run should not stamp last_recap_at:\n%s", contents)
+	if env.recapCursorExists() {
+		t.Errorf("--dry-run should not create cursor ref")
 	}
 }
 
@@ -599,9 +618,8 @@ func TestRecapAdvancesCursor(t *testing.T) {
 	env.bw("create", "normal", "--id", "cr-1")
 
 	env.bw("recap", "today")
-	contents := env.registryContents()
-	if !strings.Contains(contents, `"cursor"`) {
-		t.Errorf("recap should advance cursor:\n%s", contents)
+	if env.recapCursor() == "" {
+		t.Errorf("recap should advance cursor")
 	}
 }
 
@@ -902,14 +920,9 @@ func TestRecapAllWarnsOnMissing(t *testing.T) {
 	envs := newMultiRepoEnv(t, 2)
 	envs[0].bw("create", "Real", "--id", "re-1")
 
-	// Seed an extra registry entry for a nonexistent repo.
-	path := filepath.Join(envs[0].registryDir, "registry.json")
-	existing, _ := os.ReadFile(path)
-	// Add a missing repo to the existing registry JSON.
-	modified := strings.Replace(string(existing), `"repos": {`,
-		`"repos": {
-    "/nonexistent/path": {"last_seen_at": "2026-01-15T10:00:00Z"},`, 1)
-	os.WriteFile(path, []byte(modified), 0644)
+	// Append a nonexistent path to the registry.
+	existing := envs[0].registryContents()
+	os.WriteFile(envs[0].registryDir, []byte(existing+"/nonexistent/path\n"), 0644)
 
 	stdout, stderr := envs[0].bwCapture("recap", "today", "--all")
 	if !strings.Contains(stderr, "skipping") || !strings.Contains(stderr, "/nonexistent/path") {
@@ -953,11 +966,15 @@ func TestRecapAllAdvancesPerRepoCursors(t *testing.T) {
 
 	envs[0].bw("recap", "--all")
 
-	contents := envs[0].registryContents()
-	// Both repos should now have a "cursor" field.
-	cursorCount := strings.Count(contents, `"cursor"`)
-	if cursorCount < 2 {
-		t.Errorf("expected 2 cursors after recap --all, got %d:\n%s", cursorCount, contents)
+	// Both repos should now have a cursor ref.
+	cursors := 0
+	for _, e := range envs {
+		if e.recapCursor() != "" {
+			cursors++
+		}
+	}
+	if cursors != 2 {
+		t.Errorf("expected 2 cursors after recap --all, got %d", cursors)
 	}
 }
 
@@ -1180,45 +1197,31 @@ func TestWorktreeRefWrites(t *testing.T) {
 }
 
 // TestRecapExplicitWindowGapSkipsAdvance verifies that an explicit window
-// that starts AFTER the current cursor leaves both cursor and last_recap_at
-// untouched, and prints a gap notice on stderr naming the unrendered count.
-// See ADR: recap-explicit-window-conditional-advance.
+// that starts AFTER the current cursor leaves the cursor untouched, and
+// prints a gap notice on stderr naming the unrendered count.
 func TestRecapExplicitWindowGapSkipsAdvance(t *testing.T) {
 	env := newBwEnv(t)
 
 	const (
-		day1 = "2026-04-10T09:00:00Z" // cursor gets set here
-		day2 = "2026-04-12T09:00:00Z" // gap commit (older than window, newer than cursor)
-		day3 = "2026-04-14T12:00:00Z" // explicit "today" is day3 midnight → day3 noon
+		day1 = "2026-04-10T09:00:00Z"
+		day2 = "2026-04-12T09:00:00Z"
+		day3 = "2026-04-14T12:00:00Z"
 	)
 
-	// Day 1: create an issue, run bare recap → cursor advances to this commit.
 	env.bwAtClock(day1, "create", "gap-origin", "--id", "gp-1")
 	env.bwAtClock(day1, "recap")
-	cursor1 := registryField(t, env.registryContents(), "cursor")
-	lastRecap1 := registryField(t, env.registryContents(), "last_recap_at")
+	cursor1 := env.recapCursor()
 	if cursor1 == "" {
-		t.Fatalf("day1 bare recap did not stamp cursor:\n%s", env.registryContents())
-	}
-	if lastRecap1 == "" {
-		t.Fatalf("day1 bare recap did not stamp last_recap_at:\n%s", env.registryContents())
+		t.Fatalf("day1 bare recap did not stamp cursor")
 	}
 
-	// Day 2: another commit lands. This is the "gap" — it's newer than the
-	// day-1 cursor and older than the day-3 "today" window.
 	env.bwAtClock(day2, "create", "gap-middle", "--id", "gp-2")
 
-	// Day 3: explicit `recap today`. Window = day3 00:00 → day3 12:00. The
-	// day-2 gp-2 commit is in the gap. gp-2 is NOT rendered, cursor must
-	// NOT advance, stderr must carry the gap notice.
 	stdout, stderr := env.bwAtClockCapture(day3, "recap", "today")
 
-	// Output: gp-2 should not appear (it's older than the window).
 	if strings.Contains(stdout, "gp-2") {
 		t.Errorf("explicit window should not render gap commit gp-2:\n%s", stdout)
 	}
-
-	// Stderr notice must mention the gap count (1).
 	if !strings.Contains(stderr, "1 commit older than this window") {
 		t.Errorf("expected gap notice on stderr, got:\n%s", stderr)
 	}
@@ -1226,42 +1229,10 @@ func TestRecapExplicitWindowGapSkipsAdvance(t *testing.T) {
 		t.Errorf("gap notice should reference 'bw recap':\n%s", stderr)
 	}
 
-	// Registry: cursor + last_recap_at must still match the day-1 snapshot.
-	// (last_seen_at moves on every command via the auto-register hook; that's
-	// orthogonal to the recap-stamp behavior under test.)
-	cursor3 := registryField(t, env.registryContents(), "cursor")
-	lastRecap3 := registryField(t, env.registryContents(), "last_recap_at")
+	cursor3 := env.recapCursor()
 	if cursor3 != cursor1 {
 		t.Errorf("gapped explicit run advanced cursor\n  was: %s\n  now: %s", cursor1, cursor3)
 	}
-	if lastRecap3 != lastRecap1 {
-		t.Errorf("gapped explicit run stamped last_recap_at\n  was: %s\n  now: %s", lastRecap1, lastRecap3)
-	}
-}
-
-// registryField extracts a top-level string field from a single-repo
-// registry JSON blob. Test helper only — assumes exactly one repo entry.
-func registryField(t *testing.T, raw, field string) string {
-	t.Helper()
-	needle := `"` + field + `":`
-	i := strings.Index(raw, needle)
-	if i < 0 {
-		return ""
-	}
-	rest := raw[i+len(needle):]
-	// Skip whitespace then expect a quoted string.
-	for len(rest) > 0 && (rest[0] == ' ' || rest[0] == '\t' || rest[0] == '\n') {
-		rest = rest[1:]
-	}
-	if len(rest) == 0 || rest[0] != '"' {
-		return ""
-	}
-	rest = rest[1:]
-	end := strings.Index(rest, `"`)
-	if end < 0 {
-		return ""
-	}
-	return rest[:end]
 }
 
 // TestRecapExplicitWindowNoGapAdvances verifies that an explicit window that
@@ -1271,19 +1242,17 @@ func TestRecapExplicitWindowNoGapAdvances(t *testing.T) {
 	env := newBwEnv(t)
 
 	const (
-		day1 = "2026-04-14T03:00:00Z" // cursor here, inside day-1
-		day2 = "2026-04-14T05:00:00Z" // new commit, later same day
-		now  = "2026-04-14T12:00:00Z" // `recap today` fires here → window covers both
+		day1 = "2026-04-14T03:00:00Z"
+		day2 = "2026-04-14T05:00:00Z"
+		now  = "2026-04-14T12:00:00Z"
 	)
 
 	env.bwAtClock(day1, "create", "first", "--id", "ng-1")
 	env.bwAtClock(day1, "recap")
-	before := env.registryContents()
+	cursorBefore := env.recapCursor()
 
 	env.bwAtClock(day2, "create", "second", "--id", "ng-2")
 
-	// `recap today` at noon. Window start is midnight (before day1 cursor),
-	// so no gap — cursor should advance and stderr should be clean.
 	stdout, stderr := env.bwAtClockCapture(now, "recap", "today")
 	if !strings.Contains(stdout, "ng-2") {
 		t.Errorf("no-gap explicit recap missing ng-2:\n%s", stdout)
@@ -1292,8 +1261,8 @@ func TestRecapExplicitWindowNoGapAdvances(t *testing.T) {
 		t.Errorf("no-gap explicit recap should not emit gap notice:\n%s", stderr)
 	}
 
-	after := env.registryContents()
-	if after == before {
-		t.Errorf("no-gap explicit recap should advance cursor; registry unchanged:\n%s", after)
+	cursorAfter := env.recapCursor()
+	if cursorAfter == cursorBefore {
+		t.Errorf("no-gap explicit recap should advance cursor")
 	}
 }
