@@ -19,15 +19,14 @@ func Paths(cfg *config.Config) []string {
 	return cfg.StringSlice(key)
 }
 
-// Repo pairs a filesystem path with the prefix and aliases read live from the repo.
+// Repo pairs a filesystem path with the prefix read live from the repo.
 type Repo struct {
-	Path    string
-	Prefix  string
-	Aliases []string
+	Path   string
+	Prefix string
 }
 
-// Repos returns all registered repos with their prefixes and aliases.
-// Entries that can't be opened or aren't initialized are silently skipped.
+// Repos returns all registered repos with their prefixes. Entries that
+// can't be opened or aren't initialized are silently skipped.
 func Repos(cfg *config.Config) []Repo {
 	var out []Repo
 	for _, p := range Paths(cfg) {
@@ -35,7 +34,7 @@ func Repos(cfg *config.Config) []Repo {
 		if err != nil || !r.IsInitialized() {
 			continue
 		}
-		out = append(out, Repo{Path: p, Prefix: r.Prefix, Aliases: r.Aliases()})
+		out = append(out, Repo{Path: p, Prefix: r.Prefix})
 	}
 	return out
 }
@@ -51,20 +50,12 @@ func Resolve(cfg *config.Config, prefix string) (string, bool) {
 	return "", false
 }
 
-// ResolveAll returns all repo paths whose current prefix or aliases
-// match the given prefix.
+// ResolveAll returns all repo paths that share the given prefix.
 func ResolveAll(cfg *config.Config, prefix string) []string {
 	var paths []string
 	for _, r := range Repos(cfg) {
 		if r.Prefix == prefix {
 			paths = append(paths, r.Path)
-			continue
-		}
-		for _, a := range r.Aliases {
-			if a == prefix {
-				paths = append(paths, r.Path)
-				break
-			}
 		}
 	}
 	return paths
