@@ -61,7 +61,7 @@ func cmdConfig(store *issue.Store, args []string, w Writer, cfg *config.Config) 
 		// (open + in_progress) issues so cross-repo lookups stay consistent.
 		// Closed issues keep their old prefix as a historical record.
 		if ca.Key == "prefix" {
-			return renamePrefix(store, r, ca.Value, w, cfg)
+			return nil, renamePrefix(store, r, ca.Value, w, cfg)
 		}
 		if err := r.SetConfig(ca.Key, ca.Value); err != nil {
 			return nil, err

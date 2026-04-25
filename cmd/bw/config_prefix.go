@@ -21,21 +21,21 @@ import (
 // references to renamed issues from closed-issue JSON are updated.
 //
 // All changes land as a single commit.
-func renamePrefix(store *issue.Store, r *repo.Repo, newPrefix string, w Writer, cfg *config.Config) (*config.Config, error) {
+func renamePrefix(store *issue.Store, r *repo.Repo, newPrefix string, w Writer, cfg *config.Config) error {
 	if err := repo.ValidatePrefix(newPrefix); err != nil {
-		return nil, err
+		return err
 	}
 	if newPrefix == "" {
-		return nil, fmt.Errorf("prefix cannot be empty")
+		return fmt.Errorf("prefix cannot be empty")
 	}
 	oldPrefix := r.Prefix
 	if oldPrefix == newPrefix {
-		return nil, fmt.Errorf("prefix is already %q", newPrefix)
+		return fmt.Errorf("prefix is already %q", newPrefix)
 	}
 
 	all, err := loadAllIssues(store, r.TreeFS())
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Build rename map: top-level open/in_progress with the old prefix,
@@ -68,19 +68,19 @@ func renamePrefix(store *issue.Store, r *repo.Repo, newPrefix string, w Writer, 
 		newAliases = mergeAliases(existingAliases, oldPrefix, newPrefix)
 	}
 	if err := r.SetAliases(newAliases); err != nil {
-		return nil, err
+		return err
 	}
 	if err := r.SetConfig("prefix", newPrefix); err != nil {
-		return nil, err
+		return err
 	}
 
 	if len(renameMap) == 0 {
 		intent := fmt.Sprintf("config prefix=%s", newPrefix)
 		if err := r.Commit(intent); err != nil {
-			return nil, fmt.Errorf("commit failed: %w", err)
+			return fmt.Errorf("commit failed: %w", err)
 		}
 		fmt.Fprintf(w, "prefix=%s (no open issues to rename)\n", newPrefix)
-		return nil, nil
+		return nil
 	}
 
 	fs := r.TreeFS()
@@ -113,11 +113,11 @@ func renamePrefix(store *issue.Store, r *repo.Repo, newPrefix string, w Writer, 
 			fs.Remove("issues/" + iss.ID + ".json")
 			iss.ID = newID
 			if err := writeJSON(fs, "issues/"+newID+".json", iss); err != nil {
-				return nil, err
+				return err
 			}
 		} else if dirty {
 			if err := writeJSON(fs, "issues/"+iss.ID+".json", iss); err != nil {
-				return nil, err
+				return err
 			}
 		}
 	}
@@ -192,7 +192,7 @@ func renamePrefix(store *issue.Store, r *repo.Repo, newPrefix string, w Writer, 
 	//    renamed issue JSONs, status/label/block edge files.
 	intent := fmt.Sprintf("config prefix=%s (renamed %d issue(s))", newPrefix, len(renameMap))
 	if err := r.Commit(intent); err != nil {
-		return nil, fmt.Errorf("commit failed: %w", err)
+		return fmt.Errorf("commit failed: %w", err)
 	}
 
 	if collisionRepo != "" {
@@ -202,7 +202,7 @@ func renamePrefix(store *issue.Store, r *repo.Repo, newPrefix string, w Writer, 
 		fmt.Fprintf(w, "prefix=%s (renamed %d open/in_progress issue(s); %q kept as alias)\n",
 			newPrefix, len(renameMap), oldPrefix)
 	}
-	return nil, nil
+	return nil
 }
 
 // otherRepoClaiming returns the path of another registered repo that
