@@ -95,16 +95,12 @@ func resolveCrossRepo(cfg *config.Config, args []string) {
 	}
 }
 
-// knownPrefixes scans registered repos and returns the set of live prefixes
-// and aliases.
+// knownPrefixes returns the set of live prefixes from registered repos.
 func knownPrefixes(cfg *config.Config) map[string]bool {
 	known := map[string]bool{}
 	for _, r := range registry.Repos(cfg) {
 		if r.Prefix != "" {
 			known[r.Prefix] = true
-		}
-		for _, a := range r.Aliases {
-			known[a] = true
 		}
 	}
 	return known

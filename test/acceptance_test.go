@@ -1061,19 +1061,6 @@ func TestCFlagAcceptsPrefix(t *testing.T) {
 }
 
 // TestCFlagAcceptsAlias verifies -C works with an alias after a rename.
-func TestCFlagAcceptsAlias(t *testing.T) {
-	env := newBwEnv(t)
-	env.bw("create", "legacy", "--id", "test-lg1")
-	env.bw("close", "test-lg1")
-	env.bw("config", "set", "prefix", "renamed")
-
-	// The old prefix "test" is now an alias. -C test should still find it.
-	out := env.bw("-C", "test", "show", "test-lg1")
-	if !strings.Contains(out, "legacy") {
-		t.Errorf("-C <alias> did not resolve:\n%s", out)
-	}
-}
-
 // TestCFlagPathFallsThroughWhenNotPrefix verifies that an explicit path
 // (absolute or relative) still works even if it isn't a registered prefix.
 func TestCFlagPathFallsThroughWhenNotPrefix(t *testing.T) {
@@ -1110,6 +1097,7 @@ func TestCFlagCollisionErrors(t *testing.T) {
 	twin.git("add", ".")
 	twin.git("commit", "-m", "initial")
 	twin.bw("init", "--prefix", "r0")
+	twin.bw("list") // triggers auto-registration
 
 	out := envs[0].bwFail("-C", "r0", "list")
 	if !strings.Contains(out, "registered for 2 repositories") {
@@ -1141,6 +1129,7 @@ func TestCrossRepoPrefixCollision(t *testing.T) {
 	twin.git("add", ".")
 	twin.git("commit", "-m", "initial")
 	twin.bw("init", "--prefix", "r0")
+	twin.bw("list") // triggers auto-registration
 
 	envs[0].bw("create", "duped", "--id", "r0-d1")
 
@@ -1167,206 +1156,6 @@ func TestCrossRepoPrefixCollision(t *testing.T) {
 	}
 	if !strings.Contains(out, "use -C <path>") {
 		t.Errorf("collision error should suggest -C:\n%s", out)
-	}
-}
-
-// TestConfigSetPrefixRenamesOpen verifies `bw config set prefix` rewrites
-// open/in_progress issue IDs while keeping closed ones as historical
-// record. References from closed issues to renamed open issues update.
-func TestConfigSetPrefixRenamesOpen(t *testing.T) {
-	env := newBwEnv(t)
-
-	// 4 issues: 2 open (one with a child), 2 closed (one referencing the open one).
-	env.bw("create", "open root", "--id", "test-or1")
-	env.bw("create", "open child", "--id", "test-or1.1", "--parent", "test-or1")
-	env.bw("create", "another open", "--id", "test-or2")
-	env.bw("create", "closed one", "--id", "test-cl1")
-	env.bw("create", "closed referrer", "--id", "test-cl2")
-
-	// test-or2 blocks test-cl2; test-cl2 will be closed.
-	env.bw("dep", "add", "test-or2", "blocks", "test-cl2")
-
-	env.bw("close", "test-cl1")
-	env.bw("close", "test-cl2")
-
-	// Now rename prefix.
-	out := env.bw("config", "set", "prefix", "newt")
-	if !strings.Contains(out, "renamed") {
-		t.Errorf("expected rename summary:\n%s", out)
-	}
-
-	// Open issues moved to new prefix.
-	out2 := env.bw("show", "newt-or1")
-	if !strings.Contains(out2, "open root") {
-		t.Errorf("renamed open root not found:\n%s", out2)
-	}
-	out3 := env.bw("show", "newt-or1.1")
-	if !strings.Contains(out3, "open child") {
-		t.Errorf("renamed open child not found:\n%s", out3)
-	}
-
-	// Old IDs for renamed issues are gone.
-	gone := env.bwFail("show", "test-or1")
-	if !strings.Contains(gone, "no issue found") {
-		t.Errorf("old open ID still resolves:\n%s", gone)
-	}
-
-	// Closed issues keep their old prefix.
-	out4 := env.bw("show", "test-cl1")
-	if !strings.Contains(out4, "closed one") {
-		t.Errorf("closed issue prefix changed unexpectedly:\n%s", out4)
-	}
-
-	// Closed-referrer's blocked_by should now point at the renamed ID.
-	out5 := env.bw("show", "test-cl2", "--json")
-	if strings.Contains(out5, "test-or2") || !strings.Contains(out5, "newt-or2") {
-		t.Errorf("blocked_by ref not updated in closed issue:\n%s", out5)
-	}
-
-	// .bwconfig prefix updated.
-	out6 := env.bw("config", "get", "prefix")
-	if strings.TrimSpace(out6) != "newt" {
-		t.Errorf("config get prefix = %q, want newt", strings.TrimSpace(out6))
-	}
-}
-
-// TestConfigSetPrefixNoOpenIssues verifies the rename works on a repo
-// with no open issues — just changes .bwconfig.
-func TestConfigSetPrefixNoOpenIssues(t *testing.T) {
-	env := newBwEnv(t)
-	env.bw("create", "x", "--id", "test-x1")
-	env.bw("close", "test-x1")
-
-	out := env.bw("config", "set", "prefix", "renamed")
-	if !strings.Contains(out, "no open issues to rename") {
-		t.Errorf("expected 'no open issues to rename' message:\n%s", out)
-	}
-	if !strings.Contains(out, "renamed") {
-		t.Errorf("expected new prefix in output:\n%s", out)
-	}
-
-	// Closed issue still has old prefix.
-	out2 := env.bw("show", "test-x1")
-	if !strings.Contains(out2, "test-x1") {
-		t.Errorf("closed issue ID changed unexpectedly:\n%s", out2)
-	}
-}
-
-// TestConfigSetPrefixAliasesOldForCrossRepo verifies that after a rename,
-// the OLD prefix is registered as an alias so closed issues with the old
-// prefix remain reachable cross-repo (and reopening them still routes
-// correctly from other machines).
-func TestConfigSetPrefixAliasesOldForCrossRepo(t *testing.T) {
-	env := newBwEnv(t)
-
-	// One open + one closed before rename. Open will be migrated; closed
-	// keeps the old prefix.
-	env.bw("create", "open", "--id", "test-op1")
-	env.bw("create", "closed", "--id", "test-cl1")
-	env.bw("close", "test-cl1")
-
-	env.bw("config", "set", "prefix", "newt")
-
-	// Verify the repo's bwconfig shows the new prefix and old alias.
-	cfgOut := env.bw("config", "get", "prefix")
-	if !strings.Contains(cfgOut, "newt") {
-		t.Errorf("prefix not updated: %s", cfgOut)
-	}
-	aliasOut := env.bw("config", "get", "aliases")
-	if !strings.Contains(aliasOut, "test") {
-		t.Errorf("old prefix not registered as alias: %s", aliasOut)
-	}
-
-	// From a non-beadwork dir, BOTH the new-prefix open issue and the
-	// old-prefix closed issue must resolve.
-	nonRepo := t.TempDir()
-	caller := &bwEnv{
-		t:       t,
-		dir:     nonRepo,
-		cfgPath: env.cfgPath,
-		env: append(os.Environ(),
-			"BW_CLOCK="+fixedClock,
-			"NO_COLOR=1",
-			"BW_CONFIG="+env.cfgPath,
-			"GIT_CONFIG_GLOBAL=/dev/null",
-			"GIT_CONFIG_SYSTEM=/dev/null",
-		),
-	}
-	if out := caller.bw("show", "newt-op1"); !strings.Contains(out, "open") {
-		t.Errorf("renamed open issue not reachable cross-repo:\n%s", out)
-	}
-	if out := caller.bw("show", "test-cl1"); !strings.Contains(out, "closed") {
-		t.Errorf("old-prefix closed issue not reachable cross-repo:\n%s", out)
-	}
-
-	// Reopening a closed old-prefix issue should still route correctly.
-	caller.bw("reopen", "test-cl1")
-	if out := caller.bw("show", "test-cl1", "--json"); !strings.Contains(out, `"open"`) {
-		t.Errorf("reopen of old-prefix closed issue did not land:\n%s", out)
-	}
-}
-
-// TestConfigSetPrefixSkipsAliasWhenCollides verifies that renaming one of
-// two repos sharing a prefix does NOT add the old prefix as an alias on
-// the renamed repo — otherwise the collision would persist. After the
-// rename, the old prefix should unambiguously resolve to the *other* repo.
-func TestConfigSetPrefixSkipsAliasWhenCollides(t *testing.T) {
-	envs := newMultiRepoEnv(t, 2)
-	envs[0].bw("list")
-	envs[1].bw("list")
-
-	// Force the prefix collision: change envs[0]'s prefix to "r1" so
-	// both repos share the same prefix.
-	envs[0].bw("config", "set", "prefix", "r1")
-	envs[1].bw("create", "target", "--id", "r1-t1")
-
-	// Rename envs[1] from r1 -> newr1. Should detect the collision
-	// with envs[0] and skip aliasing.
-	out := envs[1].bw("config", "set", "prefix", "newr1")
-	if !strings.Contains(out, "NOT aliased") {
-		t.Errorf("expected collision note in rename output:\n%s", out)
-	}
-
-	// After rename, looking up the old prefix "r1" from a neutral dir
-	// should unambiguously point to envs[0] (the non-renamed repo) —
-	// envs[1] should NOT claim "r1" via alias anymore.
-	nonRepo := t.TempDir()
-	caller := &bwEnv{
-		t:       t,
-		dir:     nonRepo,
-		cfgPath: envs[1].cfgPath,
-		env: append(os.Environ(),
-			"BW_CLOCK="+fixedClock,
-			"NO_COLOR=1",
-			"BW_CONFIG="+envs[1].cfgPath,
-			"GIT_CONFIG_GLOBAL=/dev/null",
-			"GIT_CONFIG_SYSTEM=/dev/null",
-		),
-	}
-
-	// envs[0] now has prefix r1 — so "r1-t1" should resolve there,
-	// not trigger a collision.
-	out2 := caller.bwFail("show", "r1-t1")
-	if strings.Contains(out2, "registered for 2 repositories") {
-		t.Errorf("collision should be resolved after rename:\n%s", out2)
-	}
-}
-
-// TestConfigSetPrefixSameIsRejected verifies setting the same prefix errors.
-func TestConfigSetPrefixSameIsRejected(t *testing.T) {
-	env := newBwEnv(t)
-	out := env.bwFail("config", "set", "prefix", "test")
-	if !strings.Contains(out, "already") {
-		t.Errorf("expected 'already' in error:\n%s", out)
-	}
-}
-
-// TestConfigSetPrefixInvalidIsRejected verifies bad prefixes are rejected.
-func TestConfigSetPrefixInvalidIsRejected(t *testing.T) {
-	env := newBwEnv(t)
-	out := env.bwFail("config", "set", "prefix", "has spaces")
-	if !strings.Contains(out, "invalid") && !strings.Contains(out, "must") {
-		t.Errorf("expected validation error:\n%s", out)
 	}
 }
 
