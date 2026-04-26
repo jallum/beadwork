@@ -73,6 +73,9 @@ func newBwEnv(t *testing.T) *bwEnv {
 	// Initialize beadwork.
 	env.bw("init", "--prefix", "test")
 
+	// Enable auto-registration so tests see the expected registry behavior.
+	env.setConfig("registry.auto", true)
+
 	return env
 }
 
@@ -196,9 +199,25 @@ func newMultiRepoEnv(t *testing.T, n int) []*bwEnv {
 		env.git("add", ".")
 		env.git("commit", "-m", "initial")
 		env.bw("init", "--prefix", fmt.Sprintf("r%d", i))
+		if i == 0 {
+			env.setConfig("registry.auto", true)
+		}
 		envs[i] = env
 	}
 	return envs
+}
+
+// setConfig sets a key in the global config file.
+func (e *bwEnv) setConfig(key string, value any) {
+	e.t.Helper()
+	cfg, err := config.Load(e.cfgPath)
+	if err != nil {
+		e.t.Fatalf("setConfig load: %v", err)
+	}
+	cfg = cfg.Set(key, value)
+	if err := cfg.Save(); err != nil {
+		e.t.Fatalf("setConfig save: %v", err)
+	}
 }
 
 // seedRegistry adds paths to the config's registry.repos key.
@@ -240,11 +259,12 @@ func TestScaffoldingHelpers(t *testing.T) {
 		t.Errorf("registryPaths() = %v, want /a and /b", got)
 	}
 
-	// registryPaths on a fresh env returns entries from auto-registration
+	// registryPaths populated after first NeedsStore command
 	env2 := newBwEnv(t)
+	env2.bw("list") // triggers auto-registration
 	paths := env2.registryPaths()
 	if len(paths) == 0 {
-		t.Errorf("registryPaths() on fresh env is empty, expected auto-reg data")
+		t.Errorf("registryPaths() empty after bw list, expected auto-reg data")
 	}
 
 	// newMultiRepoEnv creates n envs sharing a config file
