@@ -9,6 +9,11 @@ import (
 
 const key = "registry.repos"
 
+// Auto reports whether automatic registration is enabled.
+func Auto(cfg *config.Config) bool {
+	return cfg.Bool("registry.auto")
+}
+
 // Paths returns the registered repo paths from config.
 func Paths(cfg *config.Config) []string {
 	return cfg.StringSlice(key)
