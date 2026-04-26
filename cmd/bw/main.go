@@ -108,19 +108,14 @@ func main() {
 		cfg = newCfg
 	}
 
-	cfg = autoRegister(cfg)
+	if store != nil && cfg.Bool("registry.auto") {
+		r := store.Committer.(*repo.Repo)
+		cfg = registry.Register(cfg, r.RepoDir())
+	}
 
 	if cfg != originalCfg {
 		_ = cfg.Save()
 	}
-}
-
-func autoRegister(cfg *config.Config) *config.Config {
-	r, err := repo.FindRepoAt(repoDir)
-	if err != nil || !r.IsInitialized() {
-		return cfg
-	}
-	return registry.Register(cfg, r.RepoDir())
 }
 
 // extractDirFlag removes all -C <dir> pairs from args and sets repoDir.
