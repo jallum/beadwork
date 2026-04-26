@@ -1,6 +1,7 @@
 package treefs
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -383,8 +384,8 @@ func TestCASConflict(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected CAS conflict error")
 	}
-	if !containsStr(err.Error(), "conflict") {
-		t.Fatalf("expected conflict error, got: %v", err)
+	if !errors.Is(err, ErrRefMoved) {
+		t.Fatalf("expected ErrRefMoved, got: %v", err)
 	}
 }
 
@@ -528,15 +529,3 @@ func TestCommitRespectsBWClockEnv(t *testing.T) {
 	}
 }
 
-func containsStr(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && contains(s, substr))
-}
-
-func contains(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
-}

@@ -84,6 +84,13 @@ func (s *Store) ClearCache() {
 	s.idSet = nil
 }
 
+// Refresh reloads the underlying TreeFS from the current ref and clears
+// all caches. Use this after a CAS conflict to pick up the latest state.
+func (s *Store) Refresh() error {
+	s.ClearCache()
+	return s.FS.Refresh()
+}
+
 // Now returns the current time in UTC. If the BW_CLOCK environment variable
 // is set to an RFC3339 value, that fixed time is used instead of the real
 // clock. This enables deterministic timestamps for testing and migration.
