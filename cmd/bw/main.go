@@ -108,7 +108,7 @@ func main() {
 		cfg = newCfg
 	}
 
-	if store != nil && cfg.Bool("registry.auto") {
+	if store != nil && registry.Auto(cfg) {
 		r := store.Committer.(*repo.Repo)
 		cfg = registry.Register(cfg, r.RepoDir())
 	}
