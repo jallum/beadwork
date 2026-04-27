@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 )
 
@@ -56,24 +58,24 @@ type beadsDep struct {
 }
 
 type beadsRecord struct {
-	ID           string     `json:"id"`
-	Title        string     `json:"title"`
-	Description  string     `json:"description,omitempty"`
-	Status       string     `json:"status"`
-	Priority     int        `json:"priority"`
-	IssueType    string     `json:"issue_type"`
-	Owner        string     `json:"owner,omitempty"`
-	CreatedAt    string     `json:"created_at"`
-	UpdatedAt    string     `json:"updated_at,omitempty"`
-	ClosedAt     string     `json:"closed_at,omitempty"`
-	CloseReason  string     `json:"close_reason,omitempty"`
-	Labels       []string   `json:"labels,omitempty"`
-	DeferUntil   string     `json:"defer_until,omitempty"`
-	Due          string     `json:"due,omitempty"`
-	Blocks       []string   `json:"blocks,omitempty"`
-	BlockedBy    []string   `json:"blocked_by,omitempty"`
-	Dependencies []beadsDep       `json:"dependencies,omitempty"`
-	Comments     []exportComment  `json:"comments,omitempty"`
+	ID           string          `json:"id"`
+	Title        string          `json:"title"`
+	Description  string          `json:"description,omitempty"`
+	Status       string          `json:"status"`
+	Priority     int             `json:"priority"`
+	IssueType    string          `json:"issue_type"`
+	Owner        string          `json:"owner,omitempty"`
+	CreatedAt    string          `json:"created_at"`
+	UpdatedAt    string          `json:"updated_at,omitempty"`
+	ClosedAt     string          `json:"closed_at,omitempty"`
+	CloseReason  string          `json:"close_reason,omitempty"`
+	Labels       []string        `json:"labels,omitempty"`
+	DeferUntil   string          `json:"defer_until,omitempty"`
+	Due          string          `json:"due,omitempty"`
+	Blocks       []string        `json:"blocks,omitempty"`
+	BlockedBy    []string        `json:"blocked_by,omitempty"`
+	Dependencies []beadsDep      `json:"dependencies,omitempty"`
+	Comments     []exportComment `json:"comments,omitempty"`
 }
 
 type ExportArgs struct {
@@ -92,17 +94,17 @@ func parseExportArgs(raw []string) (ExportArgs, error) {
 	}, nil
 }
 
-func cmdExport(store *issue.Store, args []string, w Writer) error {
+func cmdExport(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	ea, err := parseExportArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	filter := issue.Filter{Status: ea.Status}
 
 	issues, err := store.List(filter)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, iss := range issues {
@@ -158,9 +160,9 @@ func cmdExport(store *issue.Store, args []string, w Writer) error {
 
 		data, err := json.Marshal(rec)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		fmt.Fprintln(w, string(data))
 	}
-	return nil
+	return nil, nil
 }

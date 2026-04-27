@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 )
 
@@ -42,20 +44,20 @@ func parseCommentArgs(raw []string) (CommentArgs, error) {
 	}, nil
 }
 
-func cmdComment(store *issue.Store, args []string, w Writer) error {
+func cmdComment(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	ca, err := parseCommentArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	iss, err := store.Comment(ca.ID, ca.Text, ca.Author)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	intent := fmt.Sprintf("comment %s %q", iss.ID, ca.Text)
 	if err := store.Commit(intent); err != nil {
-		return fmt.Errorf("commit failed: %w", err)
+		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	if ca.JSON {
@@ -63,5 +65,5 @@ func cmdComment(store *issue.Store, args []string, w Writer) error {
 	} else {
 		fmt.Fprintf(w, "comment added to %s\n", w.Style(iss.ID, Cyan))
 	}
-	return nil
+	return nil, nil
 }

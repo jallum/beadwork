@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/md"
 	"github.com/jallum/beadwork/internal/repo"
@@ -13,14 +15,14 @@ import (
 )
 
 type PrimeData struct {
-	Prefix            string
-	WorktreeDirty     bool
-	Git               repo.GitContext
-	OverdueCount      int
-	ExpiredDeferrals  string
+	Prefix           string
+	WorktreeDirty    bool
+	Git              repo.GitContext
+	OverdueCount     int
+	ExpiredDeferrals string
 }
 
-func cmdPrime(store *issue.Store, _ []string, w Writer) error {
+func cmdPrime(store *issue.Store, _ []string, w Writer, _ *config.Config) (*config.Config, error) {
 	r := store.Committer.(*repo.Repo)
 	cfg := r.ListConfig()
 	gitCtx := r.GetGitContext()
@@ -48,7 +50,7 @@ func cmdPrime(store *issue.Store, _ []string, w Writer) error {
 	bwFn := func(args ...string) string {
 		if cmd := commandMap[args[0]]; cmd != nil {
 			var buf bytes.Buffer
-			cmd.Run(store, args[1:], TokenWriter(&buf))
+			cmd.Run(store, args[1:], TokenWriter(&buf), nil)
 			return strings.TrimRight(buf.String(), "\n")
 		}
 		return ""
@@ -56,11 +58,11 @@ func cmdPrime(store *issue.Store, _ []string, w Writer) error {
 
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, "prime", prompts.Prime, data, bwFn); err != nil {
-		return err
+		return nil, err
 	}
 
 	out := strings.Trim(buf.String(), "\n")
 	fmt.Fprint(w, out)
 	fmt.Fprintln(w)
-	return nil
+	return nil, nil
 }

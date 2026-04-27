@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/md"
 )
@@ -69,20 +71,20 @@ func (sa ShowArgs) showSection(name string) bool {
 	return sa.Sections[name]
 }
 
-func cmdShow(store *issue.Store, args []string, w Writer) error {
+func cmdShow(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	sa, err := parseShowArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	iss, err := store.Get(sa.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if sa.JSON {
 		fprintJSON(w, iss)
-		return nil
+		return nil, nil
 	}
 
 	if sa.showSection("summary") {
@@ -100,7 +102,7 @@ func cmdShow(store *issue.Store, args []string, w Writer) error {
 	if sa.showSection("comments") {
 		showComments(w, iss)
 	}
-	return nil
+	return nil, nil
 }
 
 func showDescription(w Writer, iss *issue.Issue) {

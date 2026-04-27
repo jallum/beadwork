@@ -17,7 +17,7 @@ func TestCmdPrimeBasic(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdPrime(env.Store, nil, PlainWriter(&buf))
+	_, err := cmdPrime(env.Store, nil, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}
@@ -35,7 +35,7 @@ func TestCmdPrimeEmpty(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdPrime(env.Store, nil, PlainWriter(&buf))
+	_, err := cmdPrime(env.Store, nil, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}
@@ -56,7 +56,7 @@ func TestCmdPrimeInProgress(t *testing.T) {
 	env.Repo.Commit("start issue")
 
 	var buf bytes.Buffer
-	err := cmdPrime(env.Store, nil, PlainWriter(&buf))
+	_, err := cmdPrime(env.Store, nil, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}
@@ -73,7 +73,7 @@ func TestCmdPrimeTemplateProcessing(t *testing.T) {
 	// Prime no longer has conditional sections (moved to start.md).
 	// Verify it renders core sections cleanly.
 	var buf bytes.Buffer
-	err := cmdPrime(env.Store, nil, PlainWriter(&buf))
+	_, err := cmdPrime(env.Store, nil, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}

@@ -68,7 +68,7 @@ func TestCmdUpgradeRepoFromV0(t *testing.T) {
 
 	// Commands should work now
 	buf.Reset()
-	err = cmdList(env.Store, []string{}, PlainWriter(&buf))
+	_, err = cmdList(env.Store, []string{}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdList after upgrade: %v", err)
 	}

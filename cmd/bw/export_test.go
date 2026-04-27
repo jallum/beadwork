@@ -19,7 +19,7 @@ func TestCmdExportBasic(t *testing.T) {
 	env.Repo.Commit("create issue")
 
 	var buf bytes.Buffer
-	err := cmdExport(env.Store, []string{}, PlainWriter(&buf))
+	_, err := cmdExport(env.Store, []string{}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdExport: %v", err)
 	}
@@ -82,7 +82,7 @@ func TestCmdExportWithParent(t *testing.T) {
 	env.Repo.Commit("create with parent")
 
 	var buf bytes.Buffer
-	if err := cmdExport(env.Store, []string{}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdExport(env.Store, []string{}, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdExport: %v", err)
 	}
 
@@ -125,7 +125,7 @@ func TestExportDeferUntilPassthrough(t *testing.T) {
 	env.Repo.Commit("create deferred issue")
 
 	var buf bytes.Buffer
-	if err := cmdExport(env.Store, []string{}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdExport(env.Store, []string{}, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdExport: %v", err)
 	}
 
@@ -157,7 +157,7 @@ func TestExportDeferUntilRFC3339Passthrough(t *testing.T) {
 	env.Repo.Commit("create deferred issue rfc3339")
 
 	var buf bytes.Buffer
-	if err := cmdExport(env.Store, []string{}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdExport(env.Store, []string{}, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdExport: %v", err)
 	}
 
@@ -187,7 +187,7 @@ func TestExportImportWithDue(t *testing.T) {
 
 	// Export
 	var buf bytes.Buffer
-	if err := cmdExport(env.Store, []string{}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdExport(env.Store, []string{}, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdExport: %v", err)
 	}
 
@@ -204,7 +204,7 @@ func TestExportImportWithDue(t *testing.T) {
 	os.WriteFile(tmpFile, buf.Bytes(), 0644)
 
 	var buf2 bytes.Buffer
-	if err := cmdImport(env2.Store, []string{tmpFile}, PlainWriter(&buf2)); err != nil {
+	if _, err := cmdImport(env2.Store, []string{tmpFile}, PlainWriter(&buf2), nil); err != nil {
 		t.Fatalf("cmdImport: %v", err)
 	}
 
@@ -226,7 +226,7 @@ func TestImportOldFormatDeferUntil(t *testing.T) {
 	os.WriteFile(tmpFile, []byte(jsonl+"\n"), 0644)
 
 	var buf bytes.Buffer
-	if err := cmdImport(env.Store, []string{tmpFile}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdImport(env.Store, []string{tmpFile}, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdImport: %v", err)
 	}
 

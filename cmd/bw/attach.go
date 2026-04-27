@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 )
 
@@ -45,10 +47,10 @@ func parseAttachArgs(raw []string) (AttachArgs, error) {
 // --name is not given the stored path defaults to filepath.Base of the
 // source file. See docs/design.md for the on-disk layout and the
 // matching intent grammar.
-func cmdAttach(store *issue.Store, args []string, w Writer) error {
+func cmdAttach(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	aa, err := parseAttachArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	storedPath := aa.StoredPath
 	if storedPath == "" {
@@ -57,17 +59,17 @@ func cmdAttach(store *issue.Store, args []string, w Writer) error {
 
 	data, err := os.ReadFile(aa.FilePath)
 	if err != nil {
-		return fmt.Errorf("read %s: %w", aa.FilePath, err)
+		return nil, fmt.Errorf("read %s: %w", aa.FilePath, err)
 	}
 
 	if err := store.Attach(aa.TicketID, storedPath, data); err != nil {
-		return err
+		return nil, err
 	}
 	intent := fmt.Sprintf("attach %s %s", aa.TicketID, storedPath)
 	if err := store.Commit(intent); err != nil {
-		return fmt.Errorf("commit failed: %w", err)
+		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	fmt.Fprintf(w, "attached %s to %s\n", w.Style(storedPath, Cyan), w.Style(aa.TicketID, Cyan))
-	return nil
+	return nil, nil
 }

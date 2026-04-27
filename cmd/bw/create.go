@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 )
 
@@ -64,24 +66,24 @@ func parseCreateArgs(raw []string) (CreateArgs, error) {
 	return ca, nil
 }
 
-func cmdCreate(store *issue.Store, args []string, w Writer) error {
+func cmdCreate(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	ca, err := parseCreateArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	now := store.Now()
 	if ca.DeferUntil != "" {
 		resolved, err := resolveDate(ca.DeferUntil, now)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		ca.DeferUntil = resolved
 	}
 	if ca.Due != "" {
 		resolved, err := resolveDate(ca.Due, now)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		ca.Due = resolved
 	}
@@ -98,13 +100,13 @@ func cmdCreate(store *issue.Store, args []string, w Writer) error {
 
 	iss, err := store.Create(ca.Title, opts)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if len(ca.Labels) > 0 {
 		iss, err = store.Label(iss.ID, ca.Labels, nil)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -119,7 +121,7 @@ func cmdCreate(store *issue.Store, args []string, w Writer) error {
 		intent += " parent=" + iss.Parent
 	}
 	if err := store.Commit(intent); err != nil {
-		return fmt.Errorf("commit failed: %w", err)
+		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	if ca.Silent {
@@ -129,5 +131,5 @@ func cmdCreate(store *issue.Store, args []string, w Writer) error {
 	} else {
 		fmt.Fprintf(w, "created %s: %s\n", iss.ID, iss.Title)
 	}
-	return nil
+	return nil, nil
 }

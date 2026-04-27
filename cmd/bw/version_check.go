@@ -18,10 +18,10 @@ const (
 
 // Injectable dependencies for testing.
 var (
-	vcheckNow          = func() time.Time { return time.Now() }
-	vcheckFetchRelease = fetchLatestRelease
+	vcheckNow            = func() time.Time { return time.Now() }
+	vcheckFetchRelease   = fetchLatestRelease
 	vcheckFetchChangelog = fetchChangelog
-	vcheckCacheDir     = func() string {
+	vcheckCacheDir       = func() string {
 		if d, err := os.UserCacheDir(); err == nil {
 			return filepath.Join(d, "bw")
 		}

@@ -25,7 +25,7 @@ func TestCmdAttachBasic(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	if err := cmdAttach(env.Store, []string{"bw-x", src}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdAttach(env.Store, []string{"bw-x", src}, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdAttach: %v", err)
 	}
 
@@ -63,7 +63,7 @@ func TestCmdAttachWithName(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	if err := cmdAttach(env.Store, []string{"bw-y", src, "--name", "dir/sub/stored.bin"}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdAttach(env.Store, []string{"bw-y", src, "--name", "dir/sub/stored.bin"}, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdAttach: %v", err)
 	}
 
@@ -89,10 +89,10 @@ func TestCmdAttachUsage(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	if err := cmdAttach(env.Store, []string{}, PlainWriter(&buf)); err == nil {
+	if _, err := cmdAttach(env.Store, []string{}, PlainWriter(&buf), nil); err == nil {
 		t.Fatal("expected error for empty args")
 	}
-	if err := cmdAttach(env.Store, []string{"bw-x"}, PlainWriter(&buf)); err == nil {
+	if _, err := cmdAttach(env.Store, []string{"bw-x"}, PlainWriter(&buf), nil); err == nil {
 		t.Fatal("expected error when file path missing")
 	}
 }
@@ -104,7 +104,7 @@ func TestCmdAttachMissingFile(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdAttach(env.Store, []string{"bw-x", filepath.Join(env.Dir, "no-such-file")}, PlainWriter(&buf))
+	_, err := cmdAttach(env.Store, []string{"bw-x", filepath.Join(env.Dir, "no-such-file")}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Fatal("expected error for missing source file")
 	}
@@ -155,13 +155,13 @@ func TestAttachSurvivesSyncConflictReplay(t *testing.T) {
 		t.Fatalf("write src: %v", err)
 	}
 	var buf bytes.Buffer
-	if err := cmdAttach(env.Store, []string{shared.ID, src}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdAttach(env.Store, []string{shared.ID, src}, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdAttach: %v", err)
 	}
 
 	// Sync — this must take the conflict-replay path.
 	buf.Reset()
-	if err := cmdSync(env.Store, []string{}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdSync(env.Store, []string{}, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdSync: %v", err)
 	}
 	out := buf.String()

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 )
 
@@ -38,15 +40,15 @@ func parseLabelArgs(raw []string) (LabelArgs, error) {
 	return la, nil
 }
 
-func cmdLabel(store *issue.Store, args []string, w Writer) error {
+func cmdLabel(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	la, err := parseLabelArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	iss, err := store.Label(la.ID, la.Add, la.Remove)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var parts []string
@@ -58,7 +60,7 @@ func cmdLabel(store *issue.Store, args []string, w Writer) error {
 	}
 	intent := fmt.Sprintf("label %s %s", iss.ID, strings.Join(parts, " "))
 	if err := store.Commit(intent); err != nil {
-		return fmt.Errorf("commit failed: %w", err)
+		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	if la.JSON {
@@ -66,5 +68,5 @@ func cmdLabel(store *issue.Store, args []string, w Writer) error {
 	} else {
 		fmt.Fprintf(w, "labeled %s: %s\n", iss.ID, strings.Join(iss.Labels, ", "))
 	}
-	return nil
+	return nil, nil
 }

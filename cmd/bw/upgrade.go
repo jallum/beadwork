@@ -17,6 +17,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/repo"
 )
@@ -25,10 +27,10 @@ const releaseURL = "https://api.github.com/repos/jallum/beadwork/releases/latest
 
 // Injectable dependencies for testing. Production code uses the defaults.
 var (
-	upgradeFetchRelease   = fetchLatestRelease
-	upgradeDownloadAsset  = downloadAsset
-	upgradeResolveBinary  = resolveBinary
-	upgradeFetchChangelog = fetchChangelog
+	upgradeFetchRelease             = fetchLatestRelease
+	upgradeDownloadAsset            = downloadAsset
+	upgradeResolveBinary            = resolveBinary
+	upgradeFetchChangelog           = fetchChangelog
 	upgradeStdin          io.Reader = os.Stdin
 	upgradeCurrentVersion           = func() string { return version }
 	upgradeVerify                   = func(execPath string) (string, error) {
@@ -64,14 +66,14 @@ func parseUpgradeArgs(raw []string) (UpgradeArgs, error) {
 	}, nil
 }
 
-func cmdUpgrade(_ *issue.Store, args []string, w Writer) error {
+func cmdUpgrade(_ *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	if len(args) > 0 && args[0] == "repo" {
-		return cmdUpgradeRepo(args[1:], w)
+		return nil, cmdUpgradeRepo(args[1:], w)
 	}
 
 	ua, err := parseUpgradeArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	check := ua.Check
 	yes := ua.Yes
@@ -79,24 +81,24 @@ func cmdUpgrade(_ *issue.Store, args []string, w Writer) error {
 	// Resolve our binary location
 	execPath, symlink, targetPath, err := upgradeResolveBinary()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Fetch latest release info
 	release, err := upgradeFetchRelease()
 	if err != nil {
-		return fmt.Errorf("failed to check for updates: %w", err)
+		return nil, fmt.Errorf("failed to check for updates: %w", err)
 	}
 
 	latest := strings.TrimPrefix(release.TagName, "v")
 	if !validVersion(latest) {
-		return fmt.Errorf("invalid version from release: %s", release.TagName)
+		return nil, fmt.Errorf("invalid version from release: %s", release.TagName)
 	}
 
 	cur := upgradeCurrentVersion()
 	if compareVersions(cur, latest) >= 0 {
 		fmt.Fprintf(w, "bw %s (up to date)\n", w.Style(cur, Dim))
-		return nil
+		return nil, nil
 	}
 
 	fmt.Fprintf(w, "bw %s %s %s available\n",
@@ -113,13 +115,13 @@ func cmdUpgrade(_ *issue.Store, args []string, w Writer) error {
 	}
 
 	if check {
-		return nil
+		return nil, nil
 	}
 
 	// Find matching asset
 	asset, err := findAsset(release, latest)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Determine where we'll write
@@ -132,7 +134,7 @@ func cmdUpgrade(_ *issue.Store, args []string, w Writer) error {
 
 	// Precheck: write permission
 	if err := checkWritable(installDir); err != nil {
-		return fmt.Errorf("no write permission to %s: %v", installDir, err)
+		return nil, fmt.Errorf("no write permission to %s: %v", installDir, err)
 	}
 
 	// Prompt unless --yes
@@ -143,7 +145,7 @@ func cmdUpgrade(_ *issue.Store, args []string, w Writer) error {
 		answer = strings.TrimSpace(strings.ToLower(answer))
 		if answer != "y" && answer != "yes" {
 			fmt.Fprintln(w, "cancelled")
-			return nil
+			return nil, nil
 		}
 	}
 
@@ -151,14 +153,14 @@ func cmdUpgrade(_ *issue.Store, args []string, w Writer) error {
 	fmt.Fprintf(w, "downloading %s...\n", w.Style(asset.Name, Cyan))
 	archiveData, err := upgradeDownloadAsset(asset.URL, asset.Size, w)
 	if err != nil {
-		return fmt.Errorf("download failed: %w", err)
+		return nil, fmt.Errorf("download failed: %w", err)
 	}
 
 	// Extract binary from archive
 	fmt.Fprintln(w, "extracting binary from archive...")
 	binaryData, err := extractBinary(asset.Name, archiveData)
 	if err != nil {
-		return fmt.Errorf("extract failed: %w", err)
+		return nil, fmt.Errorf("extract failed: %w", err)
 	}
 
 	// Install
@@ -171,21 +173,21 @@ func cmdUpgrade(_ *issue.Store, args []string, w Writer) error {
 		err = installDirect(execPath, binaryData)
 	}
 	if err != nil {
-		return fmt.Errorf("install failed: %w", err)
+		return nil, fmt.Errorf("install failed: %w", err)
 	}
 
 	// Verify
 	fmt.Fprintf(w, "verifying... ")
 	verOut, verr := upgradeVerify(execPath)
 	if verr != nil {
-		return fmt.Errorf("installed binary failed verification: %w", verr)
+		return nil, fmt.Errorf("installed binary failed verification: %w", verr)
 	}
 	fmt.Fprintln(w, w.Style(verOut, Green))
 
 	// Auto-close the upgrade bead if one exists.
 	closeUpgradeBead(w)
 
-	return nil
+	return nil, nil
 }
 
 // closeUpgradeBead finds and closes any open beadwork-upgrade bead.

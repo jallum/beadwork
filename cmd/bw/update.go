@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 )
 
@@ -84,24 +86,24 @@ func parseUpdateArgs(raw []string) (UpdateArgs, error) {
 	return ua, nil
 }
 
-func cmdUpdate(store *issue.Store, args []string, w Writer) error {
+func cmdUpdate(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	ua, err := parseUpdateArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	now := store.Now()
 	if ua.DeferSet && ua.DeferUntil != "" {
 		resolved, err := resolveDate(ua.DeferUntil, now)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		ua.DeferUntil = resolved
 	}
 	if ua.DueSet && ua.Due != "" {
 		resolved, err := resolveDate(ua.Due, now)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		ua.Due = resolved
 	}
@@ -150,12 +152,12 @@ func cmdUpdate(store *issue.Store, args []string, w Writer) error {
 
 	iss, err := store.Update(ua.ID, opts)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	intent := fmt.Sprintf("update %s %s", iss.ID, strings.Join(changes, " "))
 	if err := store.Commit(intent); err != nil {
-		return fmt.Errorf("commit failed: %w", err)
+		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	if ua.JSON {
@@ -163,5 +165,5 @@ func cmdUpdate(store *issue.Store, args []string, w Writer) error {
 	} else {
 		fmt.Fprintf(w, "updated %s\n", iss.ID)
 	}
-	return nil
+	return nil, nil
 }

@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 )
 
@@ -30,21 +32,21 @@ func parseDeleteArgs(raw []string) (DeleteArgs, error) {
 	}, nil
 }
 
-func cmdDelete(store *issue.Store, args []string, w Writer) error {
+func cmdDelete(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	da, err := parseDeleteArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if !da.Force {
 		// Preview mode
 		plan, err := store.DeletePreview(da.ID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if da.JSON {
 			fprintJSON(w, plan)
-			return nil
+			return nil, nil
 		}
 		fmt.Fprintln(w, sectionHeader(w, "DELETE PREVIEW"))
 		fmt.Fprintln(w)
@@ -74,18 +76,18 @@ func cmdDelete(store *issue.Store, args []string, w Writer) error {
 			w.Pop()
 		}
 		fmt.Fprintf(w, "\nTo proceed: %s\n", w.Style(fmt.Sprintf("bw delete %s --force", plan.Issue.ID), Dim))
-		return nil
+		return nil, nil
 	}
 
 	// Force mode — actually delete
 	iss, err := store.Delete(da.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	intent := fmt.Sprintf("delete %s", iss.ID)
 	if err := store.Commit(intent); err != nil {
-		return fmt.Errorf("commit failed: %w", err)
+		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	if da.JSON {
@@ -93,5 +95,5 @@ func cmdDelete(store *issue.Store, args []string, w Writer) error {
 	} else {
 		fmt.Fprintf(w, "deleted %s: %s\n", w.Style(iss.ID, Cyan), iss.Title)
 	}
-	return nil
+	return nil, nil
 }

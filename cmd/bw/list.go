@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/md"
 )
@@ -58,10 +60,10 @@ func parseListArgs(raw []string) (ListArgs, error) {
 	return la, nil
 }
 
-func cmdList(store *issue.Store, args []string, w Writer) error {
+func cmdList(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	la, err := parseListArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	filter := issue.Filter{
@@ -98,7 +100,7 @@ func cmdList(store *issue.Store, args []string, w Writer) error {
 
 	issues, err := store.List(filter)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if la.JSON {
@@ -109,7 +111,7 @@ func cmdList(store *issue.Store, args []string, w Writer) error {
 	} else {
 		if len(issues) == 0 {
 			fmt.Fprintln(w, "no issues found")
-			return nil
+			return nil, nil
 		}
 		displayed := issues
 		if limit > 0 && len(displayed) > limit {
@@ -124,5 +126,5 @@ func cmdList(store *issue.Store, args []string, w Writer) error {
 			fmt.Fprintf(w, "... and %d more (use --limit or --all)\n", len(issues)-limit)
 		}
 	}
-	return nil
+	return nil, nil
 }

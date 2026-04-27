@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 )
 
@@ -133,7 +135,7 @@ func TestPrintCommandHelpLayout(t *testing.T) {
 			{Cmd: "bw test abc123", Help: "Show test for abc123"},
 			{Cmd: "bw test abc123 --verbose", Help: "Verbose output"},
 		},
-		Run: func(*issue.Store, []string, Writer) error { return nil },
+		Run: func(*issue.Store, []string, Writer, *config.Config) (*config.Config, error) { return nil, nil },
 	}
 
 	var buf bytes.Buffer
@@ -193,7 +195,7 @@ func TestPrintCommandHelpNoDescription(t *testing.T) {
 		Flags: []Flag{
 			{Long: "--json", Help: "Output as JSON"},
 		},
-		Run: func(*issue.Store, []string, Writer) error { return nil },
+		Run: func(*issue.Store, []string, Writer, *config.Config) (*config.Config, error) { return nil, nil },
 	}
 
 	var buf bytes.Buffer
@@ -210,7 +212,7 @@ func TestPrintCommandHelpNoExamples(t *testing.T) {
 	cmd := &Command{
 		Name:    "bare",
 		Summary: "Bare command",
-		Run:     func(*issue.Store, []string, Writer) error { return nil },
+		Run:     func(*issue.Store, []string, Writer, *config.Config) (*config.Config, error) { return nil, nil },
 	}
 
 	var buf bytes.Buffer
@@ -303,7 +305,7 @@ func TestHiddenFlagOmittedFromHelp(t *testing.T) {
 			{Long: "--visible", Help: "Visible flag"},
 			{Long: "--secret", Value: "VAL", Help: "Secret flag", Hidden: true},
 		},
-		Run: func(*issue.Store, []string, Writer) error { return nil },
+		Run: func(*issue.Store, []string, Writer, *config.Config) (*config.Config, error) { return nil, nil },
 	}
 
 	var buf bytes.Buffer
@@ -329,7 +331,7 @@ func TestHiddenFlagStillInValueFlags(t *testing.T) {
 			{Long: "--visible", Value: "X", Help: "Visible"},
 			{Long: "--hidden", Value: "Y", Help: "Hidden", Hidden: true},
 		},
-		Run: func(*issue.Store, []string, Writer) error { return nil },
+		Run: func(*issue.Store, []string, Writer, *config.Config) (*config.Config, error) { return nil, nil },
 	}
 
 	vf := cmd.valueFlags()

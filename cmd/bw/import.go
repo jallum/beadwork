@@ -7,6 +7,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 )
 
@@ -57,10 +59,10 @@ func parseImportArgs(raw []string) (ImportArgs, error) {
 	}, nil
 }
 
-func cmdImport(store *issue.Store, args []string, w Writer) error {
+func cmdImport(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	ia, err := parseImportArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	dryRun := ia.DryRun
@@ -73,7 +75,7 @@ func cmdImport(store *issue.Store, args []string, w Writer) error {
 	} else {
 		f, err := os.Open(filePath)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		defer f.Close()
 		reader = f
@@ -91,12 +93,12 @@ func cmdImport(store *issue.Store, args []string, w Writer) error {
 		}
 		var rec importRecord
 		if err := json.Unmarshal([]byte(line), &rec); err != nil {
-			return fmt.Errorf("line %d: %v", lineNum, err)
+			return nil, fmt.Errorf("line %d: %v", lineNum, err)
 		}
 		records = append(records, rec)
 	}
 	if err := scanner.Err(); err != nil {
-		return err
+		return nil, err
 	}
 
 	// Phase 2: Collision check
@@ -120,11 +122,11 @@ func cmdImport(store *issue.Store, args []string, w Writer) error {
 
 	if dryRun {
 		fmt.Fprintln(w, "dry run: no changes made")
-		return nil
+		return nil, nil
 	}
 
 	if len(toImport) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	// Phase 3: Write issues (first pass: set parent from deps, write all)
@@ -177,7 +179,7 @@ func cmdImport(store *issue.Store, args []string, w Writer) error {
 			})
 		}
 		if err := store.Import(iss); err != nil {
-			return fmt.Errorf("import %s: %v", rec.ID, err)
+			return nil, fmt.Errorf("import %s: %v", rec.ID, err)
 		}
 	}
 
@@ -201,7 +203,7 @@ func cmdImport(store *issue.Store, args []string, w Writer) error {
 
 	intent := fmt.Sprintf("import %d issues", len(toImport))
 	if err := store.Commit(intent); err != nil {
-		return fmt.Errorf("commit failed: %w", err)
+		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	// Count by status
@@ -224,7 +226,7 @@ func cmdImport(store *issue.Store, args []string, w Writer) error {
 		fmt.Fprintf(w, " (%s)", joinParts(parts))
 	}
 	fmt.Fprintln(w)
-	return nil
+	return nil, nil
 }
 
 func joinParts(parts []string) string {

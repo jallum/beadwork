@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/md"
 )
@@ -28,20 +30,20 @@ func parseCloseArgs(raw []string) (CloseArgs, error) {
 	}, nil
 }
 
-func cmdClose(store *issue.Store, args []string, w Writer) error {
+func cmdClose(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	ca, err := parseCloseArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	iss, err := store.Close(ca.ID, ca.Reason)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	unblocked, err := store.NewlyUnblocked(iss.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	intent := fmt.Sprintf("close %s", iss.ID)
@@ -49,7 +51,7 @@ func cmdClose(store *issue.Store, args []string, w Writer) error {
 		intent += fmt.Sprintf(" reason=%q", ca.Reason)
 	}
 	if err := store.Commit(intent); err != nil {
-		return fmt.Errorf("commit failed: %w", err)
+		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	if ca.JSON {
@@ -77,7 +79,7 @@ func cmdClose(store *issue.Store, args []string, w Writer) error {
 			}
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 type ReopenArgs struct {
@@ -97,20 +99,20 @@ func parseReopenArgs(raw []string) (ReopenArgs, error) {
 	return ReopenArgs{ID: id, JSON: a.JSON()}, nil
 }
 
-func cmdReopen(store *issue.Store, args []string, w Writer) error {
+func cmdReopen(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	ra, err := parseReopenArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	iss, err := store.Reopen(ra.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	intent := fmt.Sprintf("reopen %s", iss.ID)
 	if err := store.Commit(intent); err != nil {
-		return fmt.Errorf("commit failed: %w", err)
+		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	if ra.JSON {
@@ -118,5 +120,5 @@ func cmdReopen(store *issue.Store, args []string, w Writer) error {
 	} else {
 		fmt.Fprintf(w, "reopened %s: %s\n", iss.ID, iss.Title)
 	}
-	return nil
+	return nil, nil
 }

@@ -17,7 +17,7 @@ func TestCmdLabelAdd(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdLabel(env.Store, []string{iss.ID, "+bug", "+urgent"}, PlainWriter(&buf))
+	_, err := cmdLabel(env.Store, []string{iss.ID, "+bug", "+urgent"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdLabel: %v", err)
 	}
@@ -37,7 +37,7 @@ func TestCmdLabelRemove(t *testing.T) {
 	env.Repo.Commit("create and label " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdLabel(env.Store, []string{iss.ID, "-bug"}, PlainWriter(&buf))
+	_, err := cmdLabel(env.Store, []string{iss.ID, "-bug"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdLabel: %v", err)
 	}
@@ -58,7 +58,7 @@ func TestCmdLabelJSON(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdLabel(env.Store, []string{iss.ID, "+bug", "--json"}, PlainWriter(&buf))
+	_, err := cmdLabel(env.Store, []string{iss.ID, "+bug", "--json"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdLabel --json: %v", err)
 	}
@@ -80,7 +80,7 @@ func TestCmdLabelBareAdd(t *testing.T) {
 	env.Repo.Commit("create " + iss.ID)
 
 	var buf bytes.Buffer
-	err := cmdLabel(env.Store, []string{iss.ID, "feature"}, PlainWriter(&buf))
+	_, err := cmdLabel(env.Store, []string{iss.ID, "feature"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdLabel bare: %v", err)
 	}
@@ -96,7 +96,7 @@ func TestCmdLabelNotFound(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	err := cmdLabel(env.Store, []string{"nonexistent", "+bug"}, PlainWriter(&buf))
+	_, err := cmdLabel(env.Store, []string{"nonexistent", "+bug"}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Error("expected error for nonexistent issue")
 	}

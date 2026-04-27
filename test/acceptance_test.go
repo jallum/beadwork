@@ -50,6 +50,7 @@ func newBwEnv(t *testing.T) *bwEnv {
 		dir: dir,
 		env: append(os.Environ(),
 			"BW_CLOCK="+fixedClock,
+			"BW_CONFIG="+filepath.Join(dir, ".bw"),
 			"GIT_AUTHOR_DATE="+fixedClock,
 			"GIT_COMMITTER_DATE="+fixedClock,
 			"NO_COLOR=1",

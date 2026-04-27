@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 )
 
@@ -300,15 +302,15 @@ func nextWeekday(now time.Time, day time.Weekday) time.Time {
 	return now.AddDate(0, 0, diff)
 }
 
-func cmdDefer(store *issue.Store, args []string, w Writer) error {
+func cmdDefer(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	da, err := parseDeferArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resolved, err := resolveDate(da.Date, store.Now())
 	if err != nil {
-		return err
+		return nil, err
 	}
 	da.Date = resolved
 
@@ -318,12 +320,12 @@ func cmdDefer(store *issue.Store, args []string, w Writer) error {
 		DeferUntil: &da.Date,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	intent := fmt.Sprintf("defer %s until %s", iss.ID, da.Date)
 	if err := store.Commit(intent); err != nil {
-		return fmt.Errorf("commit failed: %w", err)
+		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	if da.JSON {
@@ -331,5 +333,5 @@ func cmdDefer(store *issue.Store, args []string, w Writer) error {
 	} else {
 		fmt.Fprintf(w, "deferred %s until %s\n", iss.ID, da.Date)
 	}
-	return nil
+	return nil, nil
 }

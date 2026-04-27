@@ -19,7 +19,7 @@ func TestCmdImportBasic(t *testing.T) {
 	os.WriteFile(tmpFile, []byte(jsonl+"\n"), 0644)
 
 	var buf bytes.Buffer
-	err := cmdImport(env.Store, []string{tmpFile}, PlainWriter(&buf))
+	_, err := cmdImport(env.Store, []string{tmpFile}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdImport: %v", err)
 	}
@@ -37,7 +37,7 @@ func TestCmdImportDryRun(t *testing.T) {
 	os.WriteFile(tmpFile, []byte(jsonl+"\n"), 0644)
 
 	var buf bytes.Buffer
-	err := cmdImport(env.Store, []string{tmpFile, "--dry-run"}, PlainWriter(&buf))
+	_, err := cmdImport(env.Store, []string{tmpFile, "--dry-run"}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdImport: %v", err)
 	}
@@ -62,7 +62,7 @@ func TestCmdImportPriorityZero(t *testing.T) {
 	os.WriteFile(tmpFile, []byte(jsonl+"\n"), 0644)
 
 	var buf bytes.Buffer
-	if err := cmdImport(env.Store, []string{tmpFile}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdImport(env.Store, []string{tmpFile}, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdImport: %v", err)
 	}
 
@@ -85,7 +85,7 @@ func TestCmdImportPriorityAbsent(t *testing.T) {
 	os.WriteFile(tmpFile, []byte(jsonl+"\n"), 0644)
 
 	var buf bytes.Buffer
-	if err := cmdImport(env.Store, []string{tmpFile}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdImport(env.Store, []string{tmpFile}, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdImport: %v", err)
 	}
 
@@ -109,7 +109,7 @@ func TestCmdImportStdin(t *testing.T) {
 	t.Cleanup(func() { importStdin = orig })
 
 	var buf bytes.Buffer
-	if err := cmdImport(env.Store, []string{"-"}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdImport(env.Store, []string{"-"}, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdImport stdin: %v", err)
 	}
 

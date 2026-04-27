@@ -23,12 +23,12 @@ const (
 )
 
 var styleCode = map[Style]string{
-	Bold:      "\033[1m",
-	Dim:       "\033[2m",
-	Red:       "\033[31m",
-	BrightRed: "\033[91m",
-	Yellow:    "\033[33m",
-	Cyan:      "\033[36m",
+	Bold:          "\033[1m",
+	Dim:           "\033[2m",
+	Red:           "\033[31m",
+	BrightRed:     "\033[91m",
+	Yellow:        "\033[33m",
+	Cyan:          "\033[36m",
 	Green:         "\033[32m",
 	Strikethrough: "\033[9m",
 }

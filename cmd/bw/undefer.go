@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 )
 
@@ -22,10 +24,10 @@ func parseUndeferArgs(raw []string) (UndeferArgs, error) {
 	return UndeferArgs{ID: raw[0], JSON: a.JSON()}, nil
 }
 
-func cmdUndefer(store *issue.Store, args []string, w Writer) error {
+func cmdUndefer(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	ua, err := parseUndeferArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	status := "open"
@@ -35,12 +37,12 @@ func cmdUndefer(store *issue.Store, args []string, w Writer) error {
 		DeferUntil: &emptyDefer,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	intent := fmt.Sprintf("undefer %s", iss.ID)
 	if err := store.Commit(intent); err != nil {
-		return fmt.Errorf("commit failed: %w", err)
+		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	if ua.JSON {
@@ -48,5 +50,5 @@ func cmdUndefer(store *issue.Store, args []string, w Writer) error {
 	} else {
 		fmt.Fprintf(w, "undeferred %s\n", iss.ID)
 	}
-	return nil
+	return nil, nil
 }

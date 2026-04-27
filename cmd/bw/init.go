@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jallum/beadwork/internal/config"
+
 	"github.com/jallum/beadwork/internal/issue"
 )
 
@@ -23,31 +25,31 @@ func parseInitArgs(raw []string) (InitArgs, error) {
 	}, nil
 }
 
-func cmdInit(_ *issue.Store, args []string, w Writer) error {
+func cmdInit(_ *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	ia, err := parseInitArgs(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	r, err := getRepo()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if ia.Force {
 		if err := r.ForceReinit(ia.Prefix); err != nil {
-			return err
+			return nil, err
 		}
 		fmt.Fprintln(w, initMessage("reinitialized", r.Prefix))
-		return nil
+		return nil, nil
 	}
 	if r.IsInitialized() {
-		return fmt.Errorf("beadwork already initialized")
+		return nil, fmt.Errorf("beadwork already initialized")
 	}
 	if err := r.Init(ia.Prefix); err != nil {
-		return err
+		return nil, err
 	}
 	fmt.Fprintln(w, initMessage("initialized", r.Prefix))
-	return nil
+	return nil, nil
 }
 
 func initMessage(verb, prefix string) string {
