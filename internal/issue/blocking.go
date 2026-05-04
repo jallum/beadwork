@@ -443,7 +443,11 @@ func (o *subtreeOverlay) effectiveBlockedBy(iss *Issue) []string {
 }
 
 // buildSubtreeOverlay builds subtrees from parent fields, collects
-// external blockers per root, and marks all descendants.
+// external blockers per display root, and marks all descendants.
+//
+// A "display root" is the shallowest open/deferred ancestor with children.
+// When an ancestor is in_progress or in_review it is already claimed work, so
+// we drill past it to surface the actual next-step descendants.
 func (s *Store) buildSubtreeOverlay() *subtreeOverlay {
 	overlay := &subtreeOverlay{
 		descendants:      make(map[string]bool),
@@ -469,20 +473,42 @@ func (s *Store) buildSubtreeOverlay() *subtreeOverlay {
 		}
 	}
 
-	// Find roots and process each subtree
+	// Walk down from each top-level structural root to find display roots.
+	// Claimed nodes (in_progress/in_review) are not display roots themselves —
+	// we recurse into their children to surface the actual ready frontier.
+	var displayRoots []string
+	var walk func(id string)
+	walk = func(id string) {
+		iss := issues[id]
+		if iss == nil {
+			return
+		}
+		if iss.Status == "in_progress" || iss.Status == "in_review" {
+			for _, c := range children[id] {
+				walk(c)
+			}
+			return
+		}
+		if len(children[id]) > 0 {
+			displayRoots = append(displayRoots, id)
+		}
+	}
 	for parentID := range children {
 		iss, ok := issues[parentID]
 		if !ok {
 			continue
 		}
 		if iss.Parent != "" && issues[iss.Parent] != nil {
-			continue // not a root
+			continue // not a top-level root
 		}
+		walk(parentID)
+	}
 
-		subtree := buildSubtreeSet(parentID, children)
+	for _, rootID := range displayRoots {
+		subtree := buildSubtreeSet(rootID, children)
 
 		for id := range subtree {
-			if id != parentID {
+			if id != rootID {
 				overlay.descendants[id] = true
 			}
 		}
@@ -499,7 +525,7 @@ func (s *Store) buildSubtreeOverlay() *subtreeOverlay {
 				}
 			}
 		}
-		overlay.externalBlockers[parentID] = uniqueStrings(ext)
+		overlay.externalBlockers[rootID] = uniqueStrings(ext)
 	}
 
 	return overlay

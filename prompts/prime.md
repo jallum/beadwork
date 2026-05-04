@@ -34,6 +34,8 @@ The following items were deferred and are now due for attention:
 
 ## Currently available work:
 
+Icons: `○` open · `◐` in_progress (shown as a group header for its ready children, not an action item) · `⊘` blocked. Start the `○` items.
+
 {{ bw "ready" "--no-context" }}
 
 ## How Should This Land?
