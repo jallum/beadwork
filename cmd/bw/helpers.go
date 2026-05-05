@@ -287,16 +287,10 @@ func sectionHeader(w Writer, name string) string {
 	return w.Style(name, Bold)
 }
 
-// relativeTime returns a human-readable relative time like "2h ago".
-func relativeTime(timestamp string) string {
-	t, err := time.Parse(time.RFC3339, timestamp)
-	if err != nil {
-		return timestamp
-	}
-	return relativeTimeSince(t, time.Now())
-}
-
 // relativeTimeSince computes relative time between t and now.
+// Used by the upcoming bw recap command (PR #122).
+//
+//lint:ignore U1000 used by bw recap, re-landing in PR #122
 func relativeTimeSince(t, now time.Time) string {
 	d := now.Sub(t)
 	if d < time.Minute {

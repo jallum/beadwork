@@ -74,7 +74,7 @@ func TestCmdPrimeIncludesIconLegend(t *testing.T) {
 	defer env.Cleanup()
 
 	var buf bytes.Buffer
-	if err := cmdPrime(env.Store, nil, PlainWriter(&buf)); err != nil {
+	if _, err := cmdPrime(env.Store, nil, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}
 	out := buf.String()
@@ -102,7 +102,7 @@ func TestCmdPrimeSurfacesChildrenOfInProgressEpic(t *testing.T) {
 	env.Repo.Commit("start epic")
 
 	var buf bytes.Buffer
-	if err := cmdPrime(env.Store, nil, PlainWriter(&buf)); err != nil {
+	if _, err := cmdPrime(env.Store, nil, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdPrime: %v", err)
 	}
 	out := buf.String()

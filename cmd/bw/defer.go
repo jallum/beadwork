@@ -259,17 +259,6 @@ func parseTimeOfDay(s string) (timeOfDay, error) {
 	return timeOfDay{h, m}, nil
 }
 
-// validateDate validates a date string as either YYYY-MM-DD or RFC3339.
-func validateDate(s string) error {
-	if _, err := time.Parse("2006-01-02", s); err == nil {
-		return nil
-	}
-	if _, err := time.Parse(time.RFC3339, s); err == nil {
-		return nil
-	}
-	return fmt.Errorf("invalid date %q (expected YYYY-MM-DD or RFC3339)", s)
-}
-
 var weekdayNames = map[string]time.Weekday{
 	"sunday":    time.Sunday,
 	"monday":    time.Monday,

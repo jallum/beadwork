@@ -307,13 +307,6 @@ func TestRelativeTimeSince(t *testing.T) {
 	}
 }
 
-func TestRelativeTimeInvalidTimestamp(t *testing.T) {
-	got := relativeTime("not-a-timestamp")
-	if got != "not-a-timestamp" {
-		t.Errorf("relativeTime(invalid) = %q, want raw string", got)
-	}
-}
-
 func TestRemoveFlag(t *testing.T) {
 	tests := []struct {
 		args []string

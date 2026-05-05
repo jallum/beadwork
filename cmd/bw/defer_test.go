@@ -314,22 +314,6 @@ func TestCmdDeferUnknownFlag(t *testing.T) {
 	}
 }
 
-func TestValidateDate(t *testing.T) {
-	valid := []string{"2027-01-01", "2026-12-31", "2030-06-15"}
-	for _, d := range valid {
-		if err := validateDate(d); err != nil {
-			t.Errorf("validateDate(%q) = %v, want nil", d, err)
-		}
-	}
-
-	invalid := []string{"not-a-date", "2027/01/01", "01-01-2027", "2027-13-01", ""}
-	for _, d := range invalid {
-		if err := validateDate(d); err == nil {
-			t.Errorf("validateDate(%q) = nil, want error", d)
-		}
-	}
-}
-
 func TestResolveDate(t *testing.T) {
 	// Fixed reference time: Wednesday 2027-03-10
 	now := time.Date(2027, 3, 10, 12, 0, 0, 0, time.UTC)
@@ -566,30 +550,6 @@ func TestParseTimeOfDay(t *testing.T) {
 	}
 }
 
-func TestValidateDateAcceptsBothFormats(t *testing.T) {
-	valid := []string{
-		"2027-06-01",
-		"2027-04-15T14:00:00-04:00",
-		"2027-04-15T14:00:00Z",
-	}
-	for _, d := range valid {
-		if err := validateDate(d); err != nil {
-			t.Errorf("validateDate(%q) = %v, want nil", d, err)
-		}
-	}
-
-	invalid := []string{
-		"not-a-date",
-		"2027/06/01",
-		"",
-	}
-	for _, d := range invalid {
-		if err := validateDate(d); err == nil {
-			t.Errorf("validateDate(%q) = nil, want error", d)
-		}
-	}
-}
-
 func TestResolveDateInvalid(t *testing.T) {
 	now := time.Date(2027, 3, 10, 12, 0, 0, 0, time.UTC)
 
@@ -630,7 +590,7 @@ func TestCmdDeferRelativeDate(t *testing.T) {
 		t.Errorf("status = %q, want deferred", got.Status)
 	}
 	// The resolved date should be a valid YYYY-MM-DD.
-	if err := validateDate(got.DeferUntil); err != nil {
+	if _, err := time.Parse("2006-01-02", got.DeferUntil); err != nil {
 		t.Errorf("defer_until = %q, not a valid date: %v", got.DeferUntil, err)
 	}
 }
@@ -652,7 +612,7 @@ func TestCmdDeferTomorrow(t *testing.T) {
 	if got.Status != "deferred" {
 		t.Errorf("status = %q, want deferred", got.Status)
 	}
-	if err := validateDate(got.DeferUntil); err != nil {
+	if _, err := time.Parse("2006-01-02", got.DeferUntil); err != nil {
 		t.Errorf("defer_until = %q, not a valid date: %v", got.DeferUntil, err)
 	}
 }
@@ -675,7 +635,7 @@ func TestCmdDeferNextMonday(t *testing.T) {
 	if got.Status != "deferred" {
 		t.Errorf("status = %q, want deferred", got.Status)
 	}
-	if err := validateDate(got.DeferUntil); err != nil {
+	if _, err := time.Parse("2006-01-02", got.DeferUntil); err != nil {
 		t.Errorf("defer_until = %q, not a valid date: %v", got.DeferUntil, err)
 	}
 }
