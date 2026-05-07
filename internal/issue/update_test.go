@@ -40,7 +40,6 @@ func TestUpdateFields(t *testing.T) {
 	}
 }
 
-
 func TestStatusTransitions(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -92,7 +91,6 @@ func TestStatusTransitions(t *testing.T) {
 	}
 }
 
-
 func TestCloseAlreadyClosed(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -106,7 +104,6 @@ func TestCloseAlreadyClosed(t *testing.T) {
 	}
 }
 
-
 func TestReopenNotClosed(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -118,7 +115,6 @@ func TestReopenNotClosed(t *testing.T) {
 		t.Error("expected error reopening open issue")
 	}
 }
-
 
 func TestReopenInProgress(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -150,7 +146,6 @@ func TestReopenInProgress(t *testing.T) {
 	}
 }
 
-
 func TestUpdateStatusChange(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -178,7 +173,6 @@ func TestUpdateStatusChange(t *testing.T) {
 	}
 }
 
-
 func TestCloseNonExistent(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -188,7 +182,6 @@ func TestCloseNonExistent(t *testing.T) {
 		t.Error("expected error for non-existent issue")
 	}
 }
-
 
 func TestReopenNonExistent(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -200,7 +193,6 @@ func TestReopenNonExistent(t *testing.T) {
 	}
 }
 
-
 func TestUpdateNonExistent(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -211,7 +203,6 @@ func TestUpdateNonExistent(t *testing.T) {
 		t.Error("expected error for non-existent issue")
 	}
 }
-
 
 func TestDeferUntilPersistence(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -241,7 +232,6 @@ func TestDeferUntilPersistence(t *testing.T) {
 		t.Errorf("persisted status = %q, want deferred", got.Status)
 	}
 }
-
 
 func TestUpdateDeferUntil(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -285,7 +275,6 @@ func TestUpdateDeferUntil(t *testing.T) {
 	}
 }
 
-
 func TestUpdatedAtOnUpdate(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -309,7 +298,6 @@ func TestUpdatedAtOnUpdate(t *testing.T) {
 		t.Errorf("persisted updated_at = %q, want %q", got.UpdatedAt, updated.UpdatedAt)
 	}
 }
-
 
 func TestCloseReason(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -338,7 +326,6 @@ func TestCloseReason(t *testing.T) {
 	}
 }
 
-
 func TestCloseWithoutReason(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -357,7 +344,6 @@ func TestCloseWithoutReason(t *testing.T) {
 		t.Error("closed_at should be set even without reason")
 	}
 }
-
 
 func TestReopenClearsCloseFields(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -385,7 +371,6 @@ func TestReopenClearsCloseFields(t *testing.T) {
 		t.Errorf("persisted close fields should be cleared: closed_at=%q close_reason=%q", got.ClosedAt, got.CloseReason)
 	}
 }
-
 
 func TestUpdateSetParent(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -421,7 +406,6 @@ func TestUpdateSetParent(t *testing.T) {
 	}
 }
 
-
 func TestUpdateClearParent(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -450,7 +434,6 @@ func TestUpdateClearParent(t *testing.T) {
 	}
 }
 
-
 func TestUpdateSelfParentRejected(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -472,7 +455,6 @@ func TestUpdateSelfParentRejected(t *testing.T) {
 		t.Errorf("error = %q, want mention of 'own parent'", err.Error())
 	}
 }
-
 
 func TestUpdateDirectCycleRejected(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -504,7 +486,6 @@ func TestUpdateDirectCycleRejected(t *testing.T) {
 		t.Errorf("error = %q, want mention of 'circular'", err.Error())
 	}
 }
-
 
 func TestUpdateDeepCycleRejected(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -546,7 +527,6 @@ func TestUpdateDeepCycleRejected(t *testing.T) {
 	}
 }
 
-
 func TestUpdateParentNonexistentRejected(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -565,7 +545,6 @@ func TestUpdateParentNonexistentRejected(t *testing.T) {
 		t.Fatal("expected error for nonexistent parent")
 	}
 }
-
 
 func TestStartBasic(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -586,7 +565,6 @@ func TestStartBasic(t *testing.T) {
 	}
 }
 
-
 func TestStartBlocked(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -601,7 +579,6 @@ func TestStartBlocked(t *testing.T) {
 		t.Fatal("expected error for blocked issue")
 	}
 }
-
 
 func TestStartAlreadyInProgress(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -618,7 +595,6 @@ func TestStartAlreadyInProgress(t *testing.T) {
 	}
 }
 
-
 func TestStartClosed(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -633,7 +609,6 @@ func TestStartClosed(t *testing.T) {
 	}
 }
 
-
 func TestStartNonExistent(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -643,7 +618,6 @@ func TestStartNonExistent(t *testing.T) {
 		t.Fatal("expected error for nonexistent issue")
 	}
 }
-
 
 func TestStartBlockedReturnsBlockerIDs(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -669,7 +643,6 @@ func TestStartBlockedReturnsBlockerIDs(t *testing.T) {
 		t.Errorf("got %d blockers, want 2", len(be.Blockers))
 	}
 }
-
 
 func TestStartClosedBlockerAllowsStart(t *testing.T) {
 	env := testutil.NewEnv(t)

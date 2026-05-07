@@ -7,3 +7,8 @@ CLAUDE.md
 
 # Code Coverage
 coverage.out
+cli-coverage.out
+merged.out
+
+# Local Makefile build dir
+/bin/

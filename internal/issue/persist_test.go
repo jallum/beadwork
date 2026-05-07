@@ -18,7 +18,6 @@ func TestGetNonExistent(t *testing.T) {
 	}
 }
 
-
 func TestReadCorruptJSON(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -36,7 +35,6 @@ func TestReadCorruptJSON(t *testing.T) {
 		t.Errorf("error = %q, want 'corrupt'", err.Error())
 	}
 }
-
 
 func TestCacheHitReturnsSamePointer(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -58,7 +56,6 @@ func TestCacheHitReturnsSamePointer(t *testing.T) {
 	}
 }
 
-
 func TestClearCacheInvalidates(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -77,7 +74,6 @@ func TestClearCacheInvalidates(t *testing.T) {
 		t.Errorf("IDs differ: %q vs %q", a.ID, b.ID)
 	}
 }
-
 
 func TestDeleteEvictsFromCache(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -101,4 +97,3 @@ func TestDeleteEvictsFromCache(t *testing.T) {
 		t.Error("Get after Delete should return error, not stale cached value")
 	}
 }
-

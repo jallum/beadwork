@@ -61,7 +61,6 @@ func TestCreateAndGet(t *testing.T) {
 	}
 }
 
-
 func TestCreateDefaults(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -78,7 +77,6 @@ func TestCreateDefaults(t *testing.T) {
 		t.Errorf("default priority = %d, want 2", iss.Priority)
 	}
 }
-
 
 func TestCommitDelegatesToCommitter(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -114,7 +112,6 @@ func TestCommitDelegatesToCommitter(t *testing.T) {
 	}
 }
 
-
 func TestCommitWithoutCommitterErrors(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -126,7 +123,6 @@ func TestCommitWithoutCommitterErrors(t *testing.T) {
 		t.Fatal("expected error from read-only store, got nil")
 	}
 }
-
 
 func TestCreateDefaultPriorityFromStore(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -160,7 +156,6 @@ func TestCreateDefaultPriorityFromStore(t *testing.T) {
 		t.Errorf("priority = %d, want 0 (explicit P0)", iss3.Priority)
 	}
 }
-
 
 func TestImportDirect(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -200,7 +195,6 @@ func TestImportDirect(t *testing.T) {
 	}
 }
 
-
 func TestImportClosedStatus(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -233,7 +227,6 @@ func TestImportClosedStatus(t *testing.T) {
 		t.Error("closed status marker missing")
 	}
 }
-
 
 func TestCreateWithParent(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -268,7 +261,6 @@ func TestCreateWithParent(t *testing.T) {
 	}
 }
 
-
 func TestCreateChildIDsAreSequential(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -294,7 +286,6 @@ func TestCreateChildIDsAreSequential(t *testing.T) {
 	}
 }
 
-
 func TestCreateGrandchild(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -314,7 +305,6 @@ func TestCreateGrandchild(t *testing.T) {
 		t.Errorf("grandchild.ID = %q, want %q", grandchild.ID, want)
 	}
 }
-
 
 func TestDottedChildIDPermanentAfterOrphaning(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -341,7 +331,6 @@ func TestDottedChildIDPermanentAfterOrphaning(t *testing.T) {
 	}
 }
 
-
 func TestCreateWithNonexistentParent(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -353,7 +342,6 @@ func TestCreateWithNonexistentParent(t *testing.T) {
 		t.Fatal("expected error for nonexistent parent")
 	}
 }
-
 
 func TestUpdatedAtOnCreate(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -602,4 +590,3 @@ func TestBWClockUnsetUsesRealClock(t *testing.T) {
 		t.Error("Created should not be empty")
 	}
 }
-

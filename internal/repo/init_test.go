@@ -214,7 +214,7 @@ func TestValidatePrefix(t *testing.T) {
 		{"MY-APP", true},
 		{"my_app", true},
 		{"a", true},
-		{"abcdefghijklmnop", true},  // 16 chars, max
+		{"abcdefghijklmnop", true},   // 16 chars, max
 		{"abcdefghijklmnopq", false}, // 17 chars, too long
 		{"", true},                   // empty is ok (will be derived)
 		{"has space", false},
