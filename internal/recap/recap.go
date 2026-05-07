@@ -18,10 +18,10 @@ type IssueLookup interface {
 
 // Event represents a single parsed activity from a commit message.
 type Event struct {
-	Type string    // "create", "close", "start", "update", "reopen", "defer", "undefer", "comment", "link", "unlink", "unblocked", "delete", "label"
-	ID   string    // primary issue ID
-	Time time.Time // commit timestamp
-	Detail string  // additional context (title, reason, etc.)
+	Type   string    // "create", "close", "start", "update", "reopen", "defer", "undefer", "comment", "link", "unlink", "unblocked", "delete", "label"
+	ID     string    // primary issue ID
+	Time   time.Time // commit timestamp
+	Detail string    // additional context (title, reason, etc.)
 }
 
 // Leaf is a single event in the recap tree.
@@ -34,8 +34,8 @@ type Leaf struct {
 
 // Section groups events for a single issue.
 type Section struct {
-	ID    string `json:"id"`
-	Title string `json:"title"`
+	ID     string `json:"id"`
+	Title  string `json:"title"`
 	Leaves []Leaf `json:"events"`
 }
 

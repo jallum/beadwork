@@ -528,4 +528,3 @@ func TestCommitRespectsBWClockEnv(t *testing.T) {
 		t.Errorf("commit time = %v, want %v", commits[0].Time, expected)
 	}
 }
-
