@@ -252,7 +252,7 @@ func TestCmdSyncOriginShortcutSkipsPrompt(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	env.NewBareRemote()                // adds "origin"
+	env.NewBareRemote()               // adds "origin"
 	addBareRemote(t, env, "upstream") // second remote, without beadwork
 
 	origInteractive := isInteractiveStdin
