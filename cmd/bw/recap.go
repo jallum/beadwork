@@ -114,8 +114,11 @@ func runRecapSingle(ra recapArgs, w Writer, dir string) error {
 				return nil
 			}
 		}
-		if len(commits) > 0 {
+		switch {
+		case len(commits) > 0:
 			_ = r.SetRecapCursor(commits[0].Hash)
+		case cursor != "":
+			_ = r.TouchRecapCursor()
 		}
 	}
 
@@ -258,8 +261,11 @@ func cmdRecapAll(ra recapArgs, w Writer, cfg *config.Config) error {
 					continue
 				}
 			}
-			if len(commits) > 0 {
+			switch {
+			case len(commits) > 0:
 				_ = r.SetRecapCursor(commits[0].Hash)
+			case cursor != "":
+				_ = r.TouchRecapCursor()
 			}
 		}
 	}

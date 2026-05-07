@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jallum/beadwork/internal/config"
 )
@@ -581,8 +582,10 @@ func TestRecapCursorIsIncremental(t *testing.T) {
 }
 
 // TestRecapStampsLastRecapAtWithNoCommits verifies that running recap with
-// nothing new still leaves the cursor ref in place so the "since last recap"
-// label can be derived from the ref file's mtime.
+// nothing new bumps the cursor ref's mtime so the "since last recap (Xh ago)"
+// header reflects the most recent run, not the last cursor advance. Without
+// this, a quiet stretch (no commits between runs) leaves the header growing
+// unboundedly even though the user just ran recap.
 func TestRecapStampsLastRecapAtWithNoCommits(t *testing.T) {
 	env := newBwEnv(t)
 	env.bw("create", "x", "--id", "lr-1")
@@ -593,13 +596,41 @@ func TestRecapStampsLastRecapAtWithNoCommits(t *testing.T) {
 	}
 	cursor1 := env.recapCursor()
 
-	// Run again with nothing new. Cursor ref should still exist.
+	// Simulate a quiet stretch: backdate the cursor file's mtime as if the
+	// last recap ran two hours ago. Using a real-time delta (not BW_CLOCK)
+	// because mtime is wall-clock filesystem state.
+	cursorPath := filepath.Join(env.dir, ".git", "refs", "beadwork", "recap-cursor")
+	backdate := time.Now().Add(-2 * time.Hour)
+	if err := os.Chtimes(cursorPath, backdate, backdate); err != nil {
+		t.Fatalf("chtimes backdate: %v", err)
+	}
+	info, err := os.Stat(cursorPath)
+	if err != nil {
+		t.Fatalf("stat after backdate: %v", err)
+	}
+	if time.Since(info.ModTime()) < time.Hour {
+		t.Fatalf("backdate did not stick: mtime %v is only %v ago", info.ModTime(), time.Since(info.ModTime()))
+	}
+	backdated := info.ModTime()
+
+	// Run again with nothing new. Cursor value must not change, mtime must
+	// advance beyond the backdated time.
 	env.bw("recap")
 	if !env.recapCursorExists() {
 		t.Errorf("second recap lost cursor ref")
 	}
 	if env.recapCursor() != cursor1 {
 		t.Errorf("cursor changed with no new commits")
+	}
+	info2, err := os.Stat(cursorPath)
+	if err != nil {
+		t.Fatalf("stat after second recap: %v", err)
+	}
+	if !info2.ModTime().After(backdated) {
+		t.Errorf("cursor mtime did not advance on no-event recap: was %v, still %v", backdated, info2.ModTime())
+	}
+	if time.Since(info2.ModTime()) > time.Minute {
+		t.Errorf("cursor mtime not recent after recap: %v ago", time.Since(info2.ModTime()))
 	}
 }
 
