@@ -826,6 +826,20 @@ func (t *TreeFS) HasRemotes() (bool, error) {
 	return len(remotes) > 0, nil
 }
 
+// RemoteNames returns the configured git remote names, sorted alphabetically.
+func (t *TreeFS) RemoteNames() ([]string, error) {
+	remotes, err := t.repo.Remotes()
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, 0, len(remotes))
+	for _, r := range remotes {
+		names = append(names, r.Config().Name)
+	}
+	sort.Strings(names)
+	return names, nil
+}
+
 // SetRef directly sets a reference. Used by Init to create tracking branches.
 func (t *TreeFS) SetRef(name string, hash plumbing.Hash) error {
 	ref := plumbing.NewHashReference(plumbing.ReferenceName(name), hash)

@@ -43,7 +43,7 @@ func TestInitWithPreCommitHook(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FindRepo: %v", err)
 	}
-	if err := r.Init("test"); err != nil {
+	if err := r.Init("test", nil); err != nil {
 		t.Fatalf("Init should succeed despite pre-commit hook: %v", err)
 	}
 }
@@ -66,7 +66,7 @@ func TestCommitWithPreCommitHook(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FindRepo: %v", err)
 	}
-	if err := r.Init("test"); err != nil {
+	if err := r.Init("test", nil); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 
@@ -101,7 +101,7 @@ func TestCommitNoop(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FindRepo: %v", err)
 	}
-	if err := r.Init("test"); err != nil {
+	if err := r.Init("test", nil); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 

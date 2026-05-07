@@ -55,7 +55,7 @@ func TestVersionUnset(t *testing.T) {
 
 func TestVersionAfterInit(t *testing.T) {
 	r := initTestRepo(t)
-	if err := r.Init("test"); err != nil {
+	if err := r.Init("test", nil); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 	if v := r.Version(); v != CurrentVersion {
@@ -65,7 +65,7 @@ func TestVersionAfterInit(t *testing.T) {
 
 func TestVersionRoundTrip(t *testing.T) {
 	r := initTestRepo(t)
-	if err := r.Init("test"); err != nil {
+	if err := r.Init("test", nil); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 	r.SetConfig("version", "42")
@@ -115,7 +115,7 @@ func TestUpgradeFromV0(t *testing.T) {
 
 func TestUpgradeAlreadyCurrent(t *testing.T) {
 	r := initTestRepo(t)
-	if err := r.Init("test"); err != nil {
+	if err := r.Init("test", nil); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 
@@ -200,7 +200,7 @@ func TestUpgradeV1ToV2PriorityMigration(t *testing.T) {
 
 func TestInitStampsVersion(t *testing.T) {
 	r := initTestRepo(t)
-	if err := r.Init("test"); err != nil {
+	if err := r.Init("test", nil); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 
