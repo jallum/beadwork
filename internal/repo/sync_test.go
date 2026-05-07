@@ -479,10 +479,10 @@ func beadworkTip(t *testing.T, bare string) string {
 	return strings.TrimSpace(string(out))
 }
 
-// TestSyncMultiRemoteBothHaveBeadwork covers the core new behavior: when
-// more than one remote has the beadwork branch, sync pushes new commits
-// to every one of them.
-func TestSyncMultiRemoteBothHaveBeadwork(t *testing.T) {
+// TestSyncMultiRemoteUsesFirst verifies that when multiple remotes have
+// the beadwork branch, sync uses only the first one alphabetically and
+// leaves the others untouched.
+func TestSyncMultiRemoteUsesFirst(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
@@ -493,21 +493,21 @@ func TestSyncMultiRemoteBothHaveBeadwork(t *testing.T) {
 	gitRun(t, env.Dir, "remote", "add", "alpha", bare1)
 	gitRun(t, env.Dir, "remote", "add", "beta", bare2)
 
-	// Initial push via git config beadwork.remote; only alpha has beadwork now.
+	// Initial push via git config; only alpha has beadwork now.
 	gitRun(t, env.Dir, "config", "beadwork.remote", "alpha")
 	env.Store.Create("Seed", issue.CreateOpts{})
 	env.CommitIntent("create seed")
 	if _, _, err := env.Repo.Sync(nil); err != nil {
 		t.Fatalf("initial sync: %v", err)
 	}
-	// Seed beta so both have beadwork.
+	// Manually seed beta so both have beadwork.
 	gitRun(t, env.Dir, "push", "beta", "refs/heads/beadwork:refs/heads/beadwork")
 	seedTip := beadworkTip(t, bare1)
 	if seedTip == "" || seedTip != beadworkTip(t, bare2) {
 		t.Fatalf("pre-test seed failed: alpha=%q beta=%q", seedTip, beadworkTip(t, bare2))
 	}
 
-	// New commit locally, then sync — should push to both remotes.
+	// New commit locally, then sync — should push only to alpha (first alphabetically).
 	env.Store.Create("Multi", issue.CreateOpts{})
 	env.CommitIntent("create multi")
 
@@ -523,11 +523,8 @@ func TestSyncMultiRemoteBothHaveBeadwork(t *testing.T) {
 	if tip1 == seedTip {
 		t.Errorf("alpha tip did not advance: still %q", tip1)
 	}
-	if tip2 == seedTip {
-		t.Errorf("beta tip did not advance: still %q", tip2)
-	}
-	if tip1 != tip2 {
-		t.Errorf("tips diverged after sync: alpha=%q beta=%q", tip1, tip2)
+	if tip2 != seedTip {
+		t.Errorf("beta was updated but should have been left at seed tip: %q → %q", seedTip, tip2)
 	}
 }
 
@@ -571,10 +568,10 @@ func TestSyncMultiRemoteOnlyOneHasBeadwork(t *testing.T) {
 	}
 }
 
-// TestSyncMultiRemoteConflictFansOutAfterReplay confirms that when a
-// conflict on one remote triggers `needs replay`, replaying and
-// re-invoking sync fans the merged state out to every target remote.
-func TestSyncMultiRemoteConflictFansOutAfterReplay(t *testing.T) {
+// TestSyncConflictReplayIgnoresSecondaryRemote confirms that conflict →
+// replay → sync works correctly against the primary remote (alpha) while
+// a secondary remote with beadwork (beta) is left untouched.
+func TestSyncConflictReplayIgnoresSecondaryRemote(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
@@ -586,16 +583,16 @@ func TestSyncMultiRemoteConflictFansOutAfterReplay(t *testing.T) {
 	gitRun(t, env.Dir, "remote", "add", "beta", bare2)
 	gitRun(t, env.Dir, "config", "beadwork.remote", "alpha")
 
-	// Seed a shared issue on both remotes.
+	// Seed alpha, then manually push to beta so both have beadwork.
 	shared, _ := env.Store.Create("Shared", issue.CreateOpts{})
 	env.CommitIntent("create " + shared.ID + " p3 task \"Shared\"")
 	if _, _, err := env.Repo.Sync(nil); err != nil {
 		t.Fatalf("seed sync: %v", err)
 	}
 	gitRun(t, env.Dir, "push", "beta", "refs/heads/beadwork:refs/heads/beadwork")
+	betaSeedTip := beadworkTip(t, bare2)
 
-	// Clone the alpha bare, modify the shared issue, push back to alpha.
-	// This makes alpha diverge from local.
+	// Clone alpha, push a diverging commit back to alpha.
 	env2 := env.CloneEnv(bare1)
 	defer env2.Cleanup()
 	env2.SwitchTo()
@@ -606,15 +603,13 @@ func TestSyncMultiRemoteConflictFansOutAfterReplay(t *testing.T) {
 		t.Fatalf("clone sync: %v", err)
 	}
 
-	// Back to original, make a conflicting edit locally.
+	// Back to original, make a conflicting local edit.
 	env.SwitchTo()
 	assignee := "local-agent"
 	env.Store.Update(shared.ID, issue.UpdateOpts{Assignee: &assignee})
 	env.CommitIntent("update " + shared.ID + " assignee=local-agent")
 
-	// First sync: alpha diverged → needs replay (or clean rebase if git
-	// happens to auto-merge). Either way, after handling it the state
-	// must fan out to beta too.
+	// Sync with alpha (the primary): expect conflict or clean rebase.
 	status, intents, err := env.Repo.Sync(nil)
 	if err != nil {
 		t.Fatalf("first sync: %v", err)
@@ -631,9 +626,12 @@ func TestSyncMultiRemoteConflictFansOutAfterReplay(t *testing.T) {
 		}
 	}
 
-	// After everything settles, alpha and beta should agree.
-	if a, b := beadworkTip(t, bare1), beadworkTip(t, bare2); a != b || a == "" {
-		t.Errorf("remotes did not converge after replay: alpha=%q beta=%q", a, b)
+	// Alpha should have the resolved state; beta should still be at its seed tip.
+	if a := beadworkTip(t, bare1); a == "" {
+		t.Error("alpha has no beadwork tip after replay")
+	}
+	if b := beadworkTip(t, bare2); b != betaSeedTip {
+		t.Errorf("beta was modified but should have been left at seed tip: was %q, now %q", betaSeedTip, b)
 	}
 }
 

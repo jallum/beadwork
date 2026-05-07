@@ -132,7 +132,7 @@ func TestCmdSyncNonInteractiveFailsWithoutPrompt(t *testing.T) {
 	env.Repo.Commit("create needs resolution")
 
 	var buf bytes.Buffer
-	err := cmdSync(env.Store, []string{}, PlainWriter(&buf))
+	_, err := cmdSync(env.Store, []string{}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Fatalf("expected error in non-interactive multi-remote run; output=%q", buf.String())
 	}
@@ -175,7 +175,7 @@ func TestCmdSyncInteractivePromptPersists(t *testing.T) {
 	env.Repo.Commit("create interactive")
 
 	var buf bytes.Buffer
-	if err := cmdSync(env.Store, []string{}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdSync(env.Store, []string{}, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdSync: %v: %s", err, buf.String())
 	}
 	if !strings.Contains(buf.String(), "pushed") {
@@ -194,7 +194,7 @@ func TestCmdSyncInteractivePromptPersists(t *testing.T) {
 	env.Repo.Commit("create second")
 
 	var buf2 bytes.Buffer
-	if err := cmdSync(env.Store, []string{}, PlainWriter(&buf2)); err != nil {
+	if _, err := cmdSync(env.Store, []string{}, PlainWriter(&buf2), nil); err != nil {
 		t.Fatalf("second cmdSync: %v: %s", err, buf2.String())
 	}
 	if strings.Contains(buf2.String(), "multiple remotes") {
@@ -230,7 +230,7 @@ func TestCmdSyncGitConfigShortcutSkipsPrompt(t *testing.T) {
 	env.Repo.Commit("create config shortcut")
 
 	var buf bytes.Buffer
-	if err := cmdSync(env.Store, []string{}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdSync(env.Store, []string{}, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdSync: %v: %s", err, buf.String())
 	}
 	if primed.Len() == 0 {
@@ -269,7 +269,7 @@ func TestCmdSyncOriginShortcutSkipsPrompt(t *testing.T) {
 	env.Repo.Commit("create origin shortcut")
 
 	var buf bytes.Buffer
-	if err := cmdSync(env.Store, []string{}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdSync(env.Store, []string{}, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdSync: %v: %s", err, buf.String())
 	}
 	if primed.Len() == 0 {

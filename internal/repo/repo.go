@@ -471,7 +471,10 @@ func (r *Repo) targetRemotes(resolve RemoteResolver) ([]string, error) {
 	}
 	if len(hasBW) > 0 {
 		sort.Strings(hasBW)
-		return hasBW, nil
+		if len(hasBW) > 1 {
+			fmt.Fprintf(os.Stderr, "warning: multiple remotes have the beadwork branch (%s); using %q\n", strings.Join(hasBW, ", "), hasBW[0])
+		}
+		return []string{hasBW[0]}, nil
 	}
 	chosen, err := r.resolveSingleRemote(all, resolve)
 	if err != nil {
@@ -507,16 +510,15 @@ func (r *Repo) resolveSingleRemote(all []string, resolve RemoteResolver) (string
 	return "", fmt.Errorf("no default remote — multiple remotes, none have the %q branch, no remote is named \"origin\", and git config beadwork.remote is unset. Set one with: git config beadwork.remote <name> (remotes: %s)", BranchName, strings.Join(all, ", "))
 }
 
-// Sync fetches from every remote that has the beadwork branch, merges
-// their tips into local, and pushes the result back to every one of them.
-// If no remote has the branch yet, it resolves a single remote via the
-// precedence rules (single-remote auto-pick, git config beadwork.remote,
-// "origin" by name, or the resolver callback for interactive selection)
-// and pushes to just that one.
+// Sync fetches from the target remote, merges its tip into local, and
+// pushes the result back. The target is the first remote (alphabetically)
+// that already has the beadwork branch; if none do, a single remote is
+// resolved via the precedence rules (single-remote auto-pick, git config
+// beadwork.remote, "origin" by name, resolver callback).
 //
-// On merge conflict against any remote, returns ("needs replay",
-// conflicting-local-commits, nil) with preReplayHash captured. Callers run
-// intent.Replay then re-invoke Sync to finish the fan-out.
+// On merge conflict returns ("needs replay", conflicting-local-commits,
+// nil) with preReplayHash captured. Callers run intent.Replay then
+// re-invoke Sync to finish the push.
 func (r *Repo) Sync(resolve RemoteResolver) (status string, replayed []string, err error) {
 	if !r.hasRemote() {
 		return "no remote configured", nil, nil
@@ -530,119 +532,81 @@ func (r *Repo) Sync(resolve RemoteResolver) (status string, replayed []string, e
 		return "no remote configured", nil, nil
 	}
 
-	return r.syncTo(remotes)
+	return r.syncTo(remotes[0])
 }
 
-// syncTo runs the three-phase multi-remote sync across the given remotes:
-// fetch each, merge each into local in sorted order (stopping on conflict),
-// then push local to each.
-func (r *Repo) syncTo(remotes []string) (string, []string, error) {
-	// Phase A: fetch every target remote into its own tracking ref.
-	// A failure on one remote (e.g. network, missing beadwork branch)
-	// is warned-and-skipped so the rest of the sync can proceed.
-	fetched := make([]string, 0, len(remotes))
-	for _, name := range remotes {
-		refSpec := config.RefSpec(fmt.Sprintf("+%s:refs/remotes/%s/%s", refLocal, name, BranchName))
-		if err := r.fetch(name, refSpec); err != nil {
-			fmt.Fprintf(os.Stderr, "warning: fetch from %s failed: %v\n", name, err)
-			continue
-		}
-		fetched = append(fetched, name)
-	}
-	sort.Strings(fetched)
+func (r *Repo) syncTo(remote string) (string, []string, error) {
+	refSpec := config.RefSpec(fmt.Sprintf("+%s:refs/remotes/%s/%s", refLocal, remote, BranchName))
+	_ = r.fetch(remote, refSpec) // failure OK — remote may not have beadwork yet
 
-	// Phase B: merge each fetched remote's tip into local.
-	didMerge := false
-	didFastForward := false
-	for _, name := range fetched {
-		remoteRef := "refs/remotes/" + name + "/" + BranchName
-		remoteHash, err := r.tfs.LookupRef(remoteRef)
-		if err != nil {
-			// Tracking ref missing despite successful fetch — skip.
-			continue
-		}
-		localHash := r.tfs.RefHash()
+	remoteRef := "refs/remotes/" + remote + "/" + BranchName
+	pushRef := config.RefSpec(refLocal + ":" + refLocal)
 
-		localCommits, err := r.tfs.CommitsBetween(localHash, remoteHash)
-		if err != nil {
-			return "", nil, err
+	remoteHash, err := r.tfs.LookupRef(remoteRef)
+	if err != nil {
+		// Remote has no beadwork branch — push to seed it.
+		if err := r.gitPush(remote, pushRef); err != nil {
+			return "", nil, fmt.Errorf("push to %s: %w", remote, err)
 		}
-		if len(localCommits) == 0 {
-			if localHash != remoteHash {
-				if err := r.tfs.Reset(remoteHash); err != nil {
-					return "", nil, fmt.Errorf("fast-forward from %s: %w", name, err)
-				}
-				didFastForward = true
-			}
-			continue
-		}
-
-		remoteCommits, err := r.tfs.CommitsBetween(remoteHash, localHash)
-		if err != nil {
-			return "", nil, err
-		}
-		if len(remoteCommits) == 0 {
-			// Local strictly ahead of this remote — Phase C will push.
-			continue
-		}
-
-		// Diverged — attempt 3-way tree merge.
-		localMsgs := make([]string, 0, len(localCommits))
-		for _, c := range localCommits {
-			localMsgs = append(localMsgs, c.Message)
-		}
-		merged, err := r.tfs.MergeCommit(localHash, remoteHash, localMsgs)
-		if err != nil {
-			return "", nil, fmt.Errorf("merge with %s: %w", name, err)
-		}
-		if merged {
-			didMerge = true
-			continue
-		}
-
-		// Conflict: capture pre-reset hash for attachment-blob recovery
-		// (same as the single-remote path previously did), reset to this
-		// remote's tip, and bubble the conflicting intents out for replay.
-		r.preReplayHash = localHash
-		if err := r.tfs.Reset(remoteHash); err != nil {
-			return "", nil, fmt.Errorf("reset to %s: %w", name, err)
-		}
-		return "needs replay", localMsgs, nil
-	}
-
-	// Phase C: push local to every target remote. Only counts as "pushed"
-	// when local is actually ahead of (or unrelated to) the remote's tip.
-	pushRefSpec := config.RefSpec(refLocal + ":" + refLocal)
-	pushedCount := 0
-	for _, name := range remotes {
-		remoteRef := "refs/remotes/" + name + "/" + BranchName
-		localHash := r.tfs.RefHash()
-		remoteHash, refErr := r.tfs.LookupRef(remoteRef)
-		needsPush := refErr != nil || remoteHash != localHash
-		if !needsPush {
-			continue
-		}
-		if err := r.gitPush(name, pushRefSpec); err != nil {
-			return "", nil, fmt.Errorf("push to %s failed: %w", name, err)
-		}
-		pushedCount++
-	}
-
-	switch {
-	case didMerge && pushedCount > 0:
-		return "rebased and pushed", nil, nil
-	case pushedCount > 0:
 		return "pushed", nil, nil
-	case didFastForward:
-		return "up to date", nil, nil
-	default:
+	}
+
+	localHash := r.tfs.RefHash()
+	localCommits, err := r.tfs.CommitsBetween(localHash, remoteHash)
+	if err != nil {
+		return "", nil, err
+	}
+
+	if len(localCommits) == 0 {
+		// Local is at or behind remote.
+		if localHash != remoteHash {
+			if err := r.tfs.Reset(remoteHash); err != nil {
+				return "", nil, fmt.Errorf("fast-forward from %s: %w", remote, err)
+			}
+		}
 		return "up to date", nil, nil
 	}
+
+	remoteCommits, err := r.tfs.CommitsBetween(remoteHash, localHash)
+	if err != nil {
+		return "", nil, err
+	}
+
+	if len(remoteCommits) == 0 {
+		// Local strictly ahead — push.
+		if err := r.gitPush(remote, pushRef); err != nil {
+			return "", nil, fmt.Errorf("push to %s: %w", remote, err)
+		}
+		return "pushed", nil, nil
+	}
+
+	// Diverged — attempt 3-way tree merge.
+	localMsgs := make([]string, 0, len(localCommits))
+	for _, c := range localCommits {
+		localMsgs = append(localMsgs, c.Message)
+	}
+	merged, err := r.tfs.MergeCommit(localHash, remoteHash, localMsgs)
+	if err != nil {
+		return "", nil, fmt.Errorf("merge with %s: %w", remote, err)
+	}
+	if merged {
+		if err := r.gitPush(remote, pushRef); err != nil {
+			return "", nil, fmt.Errorf("push after merge: %w", err)
+		}
+		return "rebased and pushed", nil, nil
+	}
+
+	// Conflict — capture pre-reset hash for attachment-blob recovery,
+	// reset to the remote tip, and bubble the local intents out for replay.
+	r.preReplayHash = localHash
+	if err := r.tfs.Reset(remoteHash); err != nil {
+		return "", nil, fmt.Errorf("reset to %s: %w", remote, err)
+	}
+	return "needs replay", localMsgs, nil
 }
 
-// Push pushes the beadwork branch to every remote that has the branch, or
-// to a single resolved remote if none of them do. See Sync for the
-// resolver semantics.
+// Push pushes the beadwork branch to the target remote. See Sync for
+// the target-remote selection semantics.
 func (r *Repo) Push(resolve RemoteResolver) error {
 	if !r.hasRemote() {
 		return fmt.Errorf("no remote configured")
@@ -654,15 +618,8 @@ func (r *Repo) Push(resolve RemoteResolver) error {
 	if len(remotes) == 0 {
 		return fmt.Errorf("no remote configured")
 	}
-	return r.pushTo(remotes)
-}
-
-func (r *Repo) pushTo(remotes []string) error {
-	refSpec := config.RefSpec(refLocal + ":" + refLocal)
-	for _, name := range remotes {
-		if err := r.gitPush(name, refSpec); err != nil {
-			return fmt.Errorf("push to %s failed: %w", name, err)
-		}
+	if err := r.gitPush(remotes[0], config.RefSpec(refLocal+":"+refLocal)); err != nil {
+		return fmt.Errorf("push to %s failed: %w", remotes[0], err)
 	}
 	return nil
 }

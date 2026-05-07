@@ -193,7 +193,7 @@ func TestCmdInitMultiRemotePrompts(t *testing.T) {
 	initStdin = strings.NewReader("2\n") // pick beta
 
 	var buf bytes.Buffer
-	if err := cmdInit(nil, []string{"--prefix", "multi"}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdInit(nil, []string{"--prefix", "multi"}, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdInit: %v: %s", err, buf.String())
 	}
 	if !strings.Contains(buf.String(), "initialized") {
@@ -226,7 +226,7 @@ func TestCmdInitNonInteractiveFailsWithoutPrompt(t *testing.T) {
 	initStdin = primed
 
 	var buf bytes.Buffer
-	err := cmdInit(nil, []string{"--prefix", "alpha"}, PlainWriter(&buf))
+	_, err := cmdInit(nil, []string{"--prefix", "alpha"}, PlainWriter(&buf), nil)
 	if err == nil {
 		t.Fatalf("expected error in non-interactive multi-remote init; output=%q", buf.String())
 	}
@@ -253,7 +253,7 @@ func TestCmdInitMultiRemoteOriginShortcut(t *testing.T) {
 	initStdin = primed
 
 	var buf bytes.Buffer
-	if err := cmdInit(nil, []string{"--prefix", "o"}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdInit(nil, []string{"--prefix", "o"}, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdInit: %v: %s", err, buf.String())
 	}
 	if primed.Len() == 0 {
@@ -282,7 +282,7 @@ func TestCmdInitMultiRemoteGitConfigShortcut(t *testing.T) {
 	initStdin = primed
 
 	var buf bytes.Buffer
-	if err := cmdInit(nil, []string{"--prefix", "g"}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdInit(nil, []string{"--prefix", "g"}, PlainWriter(&buf), nil); err != nil {
 		t.Fatalf("cmdInit: %v: %s", err, buf.String())
 	}
 	if primed.Len() == 0 {
@@ -297,7 +297,7 @@ func TestCmdInitBootstrapsFromRemoteWithBeadwork(t *testing.T) {
 	// Seed a bare repo by doing a full init-and-push in a source repo.
 	srcDir, cleanupSrc := setupFreshRepoWithRemotes(t, "alpha")
 	var buf bytes.Buffer
-	if err := cmdInit(nil, []string{"--prefix", "seed"}, PlainWriter(&buf)); err != nil {
+	if _, err := cmdInit(nil, []string{"--prefix", "seed"}, PlainWriter(&buf), nil); err != nil {
 		cleanupSrc()
 		t.Fatalf("seed cmdInit: %v: %s", err, buf.String())
 	}
@@ -341,7 +341,7 @@ func TestCmdInitBootstrapsFromRemoteWithBeadwork(t *testing.T) {
 	initStdin = primed
 
 	var buf2 bytes.Buffer
-	if err := cmdInit(nil, []string{}, PlainWriter(&buf2)); err != nil {
+	if _, err := cmdInit(nil, []string{}, PlainWriter(&buf2), nil); err != nil {
 		t.Fatalf("cmdInit: %v: %s", err, buf2.String())
 	}
 	if primed.Len() == 0 {
