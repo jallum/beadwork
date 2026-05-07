@@ -540,9 +540,11 @@ func TestRecapDryRun(t *testing.T) {
 	env.bw("create", "dry", "--id", "dr-1")
 
 	env.bw("recap", "today", "--dry-run")
-	contents := env.registryContents()
-	if strings.Contains(contents, `"cursor"`) {
-		t.Errorf("--dry-run should not have set a cursor:\n%s", contents)
+	// Cursor lives in refs/beadwork/recap-cursor — should not exist after --dry-run.
+	cmd := exec.Command("git", "show-ref", "--verify", "refs/beadwork/recap-cursor")
+	cmd.Dir = env.dir
+	if err := cmd.Run(); err == nil {
+		t.Error("--dry-run should not have set the recap cursor ref")
 	}
 }
 
@@ -674,14 +676,14 @@ func TestRecapTodayLocalTimezone(t *testing.T) {
 	envLateYesterdayLocal := "2026-01-14T23:30:00-05:00"
 
 	dir := t.TempDir()
-	registryDir := t.TempDir()
+	cfgPathTZ := filepath.Join(t.TempDir(), ".bw")
 	baseEnv := append(os.Environ(),
 		"GIT_AUTHOR_NAME=Test",
 		"GIT_AUTHOR_EMAIL=test@test.com",
 		"GIT_COMMITTER_NAME=Test",
 		"GIT_COMMITTER_EMAIL=test@test.com",
 		"NO_COLOR=1",
-		"BEADWORK_HOME="+registryDir,
+		"BW_CONFIG="+cfgPathTZ,
 	)
 
 	run := func(clock string, args ...string) string {
@@ -860,11 +862,11 @@ func TestRecapFromSubdir(t *testing.T) {
 func TestRecapNotInRepo(t *testing.T) {
 	dir := t.TempDir()
 	env := &bwEnv{
-		t:           t,
-		dir:         dir,
-		registryDir: t.TempDir(),
+		t:   t,
+		dir: dir,
 		env: append(os.Environ(),
 			"BW_CLOCK="+fixedClock,
+			"BW_CONFIG="+filepath.Join(t.TempDir(), ".bw"),
 			"NO_COLOR=1",
 		),
 	}
@@ -920,9 +922,8 @@ func TestRecapAllWarnsOnMissing(t *testing.T) {
 	envs := newMultiRepoEnv(t, 2)
 	envs[0].bw("create", "Real", "--id", "re-1")
 
-	// Append a nonexistent path to the registry.
-	existing := envs[0].registryContents()
-	os.WriteFile(envs[0].registryDir, []byte(existing+"/nonexistent/path\n"), 0644)
+	// Inject a nonexistent path into the registry.
+	envs[0].seedRegistry("/nonexistent/path")
 
 	stdout, stderr := envs[0].bwCapture("recap", "today", "--all")
 	if !strings.Contains(stderr, "skipping") || !strings.Contains(stderr, "/nonexistent/path") {
