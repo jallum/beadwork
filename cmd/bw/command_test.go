@@ -269,34 +269,6 @@ func TestExpandAliases(t *testing.T) {
 	}
 }
 
-func TestCommandValueFlags(t *testing.T) {
-	// Verify that Command.valueFlags() returns the right set
-	cmd := commandMap["create"]
-	if cmd == nil {
-		t.Fatal("create command not found")
-	}
-	vf := cmd.valueFlags()
-	// --priority, --type, --description should be value flags
-	for _, name := range []string{"--priority", "--type", "--description"} {
-		found := false
-		for _, f := range vf {
-			if f == name {
-				found = true
-				break
-			}
-		}
-		if !found {
-			t.Errorf("valueFlags() missing %q for create command", name)
-		}
-	}
-	// --json should NOT be a value flag
-	for _, f := range vf {
-		if f == "--json" {
-			t.Error("--json should not be a value flag")
-		}
-	}
-}
-
 func TestHiddenFlagOmittedFromHelp(t *testing.T) {
 	cmd := &Command{
 		Name:    "hidden-test",
@@ -320,30 +292,6 @@ func TestHiddenFlagOmittedFromHelp(t *testing.T) {
 	}
 	if strings.Contains(out, "Secret flag") {
 		t.Error("hidden flag help text should not appear in help output")
-	}
-}
-
-func TestHiddenFlagStillInValueFlags(t *testing.T) {
-	cmd := &Command{
-		Name:    "vf-test",
-		Summary: "Test valueFlags includes hidden",
-		Flags: []Flag{
-			{Long: "--visible", Value: "X", Help: "Visible"},
-			{Long: "--hidden", Value: "Y", Help: "Hidden", Hidden: true},
-		},
-		Run: func(*issue.Store, []string, Writer, *config.Config) (*config.Config, error) { return nil, nil },
-	}
-
-	vf := cmd.valueFlags()
-	found := false
-	for _, f := range vf {
-		if f == "--hidden" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Error("valueFlags() should include hidden flags (they are still functional)")
 	}
 }
 

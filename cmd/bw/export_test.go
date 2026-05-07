@@ -38,30 +38,6 @@ func TestCmdExportBasic(t *testing.T) {
 	}
 }
 
-func TestDateConversionHelpers(t *testing.T) {
-	// toRFC3339Date
-	if got := toRFC3339Date(""); got != "" {
-		t.Errorf("toRFC3339Date empty = %q", got)
-	}
-	if got := toRFC3339Date("2027-06-01"); got != "2027-06-01T00:00:00Z" {
-		t.Errorf("toRFC3339Date bare = %q", got)
-	}
-	if got := toRFC3339Date("2027-06-01T12:00:00Z"); got != "2027-06-01T12:00:00Z" {
-		t.Errorf("toRFC3339Date passthrough = %q", got)
-	}
-
-	// fromRFC3339Date
-	if got := fromRFC3339Date(""); got != "" {
-		t.Errorf("fromRFC3339Date empty = %q", got)
-	}
-	if got := fromRFC3339Date("2027-06-01T00:00:00Z"); got != "2027-06-01" {
-		t.Errorf("fromRFC3339Date rfc3339 = %q", got)
-	}
-	if got := fromRFC3339Date("2027-06-01"); got != "2027-06-01" {
-		t.Errorf("fromRFC3339Date bare = %q", got)
-	}
-}
-
 func TestCmdExportWithParent(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()

@@ -42,17 +42,6 @@ type Command struct {
 	Run         func(store *issue.Store, args []string, w Writer, cfg *config.Config) (*config.Config, error)
 }
 
-// valueFlags returns the long names of flags that take a value (non-boolean).
-func (c *Command) valueFlags() []string {
-	var vf []string
-	for _, f := range c.Flags {
-		if f.Value != "" {
-			vf = append(vf, f.Long)
-		}
-	}
-	return vf
-}
-
 // expandAliases replaces short flags with their long equivalents.
 func expandAliases(raw []string, flags []Flag) []string {
 	shorts := make(map[string]string, len(flags))
