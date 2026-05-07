@@ -7,6 +7,8 @@ import (
 
 	"github.com/jallum/beadwork/internal/config"
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/registry"
+	"github.com/jallum/beadwork/internal/repo"
 	"golang.org/x/term"
 )
 
@@ -96,14 +98,23 @@ func main() {
 		fatal(err.Error())
 	}
 
+	originalCfg := cfg
+
 	newCfg, err := c.Run(store, args, w, cfg)
 	if err != nil {
 		fatal(err.Error())
 	}
 	if newCfg != nil {
-		if err := newCfg.Save(); err != nil {
-			fatal(err.Error())
-		}
+		cfg = newCfg
+	}
+
+	if store != nil && registry.Auto(cfg) {
+		r := store.Committer.(*repo.Repo)
+		cfg = registry.Register(cfg, r.RepoDir())
+	}
+
+	if cfg != originalCfg {
+		_ = cfg.Save()
 	}
 }
 
