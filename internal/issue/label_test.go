@@ -128,4 +128,3 @@ func TestUpdatedAtOnLabel(t *testing.T) {
 		t.Error("updated_at should be set after label")
 	}
 }
-

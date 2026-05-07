@@ -1756,4 +1756,3 @@ func TestReadyScopedNonExistentParent(t *testing.T) {
 		t.Error("expected error for non-existent parent")
 	}
 }
-

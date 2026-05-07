@@ -57,7 +57,6 @@ func TestListFilters(t *testing.T) {
 	}
 }
 
-
 // TestListFreshRepoEmpty covers the listing-tolerance half of the
 // .gitkeep cleanup: a repo that was just initialized has no status
 // index directories for any state, yet listings must return empty
@@ -122,7 +121,6 @@ func TestListByStatus(t *testing.T) {
 	}
 }
 
-
 func TestListJSON(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -161,7 +159,6 @@ func TestListJSON(t *testing.T) {
 	assertJSONFields(t, parsed[0], "closed", 1, "bug", "Fix crash", "alice")
 	assertJSONFields(t, parsed[1], "open", 3, "task", "Add search", "")
 }
-
 
 func TestListJSONFilterByStatus(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -216,7 +213,6 @@ func assertJSONFields(t *testing.T, iss issue.Issue, status string, priority int
 	}
 }
 
-
 func TestListByDeferredStatus(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -249,7 +245,6 @@ func TestListByDeferredStatus(t *testing.T) {
 }
 
 // --- updated_at, closed_at, close_reason ---
-
 
 func TestListStatuses(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -302,7 +297,6 @@ func TestListStatuses(t *testing.T) {
 }
 
 // --- Grep filter (bw-wdi) ---
-
 
 func TestListGrep(t *testing.T) {
 	env := testutil.NewEnv(t)
@@ -402,18 +396,18 @@ func TestIsOverdue(t *testing.T) {
 		due  string
 		want bool
 	}{
-		{"", false},                                    // no due date
-		{"2027-04-17", false},                          // future date
-		{"2027-04-16", false},                          // today (end-of-day: not overdue)
-		{"2027-04-15", true},                           // yesterday
-		{"2027-03-01", true},                           // long past
-		{"2027-04-16T13:00:00Z", false},                // future RFC3339
-		{"2027-04-16T11:00:00Z", true},                 // past RFC3339
-		{"2027-04-16T12:00:00Z", false},                // exactly now (not After)
-		{"2027-04-16T08:00:00-04:00", false},           // noon UTC = same instant
-		{"2027-04-16T07:00:00-04:00", true},            // 11am UTC = past
-		{"not-a-date", false},                          // invalid format
-		{"2027-04-16T99:99:99Z", false},                // invalid RFC3339
+		{"", false},                          // no due date
+		{"2027-04-17", false},                // future date
+		{"2027-04-16", false},                // today (end-of-day: not overdue)
+		{"2027-04-15", true},                 // yesterday
+		{"2027-03-01", true},                 // long past
+		{"2027-04-16T13:00:00Z", false},      // future RFC3339
+		{"2027-04-16T11:00:00Z", true},       // past RFC3339
+		{"2027-04-16T12:00:00Z", false},      // exactly now (not After)
+		{"2027-04-16T08:00:00-04:00", false}, // noon UTC = same instant
+		{"2027-04-16T07:00:00-04:00", true},  // 11am UTC = past
+		{"not-a-date", false},                // invalid format
+		{"2027-04-16T99:99:99Z", false},      // invalid RFC3339
 	}
 
 	for _, tt := range tests {
@@ -588,14 +582,14 @@ func TestIsDeferralExpired(t *testing.T) {
 		deferUntil string
 		want       bool
 	}{
-		{"", false},                                     // no deferral
-		{"2027-04-16", false},                           // tomorrow (not expired)
-		{"2027-04-15", true},                            // today (start-of-day: expired)
-		{"2027-04-14", true},                            // yesterday
-		{"2027-04-15T13:00:00Z", false},                 // future RFC3339
-		{"2027-04-15T11:00:00Z", true},                  // past RFC3339
-		{"2027-04-15T12:00:00Z", false},                 // exactly now (not After)
-		{"not-a-date", false},                           // invalid
+		{"", false},                     // no deferral
+		{"2027-04-16", false},           // tomorrow (not expired)
+		{"2027-04-15", true},            // today (start-of-day: expired)
+		{"2027-04-14", true},            // yesterday
+		{"2027-04-15T13:00:00Z", false}, // future RFC3339
+		{"2027-04-15T11:00:00Z", true},  // past RFC3339
+		{"2027-04-15T12:00:00Z", false}, // exactly now (not After)
+		{"not-a-date", false},           // invalid
 	}
 
 	for _, tt := range tests {
@@ -672,4 +666,3 @@ func TestListDeferredShowsAll(t *testing.T) {
 }
 
 // --- DeletePreview tests ---
-

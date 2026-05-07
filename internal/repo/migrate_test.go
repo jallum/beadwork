@@ -145,9 +145,9 @@ func TestUpgradeV1ToV2PriorityMigration(t *testing.T) {
 
 	// Write issue files with v1-era priorities (1-5)
 	cases := []struct {
-		file     string
-		oldPri   int
-		wantPri  int
+		file    string
+		oldPri  int
+		wantPri int
 	}{
 		{"issues/test-0001.json", 1, 0},
 		{"issues/test-0002.json", 3, 2},
