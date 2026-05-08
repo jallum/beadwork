@@ -480,8 +480,8 @@ func (t *TreeFS) casUpdateRef(newHash plumbing.Hash) error {
 
 	// CAS check
 	if currentRef.Hash() != t.baseRef {
-		return fmt.Errorf("conflict: ref %s has moved (expected %s, got %s)",
-			t.ref, t.baseRef.String()[:8], currentRef.Hash().String()[:8])
+		return fmt.Errorf("%w: ref %s (expected %s, got %s)",
+			ErrRefMoved, t.ref, t.baseRef.String()[:8], currentRef.Hash().String()[:8])
 	}
 
 	// Update ref
@@ -793,6 +793,37 @@ func (t *TreeFS) AllCommits() ([]CommitInfo, error) {
 	return commits, nil
 }
 
+// CommitsSince returns all commits on the tracked ref newer than the given
+// hash, newest-first. If sinceHash is zero, returns all commits.
+func (t *TreeFS) CommitsSince(sinceHash string) ([]CommitInfo, error) {
+	if t.baseRef.IsZero() {
+		return nil, nil
+	}
+	var since plumbing.Hash
+	if sinceHash != "" {
+		since = plumbing.NewHash(sinceHash)
+	}
+
+	var commits []CommitInfo
+	iter, err := t.repo.Log(&git.LogOptions{From: t.baseRef})
+	if err != nil {
+		return nil, fmt.Errorf("walk commits: %w", err)
+	}
+	iter.ForEach(func(c *object.Commit) error {
+		if !since.IsZero() && c.Hash == since {
+			return storer.ErrStop
+		}
+		commits = append(commits, CommitInfo{
+			Hash:    c.Hash.String(),
+			Message: strings.TrimSpace(c.Message),
+			Time:    c.Author.When,
+			Author:  c.Author.Name,
+		})
+		return nil
+	})
+	return commits, nil
+}
+
 // RefHash returns the current hash of the tracked ref.
 func (t *TreeFS) RefHash() plumbing.Hash {
 	return t.baseRef
@@ -836,6 +867,10 @@ func (t *TreeFS) SetRef(name string, hash plumbing.Hash) error {
 func (t *TreeFS) DeleteRef(name string) error {
 	return t.repo.Storer.RemoveReference(plumbing.ReferenceName(name))
 }
+
+// ErrRefMoved is returned by Commit when the ref has moved since the TreeFS
+// was opened, indicating a CAS conflict. Callers can check for this to retry.
+var ErrRefMoved = fmt.Errorf("ref moved")
 
 // CommitInfo holds a commit hash and message.
 type CommitInfo struct {
