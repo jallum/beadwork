@@ -139,4 +139,3 @@ func extractPrefixCandidates(args []string, known map[string]bool) []string {
 	}
 	return prefixes
 }
-
