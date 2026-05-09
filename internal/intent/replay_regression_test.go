@@ -22,10 +22,11 @@ import (
 )
 
 // ---------------------------------------------------------------------------
-// 1. create-then-close by intent ID (proves ID round-trips)
-//    BUG: replayCreate generates a new ID instead of using the ID in the
-//    intent string, so the subsequent close referencing the original ID fails.
-//    Fix: bw-u24.1
+//  1. create-then-close by intent ID (proves ID round-trips)
+//     BUG: replayCreate generates a new ID instead of using the ID in the
+//     intent string, so the subsequent close referencing the original ID fails.
+//     Fix: bw-u24.1
+//
 // ---------------------------------------------------------------------------
 func TestReplayCreateThenCloseByIntentID(t *testing.T) {
 	// Fixed by bw-u24.1: replayCreate now passes intent ID into CreateOpts.ID
@@ -56,10 +57,11 @@ func TestReplayCreateThenCloseByIntentID(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 2. create-then-update by intent ID
-//    BUG: Same root cause as #1 — the update references the intent ID which
-//    was not preserved.
-//    Fix: bw-u24.1
+//  2. create-then-update by intent ID
+//     BUG: Same root cause as #1 — the update references the intent ID which
+//     was not preserved.
+//     Fix: bw-u24.1
+//
 // ---------------------------------------------------------------------------
 func TestReplayCreateThenUpdateByIntentID(t *testing.T) {
 	// Fixed by bw-u24.1: replayCreate now passes intent ID into CreateOpts.ID
@@ -86,10 +88,11 @@ func TestReplayCreateThenUpdateByIntentID(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 3. create pair and link by intent IDs
-//    BUG: Both creates generate new IDs, so the link referencing the original
-//    intent IDs fails.
-//    Fix: bw-u24.1
+//  3. create pair and link by intent IDs
+//     BUG: Both creates generate new IDs, so the link referencing the original
+//     intent IDs fails.
+//     Fix: bw-u24.1
+//
 // ---------------------------------------------------------------------------
 func TestReplayCreatePairAndLinkByIntentIDs(t *testing.T) {
 	// Fixed by bw-u24.1: replayCreate now passes intent ID into CreateOpts.ID
@@ -125,10 +128,11 @@ func TestReplayCreatePairAndLinkByIntentIDs(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 4. start intent replay preserves status + assignee
-//    BUG: The "start" verb is not handled in replayOne's switch — it falls
-//    through to `default: return nil`, silently dropping the intent.
-//    Fix: bw-u24.2
+//  4. start intent replay preserves status + assignee
+//     BUG: The "start" verb is not handled in replayOne's switch — it falls
+//     through to `default: return nil`, silently dropping the intent.
+//     Fix: bw-u24.2
+//
 // ---------------------------------------------------------------------------
 func TestReplayStartPreservesStatusAndAssignee(t *testing.T) {
 	// Fixed by bw-u24.2: replayStart now handles start verb
@@ -159,10 +163,11 @@ func TestReplayStartPreservesStatusAndAssignee(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 5. defer intent replay preserves status + date
-//    BUG: The "defer" verb is not handled in replayOne's switch — it falls
-//    through to `default: return nil`, silently dropping the intent.
-//    Fix: bw-u24.2
+//  5. defer intent replay preserves status + date
+//     BUG: The "defer" verb is not handled in replayOne's switch — it falls
+//     through to `default: return nil`, silently dropping the intent.
+//     Fix: bw-u24.2
+//
 // ---------------------------------------------------------------------------
 func TestReplayDeferPreservesStatusAndDate(t *testing.T) {
 	// Fixed by bw-u24.2: replayDefer now handles defer verb
@@ -193,8 +198,10 @@ func TestReplayDeferPreservesStatusAndDate(t *testing.T) {
 
 // ---------------------------------------------------------------------------
 // 5b. undefer intent replay restores open status
-//     BUG: The "undefer" verb is not handled in replayOne's switch.
-//     Fix: bw-u24.2
+//
+//	BUG: The "undefer" verb is not handled in replayOne's switch.
+//	Fix: bw-u24.2
+//
 // ---------------------------------------------------------------------------
 func TestReplayUndeferRestoresOpenStatus(t *testing.T) {
 	// Fixed by bw-u24.2: replayUndefer now handles undefer verb
@@ -227,10 +234,11 @@ func TestReplayUndeferRestoresOpenStatus(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 6. close with reason round-trips
-//    BUG: replayClose always passes "" as the reason to store.Close(),
-//    ignoring the reason= field in the intent string.
-//    Fix: bw-u24.3
+//  6. close with reason round-trips
+//     BUG: replayClose always passes "" as the reason to store.Close(),
+//     ignoring the reason= field in the intent string.
+//     Fix: bw-u24.3
+//
 // ---------------------------------------------------------------------------
 func TestReplayCloseWithReasonRoundTrips(t *testing.T) {
 	// Fixed by bw-u24.3: replayClose now parses reason= from the intent
@@ -260,11 +268,12 @@ func TestReplayCloseWithReasonRoundTrips(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 7. update description round-trips
-//    BUG: cmdUpdate encodes description as "description=..." (literal
-//    ellipsis, not the actual text), so the description content is lost.
-//    replayUpdate does not handle a "description" key.
-//    Fix: bw-u24.3
+//  7. update description round-trips
+//     BUG: cmdUpdate encodes description as "description=..." (literal
+//     ellipsis, not the actual text), so the description content is lost.
+//     replayUpdate does not handle a "description" key.
+//     Fix: bw-u24.3
+//
 // ---------------------------------------------------------------------------
 func TestReplayUpdateDescriptionRoundTrips(t *testing.T) {
 	// Fixed by bw-u24.3: cmdUpdate now encodes actual description value
@@ -293,8 +302,10 @@ func TestReplayUpdateDescriptionRoundTrips(t *testing.T) {
 
 // ---------------------------------------------------------------------------
 // 7b. create with description round-trips
-//     BUG: cmdCreate intent format does not encode the description at all.
-//     Fix: bw-u24.3
+//
+//	BUG: cmdCreate intent format does not encode the description at all.
+//	Fix: bw-u24.3
+//
 // ---------------------------------------------------------------------------
 func TestReplayCreateWithDescriptionRoundTrips(t *testing.T) {
 	// Fixed by bw-u24.3: create intent now encodes description
@@ -324,12 +335,13 @@ func TestReplayCreateWithDescriptionRoundTrips(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 8. multi-word title in update
-//    BUG: cmdUpdate encodes title as "title=My New Title" (no quoting).
-//    replayUpdate splits on spaces, so it only sees "title=My" and treats
-//    "New" and "Title" as separate key=value pairs (which have no '=' so
-//    they're silently skipped).
-//    Fix: bw-u24.3
+//  8. multi-word title in update
+//     BUG: cmdUpdate encodes title as "title=My New Title" (no quoting).
+//     replayUpdate splits on spaces, so it only sees "title=My" and treats
+//     "New" and "Title" as separate key=value pairs (which have no '=' so
+//     they're silently skipped).
+//     Fix: bw-u24.3
+//
 // ---------------------------------------------------------------------------
 func TestReplayUpdateMultiWordTitle(t *testing.T) {
 	// Fixed by bw-u24.4: update intent now quotes values with %q
@@ -386,12 +398,13 @@ func TestReplayUpdateMultiWordTitleCurrentBehavior(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 9. escaped quotes in title
-//    BUG: ParseIntent strips all '"' characters and has no escape handling.
-//    A title like: He said "hello" becomes: He said hello — the quotes
-//    inside the title are lost. Worse, backslash-escaped quotes like
-//    \"hello\" cause the parser to toggle in-quote state incorrectly.
-//    Fix: bw-u24.3
+//  9. escaped quotes in title
+//     BUG: ParseIntent strips all '"' characters and has no escape handling.
+//     A title like: He said "hello" becomes: He said hello — the quotes
+//     inside the title are lost. Worse, backslash-escaped quotes like
+//     \"hello\" cause the parser to toggle in-quote state incorrectly.
+//     Fix: bw-u24.3
+//
 // ---------------------------------------------------------------------------
 func TestReplayEscapedQuotesInTitle(t *testing.T) {
 	// Fixed by bw-u24.4: ParseIntent now handles backslash-escaped quotes
@@ -448,12 +461,13 @@ func TestExtractQuotedEscaped(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 10. end-to-end sync replay preserves start/defer state
+//  10. end-to-end sync replay preserves start/defer state
 //     BUG: When sync produces a conflict and falls back to intent replay,
 //     "start" and "defer" intents are silently dropped because replayOne
 //     has no handler for these verbs. The issue state after replay is
 //     missing the status transitions.
 //     Fix: bw-u24.4 (depends on bw-u24.2 for verb handlers)
+//
 // ---------------------------------------------------------------------------
 func TestSyncReplayPreservesStartDeferState(t *testing.T) {
 	// Fixed by bw-u24.2 + bw-u24.4: start/defer verbs now handled during replay

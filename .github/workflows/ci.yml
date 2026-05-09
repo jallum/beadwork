@@ -19,18 +19,23 @@ jobs:
         with:
           go-version: "1.24.4"
 
+      - name: Format
+        run: make fmt-check
+
+      - name: Tidy
+        run: make tidy-check
+
       - name: Build
-        run: go build ./...
+        run: make build
+
+      - name: Vet
+        run: make vet
 
       - name: Staticcheck
-        run: |
-          go install honnef.co/go/tools/cmd/staticcheck@latest
-          staticcheck ./...
+        run: make staticcheck
 
       - name: Test
-        run: go test ./... -coverprofile=coverage.out -covermode=atomic -coverpkg=./...
-        env:
-          CLI_COVER_PROFILE: ${{ github.workspace }}/cli-coverage.out
+        run: make test-cover
 
       - name: Coverage badge
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'

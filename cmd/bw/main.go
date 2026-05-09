@@ -3,14 +3,25 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
+	"time"
 
 	"github.com/jallum/beadwork/internal/config"
 	"github.com/jallum/beadwork/internal/issue"
+	"github.com/jallum/beadwork/internal/registry"
+	"github.com/jallum/beadwork/internal/repo"
 	"golang.org/x/term"
 )
 
 const version = "0.12.3"
+
+// globalNoColor is set by commands (e.g. recap --no-color) to force
+// non-colored output even when stdout is a TTY. Consulted at render setup.
+var globalNoColor bool
+
+// globalDryRun mirrors the --dry-run flag. For commands with NeedsStore
+// it drives store.DryRun; for commands without a store (e.g. recap) it
+// suppresses side-effects like advancing the registry cursor.
+var globalDryRun bool
 
 func resolveRenderMode(args []string) string {
 	if mode, ok := flagValue(args, "--x-render-as"); ok && mode != "" {
@@ -18,6 +29,9 @@ func resolveRenderMode(args []string) string {
 	}
 	if hasFlag(args, "--x-raw") {
 		return "raw"
+	}
+	if hasFlag(args, "--no-color") {
+		return "markdown"
 	}
 	if term.IsTerminal(int(os.Stdout.Fd())) && os.Getenv("NO_COLOR") == "" {
 		return "tty"
@@ -40,8 +54,13 @@ func main() {
 		w = PlainWriter(os.Stdout)
 	}
 
+	cfg, err := config.Load(config.DefaultPath())
+	if err != nil {
+		fatal(err.Error())
+	}
+
 	allArgs := os.Args[1:]
-	allArgs = extractDirFlag(allArgs)
+	allArgs = extractDirFlag(cfg, allArgs)
 
 	if len(allArgs) < 1 {
 		printUsage(w)
@@ -53,10 +72,15 @@ func main() {
 
 	args = removeFlag(args, "--x-raw")
 	args, _ = removeFlagValue(args, "--x-render-as")
+	if hasFlag(args, "--no-color") {
+		globalNoColor = true
+		args = removeFlag(args, "--no-color")
+	}
 
 	dryRun := hasFlag(args, "--dry-run")
 	if dryRun {
 		args = removeFlag(args, "--dry-run")
+		globalDryRun = true
 	}
 
 	switch cmd {
@@ -80,6 +104,11 @@ func main() {
 		return
 	}
 
+	// Cross-repo routing: if the first ID-shaped positional references a
+	// different registered prefix, rewrite repoDir so the command targets
+	// that repo. Never overrides an explicit -C.
+	resolveCrossRepo(cfg, args)
+
 	var store *issue.Store
 	if c.NeedsStore {
 		var err error
@@ -91,36 +120,50 @@ func main() {
 		maybeCheckForUpgrade(store, w)
 	}
 
-	cfg, err := config.Load(config.DefaultPath())
-	if err != nil {
-		fatal(err.Error())
-	}
+	originalCfg := cfg
 
 	newCfg, err := c.Run(store, args, w, cfg)
 	if err != nil {
 		fatal(err.Error())
 	}
 	if newCfg != nil {
-		if err := newCfg.Save(); err != nil {
-			fatal(err.Error())
-		}
+		cfg = newCfg
+	}
+
+	if store != nil && registry.Auto(cfg) {
+		r := store.Committer.(*repo.Repo)
+		cfg = registry.Register(cfg, r.RepoDir())
+	}
+
+	if cfg != originalCfg {
+		_ = cfg.Save()
 	}
 }
 
+// bwNow returns the current time respecting BW_CLOCK.
+// The returned Time preserves its original location (local time when no
+// BW_CLOCK is set; whatever offset BW_CLOCK carries otherwise) so that
+// day-boundary math ("today", "yesterday") uses the user's local zone.
+// Callers that need UTC for storage should .UTC() themselves.
+func bwNow() time.Time {
+	if v := os.Getenv("BW_CLOCK"); v != "" {
+		if t, err := time.Parse(time.RFC3339, v); err == nil {
+			return t
+		}
+	}
+	return time.Now()
+}
+
 // extractDirFlag removes all -C <dir> pairs from args and sets repoDir.
-func extractDirFlag(args []string) []string {
+func extractDirFlag(cfg *config.Config, args []string) []string {
 	out := make([]string, 0, len(args))
 	for i := 0; i < len(args); i++ {
 		if args[i] == "-C" {
 			if i+1 >= len(args) {
 				fatal("-C requires an argument")
 			}
-			abs, err := filepath.Abs(args[i+1])
-			if err != nil {
-				fatal(fmt.Sprintf("-C %s: %s", args[i+1], err))
-			}
-			repoDir = abs
-			i++ // skip value
+			repoDir = resolveCFlag(cfg, args[i+1])
+			i++
 		} else {
 			out = append(out, args[i])
 		}

@@ -108,6 +108,10 @@ All data lives on a git orphan branch, manipulated directly in the object databa
 
 For storage layout and sync mechanics, see [docs/design.md](docs/design.md).
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the local dev loop and `make` targets that mirror CI.
+
 ## License
 
 MIT

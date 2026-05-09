@@ -260,4 +260,3 @@ func TestDeleteNonexistent(t *testing.T) {
 		t.Error("expected error for nonexistent issue")
 	}
 }
-

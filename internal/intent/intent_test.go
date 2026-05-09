@@ -300,15 +300,15 @@ func TestReplayMalformedIntents(t *testing.T) {
 	defer env.Cleanup()
 
 	intents := []string{
-		"create",                // too few parts
-		"close",                 // missing id
-		"delete",               // missing id
-		"update",               // missing id and fields
-		"link foo",             // missing blocks keyword
-		"unlink foo bar",       // missing blocks keyword
-		"label",                // missing id
-		"config",               // missing key=value
-		"config noequals",      // missing =
+		"create",          // too few parts
+		"close",           // missing id
+		"delete",          // missing id
+		"update",          // missing id and fields
+		"link foo",        // missing blocks keyword
+		"unlink foo bar",  // missing blocks keyword
+		"label",           // missing id
+		"config",          // missing key=value
+		"config noequals", // missing =
 	}
 	errs := intent.Replay(env.Store, intents)
 	if len(errs) != len(intents) {
