@@ -50,6 +50,17 @@ func Resolve(cfg *config.Config, prefix string) (string, bool) {
 	return "", false
 }
 
+// ResolveAll returns all repo paths that share the given prefix.
+func ResolveAll(cfg *config.Config, prefix string) []string {
+	var paths []string
+	for _, r := range Repos(cfg) {
+		if r.Prefix == prefix {
+			paths = append(paths, r.Path)
+		}
+	}
+	return paths
+}
+
 // Register returns a new config with path added to the registry. If the
 // path is already registered, returns cfg unchanged (same pointer).
 func Register(cfg *config.Config, path string) *config.Config {
