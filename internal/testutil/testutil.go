@@ -40,7 +40,7 @@ func NewEnv(t *testing.T) *Env {
 	if err != nil {
 		t.Fatalf("FindRepo: %v", err)
 	}
-	if err := r.Init("test"); err != nil {
+	if err := r.Init("test", nil); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 
@@ -86,7 +86,7 @@ func (e *Env) CloneEnv(barePath string) *Env {
 	if err != nil {
 		e.T.Fatalf("FindRepo in clone: %v", err)
 	}
-	if err := r.Init("test"); err != nil {
+	if err := r.Init("test", nil); err != nil {
 		e.T.Fatalf("Init in clone: %v", err)
 	}
 

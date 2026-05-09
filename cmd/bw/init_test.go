@@ -144,6 +144,219 @@ func TestCmdInitForceDefaultPrefix(t *testing.T) {
 	}
 }
 
+// setupFreshRepoWithRemotes creates a temp dir, inits a git repo with
+// one commit, adds the given named bare remotes, and chdirs into the
+// repo. Returns the repo dir and a cleanup function to restore cwd.
+// Used by the multi-remote init tests below.
+func setupFreshRepoWithRemotes(t *testing.T, remotes ...string) (string, func()) {
+	t.Helper()
+	dir := t.TempDir()
+	run := func(args ...string) {
+		t.Helper()
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Dir = dir
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("%v: %s: %v", args, out, err)
+		}
+	}
+	run("git", "init")
+	run("git", "config", "user.email", "test@test.com")
+	run("git", "config", "user.name", "Test")
+	os.WriteFile(dir+"/README", []byte("test"), 0644)
+	run("git", "add", ".")
+	run("git", "commit", "-m", "initial")
+	for _, name := range remotes {
+		bare := dir + "/" + name + ".git"
+		run("git", "init", "--bare", bare)
+		run("git", "remote", "add", name, bare)
+	}
+	orig, _ := os.Getwd()
+	os.Chdir(dir)
+	return dir, func() { os.Chdir(orig) }
+}
+
+// TestCmdInitMultiRemotePrompts exercises the init prompt: multiple
+// remotes exist, none have the beadwork branch yet, no origin, no git
+// config — init must ask the user which remote to seed and persist the
+// choice.
+func TestCmdInitMultiRemotePrompts(t *testing.T) {
+	dir, cleanup := setupFreshRepoWithRemotes(t, "alpha", "beta")
+	defer cleanup()
+
+	origStdin := initStdin
+	origInteractive := isInteractiveStdin
+	defer func() {
+		initStdin = origStdin
+		isInteractiveStdin = origInteractive
+	}()
+	isInteractiveStdin = func() bool { return true }
+	initStdin = strings.NewReader("2\n") // pick beta
+
+	var buf bytes.Buffer
+	if _, err := cmdInit(nil, []string{"--prefix", "multi"}, PlainWriter(&buf), nil); err != nil {
+		t.Fatalf("cmdInit: %v: %s", err, buf.String())
+	}
+	if !strings.Contains(buf.String(), "initialized") {
+		t.Errorf("output missing 'initialized': %q", buf.String())
+	}
+
+	chosen := getGitConfig(t, dir, "beadwork.remote")
+	if chosen != "beta" {
+		t.Errorf("git config beadwork.remote = %q, want 'beta'", chosen)
+	}
+}
+
+// TestCmdInitNonInteractiveFailsWithoutPrompt confirms that init honors
+// the same TTY gate as sync: when isInteractiveStdin returns false and
+// no short-circuit rule resolves the remote, init errors out instead
+// of consuming piped input. The caller can set
+// `git config beadwork.remote <name>` beforehand to skip the prompt.
+func TestCmdInitNonInteractiveFailsWithoutPrompt(t *testing.T) {
+	dir, cleanup := setupFreshRepoWithRemotes(t, "alpha", "beta")
+	defer cleanup()
+
+	origStdin := initStdin
+	origInteractive := isInteractiveStdin
+	defer func() {
+		initStdin = origStdin
+		isInteractiveStdin = origInteractive
+	}()
+	isInteractiveStdin = func() bool { return false }
+	primed := strings.NewReader("1\n")
+	initStdin = primed
+
+	var buf bytes.Buffer
+	_, err := cmdInit(nil, []string{"--prefix", "alpha"}, PlainWriter(&buf), nil)
+	if err == nil {
+		t.Fatalf("expected error in non-interactive multi-remote init; output=%q", buf.String())
+	}
+	if !strings.Contains(err.Error(), "no default remote") {
+		t.Errorf("error = %v, want a 'no default remote' message", err)
+	}
+	if primed.Len() == 0 {
+		t.Error("resolver consumed initStdin input despite non-interactive stdin")
+	}
+	if v := getGitConfig(t, dir, "beadwork.remote"); v != "" {
+		t.Errorf("git config beadwork.remote = %q, want unset", v)
+	}
+}
+
+// TestCmdInitMultiRemoteOriginShortcut verifies origin is auto-selected
+// without prompting, even when initStdin has primed input.
+func TestCmdInitMultiRemoteOriginShortcut(t *testing.T) {
+	dir, cleanup := setupFreshRepoWithRemotes(t, "origin", "upstream")
+	defer cleanup()
+
+	origStdin := initStdin
+	defer func() { initStdin = origStdin }()
+	primed := strings.NewReader("2\n")
+	initStdin = primed
+
+	var buf bytes.Buffer
+	if _, err := cmdInit(nil, []string{"--prefix", "o"}, PlainWriter(&buf), nil); err != nil {
+		t.Fatalf("cmdInit: %v: %s", err, buf.String())
+	}
+	if primed.Len() == 0 {
+		t.Error("init prompted despite origin being present")
+	}
+	// Should not have persisted a choice either, since the origin rule
+	// triggers inside resolveSingleRemote without calling the resolver.
+	if v := getGitConfig(t, dir, "beadwork.remote"); v != "" {
+		t.Errorf("git config beadwork.remote = %q, want unset (origin picked silently)", v)
+	}
+}
+
+// TestCmdInitMultiRemoteGitConfigShortcut verifies a pre-existing
+// beadwork.remote git config short-circuits the prompt during init.
+func TestCmdInitMultiRemoteGitConfigShortcut(t *testing.T) {
+	dir, cleanup := setupFreshRepoWithRemotes(t, "alpha", "beta")
+	defer cleanup()
+
+	if out, err := exec.Command("git", "-C", dir, "config", "beadwork.remote", "beta").CombinedOutput(); err != nil {
+		t.Fatalf("git config: %s: %v", out, err)
+	}
+
+	origStdin := initStdin
+	defer func() { initStdin = origStdin }()
+	primed := strings.NewReader("1\n")
+	initStdin = primed
+
+	var buf bytes.Buffer
+	if _, err := cmdInit(nil, []string{"--prefix", "g"}, PlainWriter(&buf), nil); err != nil {
+		t.Fatalf("cmdInit: %v: %s", err, buf.String())
+	}
+	if primed.Len() == 0 {
+		t.Error("init prompted despite git config beadwork.remote being set")
+	}
+}
+
+// TestCmdInitBootstrapsFromRemoteWithBeadwork confirms that if some
+// remote already has the beadwork branch, init silently fetches from it
+// (no prompt, regardless of initStdin).
+func TestCmdInitBootstrapsFromRemoteWithBeadwork(t *testing.T) {
+	// Seed a bare repo by doing a full init-and-push in a source repo.
+	srcDir, cleanupSrc := setupFreshRepoWithRemotes(t, "alpha")
+	var buf bytes.Buffer
+	if _, err := cmdInit(nil, []string{"--prefix", "seed"}, PlainWriter(&buf), nil); err != nil {
+		cleanupSrc()
+		t.Fatalf("seed cmdInit: %v: %s", err, buf.String())
+	}
+	// Push beadwork to alpha so that bare has the branch.
+	alphaBare := srcDir + "/alpha.git"
+	if out, err := exec.Command("git", "-C", srcDir, "push", "alpha", "refs/heads/beadwork:refs/heads/beadwork").CombinedOutput(); err != nil {
+		cleanupSrc()
+		t.Fatalf("seed push: %s: %v", out, err)
+	}
+	cleanupSrc()
+
+	// Fresh repo, add the same bare (with beadwork) as "beta" alongside
+	// a second empty bare "alpha2". Init should auto-pick beta (the one
+	// with beadwork) with no prompt, no persistence.
+	dir := t.TempDir()
+	run := func(args ...string) {
+		t.Helper()
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Dir = dir
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("%v: %s: %v", args, out, err)
+		}
+	}
+	run("git", "init")
+	run("git", "config", "user.email", "clone@test.com")
+	run("git", "config", "user.name", "Clone")
+	os.WriteFile(dir+"/README", []byte("x"), 0644)
+	run("git", "add", ".")
+	run("git", "commit", "-m", "initial")
+	run("git", "init", "--bare", dir+"/alpha2.git")
+	run("git", "remote", "add", "alpha2", dir+"/alpha2.git")
+	run("git", "remote", "add", "beta", alphaBare)
+
+	orig, _ := os.Getwd()
+	os.Chdir(dir)
+	defer os.Chdir(orig)
+
+	origStdin := initStdin
+	defer func() { initStdin = origStdin }()
+	primed := strings.NewReader("1\n")
+	initStdin = primed
+
+	var buf2 bytes.Buffer
+	if _, err := cmdInit(nil, []string{}, PlainWriter(&buf2), nil); err != nil {
+		t.Fatalf("cmdInit: %v: %s", err, buf2.String())
+	}
+	if primed.Len() == 0 {
+		t.Error("init prompted despite beta already having beadwork")
+	}
+	if !strings.Contains(buf2.String(), "initialized") {
+		t.Errorf("output = %q", buf2.String())
+	}
+	// Prefix came from the seed (the beadwork branch carries .bwconfig
+	// with prefix=seed), not the caller.
+	if !strings.Contains(buf2.String(), "seed") {
+		t.Errorf("expected prefix 'seed' (bootstrapped from remote); output=%q", buf2.String())
+	}
+}
+
 func TestCmdInitInvalidPrefix(t *testing.T) {
 	dir := t.TempDir()
 	runInDir := func(args ...string) {

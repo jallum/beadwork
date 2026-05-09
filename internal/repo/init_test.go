@@ -28,7 +28,7 @@ func TestForceReinit(t *testing.T) {
 	}
 
 	// First init
-	if err := r.Init("old"); err != nil {
+	if err := r.Init("old", nil); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 	if r.Prefix != "old" {
@@ -37,13 +37,13 @@ func TestForceReinit(t *testing.T) {
 
 	// Regular init should fail
 	r2, _ := repo.FindRepo()
-	if err := r2.Init("new"); err == nil {
+	if err := r2.Init("new", nil); err == nil {
 		t.Fatal("Init should fail when already initialized")
 	}
 
 	// Force reinit with new prefix
 	r3, _ := repo.FindRepo()
-	if err := r3.ForceReinit("new"); err != nil {
+	if err := r3.ForceReinit("new", nil); err != nil {
 		t.Fatalf("ForceReinit: %v", err)
 	}
 	if r3.Prefix != "new" {
@@ -75,11 +75,11 @@ func TestForceReinitKeepsPrefix(t *testing.T) {
 	defer os.Chdir(orig)
 
 	r, _ := repo.FindRepo()
-	r.Init("keep")
+	r.Init("keep", nil)
 
 	// Force reinit with empty prefix should derive a new one (not keep old)
 	r2, _ := repo.FindRepo()
-	if err := r2.ForceReinit(""); err != nil {
+	if err := r2.ForceReinit("", nil); err != nil {
 		t.Fatalf("ForceReinit: %v", err)
 	}
 	// Should derive prefix from dir name, not be empty
@@ -106,7 +106,7 @@ func TestDerivePrefixLength(t *testing.T) {
 	defer os.Chdir(orig)
 
 	r, _ := repo.FindRepo()
-	if err := r.Init(""); err != nil {
+	if err := r.Init("", nil); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 	// Should truncate to 8 chars max
@@ -136,7 +136,7 @@ func TestDerivePrefixPreservesCase(t *testing.T) {
 	defer os.Chdir(orig)
 
 	r, _ := repo.FindRepo()
-	if err := r.Init(""); err != nil {
+	if err := r.Init("", nil); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 	if r.Prefix != "MyApp" {
@@ -161,7 +161,7 @@ func TestDerivePrefixStripsInvalidChars(t *testing.T) {
 	defer os.Chdir(orig)
 
 	r, _ := repo.FindRepo()
-	if err := r.Init(""); err != nil {
+	if err := r.Init("", nil); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 	// Dots and spaces stripped, should be "mycoolap" (8 char truncation of "mycoolapp")
@@ -192,7 +192,7 @@ func TestInitNoStatusGitkeeps(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FindRepo: %v", err)
 	}
-	if err := r.Init(""); err != nil {
+	if err := r.Init("", nil); err != nil {
 		t.Fatalf("Init: %v", err)
 	}
 
@@ -201,6 +201,74 @@ func TestInitNoStatusGitkeeps(t *testing.T) {
 		if _, err := r.TreeFS().Stat(p); err == nil {
 			t.Errorf("unexpected %s seeded at init", p)
 		}
+	}
+}
+
+// TestInitWithNonOriginRemoteViaGitConfig verifies that a fresh clone whose
+// only remote is named "upstream" (origin renamed away) can still run
+// `bw init` successfully when the caller has set `git config beadwork.remote
+// upstream` beforehand. This is the bootstrap path: .bwconfig is not yet
+// readable because the beadwork branch has not been fetched.
+func TestInitWithNonOriginRemoteViaGitConfig(t *testing.T) {
+	// Set up a source repo with a beadwork branch, and a bare repo that
+	// has the beadwork branch pushed to it.
+	src := t.TempDir()
+	gitRun(t, src, "init")
+	gitRun(t, src, "config", "user.email", "test@test.com")
+	gitRun(t, src, "config", "user.name", "Test")
+	os.WriteFile(filepath.Join(src, "README"), []byte("test"), 0644)
+	gitRun(t, src, "add", ".")
+	gitRun(t, src, "commit", "-m", "initial")
+
+	bare := filepath.Join(src, "bare.git")
+	gitRun(t, src, "init", "--bare", bare)
+	gitRun(t, src, "remote", "add", "origin", bare)
+
+	orig, _ := os.Getwd()
+	os.Chdir(src)
+	srcRepo, err := repo.FindRepo()
+	if err != nil {
+		os.Chdir(orig)
+		t.Fatalf("FindRepo src: %v", err)
+	}
+	if err := srcRepo.Init("test", nil); err != nil {
+		os.Chdir(orig)
+		t.Fatalf("Init src: %v", err)
+	}
+	if _, _, err := srcRepo.Sync(nil); err != nil {
+		os.Chdir(orig)
+		t.Fatalf("Sync src: %v", err)
+	}
+	os.Chdir(orig)
+
+	// Fresh clone, but rename origin to upstream so only "upstream" exists.
+	clone := t.TempDir()
+	cloneDir := filepath.Join(clone, "work")
+	gitRun(t, clone, "clone", bare, cloneDir)
+	gitRun(t, cloneDir, "config", "user.email", "clone@test.com")
+	gitRun(t, cloneDir, "config", "user.name", "Clone")
+	gitRun(t, cloneDir, "remote", "rename", "origin", "upstream")
+
+	// Tell beadwork about the non-origin remote BEFORE init runs.
+	gitRun(t, cloneDir, "config", "beadwork.remote", "upstream")
+
+	os.Chdir(cloneDir)
+	defer os.Chdir(orig)
+
+	r, err := repo.FindRepo()
+	if err != nil {
+		t.Fatalf("FindRepo clone: %v", err)
+	}
+	if err := r.Init("test", nil); err != nil {
+		t.Fatalf("Init against upstream-only remote: %v", err)
+	}
+
+	// The beadwork branch should now exist locally, populated from upstream.
+	if _, err := r.TreeFS().Stat("issues"); err != nil {
+		t.Errorf("issues dir not found after init: %v", err)
+	}
+	if r.RemoteName() != "upstream" {
+		t.Errorf("RemoteName() = %q, want 'upstream'", r.RemoteName())
 	}
 }
 

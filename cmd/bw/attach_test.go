@@ -130,7 +130,7 @@ func TestAttachSurvivesSyncConflictReplay(t *testing.T) {
 	// Seed a shared issue and push so both sides agree on a base.
 	shared, _ := env.Store.Create("Shared work", issue.CreateOpts{})
 	env.Repo.Commit(`create ` + shared.ID + ` p2 task "Shared work"`)
-	env.Repo.Sync()
+	env.Repo.Sync(nil)
 
 	// Remote side: update the shared issue and push.
 	env2 := env.CloneEnv(bare)
@@ -140,7 +140,7 @@ func TestAttachSurvivesSyncConflictReplay(t *testing.T) {
 	statusIP := "in_progress"
 	env2.Store.Update(shared.ID, issue.UpdateOpts{Status: &statusIP})
 	env2.Repo.Commit("update " + shared.ID + " status=in_progress")
-	env2.Repo.Sync()
+	env2.Repo.Sync(nil)
 
 	// Local side: same issue gets a different assignee, AND we attach
 	// a file with a distinctive payload that must survive the replay.

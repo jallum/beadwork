@@ -152,6 +152,26 @@ func TestReadPrefixNoPrefixLine(t *testing.T) {
 	}
 }
 
+func TestRemoteNameDefault(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	if got := env.Repo.RemoteName(); got != "origin" {
+		t.Errorf("RemoteName() = %q, want %q", got, "origin")
+	}
+}
+
+func TestRemoteNameGitConfigOnly(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	gitRun(t, env.Dir, "config", "beadwork.remote", "mirror")
+
+	if got := env.Repo.RemoteName(); got != "mirror" {
+		t.Errorf("RemoteName() = %q, want %q", got, "mirror")
+	}
+}
+
 func init() {
 	os.Setenv("GIT_AUTHOR_NAME", "Test")
 	os.Setenv("GIT_AUTHOR_EMAIL", "test@test.com")
