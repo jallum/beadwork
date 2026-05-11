@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.13.0 — 2026-05-11
+
+- **`bw recap`** — shows recent beadwork activity across one or more repos. By default it's cursor-driven and incremental: the first run backfills the last 24 hours, then each subsequent run picks up from where it left off. Pass an explicit window (`bw recap today`, `--since 2026-05-01`) to override. `bw recap --all` fans out across every registered repo. Gap detection refuses to advance the cursor if an explicit window would skip unseen history.
+
+- **Host-local repository registry** — a host-local registry tracks which repos have beadwork initialized. When `registry.auto` is enabled in the global config, `bw` registers the current repo automatically after each successful command. `bw registry list` shows all registered repos; `bw registry prune` removes entries whose paths no longer exist.
+
+- **Cross-repo issue resolution** — `bw show r0-abc` resolves `r0` to the registered repo with that prefix and opens that store directly, without `cd`-ing. `-C` now accepts a registered prefix as well as a path (`bw -C r0 list`).
+
+- **Smarter `bw sync` / `bw init` remote selection** — when multiple remotes exist, both commands now pick one via a short-circuit chain: existing beadwork branch → `git config beadwork.remote` → remote named `origin` → interactive menu (TTY only). The menu persists the choice to `git config beadwork.remote`. Previously `bw sync` would push to every remote with the beadwork branch, which was surprising in fork setups.
+
+- **Ticket attachments** — `bw attach <ticket-id> <file-path>` stores an arbitrary file under `attachments/<ticket-id>/<path>` on the beadwork ref. Attachments ride along with normal sync (same ref, same commit), survive sync-conflict resets, and are readable via `Store.GetAttachment`. Designed to back review annotation workflows that need to reference uncommitted file content.
+
+- **`bw ready` now surfaces children of in-progress epics** — previously, when every top-level epic was `in_progress`, `bw ready` returned nothing. The fix walks claimed roots downward to find the shallowest open descendant and uses that as the display root. The "Currently available work" section in `bw prime` gains a one-line icon legend (`○ open  ◐ in progress`) so the grouping is clear.
+
+- **`worktreeConfig` extension fix** — `bw` crashed with `does not support extension: worktreeconfig` on any repo where a user had run `git config --worktree ...`. The extension is now silently stripped before go-git's extension check; bw doesn't read per-worktree config so bypassing it is safe.
+
+- **Reject child-blocks-ancestor dependencies** — `bw dep add` now rejects edges where a descendant blocks one of its own ancestors (in addition to the existing cycle check). A descendant blocking its ancestor is a logical contradiction — the ancestor can never become unblocked.
+
 ## 0.12.3 — 2026-04-12
 
 - **`bw ready <parent-id>`** — scope the ready list to a single subtree. Pass any issue ID as a positional argument and `bw ready` returns only the actionable descendants of that parent (the parent itself is excluded). Useful for focusing on what's unblocked within a specific epic or workstream without seeing every ready item in the repo. Without an argument, behavior is unchanged.
