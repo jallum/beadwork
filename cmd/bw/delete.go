@@ -80,14 +80,17 @@ func cmdDelete(store *issue.Store, args []string, w Writer, _ *config.Config) (*
 	}
 
 	// Force mode — actually delete
-	iss, err := store.Delete(da.ID)
+	var iss *issue.Issue
+	err = commitWithRetry(store, commitMaxRetries, func() (string, error) {
+		var derr error
+		iss, derr = store.Delete(da.ID)
+		if derr != nil {
+			return "", derr
+		}
+		return fmt.Sprintf("delete %s", iss.ID), nil
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	intent := fmt.Sprintf("delete %s", iss.ID)
-	if err := store.Commit(intent); err != nil {
-		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	if da.JSON {

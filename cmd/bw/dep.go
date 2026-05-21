@@ -73,17 +73,18 @@ func cmdDepAdd(store *issue.Store, args []string, w Writer, _ *config.Config) (*
 		return nil, err
 	}
 
-	if err := store.Link(la.BlockerID, la.BlockedID); err != nil {
+	var blocker, blocked *issue.Issue
+	err = commitWithRetry(store, commitMaxRetries, func() (string, error) {
+		if lerr := store.Link(la.BlockerID, la.BlockedID); lerr != nil {
+			return "", lerr
+		}
+		blocker, _ = store.Get(la.BlockerID)
+		blocked, _ = store.Get(la.BlockedID)
+		// Intent verb stays "link" for replay compatibility.
+		return fmt.Sprintf("link %s blocks %s", blocker.ID, blocked.ID), nil
+	})
+	if err != nil {
 		return nil, err
-	}
-
-	// Resolve full IDs for the commit message.
-	// Intent verb stays "link" for replay compatibility.
-	blocker, _ := store.Get(la.BlockerID)
-	blocked, _ := store.Get(la.BlockedID)
-	intent := fmt.Sprintf("link %s blocks %s", blocker.ID, blocked.ID)
-	if err := store.Commit(intent); err != nil {
-		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	fmt.Fprintf(w, "added dep %s blocks %s\n", blocker.ID, blocked.ID)
@@ -108,20 +109,21 @@ func cmdDepRemove(store *issue.Store, args []string, w Writer, _ *config.Config)
 		return nil, err
 	}
 
-	if !store.DepExists(ua.BlockerID, ua.BlockedID) {
-		return nil, fmt.Errorf("no dependency: %s does not block %s", ua.BlockerID, ua.BlockedID)
-	}
-
-	if err := store.Unlink(ua.BlockerID, ua.BlockedID); err != nil {
+	var blocker, blocked *issue.Issue
+	err = commitWithRetry(store, commitMaxRetries, func() (string, error) {
+		if !store.DepExists(ua.BlockerID, ua.BlockedID) {
+			return "", fmt.Errorf("no dependency: %s does not block %s", ua.BlockerID, ua.BlockedID)
+		}
+		if uerr := store.Unlink(ua.BlockerID, ua.BlockedID); uerr != nil {
+			return "", uerr
+		}
+		blocker, _ = store.Get(ua.BlockerID)
+		blocked, _ = store.Get(ua.BlockedID)
+		// Intent verb stays "unlink" for replay compatibility.
+		return fmt.Sprintf("unlink %s blocks %s", blocker.ID, blocked.ID), nil
+	})
+	if err != nil {
 		return nil, err
-	}
-
-	blocker, _ := store.Get(ua.BlockerID)
-	blocked, _ := store.Get(ua.BlockedID)
-	// Intent verb stays "unlink" for replay compatibility.
-	intent := fmt.Sprintf("unlink %s blocks %s", blocker.ID, blocked.ID)
-	if err := store.Commit(intent); err != nil {
-		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	fmt.Fprintf(w, "removed dep %s blocks %s\n", blocker.ID, blocked.ID)

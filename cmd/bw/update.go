@@ -150,14 +150,17 @@ func cmdUpdate(store *issue.Store, args []string, w Writer, _ *config.Config) (*
 		changes = append(changes, "parent="+ua.Parent)
 	}
 
-	iss, err := store.Update(ua.ID, opts)
+	var iss *issue.Issue
+	err = commitWithRetry(store, commitMaxRetries, func() (string, error) {
+		var uerr error
+		iss, uerr = store.Update(ua.ID, opts)
+		if uerr != nil {
+			return "", uerr
+		}
+		return fmt.Sprintf("update %s %s", iss.ID, strings.Join(changes, " ")), nil
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	intent := fmt.Sprintf("update %s %s", iss.ID, strings.Join(changes, " "))
-	if err := store.Commit(intent); err != nil {
-		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	if ua.JSON {

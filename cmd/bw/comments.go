@@ -50,14 +50,17 @@ func cmdComment(store *issue.Store, args []string, w Writer, _ *config.Config) (
 		return nil, err
 	}
 
-	iss, err := store.Comment(ca.ID, ca.Text, ca.Author)
+	var iss *issue.Issue
+	err = commitWithRetry(store, commitMaxRetries, func() (string, error) {
+		var cerr error
+		iss, cerr = store.Comment(ca.ID, ca.Text, ca.Author)
+		if cerr != nil {
+			return "", cerr
+		}
+		return fmt.Sprintf("comment %s %q", iss.ID, ca.Text), nil
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	intent := fmt.Sprintf("comment %s %q", iss.ID, ca.Text)
-	if err := store.Commit(intent); err != nil {
-		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	if ca.JSON {

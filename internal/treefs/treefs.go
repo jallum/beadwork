@@ -872,9 +872,21 @@ func (t *TreeFS) RemoteNames() ([]string, error) {
 }
 
 // SetRef directly sets a reference. Used by Init to create tracking branches.
+// When the target ref is the one this TreeFS is tracking, the in-memory
+// snapshot is advanced so subsequent reads and Commit() stay consistent
+// with the new ref state.
 func (t *TreeFS) SetRef(name string, hash plumbing.Hash) error {
 	ref := plumbing.NewHashReference(plumbing.ReferenceName(name), hash)
-	return t.repo.Storer.SetReference(ref)
+	if err := t.repo.Storer.SetReference(ref); err != nil {
+		return err
+	}
+	if plumbing.ReferenceName(name) == t.ref {
+		t.baseRef = hash
+		t.overlay = make(map[string][]byte)
+		t.dirs = make(map[string]bool)
+		return t.reloadBase()
+	}
+	return nil
 }
 
 // DeleteRef removes a reference.

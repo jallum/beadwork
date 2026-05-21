@@ -1,14 +1,12 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/jallum/beadwork/internal/config"
 
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/md"
-	"github.com/jallum/beadwork/internal/treefs"
 )
 
 type CloseArgs struct {
@@ -32,8 +30,6 @@ func parseCloseArgs(raw []string) (CloseArgs, error) {
 	}, nil
 }
 
-const closeMaxRetries = 3
-
 func cmdClose(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	ca, err := parseCloseArgs(args)
 	if err != nil {
@@ -43,24 +39,16 @@ func cmdClose(store *issue.Store, args []string, w Writer, _ *config.Config) (*c
 	var iss *issue.Issue
 	var unblocked []*issue.Issue
 
-	for attempt := range closeMaxRetries {
-		if attempt > 0 {
-			store.ClearCache()
-			if err := store.Refresh(); err != nil {
-				return nil, fmt.Errorf("refresh after conflict: %w", err)
-			}
+	err = commitWithRetry(store, commitMaxRetries, func() (string, error) {
+		var cerr error
+		iss, cerr = store.Close(ca.ID, ca.Reason)
+		if cerr != nil {
+			return "", cerr
 		}
-
-		iss, err = store.Close(ca.ID, ca.Reason)
-		if err != nil {
-			return nil, err
+		unblocked, cerr = store.NewlyUnblocked(iss.ID)
+		if cerr != nil {
+			return "", cerr
 		}
-
-		unblocked, err = store.NewlyUnblocked(iss.ID)
-		if err != nil {
-			return nil, err
-		}
-
 		intent := fmt.Sprintf("close %s", iss.ID)
 		if ca.Reason != "" {
 			intent += fmt.Sprintf(" reason=%q", ca.Reason)
@@ -68,17 +56,10 @@ func cmdClose(store *issue.Store, args []string, w Writer, _ *config.Config) (*c
 		for _, u := range unblocked {
 			intent += fmt.Sprintf("\nunblocked %s", u.ID)
 		}
-
-		err = store.Commit(intent)
-		if err == nil {
-			break
-		}
-		if !errors.Is(err, treefs.ErrRefMoved) {
-			return nil, fmt.Errorf("commit failed: %w", err)
-		}
-	}
+		return intent, nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("commit failed after %d attempts: %w", closeMaxRetries, err)
+		return nil, err
 	}
 
 	if ca.JSON {
@@ -132,14 +113,17 @@ func cmdReopen(store *issue.Store, args []string, w Writer, _ *config.Config) (*
 		return nil, err
 	}
 
-	iss, err := store.Reopen(ra.ID)
+	var iss *issue.Issue
+	err = commitWithRetry(store, commitMaxRetries, func() (string, error) {
+		var rerr error
+		iss, rerr = store.Reopen(ra.ID)
+		if rerr != nil {
+			return "", rerr
+		}
+		return fmt.Sprintf("reopen %s", iss.ID), nil
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	intent := fmt.Sprintf("reopen %s", iss.ID)
-	if err := store.Commit(intent); err != nil {
-		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	if ra.JSON {

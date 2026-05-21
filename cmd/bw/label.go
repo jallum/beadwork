@@ -46,21 +46,24 @@ func cmdLabel(store *issue.Store, args []string, w Writer, _ *config.Config) (*c
 		return nil, err
 	}
 
-	iss, err := store.Label(la.ID, la.Add, la.Remove)
+	var iss *issue.Issue
+	err = commitWithRetry(store, commitMaxRetries, func() (string, error) {
+		var lerr error
+		iss, lerr = store.Label(la.ID, la.Add, la.Remove)
+		if lerr != nil {
+			return "", lerr
+		}
+		var parts []string
+		for _, l := range la.Add {
+			parts = append(parts, "+"+l)
+		}
+		for _, l := range la.Remove {
+			parts = append(parts, "-"+l)
+		}
+		return fmt.Sprintf("label %s %s", iss.ID, strings.Join(parts, " ")), nil
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	var parts []string
-	for _, l := range la.Add {
-		parts = append(parts, "+"+l)
-	}
-	for _, l := range la.Remove {
-		parts = append(parts, "-"+l)
-	}
-	intent := fmt.Sprintf("label %s %s", iss.ID, strings.Join(parts, " "))
-	if err := store.Commit(intent); err != nil {
-		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	if la.JSON {
