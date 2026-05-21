@@ -304,17 +304,20 @@ func cmdDefer(store *issue.Store, args []string, w Writer, _ *config.Config) (*c
 	da.Date = resolved
 
 	status := "deferred"
-	iss, err := store.Update(da.ID, issue.UpdateOpts{
-		Status:     &status,
-		DeferUntil: &da.Date,
+	var iss *issue.Issue
+	err = commitWithRetry(store, commitMaxRetries, func() (string, error) {
+		var uerr error
+		iss, uerr = store.Update(da.ID, issue.UpdateOpts{
+			Status:     &status,
+			DeferUntil: &da.Date,
+		})
+		if uerr != nil {
+			return "", uerr
+		}
+		return fmt.Sprintf("defer %s until %s", iss.ID, da.Date), nil
 	})
 	if err != nil {
 		return nil, err
-	}
-
-	intent := fmt.Sprintf("defer %s until %s", iss.ID, da.Date)
-	if err := store.Commit(intent); err != nil {
-		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	if da.JSON {

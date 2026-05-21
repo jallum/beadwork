@@ -62,12 +62,14 @@ func cmdAttach(store *issue.Store, args []string, w Writer, _ *config.Config) (*
 		return nil, fmt.Errorf("read %s: %w", aa.FilePath, err)
 	}
 
-	if err := store.Attach(aa.TicketID, storedPath, data); err != nil {
+	err = commitWithRetry(store, commitMaxRetries, func() (string, error) {
+		if aerr := store.Attach(aa.TicketID, storedPath, data); aerr != nil {
+			return "", aerr
+		}
+		return fmt.Sprintf("attach %s %s", aa.TicketID, storedPath), nil
+	})
+	if err != nil {
 		return nil, err
-	}
-	intent := fmt.Sprintf("attach %s %s", aa.TicketID, storedPath)
-	if err := store.Commit(intent); err != nil {
-		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	fmt.Fprintf(w, "attached %s to %s\n", w.Style(storedPath, Cyan), w.Style(aa.TicketID, Cyan))

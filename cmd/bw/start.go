@@ -57,28 +57,31 @@ func cmdStart(store *issue.Store, args []string, w Writer, _ *config.Config) (*c
 		assignee = r.UserName()
 	}
 
-	iss, err := store.Start(sa.ID, assignee)
-	if err != nil {
-		var be *issue.BlockedError
-		if errors.As(err, &be) {
-			lines := []string{fmt.Sprintf("%s is blocked by:", be.ID)}
-			for _, id := range be.Blockers {
-				dep, derr := store.Get(id)
-				if derr != nil {
-					lines = append(lines, fmt.Sprintf("  %s %s", issue.StatusIcon("open"), id))
-				} else {
-					lines = append(lines, fmt.Sprintf("  %s %s: %s", issue.StatusIcon(dep.Status), id, dep.Title))
+	var iss *issue.Issue
+	err = commitWithRetry(store, commitMaxRetries, func() (string, error) {
+		var serr error
+		iss, serr = store.Start(sa.ID, assignee)
+		if serr != nil {
+			var be *issue.BlockedError
+			if errors.As(serr, &be) {
+				lines := []string{fmt.Sprintf("%s is blocked by:", be.ID)}
+				for _, id := range be.Blockers {
+					dep, derr := store.Get(id)
+					if derr != nil {
+						lines = append(lines, fmt.Sprintf("  %s %s", issue.StatusIcon("open"), id))
+					} else {
+						lines = append(lines, fmt.Sprintf("  %s %s: %s", issue.StatusIcon(dep.Status), id, dep.Title))
+					}
 				}
+				lines = append(lines, "\nuse bw ready to find available work")
+				return "", fmt.Errorf("%s", strings.Join(lines, "\n"))
 			}
-			lines = append(lines, "\nuse bw ready to find available work")
-			return nil, fmt.Errorf("%s", strings.Join(lines, "\n"))
+			return "", serr
 		}
+		return fmt.Sprintf("start %s assignee=%q", iss.ID, assignee), nil
+	})
+	if err != nil {
 		return nil, err
-	}
-
-	intent := fmt.Sprintf("start %s assignee=%q", iss.ID, assignee)
-	if err := store.Commit(intent); err != nil {
-		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	if sa.JSON {

@@ -32,17 +32,20 @@ func cmdUndefer(store *issue.Store, args []string, w Writer, _ *config.Config) (
 
 	status := "open"
 	emptyDefer := ""
-	iss, err := store.Update(ua.ID, issue.UpdateOpts{
-		Status:     &status,
-		DeferUntil: &emptyDefer,
+	var iss *issue.Issue
+	err = commitWithRetry(store, commitMaxRetries, func() (string, error) {
+		var uerr error
+		iss, uerr = store.Update(ua.ID, issue.UpdateOpts{
+			Status:     &status,
+			DeferUntil: &emptyDefer,
+		})
+		if uerr != nil {
+			return "", uerr
+		}
+		return fmt.Sprintf("undefer %s", iss.ID), nil
 	})
 	if err != nil {
 		return nil, err
-	}
-
-	intent := fmt.Sprintf("undefer %s", iss.ID)
-	if err := store.Commit(intent); err != nil {
-		return nil, fmt.Errorf("commit failed: %w", err)
 	}
 
 	if ua.JSON {
