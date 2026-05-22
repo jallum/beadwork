@@ -103,6 +103,25 @@ func (r *Repo) TreeFS() *treefs.TreeFS {
 	return r.tfs
 }
 
+// Reopen replaces the in-memory go-git repository handle and TreeFS with
+// freshly-opened copies. Use this between retry attempts in concurrent
+// scenarios so any cached state (packed-refs cache, etc.) is discarded
+// and the next operation reads directly from disk. The new TreeFS is
+// returned so callers (e.g. issue.Store) can swap their own pointer.
+func (r *Repo) Reopen() (*treefs.TreeFS, error) {
+	repoDir := filepath.Dir(r.GitDir)
+	goRepo, err := openGitRepo(repoDir)
+	if err != nil {
+		return nil, fmt.Errorf("reopen repo: %w", err)
+	}
+	tfs, err := treefs.OpenFromRepo(goRepo, refLocal)
+	if err != nil {
+		return nil, fmt.Errorf("reopen treefs: %w", err)
+	}
+	r.tfs = tfs
+	return tfs, nil
+}
+
 // UserName reads user.name from the git config (local, then global, then
 // system) using go-git's ConfigScoped. Returns "unknown" if unset.
 func (r *Repo) UserName() string {
