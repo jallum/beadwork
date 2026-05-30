@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "bw-2158"
+  ],
   "created": "2026-04-22T16:12:46Z",
   "description": "",
   "id": "bw-bdfc",

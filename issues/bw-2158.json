@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-bdfc"
+  ],
   "blocks": [],
   "closed_at": "2026-04-22T16:12:46Z",
   "created": "2026-04-22T16:12:46Z",
@@ -11,5 +13,5 @@
   "status": "closed",
   "title": "Implement bw graph command",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:46Z"
+  "updated_at": "2026-05-30T12:23:21Z"
 }
