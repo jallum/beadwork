@@ -2,14 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
-  "closed_at": "2026-04-22T16:12:51Z",
+  "closed_at": "2026-05-30T12:23:33Z",
   "created": "2026-04-22T16:12:51Z",
   "description": "",
   "id": "bw-bw5",
   "labels": [],
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add --parent flag to create and update",
   "type": "feature",
-  "updated_at": "2026-05-30T12:23:32Z"
+  "updated_at": "2026-05-30T12:23:33Z"
 }
