@@ -11,11 +11,15 @@
     {
       "text": "Also add color: dim for ☐ (open), green ✓ is already handled via check:done marker. Add a check:open marker to the TTY path so colorize can style it.",
       "timestamp": "2026-04-22T16:13:17Z"
+    },
+    {
+      "text": "Also add color: dim for ☐ (open), green ✓ is already handled via check:done marker. Add a check:open marker to the TTY path so colorize can style it.",
+      "timestamp": "2026-05-30T12:23:52Z"
     }
   ],
   "priority": 3,
   "status": "closed",
   "title": "Use ☐ for open checkbox in TTY output",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:28Z"
+  "updated_at": "2026-05-30T12:23:52Z"
 }
