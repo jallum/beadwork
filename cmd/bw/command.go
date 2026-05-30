@@ -173,17 +173,19 @@ var commands = []Command{
 	{
 		Name:        "close",
 		Summary:     "Close an issue",
-		Description: "Close an issue. Optionally provide a reason.",
+		Description: "Close an issue. Optionally provide a reason.\nWith --recursive, also close the issue's entire subtree (all descendants).",
 		Positionals: []Positional{
 			{Name: "<id>", Required: true, Help: "Issue ID"},
 		},
 		Flags: []Flag{
 			{Long: "--reason", Value: "REASON", Help: "Closing reason"},
+			{Long: "--recursive", Short: "-r", Help: "Also close all descendants (the whole subtree)"},
 			{Long: "--json", Help: "Output as JSON"},
 		},
 		Examples: []Example{
 			{Cmd: "bw close bw-a3f8"},
 			{Cmd: "bw close bw-a3f8 --reason duplicate"},
+			{Cmd: "bw close bw-a3f8 -r"},
 		},
 		NeedsStore: true,
 		Run:        cmdClose,
