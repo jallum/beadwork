@@ -15,11 +15,15 @@
     {
       "text": "Skipping — delegation test from bw-u3u T5j already showed 0/5 with no workflow in sub-agent handoffs. The hygiene warning won't change this since it doesn't create a hard pause.",
       "timestamp": "2026-04-22T16:13:23Z"
+    },
+    {
+      "text": "Skipping — delegation test from bw-u3u T5j already showed 0/5 with no workflow in sub-agent handoffs. The hygiene warning won't change this since it doesn't create a hard pause.",
+      "timestamp": "2026-05-30T12:23:57Z"
     }
   ],
   "priority": 3,
   "status": "closed",
   "title": "T4: Dirty repo + delegation",
   "type": "task",
-  "updated_at": "2026-05-30T12:23:54Z"
+  "updated_at": "2026-05-30T12:23:57Z"
 }
