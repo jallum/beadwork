@@ -24,11 +24,15 @@
     {
       "text": "## Revised plan (v2): replace graph with show --map, surface actionable tips\\n\\nPrevious plan (extend graph with direction/depth flags) is scrapped. The insight: rather than giving users graph traversal knobs, surface the _actionable information_ directly.\\n\\n### Design\\n\\n1. **Fold dependency context into `bw show` as default output** — new BLOCKED BY and BLOCKS sections replace the current flat dep listings. No --map flag needed; it's always shown. Use `--only` flag to select specific sections (e.g. `--only summary,blockedby`) if you want targeted output.\\n\\n2. **Surface leaves, not chains** — BLOCKED BY walks the full blocker tree but only shows the _tips_ (issues with no further open blockers). If A←B←C←D, showing A displays D, not the full chain. These are the issues that need work to unblock you.\\n\\n3. **BLOCKS section** — shows what closing this issue would eventually unblock (the downstream tips/leaves).\\n\\n4. **Remove `bw graph` command entirely** — `show` handles the single-issue case better. The `--all` project-wide view is dropped (low real-world use).\\n\\n5. **Revisit `bw ready`** — apply the same tips logic: filter to issues that are genuinely actionable (the leaves across all open work), not just \"open with no open blockers.\"\\n\\n### What \"tips\" means\\nAn issue is a tip if:\\n- It has no open blockers (it's workable), AND\\n- Working it makes progress (it either has no deps at all, or it's the leaf of a blocked chain)\\n\\n### Implementation order\\n1. Add leaf-walking logic to Store (walk blocker tree, return tips)\\n2. Update `bw show` output to use new BLOCKED BY / BLOCKS sections\\n3. Add `--only` flag for section filtering\\n4. Remove `bw graph` command\\n5. Update `bw ready` to use tips logic\\n6. Update tests",
       "timestamp": "2026-04-22T16:12:55Z"
+    },
+    {
+      "text": "test comment for debugging show output",
+      "timestamp": "2026-05-30T12:23:39Z"
     }
   ],
   "priority": 3,
   "status": "open",
   "title": "Dependency",
   "type": "epic",
-  "updated_at": "2026-05-30T12:23:34Z"
+  "updated_at": "2026-05-30T12:23:39Z"
 }
