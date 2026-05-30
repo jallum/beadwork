@@ -14,11 +14,15 @@
     {
       "text": "Currently prime calls Ready() (loads everything) then List() again. With snapshot: single load, derive ready/blocked/counts/in-progress in one pass. Should use Tips() for actionable next steps like show does — 'here is what is actually unblocked and at the leaves' rather than just listing in-progress items. Depends on bw-ccl.2 so Ready()/Blocked() are snapshot-based.",
       "timestamp": "2026-04-22T16:12:59Z"
+    },
+    {
+      "text": "Currently prime calls Ready() (loads everything) then List() again. With snapshot: single load, derive ready/blocked/counts/in-progress in one pass. Should use Tips() for actionable next steps like show does — 'here is what is actually unblocked and at the leaves' rather than just listing in-progress items. Depends on bw-ccl.2 so Ready()/Blocked() are snapshot-based.",
+      "timestamp": "2026-05-30T12:23:46Z"
     }
   ],
   "priority": 2,
   "status": "closed",
   "title": "Rewrite prime to use single Snapshot with tips-based display",
   "type": "task",
-  "updated_at": "2026-05-30T12:23:45Z"
+  "updated_at": "2026-05-30T12:23:46Z"
 }
