@@ -11,11 +11,15 @@
     {
       "text": "We could have a flag in the data structure to suppress printing out something in the help.",
       "timestamp": "2026-04-22T16:13:05Z"
+    },
+    {
+      "text": "We could have a flag in the data structure to suppress printing out something in the help.",
+      "timestamp": "2026-05-30T12:23:48Z"
     }
   ],
   "priority": 3,
   "status": "closed",
   "title": "Hide --id flag from help output",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:06Z"
+  "updated_at": "2026-05-30T12:23:48Z"
 }
