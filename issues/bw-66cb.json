@@ -2,7 +2,7 @@
   "assignee": "claude",
   "blocked_by": [],
   "blocks": [],
-  "closed_at": "2026-04-22T16:12:56Z",
+  "closed_at": "2026-05-30T12:23:41Z",
   "close_reason": "All 5 subtasks complete. show surfaces tips, graph removed, ready uses LoadEdges. PR #47.",
   "created": "2026-04-22T16:12:49Z",
   "description": "",
@@ -43,8 +43,8 @@
     }
   ],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Dependency",
   "type": "epic",
-  "updated_at": "2026-05-30T12:23:40Z"
+  "updated_at": "2026-05-30T12:23:41Z"
 }
