@@ -445,14 +445,24 @@ func (o *subtreeOverlay) effectiveBlockedBy(iss *Issue) []string {
 // buildSubtreeOverlay builds subtrees from parent fields, collects
 // external blockers per display root, and marks all descendants.
 //
-// A "display root" is the shallowest open/deferred ancestor with children.
-// When an ancestor is in_progress or in_review it is already claimed work, so
-// we drill past it to surface the actual next-step descendants.
+// A "display root" is the shallowest open ancestor with children that has not
+// yet been claimed. We drill past a node (recursing into its children to
+// surface the actual next-step frontier) when:
+//   - it is in_progress or in_review — already claimed work; or
+//   - it is open but a descendant is already in_progress/in_review — work has
+//     begun inside the subtree even though the node itself was never started,
+//     so the node is effectively underway and is suppressed from its own
+//     listing; or
+//   - it is deferred with an unexpired defer date — the node is hidden from
+//     ready, but its open, unblocked children should still surface as the
+//     frontier rather than being collapsed away with the hidden parent.
 func (s *Store) buildSubtreeOverlay() *subtreeOverlay {
 	overlay := &subtreeOverlay{
 		descendants:      make(map[string]bool),
 		externalBlockers: make(map[string][]string),
 	}
+
+	now := s.Now()
 
 	// Load all non-closed issues
 	var allIDs []string
@@ -473,9 +483,26 @@ func (s *Store) buildSubtreeOverlay() *subtreeOverlay {
 		}
 	}
 
+	// subtreeHasClaimedWork reports whether any descendant of id (not id
+	// itself) is in_progress or in_review.
+	var subtreeHasClaimedWork func(id string) bool
+	subtreeHasClaimedWork = func(id string) bool {
+		for _, c := range children[id] {
+			ci := issues[c]
+			if ci == nil {
+				continue
+			}
+			if ci.Status == "in_progress" || ci.Status == "in_review" {
+				return true
+			}
+			if subtreeHasClaimedWork(c) {
+				return true
+			}
+		}
+		return false
+	}
+
 	// Walk down from each top-level structural root to find display roots.
-	// Claimed nodes (in_progress/in_review) are not display roots themselves —
-	// we recurse into their children to surface the actual ready frontier.
 	var displayRoots []string
 	var walk func(id string)
 	walk = func(id string) {
@@ -483,13 +510,33 @@ func (s *Store) buildSubtreeOverlay() *subtreeOverlay {
 		if iss == nil {
 			return
 		}
+		// Claimed work: drill past to surface the frontier beneath it.
 		if iss.Status == "in_progress" || iss.Status == "in_review" {
 			for _, c := range children[id] {
 				walk(c)
 			}
 			return
 		}
+		// Future-deferred node: hidden from ready, but its children should
+		// still surface. Drill past without listing it (the deferred loop in
+		// Ready will not re-add it while its deferral is unexpired).
+		if iss.Status == "deferred" && !IsDeferralExpired(iss.DeferUntil, now) {
+			for _, c := range children[id] {
+				walk(c)
+			}
+			return
+		}
 		if len(children[id]) > 0 {
+			// An open node with claimed work inside it is effectively
+			// underway. Drill past it to surface the live frontier, and
+			// suppress the node from its own listing.
+			if subtreeHasClaimedWork(id) {
+				overlay.descendants[id] = true
+				for _, c := range children[id] {
+					walk(c)
+				}
+				return
+			}
 			displayRoots = append(displayRoots, id)
 		}
 	}

@@ -1528,6 +1528,107 @@ func TestReadyStopsAtOpenIntermediateNode(t *testing.T) {
 	}
 }
 
+// When a child is started directly (without first starting the parent epic),
+// the epic stays open but work has begun inside it. Ready() should drill past
+// the open epic and surface the open sibling frontier — not collapse to just
+// the epic and hide the actionable siblings.
+func TestReadyDrillsPastOpenRootWithClaimedChild(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{Type: "epic"})
+	childB, _ := env.Store.Create("Child B", issue.CreateOpts{Parent: epic.ID})
+	childC, _ := env.Store.Create("Child C", issue.CreateOpts{Parent: epic.ID})
+	env.CommitIntent("setup")
+
+	// Start child B directly; the epic is left open.
+	if _, err := env.Store.Start(childB.ID, ""); err != nil {
+		t.Fatalf("Start child: %v", err)
+	}
+	env.CommitIntent("start " + childB.ID)
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[childC.ID] {
+		t.Errorf("open sibling C should surface as the frontier, got %v", ids)
+	}
+	if ids[epic.ID] {
+		t.Errorf("open epic should be suppressed (work claimed inside it), got %v", ids)
+	}
+	if ids[childB.ID] {
+		t.Errorf("in_progress child B should not appear in ready, got %v", ids)
+	}
+}
+
+// An open epic with no claimed work inside it keeps the original behavior:
+// the epic is the display root and its children stay hidden until it's started.
+func TestReadyOpenRootNoClaimedWorkStillCollapses(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{Type: "epic"})
+	childB, _ := env.Store.Create("Child B", issue.CreateOpts{Parent: epic.ID})
+	childC, _ := env.Store.Create("Child C", issue.CreateOpts{Parent: epic.ID})
+	env.CommitIntent("setup")
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[epic.ID] {
+		t.Errorf("epic should be the display root, got %v", ids)
+	}
+	if ids[childB.ID] || ids[childC.ID] {
+		t.Errorf("children should stay hidden under an unstarted epic, got %v", ids)
+	}
+}
+
+// A future-deferred epic is hidden from ready, but its open, unblocked children
+// should still surface as the frontier rather than being suppressed along with
+// the hidden parent.
+func TestReadyDeferredParentSurfacesOpenChildren(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{Type: "epic"})
+	childE, _ := env.Store.Create("Child E", issue.CreateOpts{Parent: epic.ID})
+	childF, _ := env.Store.Create("Child F", issue.CreateOpts{Parent: epic.ID})
+	env.CommitIntent("setup")
+
+	// Defer the epic far into the future; children remain open and unblocked.
+	deferred := "deferred"
+	deferDate := "2099-01-01"
+	if _, err := env.Store.Update(epic.ID, issue.UpdateOpts{Status: &deferred, DeferUntil: &deferDate}); err != nil {
+		t.Fatalf("defer epic: %v", err)
+	}
+	env.CommitIntent("defer " + epic.ID)
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[childE.ID] || !ids[childF.ID] {
+		t.Errorf("open children of a deferred epic should surface, got %v", ids)
+	}
+	if ids[epic.ID] {
+		t.Errorf("future-deferred epic should not appear in ready, got %v", ids)
+	}
+}
+
 // External blockers should bubble to the display root (which can be a deeper
 // node than the top-level epic when the epic is in_progress).
 func TestReadyExternalBlockerBubblesToDisplayRoot(t *testing.T) {
