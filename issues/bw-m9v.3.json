@@ -10,11 +10,15 @@
     {
       "text": "Descoped for Octopus (octo-h7b shipped bdd7536f): projection (`fields`) and paging (`offset`, `limit`) now live in the Elixir Query layer, applied after the filter stage and stable `{priority, id}` sort. Still useful for `bw` CLI users; demoting to P3.",
       "timestamp": "2026-04-22T16:13:35Z"
+    },
+    {
+      "text": "Descoped for Octopus (octo-h7b shipped bdd7536f): projection (`fields`) and paging (`offset`, `limit`) now live in the Elixir Query layer, applied after the filter stage and stable `{priority, id}` sort. Still useful for `bw` CLI users; demoting to P3.",
+      "timestamp": "2026-05-30T12:24:00Z"
     }
   ],
   "priority": 2,
   "status": "open",
   "title": "bw list projection + paging (--fields, --offset)",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:35Z"
+  "updated_at": "2026-05-30T12:24:00Z"
 }
