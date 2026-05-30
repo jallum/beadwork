@@ -29,6 +29,10 @@
     {
       "text": "Closing. The ticket-anchored definition (variant A) works well for its designed case: ticket exists → worktree. The ambiguous 'fix that' case (no ticket) is an acceptable boundary — sometimes the user genuinely wants a quick fix. Tested 7 variants (A-G); all pass when ticket referenced, all fail on open-ended 'fix that'. The forcing function is the ticket ID, not prompt wording.",
       "timestamp": "2026-04-22T16:13:27Z"
+    },
+    {
+      "text": "Variant A results (ticket-anchored):\\n- 'pick up bw-xyz' with ticket: PASS (2/2) — used worktree\\n- 'fix this typo' without ticket: PASS (1/1) — edited in working tree\\n- 'fix the upgrade changelog formatting' without ticket (non-trivial): FAIL (1/1) — edited in working tree, skipped delivery question entirely\\n\\nVariant B results (shared-resource):\\n- 'pick up bw-xyz' with ticket: PASS (1/1) — used worktree\\n- Same behavior pattern as A when ticket present\\n\\nKey finding: both variants work when a ticket exists (ticket = worktree). Both fail on the ambiguous case (no ticket, non-trivial work). The 'default to asking' instruction gets overridden by the agent's instinct to start working. The delivery question only activates when the agent has a reason to pause — 'pick up ticket' triggers it because the agent looks up the ticket first. 'Fix this' doesn't.",
+      "timestamp": "2026-05-30T12:23:58Z"
     }
   ],
   "priority": 2,
