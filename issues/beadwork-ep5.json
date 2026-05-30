@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-05-30T12:27:08Z",
+  "description": "Add a --recursive/-r flag to `bw close` that closes the issue and its entire subtree (all descendants, leaf-up).\n\nNew store method CloseSubtree(id, reason) -\u003e SubtreeCloseResult{Closed, Skipped, Unblocked}:\n- Walk descendants via buildSubtreeSet; close leaf-up (children before parent).\n- Skip already-closed members silently; tolerate already-closed root.\n- Close in_progress/deferred members too.\n- Reason: root gets --reason verbatim; descendants get auto-note 'closed with parent \u003croot-id\u003e'.\n- Aggregate NewlyUnblocked across closed members, dedupe, exclude in-subtree issues.\n\nCLI (cmd/bw/close.go): add --recursive bool flag + CloseArgs.Recursive; single commit via commitWithRetry; intent emits one 'close \u003cid\u003e' line per closed issue + 'unblocked' lines. Non-recursive path unchanged (back-compat CloseResult JSON).\n\nWiring: add '-r':'--recursive' to helpers.go aliases; add flag+example to command.go close spec.\n\nTests: close_test.go (recursive, already-closed skipped, -r alias, JSON shape) + issue-level CloseSubtree test (nested grandchildren, external unblock surfaced, internal suppressed).\n\nNo confirmation prompt (reversible via reopen). --dry-run deferred.",
+  "id": "beadwork-ep5",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Add recursive close (--recursive/-r) to cascade-close an issue's subtree",
+  "type": "task",
+  "updated_at": "2026-05-30T12:27:08Z"
+}
