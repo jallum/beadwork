@@ -1,8 +1,7 @@
 {
   "assignee": "Jason Allum",
   "blocked_by": [
-    "bw-u24.1",
-    "bw-u24.5"
+    "bw-u24.1"
   ],
   "blocks": [],
   "closed_at": "2026-04-22T16:13:09Z",
@@ -14,5 +13,5 @@
   "status": "closed",
   "title": "Fix multi-word values in update intent format",
   "type": "task",
-  "updated_at": "2026-05-30T12:23:47Z"
+  "updated_at": "2026-05-30T12:23:49Z"
 }
