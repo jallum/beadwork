@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- **`bw archive`** — moves closed issues out of active consideration into an `archive/` tree on the beadwork branch. Archived issues leave the live ID space and the status/labels/blocks indexes, so they no longer show up in `ready`, `blocked`, `list`, or ID resolution (and no longer crowd ID-prefix matching) — but they stay in git and keep their titles in `bw recap`. The move is one-way; recover via git history or `bw import`.
+
+  Only closed issues archive: pass `--close` to close an open one first. If open work still depends on an issue (it blocks an open issue, or has open children), archive refuses unless `--detach` severs those edges (dependents lose the blocker, open children are orphaned — like `delete`). Archive a date range with `bw archive --before <date>` (e.g. `2026-01-01`, `6 weeks`, `last monday`), which sweeps every closed issue whose `closed_at` precedes the cutoff; it previews by default and commits with `--force`, skipping issues with open work unless `--detach` is given. Archived IDs are never recycled by future `create`. The operation is replayable, so it converges cleanly through `bw sync` conflicts.
+
 ## 0.13.1 — 2026-05-30
 
 - **No more `ref moved` errors under concurrent use** — commands that change issue state (`start`, `create`, `update`, `delete`, `reopen`, `attach`, `label`, `comment`, `defer`, `undefer`, `dep add`/`remove`) used to die with an error like:
