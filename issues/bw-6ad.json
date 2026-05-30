@@ -2,7 +2,6 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
-  "closed_at": "2026-04-22T16:12:58Z",
   "created": "2026-04-22T16:12:57Z",
   "description": "",
   "id": "bw-6ad",
@@ -18,8 +17,8 @@
     }
   ],
   "priority": 2,
-  "status": "closed",
+  "status": "open",
   "title": "Use ASCII strikethrough for title in close command output",
   "type": "task",
-  "updated_at": "2026-05-30T12:23:43Z"
+  "updated_at": "2026-05-30T12:23:44Z"
 }
