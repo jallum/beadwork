@@ -11,11 +11,15 @@
     {
       "text": "Every hot path (ready, blocked, prime, delete, resolveID) independently assembles the same world state: load all issues, load all edges, build a closed set. Snapshot loads once, queries many. See also: lazy ID set (bw-ccl.4) is independent — covers resolveID/ExistingIDs without needing a full snapshot.",
       "timestamp": "2026-04-22T16:12:59Z"
+    },
+    {
+      "text": "Every hot path (ready, blocked, prime, delete, resolveID) independently assembles the same world state: load all issues, load all edges, build a closed set. Snapshot loads once, queries many. See also: lazy ID set (bw-ccl.4) is independent — covers resolveID/ExistingIDs without needing a full snapshot.",
+      "timestamp": "2026-05-30T12:23:45Z"
     }
   ],
   "priority": 2,
   "status": "closed",
   "title": "Introduce Snapshot for single-load graph queries",
   "type": "epic",
-  "updated_at": "2026-04-22T16:13:00Z"
+  "updated_at": "2026-05-30T12:23:45Z"
 }
