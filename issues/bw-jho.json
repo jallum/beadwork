@@ -8,8 +8,8 @@
   "id": "bw-jho",
   "labels": [],
   "priority": 2,
-  "status": "closed",
+  "status": "in_progress",
   "title": "Replace manual space-indentation with Writer Push/Pop",
   "type": "epic",
-  "updated_at": "2026-04-22T16:12:54Z"
+  "updated_at": "2026-05-30T12:23:37Z"
 }
