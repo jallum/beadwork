@@ -7,7 +7,8 @@
   "description": "",
   "id": "bw-f713",
   "labels": [
-    "cli"
+    "cli",
+    "v1"
   ],
   "priority": 2,
   "status": "in_progress",
