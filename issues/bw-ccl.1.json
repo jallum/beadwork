@@ -15,6 +15,10 @@
     {
       "text": "Snapshot struct: Issues map[string]*Issue, Forward/Reverse map[string][]string (edge maps), Closed map[string]bool, IDs map[string]bool. Constructor calls List(Filter{}) + LoadEdges() once. Lives in internal/issue/. Tips() should operate on snapshot data instead of per-node readIssue() calls.",
       "timestamp": "2026-04-22T16:12:59Z"
+    },
+    {
+      "text": "Snapshot struct: Issues map[string]*Issue, Forward/Reverse map[string][]string (edge maps), Closed map[string]bool, IDs map[string]bool. Constructor calls List(Filter{}) + LoadEdges() once. Lives in internal/issue/. Tips() should operate on snapshot data instead of per-node readIssue() calls.",
+      "timestamp": "2026-05-30T12:23:45Z"
     }
   ],
   "priority": 2,
