@@ -28,6 +28,10 @@
     {
       "text": "test comment for debugging show output",
       "timestamp": "2026-05-30T12:23:39Z"
+    },
+    {
+      "text": "second test comment",
+      "timestamp": "2026-05-30T12:23:39Z"
     }
   ],
   "priority": 3,
