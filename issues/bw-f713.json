@@ -1,9 +1,7 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [
-    "bw-2158"
-  ],
+  "blocks": [],
   "closed_at": "2026-05-30T12:23:22Z",
   "close_reason": "implemented",
   "created": "2026-04-22T16:12:46Z",
@@ -16,5 +14,5 @@
   "status": "closed",
   "title": "Implement bw label command",
   "type": "task",
-  "updated_at": "2026-05-30T12:23:22Z"
+  "updated_at": "2026-05-30T12:23:23Z"
 }
