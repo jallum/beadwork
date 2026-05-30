@@ -15,11 +15,15 @@
     {
       "text": "Moot — already established in bw-u3u T4j that the delivery question is skipped for medium tasks on clean repos (0/4 twice).",
       "timestamp": "2026-04-22T16:13:22Z"
+    },
+    {
+      "text": "Moot — already established in bw-u3u T4j that the delivery question is skipped for medium tasks on clean repos (0/4 twice).",
+      "timestamp": "2026-05-30T12:23:57Z"
     }
   ],
   "priority": 3,
   "status": "closed",
   "title": "T3: Clean repo + medium task — control",
   "type": "task",
-  "updated_at": "2026-05-30T12:23:54Z"
+  "updated_at": "2026-05-30T12:23:57Z"
 }
