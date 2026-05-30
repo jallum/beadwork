@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-05-30T12:24:00Z",
+  "description": "Two defects in the ready subtree overlay (internal/issue/blocking.go buildSubtreeOverlay walk):\\n\\n1. An OPEN epic whose subtree already has an in_progress/in_review descendant collapses to just the epic — the actionable open siblings (the live frontier) are hidden. The drill-in only triggers when the epic NODE is in_progress; bw start \u003cchild\u003e never promotes the parent. Fix in the walk: drill past an open node that has any claimed descendant, and suppress that node's own listing.\\n\\n2. A future-deferred epic acts as a display root and suppresses its open, unblocked children, so they vanish from the global ready frontier (scoped ready still shows them). Fix in the walk: drill past a future-deferred node so its open children surface.\\n\\nFix is display-layer only (no data mutation). Add regression tests.",
+  "id": "bw-lm4",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Fix bw ready: surface frontier inside open epics with claimed children, and don't let a deferred parent hide open children",
+  "type": "task",
+  "updated_at": "2026-05-30T12:24:00Z"
+}
