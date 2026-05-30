@@ -1,6 +1,8 @@
 {
   "assignee": "Jason Allum",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-u24.5"
+  ],
   "blocks": [
     "bw-u24.2",
     "bw-u24.3",
@@ -15,5 +17,5 @@
   "status": "closed",
   "title": "Add CreateOpts.ID for deterministic create replay",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:08Z"
+  "updated_at": "2026-05-30T12:23:47Z"
 }
