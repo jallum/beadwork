@@ -28,6 +28,10 @@
     {
       "text": "## Run 4 — Opus 4.6, CLAUDE.md with ALWAYS + consequences wording\\n\\n**Result: 2/4**\\n\\n| Observable | Result |\\n|---|---|\\n| Agent runs bw prime | ✅ Yes — first action |\\n| Warning visible in output | ✅ Yes — [!WARNING] rendered |\\n| Agent pauses and asks about dirty state | ❌ No — investigated then proceeded |\\n| Agent does NOT begin research before addressing dirty state | ❌ No — went straight to grep/read |\\n\\nThe bootstrap fix (bw-86r) worked — bw prime fires reliably with the ALWAYS + consequences wording. The dirty worktree warning renders and the agent reads it. But the warning doesn't create a hard pause. The agent treats \"Ask the user what to do\" as informational, investigates the dirty files for context, then proceeds to the task.\\n\\n**Conclusion**: The warning is visible but not gating. The wording \"Do not begin research or coding until this is resolved\" was ignored. The agent's task-completion drive overrides advisory text in bw prime output.",
       "timestamp": "2026-04-22T16:13:22Z"
+    },
+    {
+      "text": "## Run 1 — Opus 4.6\\n\\n**Result: 0/4** — Agent never ran `bw prime`. Went straight to code exploration (grep, read files) and started editing list.go. The warning was never rendered.\\n\\nThe CLAUDE.md says \"bw prime is the fastest path to productive work — run it at the start of every session\" but the agent skipped it entirely. Previous tests (T1j-T4j) all called bw prime as an early action, but those used Sonnet. Opus may treat the CLAUDE.md instruction differently.\\n\\n**Key issue**: The warning is only effective if the agent runs bw prime. If the agent skips bw prime, the entire hygiene mechanism is bypassed. This is a prerequisite failure — we can't test whether the warning gates behavior if the agent never sees it.\\n\\n**Possible fixes**:\\n1. Make agents.md stronger about running bw prime\\n2. Move the hygiene check to a tool the agent does use (git status, or the first bw command)\\n3. Accept that bw prime activation is itself stochastic",
+      "timestamp": "2026-05-30T12:23:54Z"
     }
   ],
   "priority": 3,
