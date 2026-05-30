@@ -16,5 +16,5 @@
   "status": "closed",
   "title": "Rewrite Ready() and Blocked() to query indexes directly",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:01Z"
+  "updated_at": "2026-05-30T12:23:46Z"
 }
