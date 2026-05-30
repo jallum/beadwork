@@ -12,7 +12,7 @@
   "id": "bw-66cb.1",
   "labels": [],
   "priority": 2,
-  "status": "closed",
+  "status": "in_progress",
   "title": "Extract shared edge-loading and tip-walking primitives in Store",
   "type": "task",
   "updated_at": "2026-05-30T12:23:40Z"
