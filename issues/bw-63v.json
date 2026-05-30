@@ -6,9 +6,15 @@
   "description": "testing",
   "id": "bw-63v",
   "labels": [],
+  "comments": [
+    {
+      "text": "this is a test comment",
+      "timestamp": "2026-05-30T12:23:50Z"
+    }
+  ],
   "priority": 3,
   "status": "open",
   "title": "test comment display",
   "type": "task",
-  "updated_at": "2026-05-30T12:23:49Z"
+  "updated_at": "2026-05-30T12:23:50Z"
 }
