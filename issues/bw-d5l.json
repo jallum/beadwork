@@ -11,11 +11,15 @@
     {
       "text": "Epic complete. Phase 1: PR #50, Phase 3: PR #51. Phase 2 folded into Phase 1.",
       "timestamp": "2026-04-22T16:12:57Z"
+    },
+    {
+      "text": "Epic complete. Phase 1: PR #50, Phase 3: PR #51. Phase 2 folded into Phase 1.",
+      "timestamp": "2026-05-30T12:23:43Z"
     }
   ],
   "priority": 1,
   "status": "closed",
   "title": "Inject store into commands and add write-through cache",
   "type": "task",
-  "updated_at": "2026-05-30T12:23:41Z"
+  "updated_at": "2026-05-30T12:23:43Z"
 }
