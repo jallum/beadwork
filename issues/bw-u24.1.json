@@ -2,6 +2,7 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [
+    "bw-u24.2",
     "bw-u24.3",
     "bw-u24.4"
   ],

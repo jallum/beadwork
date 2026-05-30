@@ -1,6 +1,8 @@
 {
   "assignee": "Jason Allum",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-u24.1"
+  ],
   "blocks": [],
   "closed_at": "2026-04-22T16:13:09Z",
   "created": "2026-04-22T16:13:02Z",
