@@ -1,5 +1,5 @@
 {
-  "assignee": "local-agent",
+  "assignee": "remote-agent",
   "blocked_by": [],
   "blocks": [],
   "closed_at": "2026-04-22T16:12:46Z",
@@ -8,8 +8,8 @@
   "id": "bw-aaaa",
   "labels": [],
   "priority": 1,
-  "status": "closed",
+  "status": "in_progress",
   "title": "Issue from remote agent",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:46Z"
+  "updated_at": "2026-05-30T12:23:23Z"
 }
