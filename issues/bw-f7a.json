@@ -29,6 +29,10 @@
     {
       "text": "Reopening to rework: replacing hacky width-N arithmetic with indent-aware Writer. Consolidating plainWriter/colorWriter into single struct with Push/Pop indent stack. Width() auto-adjusts for current indent. Write() auto-prefixes lines.",
       "timestamp": "2026-05-30T12:23:37Z"
+    },
+    {
+      "text": "Reworked: consolidated plainWriter/colorWriter into single writer struct with Push/Pop indent stack. Write() auto-prefixes lines. Width() subtracts current indent. Refactored fprintIssue, fprintComments, fprintDeps, cmdComments. 18 new writer tests + 2 wrapping tests. PR #42 updated.",
+      "timestamp": "2026-05-30T12:23:37Z"
     }
   ],
   "priority": 2,
