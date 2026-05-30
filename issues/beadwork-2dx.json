@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-05-30T17:32:49Z",
@@ -7,8 +7,8 @@
   "id": "beadwork-2dx",
   "labels": [],
   "priority": 3,
-  "status": "open",
+  "status": "in_progress",
   "title": "Implement bw archive (single + --before sweep), intent replay, recap title fallback",
   "type": "task",
-  "updated_at": "2026-05-30T17:32:49Z"
+  "updated_at": "2026-05-30T17:32:53Z"
 }
