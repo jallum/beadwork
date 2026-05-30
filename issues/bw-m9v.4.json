@@ -10,11 +10,15 @@
     {
       "text": "Descoped for Octopus (octo-h7b shipped bdd7536f): the Elixir MCP layer normalizes string `status`/`type` → atom at the boundary, and `Octopus.Tickets.Beadwork.Filter.resolve_statuses/1` already treats an explicit `status` as a full replacement of the default whitelist — so `status: \"in_review\"` returns the expected tickets. Still useful for `bw` CLI users; demoting to P3.",
       "timestamp": "2026-04-22T16:13:35Z"
+    },
+    {
+      "text": "Descoped for Octopus (octo-h7b shipped bdd7536f): the Elixir MCP layer normalizes string `status`/`type` → atom at the boundary, and `Octopus.Tickets.Beadwork.Filter.resolve_statuses/1` already treats an explicit `status` as a full replacement of the default whitelist — so `status: \"in_review\"` returns the expected tickets. Still useful for `bw` CLI users; demoting to P3.",
+      "timestamp": "2026-05-30T12:24:00Z"
     }
   ],
   "priority": 2,
   "status": "open",
   "title": "bw list --status X default-whitelist semantics",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:35Z"
+  "updated_at": "2026-05-30T12:24:00Z"
 }
