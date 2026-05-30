@@ -11,11 +11,15 @@
     {
       "text": "## Analysis findings\\n\\nConfirmed the gap described in the ticket. Current state:\\n\\n**Parent-child hierarchy** — has full cycle detection in `update.go:46-56`. Walks the ancestor chain from proposed parent upward; rejects if the target issue is found. Works because parent-child is a tree (single parent per issue), so the walk is O(depth).\\n\\n**Blocking graph** — only guards against self-loops (`blocking.go:17-18`). No reachability check exists. Cyclic blocking edges (A→B→C→A) are silently accepted.\\n\\n**`Tips` traversal** (`blocking.go:167-175`) uses a `visited` set to avoid infinite loops when walking edges, so cycles don't cause hangs at read time — but they do create logically incoherent state where blocked issues can never become unblocked.\\n\\nThe approach in the ticket description (DFS walk from `blockedID` following `Blocks` lists) is sound. One note: `LoadEdges` reads the entire `blocks/` directory tree, so the per-issue `readIssue` walk proposed here is more efficient for sparse graphs. For dense graphs it's equivalent since `readIssue` hits the object store per node, but the reachable subgraph is typically small.",
       "timestamp": "2026-04-22T16:13:31Z"
+    },
+    {
+      "text": "## Analysis findings\\n\\nConfirmed the gap described in the ticket. Current state:\\n\\n**Parent-child hierarchy** — has full cycle detection in `update.go:46-56`. Walks the ancestor chain from proposed parent upward; rejects if the target issue is found. Works because parent-child is a tree (single parent per issue), so the walk is O(depth).\\n\\n**Blocking graph** — only guards against self-loops (`blocking.go:17-18`). No reachability check exists. Cyclic blocking edges (A→B→C→A) are silently accepted.\\n\\n**`Tips` traversal** (`blocking.go:167-175`) uses a `visited` set to avoid infinite loops when walking edges, so cycles don't cause hangs at read time — but they do create logically incoherent state where blocked issues can never become unblocked.\\n\\nThe approach in the ticket description (DFS walk from `blockedID` following `Blocks` lists) is sound. One note: `LoadEdges` reads the entire `blocks/` directory tree, so the per-issue `readIssue` walk proposed here is more efficient for sparse graphs. For dense graphs it's equivalent since `readIssue` hits the object store per node, but the reachable subgraph is typically small.",
+      "timestamp": "2026-05-30T12:23:59Z"
     }
   ],
   "priority": 3,
   "status": "closed",
   "title": "Reject cyclic dependency edges in Link",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:31Z"
+  "updated_at": "2026-05-30T12:23:59Z"
 }
