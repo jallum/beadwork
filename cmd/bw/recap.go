@@ -23,11 +23,15 @@ func (s *storeLookup) Title(id string) string {
 	if s.store == nil {
 		return ""
 	}
-	iss, err := s.store.Get(id)
-	if err != nil {
-		return ""
+	if iss, err := s.store.Get(id); err == nil {
+		return iss.Title
 	}
-	return iss.Title
+	// Fall back to the archive so historical recaps keep titles for issues
+	// that have since been archived out of the live tree.
+	if iss, err := s.store.ArchivedIssue(id); err == nil {
+		return iss.Title
+	}
+	return ""
 }
 
 type recapArgs struct {

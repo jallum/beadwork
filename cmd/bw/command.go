@@ -274,6 +274,30 @@ var commands = []Command{
 		Run:        cmdDelete,
 	},
 	{
+		Name:        "archive",
+		Summary:     "Archive closed issues out of active consideration",
+		Description: "Move closed issues into the archive/ tree on the beadwork branch. Archived issues leave the live ID space and the status/labels/blocks indexes, so they no longer appear in ready, blocked, list, or ID resolution. The move is one-way; recover via git history or bw import.\n\nOnly closed issues can be archived: pass --close to close an open issue first. If open work still depends on an issue (it blocks an open issue, or has open children), archive refuses unless --detach is given to sever those edges.\n\nUse --before <date> to sweep all closed issues whose closed_at precedes a past cutoff (e.g. \"2026-01-01\", \"6 weeks\", \"last monday\"). The sweep previews by default; pass --force to commit. Issues with open work attached are skipped unless --detach is set.",
+		Positionals: []Positional{
+			{Name: "<id>...", Required: false, Help: "Issue IDs to archive"},
+		},
+		Flags: []Flag{
+			{Long: "--before", Value: "DATE", Help: "Sweep closed issues closed before a past date/expression"},
+			{Long: "--close", Help: "Close the issue first if it is still open"},
+			{Long: "--detach", Help: "Sever edges to open dependents/children instead of refusing"},
+			{Long: "--force", Short: "-y", Help: "Execute a --before sweep (default: preview only)"},
+			{Long: "--json", Help: "Output as JSON"},
+		},
+		Examples: []Example{
+			{Cmd: "bw archive bw-a3f8", Help: "Archive one closed issue"},
+			{Cmd: "bw archive bw-a3f8 --close", Help: "Close it first, then archive"},
+			{Cmd: "bw archive bw-a3f8 --detach", Help: "Sever live edges, then archive"},
+			{Cmd: "bw archive --before 2026-01-01", Help: "Preview closed issues before a date"},
+			{Cmd: "bw archive --before 6\\ weeks --force", Help: "Archive everything closed >6 weeks ago"},
+		},
+		NeedsStore: true,
+		Run:        cmdArchive,
+	},
+	{
 		Name:        "label",
 		Summary:     "Add/remove labels",
 		Description: "Add or remove labels on an issue. Prefix with + to add, - to remove.\nBare names (without prefix) are added.",
@@ -540,7 +564,7 @@ var commandGroups = []struct {
 	name string
 	cmds []string
 }{
-	{"Working With Issues", []string{"create", "show", "list", "update", "start", "close", "reopen", "delete", "comment", "label", "defer", "undefer", "history", "attach"}},
+	{"Working With Issues", []string{"create", "show", "list", "update", "start", "close", "reopen", "delete", "archive", "comment", "label", "defer", "undefer", "history", "attach"}},
 	{"Finding Work", []string{"ready", "blocked"}},
 	{"Dependencies", []string{"dep"}},
 	{"Sync & Data", []string{"sync", "export", "import"}},
