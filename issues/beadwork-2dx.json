@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-05-30T17:32:49Z",
+  "description": "Add 'bw archive'. Store: Archive(id, {Close,Detach}) moves issues/\u003cid\u003e.json -\u003e archive/\u003cid\u003e.json, freezes status=closed, stamps archived_at, removes status/labels/blocks markers, detaches live graph edges (refuse if open dependents/children unless --detach), closes-if-open only with --close. Add Issue.ArchivedAt. Intent: 'archive \u003cid\u003e [--close] [--detach]' verb + replayArchive. Command: bw archive \u003cid\u003e... (direct) and bw archive --before \u003ccutoff\u003e (closed-only sweep via resolveDateBeforeNow, preview-by-default, --force to execute). Recap storeLookup.Title falls back to archive/. One-way (no unarchive). Stacked on beadwork-gxn/date-before-now.",
+  "id": "beadwork-2dx",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Implement bw archive (single + --before sweep), intent replay, recap title fallback",
+  "type": "task",
+  "updated_at": "2026-05-30T17:32:49Z"
+}
