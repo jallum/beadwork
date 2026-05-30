@@ -2,14 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
-  "closed_at": "2026-04-22T16:12:54Z",
+  "closed_at": "2026-05-30T12:23:38Z",
   "created": "2026-04-22T16:12:53Z",
   "description": "",
   "id": "bw-jho.3",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "blocked.go: replace hardcoded indentation with Writer Push/Pop",
   "type": "task",
-  "updated_at": "2026-05-30T12:23:37Z"
+  "updated_at": "2026-05-30T12:23:38Z"
 }
