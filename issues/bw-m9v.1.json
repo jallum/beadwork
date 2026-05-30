@@ -10,11 +10,15 @@
     {
       "text": "octo-h7b shipped (octopus commit bdd7536f): Octopus now reads `annotations`, `reviewer`, and `index` directly from the JSON on the **read path**, so this ticket is specifically the **write-side** guarantee — preventing `bw update`/`bw close` or any CLI-mediated edit from silently dropping those fields on round-trip. Priority stays P1.",
       "timestamp": "2026-04-22T16:13:35Z"
+    },
+    {
+      "text": "octo-h7b shipped (octopus commit bdd7536f): Octopus now reads `annotations`, `reviewer`, and `index` directly from the JSON on the **read path**, so this ticket is specifically the **write-side** guarantee — preventing `bw update`/`bw close` or any CLI-mediated edit from silently dropping those fields on round-trip. Priority stays P1.",
+      "timestamp": "2026-05-30T12:23:59Z"
     }
   ],
   "priority": 1,
   "status": "open",
   "title": "Preserve unknown fields on Issue round-trip — lossless JSON",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:35Z"
+  "updated_at": "2026-05-30T12:23:59Z"
 }
