@@ -14,8 +14,8 @@
     }
   ],
   "priority": 3,
-  "status": "closed",
+  "status": "in_progress",
   "title": "Add --silent flag to create",
   "type": "feature",
-  "updated_at": "2026-04-22T16:12:53Z"
+  "updated_at": "2026-05-30T12:23:35Z"
 }
