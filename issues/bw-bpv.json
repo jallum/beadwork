@@ -2,14 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
-  "closed_at": "2026-04-22T16:12:51Z",
+  "closed_at": "2026-05-30T12:23:33Z",
   "created": "2026-04-22T16:12:51Z",
   "description": "",
   "id": "bw-bpv",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add bw history command",
   "type": "feature",
-  "updated_at": "2026-05-30T12:23:32Z"
+  "updated_at": "2026-05-30T12:23:33Z"
 }
