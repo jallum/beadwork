@@ -17,11 +17,15 @@
     {
       "text": "Moot — T1 showed no hygiene pause occurs, so there's no 'after pause' to test.",
       "timestamp": "2026-04-22T16:13:22Z"
+    },
+    {
+      "text": "Moot — T1 showed no hygiene pause occurs, so there's no 'after pause' to test.",
+      "timestamp": "2026-05-30T12:23:57Z"
     }
   ],
   "priority": 3,
   "status": "closed",
   "title": "T2: After hygiene pause, does agent ask about delivery?",
   "type": "task",
-  "updated_at": "2026-05-30T12:23:54Z"
+  "updated_at": "2026-05-30T12:23:57Z"
 }
