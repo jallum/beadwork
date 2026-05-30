@@ -4,7 +4,7 @@
   "blocks": [
     "bw-f7a"
   ],
-  "closed_at": "2026-04-22T16:12:53Z",
+  "closed_at": "2026-05-30T12:23:36Z",
   "created": "2026-04-22T16:12:52Z",
   "description": "",
   "id": "bw-9vd",
@@ -20,8 +20,8 @@
     }
   ],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add text line wrapping utility",
   "type": "task",
-  "updated_at": "2026-05-30T12:23:35Z"
+  "updated_at": "2026-05-30T12:23:36Z"
 }
