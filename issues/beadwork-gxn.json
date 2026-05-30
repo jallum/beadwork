@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-05-30T14:12:20Z",
+  "description": "Split the date-resolution machinery by direction. Rename the forward-looking resolveDate (cmd/bw/defer.go) to resolveDateAfterNow and update all call sites (create.go x2, update.go x2, defer.go, defer_test.go). Add a backward-looking mirror resolveDateBeforeNow that resolves expressions to the most recent PAST occurrence: YYYY-MM-DD/RFC3339 passthrough, 'yesterday', bare time (today-or-yesterday), 'N units'/'N units ago', 'last \u003cweekday\u003e'. Reuses existing helpers (parseTimeOfDay, parseWeekday, splitAtKeyword). Prerequisite for 'bw archive --before \u003ccutoff\u003e'.",
+  "id": "beadwork-gxn",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "Rename resolveDate -\u003e resolveDateAfterNow; add resolveDateBeforeNow",
+  "type": "task",
+  "updated_at": "2026-05-30T14:12:20Z"
+}
