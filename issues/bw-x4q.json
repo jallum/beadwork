@@ -11,11 +11,15 @@
     {
       "text": "Superseded by epic bw-d5l which breaks this into phased child tickets.",
       "timestamp": "2026-04-22T16:12:56Z"
+    },
+    {
+      "text": "Superseded by epic bw-d5l which breaks this into phased child tickets.",
+      "timestamp": "2026-05-30T12:23:42Z"
     }
   ],
   "priority": 1,
   "status": "closed",
   "title": "Inject store into commands and add write-through cache",
   "type": "task",
-  "updated_at": "2026-04-22T16:12:56Z"
+  "updated_at": "2026-05-30T12:23:42Z"
 }
