@@ -94,14 +94,14 @@ func cmdUpdate(store *issue.Store, args []string, w Writer, _ *config.Config) (*
 
 	now := store.Now()
 	if ua.DeferSet && ua.DeferUntil != "" {
-		resolved, err := resolveDate(ua.DeferUntil, now)
+		resolved, err := resolveDateAfterNow(ua.DeferUntil, now)
 		if err != nil {
 			return nil, err
 		}
 		ua.DeferUntil = resolved
 	}
 	if ua.DueSet && ua.Due != "" {
-		resolved, err := resolveDate(ua.Due, now)
+		resolved, err := resolveDateAfterNow(ua.Due, now)
 		if err != nil {
 			return nil, err
 		}
