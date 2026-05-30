@@ -13,11 +13,15 @@
     {
       "text": "The TTY renderer also needs to handle nested fenced code blocks properly: outer fences with 4+ backticks should contain inner fences with 3 backticks (per CommonMark spec). The fence tracking in colorize() needs to count backtick length, not just toggle on any ``` prefix.",
       "timestamp": "2026-04-22T16:13:14Z"
+    },
+    {
+      "text": "The TTY renderer also needs to handle nested fenced code blocks properly: outer fences with 4+ backticks should contain inner fences with 3 backticks (per CommonMark spec). The fence tracking in colorize() needs to count backtick length, not just toggle on any ``` prefix.",
+      "timestamp": "2026-05-30T12:23:52Z"
     }
   ],
   "priority": 1,
   "status": "closed",
   "title": "TTY renderer applies markdown styling inside fenced code blocks",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:15Z"
+  "updated_at": "2026-05-30T12:23:52Z"
 }
