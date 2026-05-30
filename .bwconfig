@@ -1,4 +1,4 @@
-default.priority=2
+default.priority=3
 prefix=beadwork
 remote=upstream
 version=2
