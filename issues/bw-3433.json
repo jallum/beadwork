@@ -11,6 +11,10 @@
     {
       "text": "Added --silent flag to create command. When set, outputs only the bare issue ID (e.g. bw-abc1) with no other text, enabling scripting patterns like id=$(bw create 'Fix bug' --silent). Silent takes precedence over --json. Added two tests: TestCmdCreateSilent verifies bare ID output and absence of human-readable text, TestCmdCreateSilentNoExtraOutput verifies single-line output with correct prefix. All tests pass.",
       "timestamp": "2026-04-22T16:12:52Z"
+    },
+    {
+      "text": "Added --silent flag to create command. When set, outputs only the bare issue ID (e.g. bw-abc1) with no other text, enabling scripting patterns like id=$(bw create 'Fix bug' --silent). Silent takes precedence over --json. Added two tests: TestCmdCreateSilent verifies bare ID output and absence of human-readable text, TestCmdCreateSilentNoExtraOutput verifies single-line output with correct prefix. All tests pass.",
+      "timestamp": "2026-05-30T12:23:35Z"
     }
   ],
   "priority": 3,
