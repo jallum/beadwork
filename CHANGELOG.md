@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.13.1 — 2026-05-30
+
+- **No more `ref moved` errors under concurrent use** — commands that change issue state (`start`, `create`, `update`, `delete`, `reopen`, `attach`, `label`, `comment`, `defer`, `undefer`, `dep add`/`remove`) used to die with an error like:
+
+  ```
+  error: commit failed: ref moved: ref refs/heads/beadwork (expected f2105ed3, got 3e642ee7)
+  ```
+
+  This happened whenever something else moved the beadwork branch mid-command — another `bw` in a second terminal, a background `bw sync`, or an agent working in a worktree. Only `bw close` knew how to recover; every other command lost its work and made you retry by hand. Now all mutating commands automatically refresh against the latest state and retry (up to 12 attempts, with exponential backoff and jitter so colliding writers spread out), so the command just succeeds instead of erroring. Also fixed a latent snapshot-tracking bug in the underlying store that could spuriously trigger the same error.
+
 ## 0.13.0 — 2026-05-11
 
 - **`bw recap`** — shows recent beadwork activity across one or more repos. By default it's cursor-driven and incremental: the first run backfills the last 24 hours, then each subsequent run picks up from where it left off. Pass an explicit window (`bw recap today`, `--since 2026-05-01`) to override. `bw recap --all` fans out across every registered repo. Gap detection refuses to advance the cursor if an explicit window would skip unseen history.

@@ -12,7 +12,7 @@ import (
 	"golang.org/x/term"
 )
 
-const version = "0.13.0"
+const version = "0.13.1"
 
 // globalNoColor is set by commands (e.g. recap --no-color) to force
 // non-colored output even when stdout is a TTY. Consulted at render setup.
