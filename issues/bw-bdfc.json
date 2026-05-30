@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "bw-2158"
+  ],
   "closed_at": "2026-05-30T12:23:21Z",
   "close_reason": "implemented",
   "created": "2026-04-22T16:12:46Z",
@@ -12,5 +14,5 @@
   "status": "closed",
   "title": "Implement bw link and bw unlink commands",
   "type": "task",
-  "updated_at": "2026-05-30T12:23:21Z"
+  "updated_at": "2026-05-30T12:23:22Z"
 }
