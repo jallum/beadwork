@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "bw-ytt.1"
+  ],
   "blocks": [],
   "closed_at": "2026-04-22T16:13:04Z",
   "created": "2026-04-22T16:13:03Z",
