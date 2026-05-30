@@ -13,11 +13,15 @@
     {
       "text": "Delete and DeletePreview both call List(Filter{}) to find children by scanning other.Parent == id. With snapshot, scan snap.Issues instead — no second List() call. Could also build a Children map[string][]string in the snapshot if parent lookups become common.",
       "timestamp": "2026-04-22T16:12:59Z"
+    },
+    {
+      "text": "Delete and DeletePreview both call List(Filter{}) to find children by scanning other.Parent == id. With snapshot, scan snap.Issues instead — no second List() call. Could also build a Children map[string][]string in the snapshot if parent lookups become common.",
+      "timestamp": "2026-05-30T12:23:46Z"
     }
   ],
   "priority": 2,
   "status": "closed",
   "title": "Update Delete to use Snapshot for child lookup",
   "type": "task",
-  "updated_at": "2026-05-30T12:23:45Z"
+  "updated_at": "2026-05-30T12:23:46Z"
 }
