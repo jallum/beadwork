@@ -11,11 +11,15 @@
     {
       "text": "cmd/bw/start.go:39 does store.Committer.(*repo.Repo) without a nil check. When the store is opened without a real repo backing it, this panics with: nil pointer dereference. Need a guard or a different way to get the git dir for gitUserName.",
       "timestamp": "2026-04-22T16:12:58Z"
+    },
+    {
+      "text": "cmd/bw/start.go:39 does store.Committer.(*repo.Repo) without a nil check. When the store is opened without a real repo backing it, this panics with: nil pointer dereference. Need a guard or a different way to get the git dir for gitUserName.",
+      "timestamp": "2026-05-30T12:23:44Z"
     }
   ],
   "priority": 1,
   "status": "closed",
   "title": "bw start crashes with nil pointer when store.Committer is nil",
   "type": "bug",
-  "updated_at": "2026-04-22T16:12:58Z"
+  "updated_at": "2026-05-30T12:23:44Z"
 }
