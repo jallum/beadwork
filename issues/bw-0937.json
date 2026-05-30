@@ -4,13 +4,13 @@
   "blocks": [
     "bw-57f5"
   ],
-  "closed_at": "2026-04-22T16:12:53Z",
+  "closed_at": "2026-05-30T12:23:36Z",
   "created": "2026-04-22T16:12:50Z",
   "description": "",
   "id": "bw-0937",
   "labels": [],
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Dotted child IDs for parent-child creation",
   "type": "feature",
   "updated_at": "2026-05-30T12:23:36Z"
