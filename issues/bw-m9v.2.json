@@ -10,11 +10,15 @@
     {
       "text": "Descoped for Octopus (octo-h7b shipped bdd7536f): `ticket_show` with `recursive: true` now walks the subtree in Elixir and returns `{root, tickets, tree, deps, ready}` — `tree` and `deps` are graphviz DOT strings embedded in the JSON response, so agents read them directly. Still useful for `bw` CLI users; demoting to P3.",
       "timestamp": "2026-04-22T16:13:35Z"
+    },
+    {
+      "text": "Descoped for Octopus (octo-h7b shipped bdd7536f): `ticket_show` with `recursive: true` now walks the subtree in Elixir and returns `{root, tickets, tree, deps, ready}` — `tree` and `deps` are graphviz DOT strings embedded in the JSON response, so agents read them directly. Still useful for `bw` CLI users; demoting to P3.",
+      "timestamp": "2026-05-30T12:23:59Z"
     }
   ],
   "priority": 2,
   "status": "open",
   "title": "bw show --recursive / bw tree \u003cid\u003e — subtree/DAG rendering",
   "type": "task",
-  "updated_at": "2026-04-22T16:13:35Z"
+  "updated_at": "2026-05-30T12:23:59Z"
 }
