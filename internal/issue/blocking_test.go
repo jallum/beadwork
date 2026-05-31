@@ -1629,6 +1629,49 @@ func TestReadyDeferredParentSurfacesOpenChildren(t *testing.T) {
 	}
 }
 
+// When work is claimed two levels down (a grandchild started while both the
+// epic and the intermediate node stay open), Ready() must still recognize the
+// subtree as underway: suppress the open epic AND the open intermediate, and
+// surface the open sibling as the frontier. This exercises the recursive
+// descent in subtreeHasClaimedWork.
+func TestReadyDrillsPastOpenRootWithTransitivelyClaimedChild(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	epic, _ := env.Store.Create("Epic", issue.CreateOpts{Type: "epic"})
+	mid, _ := env.Store.Create("Mid", issue.CreateOpts{Parent: epic.ID})
+	leaf, _ := env.Store.Create("Leaf", issue.CreateOpts{Parent: mid.ID})
+	sib, _ := env.Store.Create("Sib", issue.CreateOpts{Parent: epic.ID})
+	env.CommitIntent("setup")
+
+	// Start the grandchild directly; epic and mid are left open.
+	if _, err := env.Store.Start(leaf.ID, ""); err != nil {
+		t.Fatalf("Start leaf: %v", err)
+	}
+	env.CommitIntent("start " + leaf.ID)
+
+	ready, err := env.Store.Ready()
+	if err != nil {
+		t.Fatalf("Ready: %v", err)
+	}
+	ids := make(map[string]bool)
+	for _, r := range ready {
+		ids[r.ID] = true
+	}
+	if !ids[sib.ID] {
+		t.Errorf("open sibling should surface as the frontier, got %v", ids)
+	}
+	if ids[epic.ID] {
+		t.Errorf("open epic should be suppressed (transitively claimed work), got %v", ids)
+	}
+	if ids[mid.ID] {
+		t.Errorf("open intermediate node should be suppressed (claimed child below it), got %v", ids)
+	}
+	if ids[leaf.ID] {
+		t.Errorf("in_progress leaf should not appear in ready, got %v", ids)
+	}
+}
+
 // External blockers should bubble to the display root (which can be a deeper
 // node than the top-level epic when the epic is in_progress).
 func TestReadyExternalBlockerBubblesToDisplayRoot(t *testing.T) {
