@@ -260,17 +260,19 @@ var commands = []Command{
 	{
 		Name:        "delete",
 		Summary:     "Delete an issue",
-		Description: "Permanently delete an issue and clean up references.\nWithout --force, shows a preview of what would be affected.",
+		Description: "Permanently delete an issue and clean up references.\nWithout --force, shows a preview of what would be affected.\nWith --recursive, also delete the issue's entire subtree (all descendants).",
 		Positionals: []Positional{
 			{Name: "<id>", Required: true, Help: "Issue ID"},
 		},
 		Flags: []Flag{
+			{Long: "--recursive", Short: "-r", Help: "Also delete all descendants (the whole subtree)"},
 			{Long: "--force", Help: "Actually delete (default: preview only)"},
 			{Long: "--json", Help: "Output as JSON"},
 		},
 		Examples: []Example{
 			{Cmd: "bw delete bw-a3f8", Help: "Preview deletion"},
 			{Cmd: "bw delete bw-a3f8 --force", Help: "Delete permanently"},
+			{Cmd: "bw delete bw-a3f8 -r --force", Help: "Delete the whole subtree"},
 		},
 		NeedsStore: true,
 		Run:        cmdDelete,
