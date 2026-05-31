@@ -103,6 +103,7 @@ var aliases = map[string]string{
 	"-l": "--labels",
 	"-g": "--grep",
 	"-y": "--yes",
+	"-r": "--recursive",
 }
 
 // Args holds parsed command-line arguments separated into boolean flags,

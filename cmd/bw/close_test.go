@@ -82,6 +82,98 @@ func TestCmdCloseNotFound(t *testing.T) {
 	}
 }
 
+func TestCmdCloseRecursive(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	root, _ := env.Store.Create("Epic", issue.CreateOpts{Type: "epic"})
+	c, _ := env.Store.Create("Child", issue.CreateOpts{Parent: root.ID})
+	gc, _ := env.Store.Create("Grandchild", issue.CreateOpts{Parent: c.ID})
+	env.Repo.Commit("setup")
+
+	var buf bytes.Buffer
+	_, err := cmdClose(env.Store, []string{root.ID, "--recursive"}, PlainWriter(&buf), nil)
+	if err != nil {
+		t.Fatalf("cmdClose --recursive: %v", err)
+	}
+	if !strings.Contains(buf.String(), "closed 3 issue") {
+		t.Errorf("output = %q", buf.String())
+	}
+
+	for _, id := range []string{root.ID, c.ID, gc.ID} {
+		got, _ := env.Store.Get(id)
+		if got.Status != "closed" {
+			t.Errorf("%s status = %q, want closed", id, got.Status)
+		}
+	}
+}
+
+func TestCmdCloseRecursiveAlias(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	root, _ := env.Store.Create("Epic", issue.CreateOpts{Type: "epic"})
+	c, _ := env.Store.Create("Child", issue.CreateOpts{Parent: root.ID})
+	env.Repo.Commit("setup")
+
+	var buf bytes.Buffer
+	if _, err := cmdClose(env.Store, []string{root.ID, "-r"}, PlainWriter(&buf), nil); err != nil {
+		t.Fatalf("cmdClose -r: %v", err)
+	}
+	got, _ := env.Store.Get(c.ID)
+	if got.Status != "closed" {
+		t.Errorf("child status = %q, want closed", got.Status)
+	}
+}
+
+func TestCmdCloseRecursiveSkipsAlreadyClosed(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	root, _ := env.Store.Create("Epic", issue.CreateOpts{Type: "epic"})
+	c, _ := env.Store.Create("Child", issue.CreateOpts{Parent: root.ID})
+	env.Store.Close(c.ID, "")
+	env.Repo.Commit("setup")
+
+	var buf bytes.Buffer
+	if _, err := cmdClose(env.Store, []string{root.ID, "-r"}, PlainWriter(&buf), nil); err != nil {
+		t.Fatalf("cmdClose -r: %v", err)
+	}
+	if !strings.Contains(buf.String(), "already closed, skipped") {
+		t.Errorf("output = %q", buf.String())
+	}
+	rootGot, _ := env.Store.Get(root.ID)
+	if rootGot.Status != "closed" {
+		t.Errorf("root status = %q, want closed", rootGot.Status)
+	}
+}
+
+func TestCmdCloseRecursiveJSON(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	root, _ := env.Store.Create("Epic", issue.CreateOpts{Type: "epic"})
+	env.Store.Create("Child", issue.CreateOpts{Parent: root.ID})
+	env.Repo.Commit("setup")
+
+	var buf bytes.Buffer
+	_, err := cmdClose(env.Store, []string{root.ID, "-r", "--json"}, PlainWriter(&buf), nil)
+	if err != nil {
+		t.Fatalf("cmdClose -r --json: %v", err)
+	}
+
+	var got issue.SubtreeCloseResult
+	if err := json.Unmarshal(buf.Bytes(), &got); err != nil {
+		t.Fatalf("JSON parse: %v", err)
+	}
+	if len(got.Closed) != 2 {
+		t.Errorf("closed = %d, want 2", len(got.Closed))
+	}
+	if got.Skipped == nil || got.Unblocked == nil {
+		t.Error("skipped/unblocked should be [] not null")
+	}
+}
+
 func TestCmdReopenBasic(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
