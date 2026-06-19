@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.13.2 — 2026-06-19
+
+- **`bw close --recursive` / `-r`** — close an issue *and its entire subtree* in a single commit. Descendants close leaf-up (children before parents); already-closed members are skipped silently, so a re-run mops up stragglers. The root records your `--reason` verbatim while each descendant records `closed with parent <root-id>`. External issues that become fully unblocked are surfaced (and deduped); unblocks internal to the subtree are suppressed as noise. The non-recursive path is unchanged.
+
+  ```
+  $ bw close epic-abc --recursive
+  ```
+
+- **`bw ready` surfaces work hidden under claimed-but-open epics and deferred parents** — two cases where the live frontier could vanish are fixed:
+  - Running `bw start <child>` moves only that child to `in_progress` without promoting its parent epic. The epic stayed `open` as a display root and suppressed its whole subtree, so `bw ready` collapsed to just the epic. It now drills in and surfaces the open, unblocked siblings.
+  - A future-deferred epic acted as a display root and hid its open, unblocked children from the global ready list. Those children now appear (under a `❄` deferred-parent marker).
+
 ## 0.13.1 — 2026-05-30
 
 - **No more `ref moved` errors under concurrent use** — commands that change issue state (`start`, `create`, `update`, `delete`, `reopen`, `attach`, `label`, `comment`, `defer`, `undefer`, `dep add`/`remove`) used to die with an error like:
