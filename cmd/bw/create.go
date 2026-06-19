@@ -74,14 +74,14 @@ func cmdCreate(store *issue.Store, args []string, w Writer, _ *config.Config) (*
 
 	now := store.Now()
 	if ca.DeferUntil != "" {
-		resolved, err := resolveDate(ca.DeferUntil, now)
+		resolved, err := resolveDateAfterNow(ca.DeferUntil, now)
 		if err != nil {
 			return nil, err
 		}
 		ca.DeferUntil = resolved
 	}
 	if ca.Due != "" {
-		resolved, err := resolveDate(ca.Due, now)
+		resolved, err := resolveDateAfterNow(ca.Due, now)
 		if err != nil {
 			return nil, err
 		}

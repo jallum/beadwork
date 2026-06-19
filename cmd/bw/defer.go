@@ -38,11 +38,13 @@ func parseDeferArgs(raw []string) (DeferArgs, error) {
 	return DeferArgs{ID: raw[0], Date: dateExpr, JSON: a.JSON()}, nil
 }
 
-// resolveDate converts a date or datetime expression to either YYYY-MM-DD
-// (for date-only expressions) or RFC3339 with local timezone offset (for
-// time-bearing expressions).
+// resolveDateAfterNow converts a date or datetime expression into a point in
+// the future, to either YYYY-MM-DD (for date-only expressions) or RFC3339 with
+// local timezone offset (for time-bearing expressions). Bare times and relative
+// expressions resolve to the next FUTURE occurrence. Its backward-looking mirror
+// is resolveDateBeforeNow.
 // The now parameter allows testing with a fixed time.
-func resolveDate(expr string, now time.Time) (string, error) {
+func resolveDateAfterNow(expr string, now time.Time) (string, error) {
 	original := strings.TrimSpace(expr)
 	expr = strings.ToLower(original)
 
@@ -291,13 +293,137 @@ func nextWeekday(now time.Time, day time.Weekday) time.Time {
 	return now.AddDate(0, 0, diff)
 }
 
+// prevWeekday returns the date of the most recent past occurrence of the given
+// weekday before now. If now is that weekday, it returns the previous week.
+// Mirror of nextWeekday.
+func prevWeekday(now time.Time, day time.Weekday) time.Time {
+	diff := int(now.Weekday()) - int(day)
+	if diff <= 0 {
+		diff += 7
+	}
+	return now.AddDate(0, 0, -diff)
+}
+
+// parseDurationExprAgo parses past-facing duration expressions: "N unit",
+// "N unit ago", "N units ago". A trailing "ago" is optional and carries no
+// extra meaning (the resolver always subtracts). Delegates to parseDurationExpr
+// for the "N unit" core. Returns (n, normalizedUnit, true) or (0, "", false).
+func parseDurationExprAgo(parts []string) (int, string, bool) {
+	if len(parts) > 0 && parts[len(parts)-1] == "ago" {
+		parts = parts[:len(parts)-1]
+	}
+	return parseDurationExpr(parts)
+}
+
+// resolveDateBeforeNow converts a date or datetime expression into a cutoff in
+// the past. It is the backward-looking mirror of resolveDateAfterNow: bare
+// times and relative expressions resolve to the most recent PAST occurrence.
+// Accepted forms: YYYY-MM-DD and RFC3339 (passthrough), "yesterday" [at TIME],
+// bare time ("3pm" → today if already elapsed, else yesterday), "N units" /
+// "N units ago", and "last <weekday>" [at TIME]. Forward-facing expressions
+// ("tomorrow", "next monday") are rejected. Returns YYYY-MM-DD for date-only
+// expressions or RFC3339 (local offset) for time-bearing ones.
+// The now parameter allows testing with a fixed time.
+func resolveDateBeforeNow(expr string, now time.Time) (string, error) {
+	original := strings.TrimSpace(expr)
+	expr = strings.ToLower(original)
+
+	// Try absolute date first (YYYY-MM-DD).
+	if _, err := time.Parse("2006-01-02", expr); err == nil {
+		return expr, nil
+	}
+
+	// Try RFC3339 passthrough (use original case to preserve T and Z).
+	if _, err := time.Parse(time.RFC3339, original); err == nil {
+		return original, nil
+	}
+
+	parts := strings.Fields(expr)
+	local := now.In(time.Local)
+
+	// Split on "at" for date-at-time expressions.
+	dateExpr, timeExpr := splitAtKeyword(parts)
+
+	// Handle bare time ("3pm", "14:00") — most recent past occurrence.
+	if dateExpr == "" && timeExpr != "" {
+		tod, err := parseTimeOfDay(timeExpr)
+		if err != nil {
+			return "", err
+		}
+		result := time.Date(local.Year(), local.Month(), local.Day(),
+			tod.hour, tod.min, 0, 0, local.Location())
+		if !result.Before(now) {
+			result = result.AddDate(0, 0, -1)
+		}
+		return result.Format(time.RFC3339), nil
+	}
+
+	// Handle "yesterday" with optional time.
+	if dateExpr == "yesterday" || (len(parts) > 0 && parts[0] == "yesterday" && timeExpr == "") {
+		if timeExpr != "" {
+			tod, err := parseTimeOfDay(timeExpr)
+			if err != nil {
+				return "", err
+			}
+			yesterday := local.AddDate(0, 0, -1)
+			result := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(),
+				tod.hour, tod.min, 0, 0, local.Location())
+			return result.Format(time.RFC3339), nil
+		}
+		return now.AddDate(0, 0, -1).Format("2006-01-02"), nil
+	}
+
+	// Handle "N unit" or "N unit ago" patterns.
+	offset, unit, ok := parseDurationExprAgo(parts)
+	if ok {
+		if offset < 0 {
+			return "", fmt.Errorf("duration must be positive, got %d %s", offset, unit)
+		}
+		switch unit {
+		case "minute":
+			return now.Add(-time.Duration(offset) * time.Minute).In(time.Local).Format(time.RFC3339), nil
+		case "hour":
+			return now.Add(-time.Duration(offset) * time.Hour).In(time.Local).Format(time.RFC3339), nil
+		case "day":
+			return now.AddDate(0, 0, -offset).Format("2006-01-02"), nil
+		case "week":
+			return now.AddDate(0, 0, -offset*7).Format("2006-01-02"), nil
+		case "month":
+			return now.AddDate(0, -offset, 0).Format("2006-01-02"), nil
+		case "year":
+			return now.AddDate(-offset, 0, 0).Format("2006-01-02"), nil
+		}
+	}
+
+	// Handle "last <weekday>" with optional time.
+	if len(parts) >= 2 && parts[0] == "last" {
+		day, ok := parseWeekday(parts[1])
+		if ok {
+			target := prevWeekday(now, day)
+			if timeExpr != "" {
+				tod, err := parseTimeOfDay(timeExpr)
+				if err != nil {
+					return "", err
+				}
+				targetLocal := target.In(time.Local)
+				result := time.Date(targetLocal.Year(), targetLocal.Month(), targetLocal.Day(),
+					tod.hour, tod.min, 0, 0, local.Location())
+				return result.Format(time.RFC3339), nil
+			}
+			return target.Format("2006-01-02"), nil
+		}
+	}
+
+	return "", fmt.Errorf("invalid date %q (expected YYYY-MM-DD, RFC3339, or relative like \"2 weeks\", \"2 weeks ago\", \"last monday\", \"yesterday\", \"15 minutes ago\", \"3pm\")", expr)
+}
+
 func cmdDefer(store *issue.Store, args []string, w Writer, _ *config.Config) (*config.Config, error) {
 	da, err := parseDeferArgs(args)
 	if err != nil {
 		return nil, err
 	}
 
-	resolved, err := resolveDate(da.Date, store.Now())
+	resolved, err := resolveDateAfterNow(da.Date, store.Now())
 	if err != nil {
 		return nil, err
 	}

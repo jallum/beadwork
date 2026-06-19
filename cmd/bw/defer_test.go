@@ -346,13 +346,13 @@ func TestResolveDate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got, err := resolveDate(tt.input, now)
+		got, err := resolveDateAfterNow(tt.input, now)
 		if err != nil {
-			t.Errorf("resolveDate(%q) error: %v", tt.input, err)
+			t.Errorf("resolveDateAfterNow(%q) error: %v", tt.input, err)
 			continue
 		}
 		if got != tt.want {
-			t.Errorf("resolveDate(%q) = %q, want %q", tt.input, got, tt.want)
+			t.Errorf("resolveDateAfterNow(%q) = %q, want %q", tt.input, got, tt.want)
 		}
 	}
 }
@@ -363,7 +363,7 @@ func TestResolveDateTimeExpressions(t *testing.T) {
 	now := time.Date(2027, 3, 10, 12, 0, 0, 0, time.UTC)
 
 	t.Run("RFC3339 passthrough", func(t *testing.T) {
-		got, err := resolveDate("2027-04-15T14:00:00-04:00", now)
+		got, err := resolveDateAfterNow("2027-04-15T14:00:00-04:00", now)
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -373,7 +373,7 @@ func TestResolveDateTimeExpressions(t *testing.T) {
 	})
 
 	t.Run("in N minutes", func(t *testing.T) {
-		got, err := resolveDate("in 15 minutes", now)
+		got, err := resolveDateAfterNow("in 15 minutes", now)
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -388,7 +388,7 @@ func TestResolveDateTimeExpressions(t *testing.T) {
 	})
 
 	t.Run("in 4 hours", func(t *testing.T) {
-		got, err := resolveDate("in 4 hours", now)
+		got, err := resolveDateAfterNow("in 4 hours", now)
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -400,7 +400,7 @@ func TestResolveDateTimeExpressions(t *testing.T) {
 	})
 
 	t.Run("N minutes without in", func(t *testing.T) {
-		got, err := resolveDate("15 minutes", now)
+		got, err := resolveDateAfterNow("15 minutes", now)
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -412,7 +412,7 @@ func TestResolveDateTimeExpressions(t *testing.T) {
 	})
 
 	t.Run("2 hours without in", func(t *testing.T) {
-		got, err := resolveDate("2 hours", now)
+		got, err := resolveDateAfterNow("2 hours", now)
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -424,14 +424,14 @@ func TestResolveDateTimeExpressions(t *testing.T) {
 	})
 
 	t.Run("negative duration rejected", func(t *testing.T) {
-		_, err := resolveDate("in -5 minutes", now)
+		_, err := resolveDateAfterNow("in -5 minutes", now)
 		if err == nil {
 			t.Error("expected error for negative duration")
 		}
 	})
 
 	t.Run("in 0 minutes", func(t *testing.T) {
-		got, err := resolveDate("in 0 minutes", now)
+		got, err := resolveDateAfterNow("in 0 minutes", now)
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -442,7 +442,7 @@ func TestResolveDateTimeExpressions(t *testing.T) {
 	})
 
 	t.Run("tomorrow at 2pm", func(t *testing.T) {
-		got, err := resolveDate("tomorrow at 2pm", now)
+		got, err := resolveDateAfterNow("tomorrow at 2pm", now)
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -456,7 +456,7 @@ func TestResolveDateTimeExpressions(t *testing.T) {
 	})
 
 	t.Run("tomorrow at 14:00", func(t *testing.T) {
-		got, err := resolveDate("tomorrow at 14:00", now)
+		got, err := resolveDateAfterNow("tomorrow at 14:00", now)
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -467,7 +467,7 @@ func TestResolveDateTimeExpressions(t *testing.T) {
 	})
 
 	t.Run("next monday at 9am", func(t *testing.T) {
-		got, err := resolveDate("next monday at 9am", now)
+		got, err := resolveDateAfterNow("next monday at 9am", now)
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -481,7 +481,7 @@ func TestResolveDateTimeExpressions(t *testing.T) {
 	})
 
 	t.Run("next monday at 9:30am", func(t *testing.T) {
-		got, err := resolveDate("next monday at 9:30am", now)
+		got, err := resolveDateAfterNow("next monday at 9:30am", now)
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -493,13 +493,13 @@ func TestResolveDateTimeExpressions(t *testing.T) {
 
 	t.Run("date-only expressions still produce YYYY-MM-DD", func(t *testing.T) {
 		for _, expr := range []string{"tomorrow", "2 weeks", "next monday", "2027-06-01"} {
-			got, err := resolveDate(expr, now)
+			got, err := resolveDateAfterNow(expr, now)
 			if err != nil {
-				t.Errorf("resolveDate(%q) error: %v", expr, err)
+				t.Errorf("resolveDateAfterNow(%q) error: %v", expr, err)
 				continue
 			}
 			if strings.Contains(got, "T") {
-				t.Errorf("resolveDate(%q) = %q, should be date-only (no T)", expr, got)
+				t.Errorf("resolveDateAfterNow(%q) = %q, should be date-only (no T)", expr, got)
 			}
 		}
 	})
@@ -561,9 +561,9 @@ func TestResolveDateInvalid(t *testing.T) {
 		"",
 	}
 	for _, expr := range invalid {
-		_, err := resolveDate(expr, now)
+		_, err := resolveDateAfterNow(expr, now)
 		if err == nil {
-			t.Errorf("resolveDate(%q) = nil error, want error", expr)
+			t.Errorf("resolveDateAfterNow(%q) = nil error, want error", expr)
 		}
 	}
 }
@@ -751,5 +751,209 @@ func TestParseUndeferArgsJSON(t *testing.T) {
 	}
 	if !ua.JSON {
 		t.Error("expected JSON=true")
+	}
+}
+
+func TestResolveDateBeforeNow(t *testing.T) {
+	// Fixed reference time: Wednesday 2027-03-10
+	now := time.Date(2027, 3, 10, 12, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		input string
+		want  string
+	}{
+		// Absolute dates pass through.
+		{"2027-01-01", "2027-01-01"},
+		// Relative past: N days/weeks/months/years.
+		{"3 days", "2027-03-07"},
+		{"1 day", "2027-03-09"},
+		{"2 weeks", "2027-02-24"},
+		{"1 week", "2027-03-03"},
+		{"1 month", "2027-02-10"},
+		{"2 months", "2027-01-10"},
+		{"1 year", "2026-03-10"},
+		// "ago" suffix is accepted and means the same thing.
+		{"3 days ago", "2027-03-07"},
+		{"2 weeks ago", "2027-02-24"},
+		// Yesterday (mirror of "tomorrow").
+		{"yesterday", "2027-03-09"},
+		// Last weekday (reference is Wednesday 2027-03-10).
+		{"last monday", "2027-03-08"},
+		{"last friday", "2027-03-05"},
+		{"last wednesday", "2027-03-03"}, // same day → previous week
+		{"last sun", "2027-03-07"},
+		// Case insensitive.
+		{"Last Monday", "2027-03-08"},
+		{"YESTERDAY", "2027-03-09"},
+		{"2 Weeks Ago", "2027-02-24"},
+	}
+
+	for _, tt := range tests {
+		got, err := resolveDateBeforeNow(tt.input, now)
+		if err != nil {
+			t.Errorf("resolveDateBeforeNow(%q) error: %v", tt.input, err)
+			continue
+		}
+		if got != tt.want {
+			t.Errorf("resolveDateBeforeNow(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
+func TestResolveDateBeforeNowTimeExpressions(t *testing.T) {
+	// Fixed reference: Wednesday 2027-03-10 at noon UTC.
+	now := time.Date(2027, 3, 10, 12, 0, 0, 0, time.UTC)
+
+	t.Run("RFC3339 passthrough", func(t *testing.T) {
+		got, err := resolveDateBeforeNow("2027-04-15T14:00:00-04:00", now)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+		if got != "2027-04-15T14:00:00-04:00" {
+			t.Errorf("got %q, want passthrough", got)
+		}
+	})
+
+	t.Run("N minutes ago", func(t *testing.T) {
+		got, err := resolveDateBeforeNow("15 minutes ago", now)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+		parsed, err := time.Parse(time.RFC3339, got)
+		if err != nil {
+			t.Fatalf("result %q is not RFC3339: %v", got, err)
+		}
+		expected := now.Add(-15 * time.Minute)
+		if !parsed.Equal(expected) {
+			t.Errorf("got instant %v, want %v", parsed, expected)
+		}
+	})
+
+	t.Run("N minutes without ago", func(t *testing.T) {
+		got, err := resolveDateBeforeNow("15 minutes", now)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+		parsed, _ := time.Parse(time.RFC3339, got)
+		expected := now.Add(-15 * time.Minute)
+		if !parsed.Equal(expected) {
+			t.Errorf("got instant %v, want %v", parsed, expected)
+		}
+	})
+
+	t.Run("2 hours ago", func(t *testing.T) {
+		got, err := resolveDateBeforeNow("2 hours ago", now)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+		parsed, _ := time.Parse(time.RFC3339, got)
+		expected := now.Add(-2 * time.Hour)
+		if !parsed.Equal(expected) {
+			t.Errorf("got instant %v, want %v", parsed, expected)
+		}
+	})
+
+	t.Run("negative duration rejected", func(t *testing.T) {
+		_, err := resolveDateBeforeNow("-5 minutes", now)
+		if err == nil {
+			t.Error("expected error for negative duration")
+		}
+	})
+
+	// assertMostRecentPast checks that parsed is the most recent past instant
+	// at the given local wall-clock hour:minute — i.e. it is before now, sits
+	// at that local time, and adding a day would not still be before now.
+	// Written this way so the test is independent of the runner's time.Local.
+	assertMostRecentPast := func(t *testing.T, got string, hour, min int) {
+		t.Helper()
+		parsed, err := time.Parse(time.RFC3339, got)
+		if err != nil {
+			t.Fatalf("result %q is not RFC3339: %v", got, err)
+		}
+		if !parsed.Before(now) {
+			t.Errorf("got %v, want an instant before now (%v)", parsed, now)
+		}
+		if parsed.AddDate(0, 0, 1).Before(now) {
+			t.Errorf("got %v, but a later same-time instant is still in the past — not the most recent", parsed)
+		}
+		l := parsed.In(time.Local)
+		if l.Hour() != hour || l.Minute() != min {
+			t.Errorf("got local %02d:%02d, want %02d:%02d", l.Hour(), l.Minute(), hour, min)
+		}
+	}
+
+	t.Run("bare time resolves to most recent past occurrence (9am)", func(t *testing.T) {
+		got, err := resolveDateBeforeNow("9am", now)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+		assertMostRecentPast(t, got, 9, 0)
+	})
+
+	t.Run("bare time resolves to most recent past occurrence (3pm)", func(t *testing.T) {
+		got, err := resolveDateBeforeNow("3pm", now)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+		assertMostRecentPast(t, got, 15, 0)
+	})
+
+	t.Run("yesterday at 2pm", func(t *testing.T) {
+		got, err := resolveDateBeforeNow("yesterday at 2pm", now)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+		parsed, _ := time.Parse(time.RFC3339, got)
+		if parsed.Day() != 9 || parsed.Hour() != 14 {
+			t.Errorf("got %v, want 2027-03-09 14:00", parsed)
+		}
+	})
+
+	t.Run("last monday at 9am", func(t *testing.T) {
+		got, err := resolveDateBeforeNow("last monday at 9am", now)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+		parsed, _ := time.Parse(time.RFC3339, got)
+		if parsed.Weekday() != time.Monday {
+			t.Errorf("got weekday %v, want Monday", parsed.Weekday())
+		}
+		if parsed.Hour() != 9 {
+			t.Errorf("got hour %d, want 9", parsed.Hour())
+		}
+	})
+
+	t.Run("date-only expressions still produce YYYY-MM-DD", func(t *testing.T) {
+		for _, expr := range []string{"yesterday", "2 weeks", "2 weeks ago", "last monday", "2027-01-01"} {
+			got, err := resolveDateBeforeNow(expr, now)
+			if err != nil {
+				t.Errorf("resolveDateBeforeNow(%q) error: %v", expr, err)
+				continue
+			}
+			if strings.Contains(got, "T") {
+				t.Errorf("resolveDateBeforeNow(%q) = %q, should be date-only (no T)", expr, got)
+			}
+		}
+	})
+}
+
+func TestResolveDateBeforeNowInvalid(t *testing.T) {
+	now := time.Date(2027, 3, 10, 12, 0, 0, 0, time.UTC)
+
+	invalid := []string{
+		"not-a-date",
+		"2027/06/01",
+		"next someday",
+		"5 fortnights",
+		// Forward-facing expressions are rejected by the past-facing resolver.
+		"tomorrow",
+		"next monday",
+		"",
+	}
+	for _, expr := range invalid {
+		_, err := resolveDateBeforeNow(expr, now)
+		if err == nil {
+			t.Errorf("resolveDateBeforeNow(%q) = nil error, want error", expr)
+		}
 	}
 }
