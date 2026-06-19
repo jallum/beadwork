@@ -16,12 +16,23 @@ func (s *Store) validateExplicitID(id string) (string, error) {
 	if strings.ContainsAny(id, " \t\n\r") {
 		return "", fmt.Errorf("invalid ID %q: must not contain whitespace", id)
 	}
-	// Uniqueness check.
+	// Uniqueness check — against both live and archived IDs. An archived ID is
+	// out of the live space, but reusing it would collide with the archived
+	// record and break recovery.
 	existing := s.ExistingIDs()
 	if existing[id] {
 		return "", fmt.Errorf("ID %q already exists", id)
 	}
+	if s.isArchived(id) {
+		return "", fmt.Errorf("ID %q is archived", id)
+	}
 	return id, nil
+}
+
+// isArchived reports whether an archive/<id>.json record exists.
+func (s *Store) isArchived(id string) bool {
+	_, err := s.FS.Stat("archive/" + id + ".json")
+	return err == nil
 }
 
 func (s *Store) generateID() (string, error) {
@@ -45,7 +56,7 @@ func (s *Store) generateID() (string, error) {
 				suffix.WriteByte(base36[int(v)%36])
 			}
 			id := s.Prefix + "-" + suffix.String()
-			if !existing[id] {
+			if !existing[id] && !s.isArchived(id) {
 				return id, nil
 			}
 		}

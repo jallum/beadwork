@@ -17,6 +17,7 @@ type Comment struct {
 }
 
 type Issue struct {
+	ArchivedAt  string    `json:"archived_at,omitempty"`
 	Assignee    string    `json:"assignee"`
 	BlockedBy   []string  `json:"blocked_by"`
 	Blocks      []string  `json:"blocks"`

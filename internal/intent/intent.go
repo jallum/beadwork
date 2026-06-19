@@ -72,6 +72,8 @@ func replayOne(store *issue.Store, raw string) error {
 		return replayUndefer(store, parts[1:], raw)
 	case "attach":
 		return replayAttach(store, parts[1:], raw)
+	case "archive":
+		return replayArchive(store, parts[1:], raw)
 	case "init":
 		return nil // skip init intents
 	default:
@@ -291,6 +293,26 @@ func replayDelete(store *issue.Store, parts []string, raw string) error {
 	}
 	_, err := store.Delete(parts[0])
 	if err != nil {
+		return err
+	}
+	return store.Commit(raw)
+}
+
+func replayArchive(store *issue.Store, parts []string, raw string) error {
+	// archive <id> [--close] [--detach]
+	if len(parts) < 1 {
+		return fmt.Errorf("malformed archive intent")
+	}
+	opts := issue.ArchiveOpts{}
+	for _, p := range parts[1:] {
+		switch p {
+		case "--close":
+			opts.Close = true
+		case "--detach":
+			opts.Detach = true
+		}
+	}
+	if _, err := store.Archive(parts[0], opts); err != nil {
 		return err
 	}
 	return store.Commit(raw)
