@@ -117,7 +117,12 @@ type Args struct {
 // ParseArgs separates raw args into booleans, key-value pairs, and positionals.
 // valueFlags lists flags that consume the next token as a value (e.g. "--status").
 // boolFlags lists boolean flags (e.g. "--json", "--all").
-// Any "--" prefixed token not in valueFlags or boolFlags returns an error.
+//
+// Any "-"-prefixed token that is not a recognized flag (or alias) returns an
+// error, so a stray flag-looking token (e.g. "-F") fails loudly instead of
+// being silently swallowed as a positional. Two escape hatches preserve
+// legitimate uses: a bare "-" is treated as a positional (the stdin sentinel),
+// and "--" terminates flag parsing so every token after it is a positional.
 func ParseArgs(raw []string, valueFlags []string, boolFlags []string) (Args, error) {
 	vf := make(map[string]bool, len(valueFlags))
 	for _, f := range valueFlags {
@@ -133,17 +138,31 @@ func ParseArgs(raw []string, valueFlags []string, boolFlags []string) (Args, err
 		flags: make(map[string]string),
 	}
 
+	endOfFlags := false
 	for i := 0; i < len(raw); i++ {
 		tok := raw[i]
+
+		if endOfFlags {
+			a.pos = append(a.pos, raw[i])
+			continue
+		}
+		// "--" terminates flag parsing; everything after it is positional.
+		if tok == "--" {
+			endOfFlags = true
+			continue
+		}
 		if long, ok := aliases[tok]; ok {
 			tok = long
 		}
 
-		if !strings.HasPrefix(tok, "--") {
+		// A bare "-" is a positional (stdin sentinel); so is any token that
+		// does not begin with "-".
+		if tok == "-" || !strings.HasPrefix(tok, "-") {
 			a.pos = append(a.pos, raw[i])
 			continue
 		}
 
+		// tok is a flag-like token ("-x" or "--x").
 		if vf[tok] {
 			if i+1 < len(raw) {
 				a.flags[tok] = raw[i+1]

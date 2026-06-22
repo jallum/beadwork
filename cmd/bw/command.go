@@ -212,17 +212,20 @@ var commands = []Command{
 		Name:        "comment",
 		Aliases:     []string{"comments"},
 		Summary:     "Add a comment to an issue",
-		Description: "Add a comment to an issue. Use bw show to view comments.",
+		Description: "Add a comment to an issue. Use bw show to view comments.\n\nThe body comes from the <text> argument, or from --file <path> (use --file - to\nread it from stdin). --file avoids shell-quoting and heredoc fragility for\nmulti-line bodies. A stray flag-looking token in the <text> position (e.g. -F)\nis rejected rather than silently posted as the comment text.",
 		Positionals: []Positional{
 			{Name: "<id>", Required: true, Help: "Issue ID"},
-			{Name: "<text>", Required: true, Help: "Comment text"},
+			{Name: "<text>", Required: false, Help: "Comment text (omit when using --file)"},
 		},
 		Flags: []Flag{
 			{Long: "--author", Short: "-a", Value: "NAME", Help: "Comment author"},
+			{Long: "--file", Short: "-F", Value: "PATH", Help: "Read comment body from file (use - for stdin)"},
 			{Long: "--json", Help: "Output as JSON"},
 		},
 		Examples: []Example{
 			{Cmd: `bw comment bw-a3f8 "Fixed in latest deploy"`},
+			{Cmd: `bw comment bw-a3f8 --file notes.md`, Help: "Read the body from a file"},
+			{Cmd: `bw comment bw-a3f8 -F - < notes.md`, Help: "Read the body from stdin"},
 		},
 		NeedsStore: true,
 		Run:        cmdComment,

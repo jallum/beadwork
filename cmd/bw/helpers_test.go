@@ -115,6 +115,61 @@ func TestParseArgsValueFlagAtEnd(t *testing.T) {
 	}
 }
 
+func TestParseArgsRejectsUnknownShortFlag(t *testing.T) {
+	// A stray single-dash token must error rather than being swallowed as a
+	// positional (the -F sharp edge: bw comment <id> -F silently posted "-F").
+	_, err := ParseArgs([]string{"bw-1234", "-F"}, nil, nil)
+	if err == nil {
+		t.Fatal("expected error for unknown short flag -F")
+	}
+	if !strings.Contains(err.Error(), "-F") {
+		t.Errorf("error = %q, want it to name the offending flag -F", err.Error())
+	}
+}
+
+func TestParseArgsRejectsUnknownLongFlag(t *testing.T) {
+	_, err := ParseArgs([]string{"--bogus"}, nil, []string{"--json"})
+	if err == nil {
+		t.Fatal("expected error for unknown long flag --bogus")
+	}
+}
+
+func TestParseArgsBareDashIsPositional(t *testing.T) {
+	// "-" is the stdin sentinel (e.g. bw import -), not a flag.
+	a, err := ParseArgs([]string{"-"}, nil, nil)
+	if err != nil {
+		t.Fatalf("bare - should be a positional, got error: %v", err)
+	}
+	if a.PosFirst() != "-" {
+		t.Errorf("PosFirst() = %q, want -", a.PosFirst())
+	}
+}
+
+func TestParseArgsDoubleDashEndsFlagParsing(t *testing.T) {
+	// Everything after "--" is positional, even flag-looking tokens — the
+	// escape hatch for bodies/values that legitimately start with a dash.
+	a, err := ParseArgs([]string{"id", "--", "-F", "--not-a-flag"}, nil, []string{"--json"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	pos := a.Pos()
+	if len(pos) != 3 || pos[0] != "id" || pos[1] != "-F" || pos[2] != "--not-a-flag" {
+		t.Errorf("pos = %v, want [id -F --not-a-flag]", pos)
+	}
+}
+
+func TestParseArgsDashValueConsumedNotRejected(t *testing.T) {
+	// A value flag consumes the next token verbatim, so a dash-leading value
+	// (e.g. --file -) is fine and is not mistaken for an unknown flag.
+	a, err := ParseArgs([]string{"--file", "-"}, []string{"--file"}, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if a.String("--file") != "-" {
+		t.Errorf("--file = %q, want -", a.String("--file"))
+	}
+}
+
 func TestParseArgsIntErr(t *testing.T) {
 	a, parseErr := ParseArgs([]string{"--priority", "abc"}, []string{"--priority"}, nil)
 	if parseErr != nil {
