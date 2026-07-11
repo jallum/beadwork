@@ -9,6 +9,12 @@
   "id": "beadwork-vd6.4",
   "labels": [],
   "parent": "beadwork-vd6",
+  "comments": [
+    {
+      "text": "ORCHESTRATOR DECISIONS (user-confirmed 2026-07-11):\n1. Adopted repo = /Users/mz/dev/cs/builder (description placeholders updated).\n2. Acceptance execution split per user: land the dual-mode SKILL.md edits, builder signals.yml + hooks, and scratch-emit validation NOW; the full end-to-end epic run in signals mode is DEFERRED to a user-driven session. Consequence: the merge-gate item \"End-to-end epic run in signals mode with zero prose-parse use, evidence on ticket\" remains unchecked and this ticket stays OPEN (parked, not escalated) after the landable work is verified. Spec stubs provable only by the live run stay execute:false.",
+      "timestamp": "2026-07-11T18:12:26Z"
+    }
+  ],
   "priority": 3,
   "status": "open",
   "title": "S4: Dual-mode skills migration (acceptance proof on one adopted repo)",
