@@ -33,11 +33,15 @@
     {
       "text": "FLAKE_ACCEPTED (1/2 for this signature): internal/signal TestPipelineEmitSequence + TestHookStdinJSONContract failed with 'timed out after 1s' during vd6.3 stage smoke under full-suite parallel load; both green 10/10 in isolation immediately after. Signature: internal/signal hook-exec timeout-1s under load. Third occurrence requires an investigation ticket (likely fix: raise the test hook_timeout headroom). Does not intersect the vd6.3 diff (none exists yet).",
       "timestamp": "2026-07-11T16:05:32Z"
+    },
+    {
+      "text": "Scope amendment on beadwork-vd6.3: cmd/bw/prime.go added to Allowed (prime template gate plumbing, verifier-confirmed load-bearing). One bounce to implementer for a nondeterministic test fixture (map-order signal emission in TestShowSignalsSection).",
+      "timestamp": "2026-07-11T16:25:09Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "Signals: typed event records on tickets",
   "type": "epic",
-  "updated_at": "2026-07-11T16:05:32Z"
+  "updated_at": "2026-07-11T16:25:09Z"
 }
