@@ -13,11 +13,15 @@
     {
       "text": "Orchestration run started (session: orchestrate-epic). Worker mode: codex (user-confirmed; profile auto-picked per ticket, currently team). Grading (verify/audit) on Claude session-default. Note: host global commit.gpgsign=true hangs internal/issue tests on the 1Password signing socket — all orchestrator-run gates use GIT_CONFIG_COUNT=1 commit.gpgsign=false env override; with it, full build+test is green at e71cc3d. generated_state_paths: none. No rules-check script (empty rule packs).",
       "timestamp": "2026-07-11T14:24:05Z"
+    },
+    {
+      "text": "Scope expansion: added beadwork-vd6.5 (casUpdateRef TOCTOU race in internal/treefs), surfaced by beadwork-vd6.1 verification. vd6.1 paused on it. Expansion 1 of 3 soft-cap.",
+      "timestamp": "2026-07-11T14:50:35Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "Signals: typed event records on tickets",
   "type": "epic",
-  "updated_at": "2026-07-11T14:24:05Z"
+  "updated_at": "2026-07-11T14:50:35Z"
 }
