@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Manuel Zubieta",
   "blocked_by": [
     "beadwork-vd6.2"
   ],
@@ -12,8 +12,8 @@
   "labels": [],
   "parent": "beadwork-vd6",
   "priority": 3,
-  "status": "open",
+  "status": "in_progress",
   "title": "S3: Query surface + bw show rendering",
   "type": "task",
-  "updated_at": "2026-07-11T13:54:31Z"
+  "updated_at": "2026-07-11T16:04:25Z"
 }
