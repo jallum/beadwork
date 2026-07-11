@@ -15,11 +15,15 @@
     {
       "text": "ORCHESTRATOR DECISIONS (user-confirmed 2026-07-11):\n1. Adopted repo = /Users/mz/dev/cs/builder (description placeholders updated).\n2. Acceptance execution split per user: land the dual-mode SKILL.md edits, builder signals.yml + hooks, and scratch-emit validation NOW; the full end-to-end epic run in signals mode is DEFERRED to a user-driven session. Consequence: the merge-gate item \"End-to-end epic run in signals mode with zero prose-parse use, evidence on ticket\" remains unchecked and this ticket stays OPEN (parked, not escalated) after the landable work is verified. Spec stubs provable only by the live run stay execute:false.",
       "timestamp": "2026-07-11T18:12:26Z"
+    },
+    {
+      "text": "Worker-mode note: this stage runs as a Claude subagent instead of Codex — the Codex sandbox spawn shape (pinned to one stage worktree + its git common dir) cannot cover the three write surfaces this ticket needs (vault skills, builder/.beadwork, beadwork stage worktree spec flip). Epic worker_mode stays codex for any future beadwork-source stages.",
+      "timestamp": "2026-07-11T18:12:40Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "S4: Dual-mode skills migration (acceptance proof on one adopted repo)",
   "type": "task",
-  "updated_at": "2026-07-11T18:12:27Z"
+  "updated_at": "2026-07-11T18:12:40Z"
 }
