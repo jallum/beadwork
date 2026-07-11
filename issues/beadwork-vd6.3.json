@@ -25,11 +25,15 @@
     {
       "text": "SCOPE_AMENDMENT (orchestrator): added cmd/bw/prime.go to Allowed touches per the verifier's load-bearing assessment — the prompts/prime.md Signals paragraph is gated on the repo defining signal types, and that gate cannot function unless cmdPrime supplies the HasSignalTypes template value (3-line change, nothing opportunistic). Re-plan, not a bounce.\n\nSeparately, BOUNCE → implementer (attempts.impl now 2/cap): TestShowSignalsSection is nondeterministic — fixture emits signals by ranging a map, so seq assignment order flakes ~25% of runs against the hard-coded verify-before-audit assertion. Fix the fixture to emit in fixed slice order (cmd/bw/show_test.go). No production change needed.",
       "timestamp": "2026-07-11T16:25:09Z"
+    },
+    {
+      "text": "IMPLEMENTED\nSession: codex-c062637a\nLog: /Users/mz/.local/state/agentic-runs/beadwork/beadwork-vd6.3/codex-c062637a/log\n\nCommit: 54806b0d4fff4e66abec96a58666a3053c20853b\nFiles touched: cmd/bw/show_test.go\nTests added: None; stabilized TestShowSignalsSection fixture ordering\nVerification stubs flipped: None in this bounce iteration\n\nSummary: Preserved the Phase 1 implementation from ba30ae3 and fixed the verifier bounce by emitting verify and audit fixtures from a fixed-order slice, guaranteeing sequence assignment and render assertions are deterministic. TestShowSignalsSection passes with -race -count=30, and the full make preflight tier is green.",
+      "timestamp": "2026-07-11T16:28:15Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "S3: Query surface + bw show rendering",
   "type": "task",
-  "updated_at": "2026-07-11T16:25:33Z"
+  "updated_at": "2026-07-11T16:28:15Z"
 }
