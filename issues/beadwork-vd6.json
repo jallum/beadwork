@@ -29,11 +29,15 @@
     {
       "text": "LESSONS\n- [untested-clause] Run concurrency-sensitive tests with -race -count=30 before trusting a green; a single green run of a racy test is not coverage (from beadwork-vd6.1)\n- [untested-clause] Negative/suppression clauses (X must NOT fire when Y) need their own explicit test, not inference from the positive-path tests (from beadwork-vd6.2)",
       "timestamp": "2026-07-11T15:46:11Z"
+    },
+    {
+      "text": "FLAKE_ACCEPTED (1/2 for this signature): internal/signal TestPipelineEmitSequence + TestHookStdinJSONContract failed with 'timed out after 1s' during vd6.3 stage smoke under full-suite parallel load; both green 10/10 in isolation immediately after. Signature: internal/signal hook-exec timeout-1s under load. Third occurrence requires an investigation ticket (likely fix: raise the test hook_timeout headroom). Does not intersect the vd6.3 diff (none exists yet).",
+      "timestamp": "2026-07-11T16:05:32Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "Signals: typed event records on tickets",
   "type": "epic",
-  "updated_at": "2026-07-11T15:46:11Z"
+  "updated_at": "2026-07-11T16:05:32Z"
 }
