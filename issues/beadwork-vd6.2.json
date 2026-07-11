@@ -25,11 +25,15 @@
     {
       "text": "SCOPE_AMENDMENT (orchestrator): added internal/signal/config.go and internal/signal/schema.go to Allowed touches, per the verifier's load-bearing assessment (2026-07-11 VERIFY comment): the Hooks/HookTimeout fields must be added to the existing Config/Type structs (schema.go) and hook parsing must wire into the single YAML entrypoints Parse()/toType() (config.go) — structurally unavoidable for this ticket's deliverable, no opportunistic edits found. This resolves the VERIFY: FAIL's only Gap. This amendment is a re-plan, not a bounce.\n\nSeparately, BOUNCE → implementer (attempts.impl now 2/cap): the untested conditional clause the verifier flagged must be covered before re-IMPLEMENTED — see next steps in the respawn prompt. The ticket's standing bounce-class checks require every conditional clause covered by a test; \"on-blocked does NOT fire on MALFUNCTION\" currently has no test.",
       "timestamp": "2026-07-11T15:46:03Z"
+    },
+    {
+      "text": "IMPLEMENTED\nSession: codex-6ec618f4\nLog: /Users/mz/.local/state/agentic-runs/beadwork/beadwork-vd6.2/codex-6ec618f4/log\n\nCommit: 15a354a8d0d33bffa8fc5dfde5ef838e3a0038a2\nFiles touched: test/acceptance_test.go\nTests added: test.TestSignalGateMalfunctionDoesNotFireOnBlocked\nVerification stubs flipped: none\n\nSummary: Added the bounce-requested production CLI acceptance test for a malfunctioning gate with an on-blocked hook configured. The test proves exit 2 is labeled MALFUNCTION, does not fire on-blocked, and stores nothing; targeted test, make preflight, and the hook retry race/count check are green.",
+      "timestamp": "2026-07-11T15:52:01Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "S2: Unskippable hook pipeline",
   "type": "task",
-  "updated_at": "2026-07-11T15:46:54Z"
+  "updated_at": "2026-07-11T15:52:01Z"
 }
