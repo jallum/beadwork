@@ -37,6 +37,10 @@
     {
       "text": "Scope amendment on beadwork-vd6.3: cmd/bw/prime.go added to Allowed (prime template gate plumbing, verifier-confirmed load-bearing). One bounce to implementer for a nondeterministic test fixture (map-order signal emission in TestShowSignalsSection).",
       "timestamp": "2026-07-11T16:25:09Z"
+    },
+    {
+      "text": "LESSONS\n- [untested-clause] Run concurrency-sensitive tests with -race -count=30 before trusting a green; a single green run of a racy test is not coverage (from beadwork-vd6.1)\n- [untested-clause] Negative/suppression clauses (X must NOT fire when Y) need their own explicit test, not inference from the positive-path tests (from beadwork-vd6.2)\n- [fixture-leak] Emit multi-record test fixtures in fixed slice order, never by ranging a map — map iteration order flakes seq-sensitive assertions (from beadwork-vd6.3)",
+      "timestamp": "2026-07-11T16:25:09Z"
     }
   ],
   "priority": 3,
