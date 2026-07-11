@@ -15,11 +15,15 @@
     {
       "text": "IMPLEMENTED\nSession: codex-d5b164c9\nLog: /Users/mz/.local/state/agentic-runs/beadwork/beadwork-vd6.5/codex-d5b164c9/log\n\nCommit: f27f44399b248803339d9a65da5002e65eedcde3\nFiles touched: internal/treefs/treefs.go, internal/treefs/treefs_test.go\nTests added: TestConcurrentCommitsRetryWithoutLosingFiles\nVerification stubs flipped: none\n\nSummary: Serialized TreeFS ref compare-and-set updates with a process-wide mutex so separate same-process go-git handles reliably receive ErrRefMoved instead of silently overwriting a concurrent commit. Added an eight-writer retry regression test that verifies conflicts occur and every writer's file survives; the test passed with -race -count=30 and make preflight is green.",
       "timestamp": "2026-07-11T14:56:56Z"
+    },
+    {
+      "text": "-F",
+      "timestamp": "2026-07-11T15:04:12Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "casUpdateRef TOCTOU race: concurrent commits silently drop records",
   "type": "bug",
-  "updated_at": "2026-07-11T14:57:43Z"
+  "updated_at": "2026-07-11T15:04:12Z"
 }
