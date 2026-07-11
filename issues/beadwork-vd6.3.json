@@ -13,9 +13,15 @@
     "phase:implementing"
   ],
   "parent": "beadwork-vd6",
+  "comments": [
+    {
+      "text": "IMPLEMENTED\nSession: codex-b5ebba04\nLog: /Users/mz/.local/state/agentic-runs/beadwork/beadwork-vd6.3/codex-b5ebba04/log\n\nCommit: ba30ae35e281ec813103243c75bf8e6f2006ef76\nFiles touched: .spec/specs/signal_query.spec.md, cmd/bw/signal_query.go, cmd/bw/signal_query_test.go, cmd/bw/prime.go, cmd/bw/show.go, cmd/bw/show_test.go, internal/md/render.go, internal/md/render_test.go, prompts/prime.md, docs/design.md, test/acceptance_test.go\nTests added: TestSignalQueryStoreAssignedCursor, TestPrimeMentionsSignalsWhenDefined, TestShowSignalsSection, TestShowSectionsListSignals, TestSignalsChronological, TestSignalQuerySinceCursorExactlyOnce\nVerification stubs flipped: TestSignalQuerySinceCursorExactlyOnce, TestSignalQueryStoreAssignedCursor, TestShowSignalsSection, TestUsageListsSignalGroup, TestPrimeMentionsSignalsWhenDefined\n\nSummary: Added stateless since-cursor signal polling over self-describing commit intents, with oldest-first records, ticket/type filtering, and a caller-owned head cursor. Added chronological bw show rendering with orphaned-type notes, conditional prime discovery, cursor design documentation, and full scenario coverage; make preflight passes.",
+      "timestamp": "2026-07-11T16:15:06Z"
+    }
+  ],
   "priority": 3,
   "status": "in_progress",
   "title": "S3: Query surface + bw show rendering",
   "type": "task",
-  "updated_at": "2026-07-11T16:04:26Z"
+  "updated_at": "2026-07-11T16:15:06Z"
 }
