@@ -41,11 +41,15 @@
     {
       "text": "LESSONS\n- [untested-clause] Run concurrency-sensitive tests with -race -count=30 before trusting a green; a single green run of a racy test is not coverage (from beadwork-vd6.1)\n- [untested-clause] Negative/suppression clauses (X must NOT fire when Y) need their own explicit test, not inference from the positive-path tests (from beadwork-vd6.2)\n- [fixture-leak] Emit multi-record test fixtures in fixed slice order, never by ranging a map — map iteration order flakes seq-sensitive assertions (from beadwork-vd6.3)",
       "timestamp": "2026-07-11T16:25:09Z"
+    },
+    {
+      "text": "Merge gate for vd6.4 spec-flip merge (2d9ae5f): skipped full suite — test-relevant hash unchanged (diff is .spec/specs/signal_adoption.spec.md only; no lib/cmd/internal/test/go.mod changes).",
+      "timestamp": "2026-07-11T18:35:51Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "Signals: typed event records on tickets",
   "type": "epic",
-  "updated_at": "2026-07-11T16:25:09Z"
+  "updated_at": "2026-07-11T18:35:51Z"
 }
