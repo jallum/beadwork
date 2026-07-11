@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-07-11T20:47:07Z",
+  "description": "Advances: bw.signal.pipeline. Hooks run with cwd = repo root (commondir parent). When bw signal emit runs from a linked worktree, gate hooks that verify the tree (compile/test) silently operate on the primary checkout instead of the emitting worktree, and ancestry checks against HEAD see the wrong branch. Verified empirically. Fix: export the invocation directory (repo.CWD) as BW_SIGNAL_CALLER_CWD in the hook environment so worktree-aware gates can cd into the tree under test. Hook cwd stays repo root per bw.decision.signal_hook_io.",
+  "id": "beadwork-vd6.7",
+  "labels": [],
+  "parent": "beadwork-vd6",
+  "priority": 3,
+  "status": "open",
+  "title": "Expose caller cwd to signal hooks as BW_SIGNAL_CALLER_CWD",
+  "type": "task",
+  "updated_at": "2026-07-11T20:47:07Z"
+}
