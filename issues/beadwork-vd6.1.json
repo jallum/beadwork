@@ -1,6 +1,8 @@
 {
   "assignee": "Manuel Zubieta",
-  "blocked_by": [],
+  "blocked_by": [
+    "beadwork-vd6.5"
+  ],
   "blocks": [
     "beadwork-vd6.2"
   ],
@@ -25,5 +27,5 @@
   "status": "in_progress",
   "title": "S1: Signal store, type schema, and intent replay",
   "type": "task",
-  "updated_at": "2026-07-11T14:47:48Z"
+  "updated_at": "2026-07-11T14:50:18Z"
 }
