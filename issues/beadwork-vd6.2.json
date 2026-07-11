@@ -37,11 +37,15 @@
     {
       "text": "AUDIT: APPROVE\nSession: 07d7c09d-a97c-42a6-b489-6f3d6c74c9f7\nLog: ~/.claude-remembers/projects/-Users-mz-src-beadwork/07d7c09d-a97c-42a6-b489-6f3d6c74c9f7.jsonl\n\nReasoning: Traced every disclosed seam to production and confirmed the wire is structurally connected, not just green-by-test. cmdSignalEmit (cmd/bw/signal.go:113-118) builds Pipeline and calls Run with the REAL validate closure (signalcfg.ValidatePayload(*typ,p)) and the REAL store closure (commitWithRetry(store, commitMaxRetries, EmitSignal)) — the exact shape TestPipelineEmitSequence/TestHookStdinJSONContract/TestOnBlockedFailureIsolated fake. The enrich-\u003evalidate-\u003egate-\u003estore-\u003epost-emit order is fixed INSIDE Pipeline.Run (internal/signal/hooks.go:36-73), so the caller cannot desync it; there is no path where production validates before enrich or stores outside commitWithRetry. TestSignalHooksRunOnceUnderRetry wraps the real commitWithRetry+EmitSignal in the store closure and forces a real CAS race via the racer treefs handle (attempts\u003e=2 AND hook count==1) — hooks-outside-retry holds on the production shape. The exit-code classifier (hooks.go:56-66: exit 1 =\u003e BLOCKED + on-blocked fires; else =\u003e malfunction, on-blocked suppressed) and SIGTERM-\u003eSIGKILL pgid kill (hooks.go:101-113) are proven on the REAL bw binary by the subprocess acceptance tests: TestSignalGateBlocks (exit 1, bwFail asserts non-zero exit, ls-tree empty, on-blocked marker present), TestSignalHookMalfunction (timeout, bounded \u003c1s), TestSignalGateMalfunctionDoesNotFireOnBlocked (exit 2, marker absent, nothing stored — non-vacuous vs the exit-1 test that proves the same wiring FIRES), TestSignalPostEmitWarning (bw() asserts exit 0 + WARNING + stored). Round-1's untested suppression clause is closed by 15a354a. Scope: diff is exactly 9 files, all within AMENDED Allowed globs; config.go/schema.go edits are load-bearing hook plumbing (parseHooks/parseCommands + Parse()/toType() wiring; Hooks struct + Hooks/HookTimeout fields that hooks.go dereferences), no opportunistic edits — amendment basis holds. Out-of-Scope (intent) clean: grep found no Getenv/LookupEnv/bypass in the pipeline path (os.Environ() is parent-env inheritance, not a switch), no core identity/session concept, no hook re-runs in CAS retry, no throttling/cooldown, no TTY (bytes stdin + captured buffers). No Out-of-Scope file touched.",
       "timestamp": "2026-07-11T16:00:47Z"
+    },
+    {
+      "text": "APPROVED. Merged into beadwork-vd6/signals (ff to 15a354a); full preflight green on epic worktree. Closing per orchestrator sign-off.",
+      "timestamp": "2026-07-11T16:02:36Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "S2: Unskippable hook pipeline",
   "type": "task",
-  "updated_at": "2026-07-11T16:01:11Z"
+  "updated_at": "2026-07-11T16:02:36Z"
 }
