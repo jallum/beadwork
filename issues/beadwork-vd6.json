@@ -45,11 +45,15 @@
     {
       "text": "Merge gate for vd6.4 spec-flip merge (2d9ae5f): skipped full suite — test-relevant hash unchanged (diff is .spec/specs/signal_adoption.spec.md only; no lib/cmd/internal/test/go.mod changes).",
       "timestamp": "2026-07-11T18:35:51Z"
+    },
+    {
+      "text": "ORCHESTRATION RUN SUMMARY (2026-07-11, not the final MINI-RETRO — epic stays open)\nChildren closed this run: 4 (vd6.1, vd6.2, vd6.3, vd6.5) of 5; vd6.4 PARKED on user-deferred acceptance run\nbounces: 2 (untested-clause on vd6.2; fixture-leak nondeterminism on vd6.3)\nscope events: 1 expansion subticket (vd6.5, treefs CAS race) + 2 Allowed-touches amendments (vd6.2 config/schema plumbing; vd6.3 prime.go gate bool) — all verifier-confirmed load-bearing\nfull_suite_runs: 4 (one per code merge; vd6.4 spec-only merge skipped via unchanged test-relevant hash)\nflake_accepts: 1 (internal/signal hook-exec 1s-timeout under parallel load, 1/2 for signature)\nescalations: 0\nlessons kept/retired: 3/0\nworker mode: codex (5 spawns across team/remembers/personal profiles; 1 claude fallback on vd6.4 for multi-surface writes)\nprod-gate: n/a this run — deferred with the acceptance run; MUST run before the epic closes (user-facing bw signal surface shipped)\nEpic branch: beadwork-vd6/signals at 2d9ae5f, preflight green. Do NOT push or open a PR — human checkpoint, and the epic is not done until vd6.4's acceptance evidence lands.",
+      "timestamp": "2026-07-11T18:36:10Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "Signals: typed event records on tickets",
   "type": "epic",
-  "updated_at": "2026-07-11T18:35:51Z"
+  "updated_at": "2026-07-11T18:36:10Z"
 }
