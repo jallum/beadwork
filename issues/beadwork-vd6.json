@@ -25,11 +25,15 @@
     {
       "text": "Scope amendment on beadwork-vd6.2: internal/signal/{config,schema}.go added to Allowed touches (hook config plumbing was under-scoped by the plan; verifier confirmed load-bearing). One bounce to implementer for an untested conditional clause (on-blocked suppression on malfunction).",
       "timestamp": "2026-07-11T15:46:03Z"
+    },
+    {
+      "text": "LESSONS\n- [untested-clause] Run concurrency-sensitive tests with -race -count=30 before trusting a green; a single green run of a racy test is not coverage (from beadwork-vd6.1)\n- [untested-clause] Negative/suppression clauses (X must NOT fire when Y) need their own explicit test, not inference from the positive-path tests (from beadwork-vd6.2)",
+      "timestamp": "2026-07-11T15:46:11Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "Signals: typed event records on tickets",
   "type": "epic",
-  "updated_at": "2026-07-11T15:46:03Z"
+  "updated_at": "2026-07-11T15:46:11Z"
 }
