@@ -21,11 +21,15 @@
     {
       "text": "SCOPE_AMENDMENT (orchestrator): cmd/bw/signal_query.go added to Allowed touches for the usage-label string sync only (verifier-assessed: one line, additive, serves the ticket's help-text deliverable; omitting it regresses help in query-enabled builds). Re-plan, not a bounce.\n\nBOUNCE → implementer (attempts.impl now 2/cap): the epic's standing lessons require explicit tests for suppression clauses and locked contracts — three coverage gaps the verifier noted must close before re-IMPLEMENTED:\n1. post-emit suppression in dry-run is proven by construction only — add an explicit test (post-emit hook writes a marker file; assert absent after validate --run-hooks on an allowed emit).\n2. The byte-identical default `bw signal types` output is an intent contract with no regression test — add one locking the exact plain-mode output shape.\n3. The --run-hooks enriched-payload report is implemented but never asserted — extend TestSignalValidateRunHooks* (or add one) asserting the reported enriched payload contains the enrich hook's stamp.",
       "timestamp": "2026-07-11T19:31:14Z"
+    },
+    {
+      "text": "IMPLEMENTED\nSession: codex-78916cae\nLog: /Users/mz/.local/state/agentic-runs/beadwork/beadwork-vd6.6/codex-78916cae/log\n\nCommit: 7b1af0092046ea920c66c40985c1578d66760214\nFiles touched: .spec/specs/signal_config.spec.md, cmd/bw/command.go, cmd/bw/signal.go, cmd/bw/signal_query.go, cmd/bw/signal_test.go, docs/design.md, internal/signal/hooks.go\nTests added: TestSignalTypesVerbose; TestSignalTypesJSON; TestSignalTypesPlainOutputContract; TestSignalShowType; TestSignalShowUndefinedType; TestSignalValidateSchemaOnly; TestSignalValidateNeverStores; TestSignalValidateRunHooksSuppressesPostEmit; TestSignalValidateRunHooksGateBlock; TestSignalValidateDryRunEnv\nVerification stubs flipped: bw.signal.config.introspection_types/TestSignalTypesVerbose; bw.signal.config.introspection_types/TestSignalTypesJSON; bw.signal.config.introspection_show/TestSignalShowType; bw.signal.config.introspection_show/TestSignalShowUndefinedType; bw.signal.config.validate_dry_run/TestSignalValidateSchemaOnly; bw.signal.config.validate_dry_run/TestSignalValidateNeverStores; bw.signal.config.validate_dry_run/TestSignalValidateRunHooksGateBlock; bw.signal.config.validate_dry_run_env/TestSignalValidateDryRunEnv\nAudit-expanded scope: cmd/bw/signal_query.go (SCOPE_AMENDMENT 2026-07-11T19:31:14Z: usage-label string sync only)\n\nSummary: Added the requested bounce coverage on top of da46933: a byte-for-byte plain `bw signal types` output contract, an explicit dry-run post-emit suppression test with marker-file absence and no storage, and an assertion that --run-hooks reports the enrich hook's stamped payload field. Final tier passed with `GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=commit.gpgsign GIT_CONFIG_VALUE_0=false HOME=/private/tmp/beadwork-home GOCACHE=/private/tmp/beadwork-go-cache make preflight` after redirecting tool caches into writable sandbox paths.",
+      "timestamp": "2026-07-11T19:36:10Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "Signal CLI introspection: types --verbose/--json, show \u003ctype\u003e, validate dry-run",
   "type": "task",
-  "updated_at": "2026-07-11T19:31:39Z"
+  "updated_at": "2026-07-11T19:36:10Z"
 }
