@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "Manuel Zubieta",
   "blocked_by": [],
   "blocks": [
     "beadwork-vd6.1"
@@ -10,8 +10,8 @@
   "labels": [],
   "parent": "beadwork-vd6",
   "priority": 3,
-  "status": "open",
+  "status": "in_progress",
   "title": "casUpdateRef TOCTOU race: concurrent commits silently drop records",
   "type": "bug",
-  "updated_at": "2026-07-11T14:50:18Z"
+  "updated_at": "2026-07-11T14:52:35Z"
 }
