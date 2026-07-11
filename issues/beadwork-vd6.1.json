@@ -25,11 +25,15 @@
     {
       "text": "SCOPE_EXPANSION: spawned beadwork-vd6.5 to cover the casUpdateRef TOCTOU race in internal/treefs (out of scope here; root cause of the TestSignalConcurrentEmits flake the verifier reproduced). Bouncing this ticket with the new ticket as a dependency. This does NOT consume a bounce attempt. When vd6.5 closes and merges to the epic branch, this ticket resumes: rebase stage onto epic HEAD, re-run final tier, re-verify.",
       "timestamp": "2026-07-11T14:50:34Z"
+    },
+    {
+      "text": "IMPLEMENTED\nSession: codex-157eaa45\nLog: /Users/mz/.local/state/agentic-runs/beadwork/beadwork-vd6.1/codex-157eaa45/log\n\nCommit: 8e8dc464b117be435d92f2cfea08b8197d69230f\nFiles touched: .spec/specs/signal_config.spec.md, .spec/specs/signal_store.spec.md, cmd/bw/command.go, cmd/bw/signal.go, cmd/bw/signal_test.go, docs/design.md, internal/intent/intent.go, internal/intent/signal_test.go, internal/issue/signal.go, internal/issue/signal_test.go, internal/signal/config.go, internal/signal/config_test.go, internal/signal/schema.go, internal/signal/validate.go, test/acceptance_test.go\nTests added: signal_test.TestConfigWorkingTreeSource, signal_test.TestConfigFailClosedMalformed, signal_test.TestSchemaExpressiveness, signal_test.TestValidateFinalPayload, issue_test.TestSignalConcurrentEmits, issue_test.TestSignalRecordJSONShape, intent_test.TestReplaySignal, main.TestSignalEmitUndefinedTypeRefused, main.TestSignalHistoryOutlivesDefinitions, main.TestUsageListsSignalGroup, main.TestSignalRequiredWhenRouting, test.TestSignalEmitAndReread, test.TestSignalAdditivityDormantRepo\nVerification stubs flipped: bw.signal.config.working_tree_source, bw.signal.config.dormant_when_absent, bw.signal.config.fail_closed_malformed, bw.signal.config.undefined_type_refused, bw.signal.config.zero_builtin_types, bw.signal.config.schema_expressiveness, bw.signal.config.full_payload_validation, bw.signal.store.immutable_snapshot, bw.signal.store.store_assigned_sequence, bw.signal.store.intent_verb, bw.signal.store.concurrent_parity, bw.signal.store.replay_loud_fail, bw.signal.store.replay_no_hooks, bw.signal.store.history_outlives_definitions\n\nSummary: Rebased onto epic HEAD after beadwork-vd6.5 (treefs CAS fix); no implementation changes. The existing signal config, immutable signal store, and replayable signal intent implementation now passes the former flaky concurrent emit proving test under repeated race runs, and the final preflight gate is green.",
+      "timestamp": "2026-07-11T15:11:35Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "S1: Signal store, type schema, and intent replay",
   "type": "task",
-  "updated_at": "2026-07-11T15:08:07Z"
+  "updated_at": "2026-07-11T15:11:35Z"
 }
