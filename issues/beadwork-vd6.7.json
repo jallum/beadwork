@@ -7,9 +7,15 @@
   "id": "beadwork-vd6.7",
   "labels": [],
   "parent": "beadwork-vd6",
+  "comments": [
+    {
+      "text": "Implemented: Pipeline.CallerCWD wired from repo.CWD at both emit and validate --run-hooks call sites; runWithEnv exports BW_SIGNAL_CALLER_CWD when non-empty. TestHookCallerCWDEnv asserts hook cwd stays RepoRoot while the env var carries the caller dir, and that empty CallerCWD leaves the var unset. docs/design.md, bw.decision.signal_hook_io, and signal_pipeline.spec.md (requirement caller_cwd_env + worktree scenario + verification entry) updated. Builder's three gates rewritten to cd $BW_SIGNAL_CALLER_CWD with same-repo worktree validation; gate-completed now checks branch==epic_branch and ancestry against the epic worktree HEAD, drops legacy scripts/preflight.sh; hook_timeout 45m→10m. Full go test ./... running.",
+      "timestamp": "2026-07-11T20:58:18Z"
+    }
+  ],
   "priority": 3,
   "status": "in_progress",
   "title": "Expose caller cwd to signal hooks as BW_SIGNAL_CALLER_CWD",
   "type": "task",
-  "updated_at": "2026-07-11T20:47:17Z"
+  "updated_at": "2026-07-11T20:58:18Z"
 }
