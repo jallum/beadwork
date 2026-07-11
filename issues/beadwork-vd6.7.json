@@ -11,11 +11,15 @@
     {
       "text": "Implemented: Pipeline.CallerCWD wired from repo.CWD at both emit and validate --run-hooks call sites; runWithEnv exports BW_SIGNAL_CALLER_CWD when non-empty. TestHookCallerCWDEnv asserts hook cwd stays RepoRoot while the env var carries the caller dir, and that empty CallerCWD leaves the var unset. docs/design.md, bw.decision.signal_hook_io, and signal_pipeline.spec.md (requirement caller_cwd_env + worktree scenario + verification entry) updated. Builder's three gates rewritten to cd $BW_SIGNAL_CALLER_CWD with same-repo worktree validation; gate-completed now checks branch==epic_branch and ancestry against the epic worktree HEAD, drops legacy scripts/preflight.sh; hook_timeout 45m→10m. Full go test ./... running.",
       "timestamp": "2026-07-11T20:58:18Z"
+    },
+    {
+      "text": "Landed as f09ee9e. Verification: TestHookCallerCWDEnv green; all 21 signal cmd/bw tests green; cmd/bw full package 544/544 green with -timeout 15m (the package legitimately exceeds go test's default 10m on this machine with -count=1 — pre-existing, unrelated); internal/issue+repo+signal green sequentially. E2E: scratch repo probe shows hook pwd = primary checkout, BW_SIGNAL_CALLER_CWD = emitting worktree on both emit and validate --run-hooks. Builder's three gates rewritten against the new contract and dry-run-probed from a real worktree: truthful claims ALLOWED, cross-worktree commit and wrong-epic-branch claims BLOCKED with precise reasons. Builder also drops legacy scripts/preflight.sh from gate-completed and hook_timeout 45m→10m per user direction.",
+      "timestamp": "2026-07-11T21:47:22Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "Expose caller cwd to signal hooks as BW_SIGNAL_CALLER_CWD",
   "type": "task",
-  "updated_at": "2026-07-11T20:58:18Z"
+  "updated_at": "2026-07-11T21:47:22Z"
 }
