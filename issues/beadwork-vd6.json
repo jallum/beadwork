@@ -5,7 +5,9 @@
   "created": "2026-07-11T13:52:35Z",
   "description": "Jira: n/a (personal OSS fork)\nDistilled from mini-plan (plan epic think-0qf, run 20260711-092606-claude-mini). Spec dir: .spec/\nWorktree: /Users/mz/src/beadwork-signals\n\nFirst-class, append-only, typed event records on tickets alongside comments: repo-defined signal types in .beadwork/signals.yml, validated emit with an unskippable hook pipeline (enrich → gate → on-blocked → post-emit), immutable storage on the beadwork branch with a replayable signal intent, and a since-cursor query surface. Acceptance: the full MARKERS.md pipeline runs end-to-end in signals mode on one adopted repo.",
   "id": "beadwork-vd6",
-  "labels": [],
+  "labels": [
+    "slug:signals"
+  ],
   "priority": 3,
   "status": "open",
   "title": "Signals: typed event records on tickets",
