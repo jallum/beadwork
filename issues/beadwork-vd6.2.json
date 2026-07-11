@@ -13,9 +13,15 @@
     "phase:implementing"
   ],
   "parent": "beadwork-vd6",
+  "comments": [
+    {
+      "text": "IMPLEMENTED\nSession: codex-c8dff4d9\nLog: /Users/mz/.local/state/agentic-runs/beadwork/beadwork-vd6.2/codex-c8dff4d9/log\n\nCommit: e438d24d3e65230b7ca6d0842dc616fe65ade9d6\nFiles touched: .spec/specs/signal_pipeline.spec.md, cmd/bw/signal.go, cmd/bw/signal_test.go, docs/design.md, internal/signal/config.go, internal/signal/hooks.go, internal/signal/hooks_test.go, internal/signal/schema.go, test/acceptance_test.go\nTests added: signal_test.TestPipelineEmitSequence, signal_test.TestHookStdinJSONContract, signal_test.TestOnBlockedFailureIsolated, signal_test.TestHookTimeoutKilled, main.TestSignalHooksRunOnceUnderRetry, main.TestSignalEmitNoBypassFlag, main.TestSignalEmitHelpMentionsPipeline, test.TestSignalGateBlocks, test.TestSignalHookMalfunction, test.TestSignalPostEmitWarning\nVerification stubs flipped: bw.signal.pipeline.emit_sequence, bw.signal.pipeline.stdin_json_io, bw.signal.pipeline.gate_block_refuses, bw.signal.pipeline.malfunction_fails_closed, bw.signal.pipeline.on_blocked_isolated, bw.signal.pipeline.post_emit_after_store, bw.signal.pipeline.hooks_once_outside_retry, bw.signal.pipeline.never_hang, bw.signal.pipeline.unskippable\n\nSummary: Added repo-global and per-type enrich, gate, on-blocked, and post-emit hooks with stdin JSON, inherited scalar environment, captured output, fail-closed verdict classification, and TERM-to-KILL deadlines. Wired the pipeline exactly once around schema validation and CAS-retried durable storage, documented the I/O contract, and proved blocks, malfunctions, isolated failures, post-store warnings, no bypass, and single execution under a real retry; make preflight is green.",
+      "timestamp": "2026-07-11T15:35:44Z"
+    }
+  ],
   "priority": 3,
   "status": "in_progress",
   "title": "S2: Unskippable hook pipeline",
   "type": "task",
-  "updated_at": "2026-07-11T15:27:24Z"
+  "updated_at": "2026-07-11T15:35:44Z"
 }
