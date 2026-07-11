@@ -11,9 +11,15 @@
     "phase:implementing"
   ],
   "parent": "beadwork-vd6",
+  "comments": [
+    {
+      "text": "IMPLEMENTED\nSession: codex-62cfb35b\nLog: /Users/mz/.local/state/agentic-runs/beadwork/beadwork-vd6.1/codex-62cfb35b/log\n\nCommit: dba92388c038b2d9391621cb9da770f9acc8db10\nFiles touched: .spec/specs/signal_config.spec.md, .spec/specs/signal_store.spec.md, cmd/bw/command.go, cmd/bw/signal.go, cmd/bw/signal_test.go, docs/design.md, internal/intent/intent.go, internal/intent/signal_test.go, internal/issue/signal.go, internal/issue/signal_test.go, internal/signal/config.go, internal/signal/config_test.go, internal/signal/schema.go, internal/signal/validate.go, test/acceptance_test.go\nTests added: signal_test.TestConfigWorkingTreeSource, signal_test.TestConfigFailClosedMalformed, signal_test.TestSchemaExpressiveness, signal_test.TestValidateFinalPayload, issue_test.TestSignalConcurrentEmits, issue_test.TestSignalRecordJSONShape, intent_test.TestReplaySignal, main.TestSignalEmitUndefinedTypeRefused, main.TestSignalHistoryOutlivesDefinitions, main.TestUsageListsSignalGroup, main.TestSignalRequiredWhenRouting, test.TestSignalEmitAndReread, test.TestSignalAdditivityDormantRepo\nVerification stubs flipped: bw.signal.config.working_tree_source, bw.signal.config.dormant_when_absent, bw.signal.config.fail_closed_malformed, bw.signal.config.undefined_type_refused, bw.signal.config.zero_builtin_types, bw.signal.config.schema_expressiveness, bw.signal.config.full_payload_validation, bw.signal.store.immutable_snapshot, bw.signal.store.store_assigned_sequence, bw.signal.store.intent_verb, bw.signal.store.concurrent_parity, bw.signal.store.replay_loud_fail, bw.signal.store.replay_no_hooks, bw.signal.store.history_outlives_definitions\n\nSummary: Added working-tree signal config loading with fail-closed schema validation, immutable per-ticket signal records, and replayable signal intents recovered from SourceHash without hook execution. Registered the additive bw signal emit/types command path through commitWithRetry and covered the required config, store, replay, CLI, and acceptance scenarios; final make preflight passed.",
+      "timestamp": "2026-07-11T14:38:48Z"
+    }
+  ],
   "priority": 3,
   "status": "in_progress",
   "title": "S1: Signal store, type schema, and intent replay",
   "type": "task",
-  "updated_at": "2026-07-11T14:26:08Z"
+  "updated_at": "2026-07-11T14:38:48Z"
 }
