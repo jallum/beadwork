@@ -9,9 +9,15 @@
     "phase:implementing"
   ],
   "parent": "beadwork-vd6",
+  "comments": [
+    {
+      "text": "IMPLEMENTED\nSession: codex-42f93c72\nLog: /Users/mz/.local/state/agentic-runs/beadwork/beadwork-vd6.6/codex-42f93c72/log\n\nCommit: da4693360a6175d2470ce6b884f7f97567f03a88\nFiles touched: .spec/specs/signal_config.spec.md, cmd/bw/command.go, cmd/bw/signal.go, cmd/bw/signal_query.go, cmd/bw/signal_test.go, docs/design.md, internal/signal/hooks.go\nTests added: TestSignalTypesVerbose; TestSignalTypesJSON; TestSignalShowType; TestSignalShowUndefinedType; TestSignalValidateSchemaOnly; TestSignalValidateNeverStores; TestSignalValidateRunHooksGateBlock; TestSignalValidateDryRunEnv\nVerification stubs flipped: bw.signal.config.introspection_types/TestSignalTypesVerbose; bw.signal.config.introspection_types/TestSignalTypesJSON; bw.signal.config.introspection_show/TestSignalShowType; bw.signal.config.introspection_show/TestSignalShowUndefinedType; bw.signal.config.validate_dry_run/TestSignalValidateSchemaOnly; bw.signal.config.validate_dry_run/TestSignalValidateNeverStores; bw.signal.config.validate_dry_run/TestSignalValidateRunHooksGateBlock; bw.signal.config.validate_dry_run_env/TestSignalValidateDryRunEnv\n\nSummary: Added signal CLI introspection for verbose/json type listing and single-type show output, including field schemas, required_when, hook order, and effective timeout. Added dry-run validation with schema-only and --run-hooks modes that never store signals, set BW_SIGNAL_DRY_RUN=1, and suppress on-blocked/post-emit hooks while reporting enriched payload and gate verdicts.",
+      "timestamp": "2026-07-11T19:24:21Z"
+    }
+  ],
   "priority": 3,
   "status": "in_progress",
   "title": "Signal CLI introspection: types --verbose/--json, show \u003ctype\u003e, validate dry-run",
   "type": "task",
-  "updated_at": "2026-07-11T19:11:53Z"
+  "updated_at": "2026-07-11T19:24:21Z"
 }
