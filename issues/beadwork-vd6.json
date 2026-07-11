@@ -17,6 +17,10 @@
     {
       "text": "Scope expansion: added beadwork-vd6.5 (casUpdateRef TOCTOU race in internal/treefs), surfaced by beadwork-vd6.1 verification. vd6.1 paused on it. Expansion 1 of 3 soft-cap.",
       "timestamp": "2026-07-11T14:50:35Z"
+    },
+    {
+      "text": "LESSONS\n- [untested-clause] Run concurrency-sensitive tests with -race -count=30 before trusting a green; a single green run of a racy test is not coverage (from beadwork-vd6.1)",
+      "timestamp": "2026-07-11T14:50:35Z"
     }
   ],
   "priority": 3,
