@@ -33,11 +33,15 @@
     {
       "text": "PARKED (orchestrator): landed scope APPROVED (verify PASS + audit APPROVE on the ticket) and the spec-flip commit 2d9ae5f is merged into beadwork-vd6/signals. This ticket stays OPEN pending the user-deferred acceptance evidence:\n\nRemaining to close:\n- Run a real epic on /Users/mz/dev/cs/builder in signals mode (comment-marker parser disabled), exercising a full bounce loop (VERIFY FAIL -\u003e AUDIT BOUNCE -\u003e implementer -\u003e completed) with the orchestrator reacting solely to typed signal records.\n- Record the run evidence as a comment here, flip the remaining signal_adoption.spec.md stubs (execute:false-\u003etrue), merge the flip, then close this ticket and proceed to /deliver for the epic.\n\nPrereqs already in place: dual-mode sections live in both vault SKILL.md files; builder has .beadwork/signals.yml + hooks (untracked, awaiting user commit); a signals-capable bw builds from the epic worktree (make -C /Users/mz/src/beadwork-signals bw).",
       "timestamp": "2026-07-11T18:35:51Z"
+    },
+    {
+      "text": "GATE HARDENING (user review feedback, 2026-07-11): the original builder hooks only checked evidence fields were non-blank — verification asks stayed prose. Reworked so the repo's actual asks are mechanically gated:\n- implemented gate (new): claimed commit must exist in-repo; then mix compile --warnings-as-errors, mix format --check-formatted, mix spec.check must be green.\n- verify gate (new): verdict=fail passes through; verdict=pass requires compile --warnings-as-errors + mix spec.check green.\n- completed gate (rewritten): evidence fields + merged_sha must exist AND be an ancestor of HEAD; then full scripts/preflight.sh (incl. dialyzer + coveralls/tests) + mix spec.check.\n- hook_timeout raised 30s -\u003e 45m (global-only knob; must cover preflight).\nValidated: signals.yml parses (11 types), hooks bash -n clean, scratch exercise — bogus-commit IMPLEMENTED blocked pre-store, verify-fail stored with enrich stamp; builder beadwork ref reset byte-equal (abe4cbb9). Green paths through mix/preflight not exercised (cost); first real use proves them. Files remain untracked for user commit.",
+      "timestamp": "2026-07-11T18:52:37Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "S4: Dual-mode skills migration (acceptance proof on one adopted repo)",
   "type": "task",
-  "updated_at": "2026-07-11T18:35:51Z"
+  "updated_at": "2026-07-11T18:52:37Z"
 }
