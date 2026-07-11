@@ -53,11 +53,15 @@
     {
       "text": "Scope expansion (user-directed): added beadwork-vd6.6 — signal CLI introspection (types --verbose/--json, show \u003ctype\u003e, validate dry-run incl. --run-hooks). Surfaced during user review of the builder gate hardening. Expansion 2 of 3 soft-cap.",
       "timestamp": "2026-07-11T19:10:17Z"
+    },
+    {
+      "text": "FLAKE_ACCEPTED (2/2 for signature 'internal/signal hook-exec timeout-1s under load'): TestPipelineEmitSequence timed out again during vd6.6 stage smoke under full-suite parallel load; green 10/10 in isolation. Signature is now at its acceptance cap — a THIRD occurrence requires an investigation ticket (raise the 1s test hook timeout headroom) and leaves the gate red.",
+      "timestamp": "2026-07-11T19:14:36Z"
     }
   ],
   "priority": 3,
   "status": "in_progress",
   "title": "Signals: typed event records on tickets",
   "type": "epic",
-  "updated_at": "2026-07-11T19:10:17Z"
+  "updated_at": "2026-07-11T19:14:36Z"
 }
