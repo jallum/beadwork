@@ -664,6 +664,67 @@ func TestSyncStaleBeadworkRemoteConfig(t *testing.T) {
 	}
 }
 
+// gitOut runs a git command and returns its trimmed stdout.
+func gitOut(t *testing.T, dir string, args ...string) string {
+	t.Helper()
+	cmd := exec.Command("git", args...)
+	cmd.Dir = dir
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("git %v: %s: %v", args, out, err)
+	}
+	return strings.TrimSpace(string(out))
+}
+
+// TestSyncSurvivesExternalRepack reproduces the production failure
+// "walk local commits: packfile not found". Git repacks the object database
+// out of process — auto-gc runs at the end of `git fetch` — deleting packfiles
+// that a long-lived go-git handle still has indexed. Sync must not read
+// objects through that stale handle after fetching.
+func TestSyncSurvivesExternalRepack(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	env.NewBareRemote()
+
+	env.Store.Create("First issue", issue.CreateOpts{})
+	env.CommitIntent("create first")
+	if _, _, err := env.Repo.Sync(nil); err != nil {
+		t.Fatalf("seed sync: %v", err)
+	}
+
+	// Pack every object into a single packfile, then reopen so the go-git
+	// handle caches that packfile's index.
+	gitRun(t, env.Dir, "repack", "-a", "-d")
+	if _, err := env.Repo.Reopen(); err != nil {
+		t.Fatalf("Reopen: %v", err)
+	}
+
+	// Out of process (as auto-gc after fetch would), advance the beadwork
+	// branch and repack again: the replacement pack has a different name and
+	// the pack the handle has indexed is deleted.
+	tree := gitOut(t, env.Dir, "rev-parse", "refs/heads/beadwork^{tree}")
+	parent := gitOut(t, env.Dir, "rev-parse", "refs/heads/beadwork")
+	c1 := gitOut(t, env.Dir, "commit-tree", tree, "-p", parent, "-m", "external one")
+	c2 := gitOut(t, env.Dir, "commit-tree", tree, "-p", c1, "-m", "external two")
+	gitRun(t, env.Dir, "update-ref", "refs/heads/beadwork", c2)
+	gitRun(t, env.Dir, "repack", "-a", "-d")
+
+	status, _, err := env.Repo.Sync(nil)
+	if err != nil {
+		t.Fatalf("Sync after external repack: %v", err)
+	}
+	if status != "pushed" {
+		t.Errorf("status = %q, want 'pushed'", status)
+	}
+	// The external commits must actually have reached the remote — a sync
+	// that silently dropped them (e.g. by resetting onto the stale remote
+	// tip) would corrupt the branch without reporting an error.
+	if tip := beadworkTip(t, env.Dir+"/remote.git"); tip != c2 {
+		t.Errorf("remote tip = %q, want external commit %q", tip, c2)
+	}
+}
+
 func init() {
 	// Ensure we don't accidentally run tests against the real repo
 	os.Setenv("GIT_AUTHOR_NAME", "Test")

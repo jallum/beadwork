@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -222,6 +223,8 @@ func (r *Repo) Init(prefix string, resolve RemoteResolver) error {
 		}
 
 		if !localExists {
+			// fetch reopened the TreeFS at refLocal (empty, the ref doesn't
+			// exist yet); SetRef advances its snapshot to the new ref state.
 			remoteHash, err := r.tfs.LookupRef(remoteRef)
 			if err != nil {
 				return fmt.Errorf("lookup remote ref: %w", err)
@@ -231,12 +234,6 @@ func (r *Repo) Init(prefix string, resolve RemoteResolver) error {
 			}
 		}
 
-		// Reopen TreeFS to pick up the new ref
-		tfs, err := treefs.OpenFromRepo(r.tfs.Repo(), refLocal)
-		if err != nil {
-			return fmt.Errorf("reopen treefs: %w", err)
-		}
-		r.tfs = tfs
 		r.Prefix = r.readPrefix()
 	} else if !localExists {
 		// No remote has beadwork yet and we're about to seed a new
@@ -556,7 +553,11 @@ func (r *Repo) Sync(resolve RemoteResolver) (status string, replayed []string, e
 
 func (r *Repo) syncTo(remote string) (string, []string, error) {
 	refSpec := config.RefSpec(fmt.Sprintf("+%s:refs/remotes/%s/%s", refLocal, remote, BranchName))
-	_ = r.fetch(remote, refSpec) // failure OK — remote may not have beadwork yet
+	// Fetch failure is OK — the remote may not have beadwork yet — but merging
+	// through stale go-git caches after a successful fetch is not.
+	if err := r.fetch(remote, refSpec); errors.Is(err, errReopenAfterFetch) {
+		return "", nil, err
+	}
 
 	remoteRef := "refs/remotes/" + remote + "/" + BranchName
 	pushRef := config.RefSpec(refLocal + ":" + refLocal)
@@ -687,12 +688,28 @@ func (r *Repo) GetGitContext() GitContext {
 	return ctx
 }
 
+// errReopenAfterFetch marks a failure to reopen go-git state after a
+// successful fetch. Callers that tolerate fetch failures (the remote may not
+// have beadwork yet) must still treat this error as fatal.
+var errReopenAfterFetch = errors.New("reopen after fetch")
+
+// fetch shells out to `git fetch`, then reopens the in-memory go-git state so
+// the freshly-fetched packfiles and refs are visible — go-git would otherwise
+// keep serving stale object and ref caches.
 func (r *Repo) fetch(remoteName string, refSpec config.RefSpec) error {
-	_, err := execGit(r.RepoDir(), "fetch", remoteName, string(refSpec))
-	return err
+	if _, err := execGit(r.RepoDir(), "fetch", remoteName, string(refSpec)); err != nil {
+		return err
+	}
+	if _, err := r.Reopen(); err != nil {
+		return fmt.Errorf("%w: %s", errReopenAfterFetch, err)
+	}
+	return nil
 }
 
 func (r *Repo) gitPush(remoteName string, refSpec config.RefSpec) error {
+	if _, err := r.tfs.Stat(".bwconfig"); err != nil {
+		return fmt.Errorf("refusing to push beadwork branch without .bwconfig: %w", err)
+	}
 	_, err := execGit(r.RepoDir(), "push", "--no-verify", remoteName, string(refSpec))
 	return err
 }
