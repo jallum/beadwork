@@ -148,6 +148,26 @@ func TestFindRepoAtWithWorktreeConfigExtension(t *testing.T) {
 	}
 }
 
+func TestFindRepoAtWithNegativeFetchRefSpec(t *testing.T) {
+	dir := t.TempDir()
+
+	gitRun(t, dir, "init")
+	gitRun(t, dir, "config", "user.email", "test@test.com")
+	gitRun(t, dir, "config", "user.name", "Test")
+	os.WriteFile(filepath.Join(dir, "README"), []byte("test"), 0644)
+	gitRun(t, dir, "add", ".")
+	gitRun(t, dir, "commit", "-m", "initial")
+
+	// A negative refspec (git 2.29+) excludes refs from a fetch. go-git can't
+	// parse one, so bw has to strip it before opening the repo.
+	gitRun(t, dir, "remote", "add", "origin", "git@github.com:example/example.git")
+	gitRun(t, dir, "config", "--add", "remote.origin.fetch", "^refs/heads/skip/*")
+
+	if _, err := repo.FindRepoAt(dir); err != nil {
+		t.Fatalf("FindRepoAt with negative fetch refspec: %v", err)
+	}
+}
+
 func TestFindRepoAtFromWorktreeWithWorktreeConfig(t *testing.T) {
 	base, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
