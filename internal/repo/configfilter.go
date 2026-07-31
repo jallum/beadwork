@@ -32,6 +32,9 @@ var bypassedExtensions = map[string]struct{}{
 
 // openGitRepo opens the repo at repoDir, reading git config through
 // configFilteringStorer so config bw has no use for can't block the open.
+//
+// On a repo using the reftable backend, ref access is additionally routed
+// through reftableRefStorer, since go-git cannot read .git/reftable.
 func openGitRepo(repoDir string) (*git.Repository, error) {
 	wt := osfs.New(repoDir)
 	dotGit := osfs.New(filepath.Join(repoDir, ".git"))
@@ -43,19 +46,41 @@ func openGitRepo(repoDir string) (*git.Repository, error) {
 		return nil, err
 	}
 
-	s := filesystem.NewStorage(dotGit, cache.NewObjectLRUDefault())
-	return git.Open(&configFilteringStorer{Storer: s, dotGit: dotGit}, wt)
+	raw, err := readRawConfig(dotGit)
+	if err != nil {
+		return nil, err
+	}
+
+	bypass := make(map[string]struct{}, len(bypassedExtensions)+1)
+	for name := range bypassedExtensions {
+		bypass[name] = struct{}{}
+	}
+
+	var s storage.Storer = filesystem.NewStorage(dotGit, cache.NewObjectLRUDefault())
+	if usesReftable(raw) {
+		s = &reftableRefStorer{Storer: s, repoDir: repoDir}
+		// Only safe to bypass now that refs are served by the git CLI. Left
+		// in place, go-git would read .git/refs and see nothing at all.
+		bypass[refStorageExtension] = struct{}{}
+	}
+
+	return git.Open(&configFilteringStorer{Storer: s, dotGit: dotGit, bypass: bypass}, wt)
 }
 
 // configFilteringStorer wraps a storage.Storer and parses .git/config itself,
-// dropping entries go-git rejects but bw never reads: extensions listed in
-// bypassedExtensions, and negative fetch refspecs.
+// dropping entries go-git rejects but bw never reads: the extensions named in
+// bypass, and negative fetch refspecs.
 //
 // SetConfig is inherited from the embedded Storer unchanged — bw never writes
 // git config, so there's no round-trip concern.
 type configFilteringStorer struct {
 	storage.Storer
 	dotGit billy.Filesystem
+
+	// bypass names the extensions to strip, lowercased. Built per-open so
+	// refstorage is only bypassed when a reftable-aware ref storer is
+	// actually installed.
+	bypass map[string]struct{}
 }
 
 // Config parses .git/config, filtering it in its raw on-disk form before
@@ -64,21 +89,12 @@ type configFilteringStorer struct {
 // decoding: Config returns a nil config alongside the error, leaving nothing
 // to filter after the fact.
 func (s *configFilteringStorer) Config() (*config.Config, error) {
-	f, err := s.dotGit.Open(gitConfigFile)
+	raw, err := readRawConfig(s.dotGit)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return config.NewConfig(), nil
-		}
-		return nil, err
-	}
-	defer f.Close()
-
-	raw := format.New()
-	if err := format.NewDecoder(f).Decode(raw); err != nil {
 		return nil, err
 	}
 
-	stripBypassedExtensions(raw)
+	stripExtensions(raw, s.bypass)
 	stripNegativeFetchRefSpecs(raw)
 
 	// go-git's decoders for the typed config are unexported, so re-encoding
@@ -94,16 +110,37 @@ func (s *configFilteringStorer) Config() (*config.Config, error) {
 	return cfg, nil
 }
 
-// stripBypassedExtensions removes the extensions named in bypassedExtensions
-// so go-git's extension check doesn't reject the repo.
-func stripBypassedExtensions(raw *format.Config) {
+// readRawConfig decodes .git/config into its unvalidated on-disk form. A
+// missing file yields an empty config, matching go-git's own treatment of a
+// repo without one.
+func readRawConfig(dotGit billy.Filesystem) (*format.Config, error) {
+	raw := format.New()
+
+	f, err := dotGit.Open(gitConfigFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return raw, nil
+		}
+		return nil, err
+	}
+	defer f.Close()
+
+	if err := format.NewDecoder(f).Decode(raw); err != nil {
+		return nil, err
+	}
+	return raw, nil
+}
+
+// stripExtensions removes the named extensions (lowercased) so go-git's
+// extension check doesn't reject the repo.
+func stripExtensions(raw *format.Config, names map[string]struct{}) {
 	if !raw.HasSection("extensions") {
 		return
 	}
 	section := raw.Section("extensions")
 	kept := section.Options[:0]
 	for _, opt := range section.Options {
-		if _, skip := bypassedExtensions[strings.ToLower(opt.Key)]; skip {
+		if _, skip := names[strings.ToLower(opt.Key)]; skip {
 			continue
 		}
 		kept = append(kept, opt)
