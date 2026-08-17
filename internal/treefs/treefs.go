@@ -733,15 +733,20 @@ func (t *TreeFS) Reset(hash plumbing.Hash) error {
 // CommitsBetween returns commits on localRef that are not ancestors of
 // remoteRef, in oldest-first order. Used by Sync to find local-only commits.
 func (t *TreeFS) CommitsBetween(localHash, remoteHash plumbing.Hash) ([]CommitInfo, error) {
-	// Collect all ancestors of remoteHash into a set
+	// Collect all ancestors of remoteHash into a set. A partial walk must be
+	// an error, not an empty/short set: misclassifying commits here makes
+	// Sync reset or merge the wrong way and silently discard local commits.
 	remoteSet := make(map[plumbing.Hash]bool)
 	if !remoteHash.IsZero() {
 		iter, err := t.repo.Log(&git.LogOptions{From: remoteHash})
-		if err == nil {
-			iter.ForEach(func(c *object.Commit) error {
-				remoteSet[c.Hash] = true
-				return nil
-			})
+		if err != nil {
+			return nil, fmt.Errorf("walk remote commits: %w", err)
+		}
+		if err := iter.ForEach(func(c *object.Commit) error {
+			remoteSet[c.Hash] = true
+			return nil
+		}); err != nil {
+			return nil, fmt.Errorf("walk remote commits: %w", err)
 		}
 	}
 
@@ -751,7 +756,7 @@ func (t *TreeFS) CommitsBetween(localHash, remoteHash plumbing.Hash) ([]CommitIn
 	if err != nil {
 		return nil, fmt.Errorf("walk local commits: %w", err)
 	}
-	iter.ForEach(func(c *object.Commit) error {
+	err = iter.ForEach(func(c *object.Commit) error {
 		if remoteSet[c.Hash] {
 			return storer.ErrStop
 		}
@@ -763,6 +768,9 @@ func (t *TreeFS) CommitsBetween(localHash, remoteHash plumbing.Hash) ([]CommitIn
 		})
 		return nil
 	})
+	if err != nil && err != storer.ErrStop {
+		return nil, fmt.Errorf("walk local commits: %w", err)
+	}
 
 	// Reverse to oldest-first
 	for i, j := 0, len(commits)-1; i < j; i, j = i+1, j-1 {
@@ -924,23 +932,17 @@ func (t *TreeFS) MergeCommit(localHash, remoteHash plumbing.Hash, localCommitMsg
 	remoteFiles := make(map[string][]byte)
 
 	if !baseHash.IsZero() {
-		if c, err := t.repo.CommitObject(baseHash); err == nil {
-			if tree, err := c.Tree(); err == nil {
-				t.collectBaseFiles(tree, "", baseFiles)
-			}
+		if err := t.collectFilesAtCommit(baseHash, baseFiles); err != nil {
+			return false, fmt.Errorf("read merge base tree %s: %w", baseHash, err)
 		}
 	}
 
-	if c, err := t.repo.CommitObject(localHash); err == nil {
-		if tree, err := c.Tree(); err == nil {
-			t.collectBaseFiles(tree, "", localFiles)
-		}
+	if err := t.collectFilesAtCommit(localHash, localFiles); err != nil {
+		return false, fmt.Errorf("read local tree %s: %w", localHash, err)
 	}
 
-	if c, err := t.repo.CommitObject(remoteHash); err == nil {
-		if tree, err := c.Tree(); err == nil {
-			t.collectBaseFiles(tree, "", remoteFiles)
-		}
+	if err := t.collectFilesAtCommit(remoteHash, remoteFiles); err != nil {
+		return false, fmt.Errorf("read remote tree %s: %w", remoteHash, err)
 	}
 
 	// 3-way merge
@@ -998,6 +1000,10 @@ func (t *TreeFS) MergeCommit(localHash, remoteHash plumbing.Hash, localCommitMsg
 		}
 	}
 
+	if !hasPath(merged, ".bwconfig") && (hasPath(baseFiles, ".bwconfig") || hasPath(localFiles, ".bwconfig") || hasPath(remoteFiles, ".bwconfig")) {
+		return false, fmt.Errorf("refusing merge result without .bwconfig")
+	}
+
 	// Build merged tree and commit on top of remote
 	treeHash, err := t.writeTreeFromFiles(t.repo.Storer, merged)
 	if err != nil {
@@ -1045,6 +1051,23 @@ func (t *TreeFS) MergeCommit(localHash, remoteHash plumbing.Hash, localCommitMsg
 	return true, nil
 }
 
+func (t *TreeFS) collectFilesAtCommit(hash plumbing.Hash, out map[string][]byte) error {
+	commit, err := t.repo.CommitObject(hash)
+	if err != nil {
+		return err
+	}
+	tree, err := commit.Tree()
+	if err != nil {
+		return err
+	}
+	return t.collectBaseFiles(tree, "", out)
+}
+
+func hasPath(files map[string][]byte, p string) bool {
+	_, ok := files[p]
+	return ok
+}
+
 // findMergeBase finds the common ancestor of two commits.
 func (t *TreeFS) findMergeBase(a, b plumbing.Hash) (plumbing.Hash, error) {
 	// Collect all ancestors of b
@@ -1053,10 +1076,12 @@ func (t *TreeFS) findMergeBase(a, b plumbing.Hash) (plumbing.Hash, error) {
 	if err != nil {
 		return plumbing.ZeroHash, err
 	}
-	iter.ForEach(func(c *object.Commit) error {
+	if err := iter.ForEach(func(c *object.Commit) error {
 		bAncestors[c.Hash] = true
 		return nil
-	})
+	}); err != nil {
+		return plumbing.ZeroHash, err
+	}
 
 	// Walk a's ancestors, first one in bAncestors is the merge base
 	iter, err = t.repo.Log(&git.LogOptions{From: a})
@@ -1064,13 +1089,16 @@ func (t *TreeFS) findMergeBase(a, b plumbing.Hash) (plumbing.Hash, error) {
 		return plumbing.ZeroHash, err
 	}
 	var base plumbing.Hash
-	iter.ForEach(func(c *object.Commit) error {
+	err = iter.ForEach(func(c *object.Commit) error {
 		if bAncestors[c.Hash] {
 			base = c.Hash
 			return storer.ErrStop
 		}
 		return nil
 	})
+	if err != nil && err != storer.ErrStop {
+		return plumbing.ZeroHash, err
+	}
 	return base, nil
 }
 

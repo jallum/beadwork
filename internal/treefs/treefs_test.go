@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
 // initGitRepo creates a git repo with one commit on the default branch.
@@ -592,6 +593,55 @@ func TestSnapshotConsistentAfterRefresh(t *testing.T) {
 	if err := tfs2.Commit("tfs2 commit"); err != nil {
 		t.Fatalf("Commit after Refresh: %v", err)
 	}
+}
+
+func TestMergeCommitDoesNotSynthesizeEmptyTreeWhenInputsUnreadable(t *testing.T) {
+	dir := initTestRepo(t)
+	tfs, err := Open(dir, "refs/heads/beadwork")
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+
+	baseHash := tfs.RefHash()
+	localHash := writeCommitWithMissingTree(t, tfs, baseHash, "local intent")
+	remoteHash := writeCommitWithMissingTree(t, tfs, baseHash, "remote intent")
+
+	// Regression guard for the production failure where bw sync pushed a
+	// commit whose tree was 4b825dc6... (the canonical empty tree), deleting
+	// every issue. Merge inputs that cannot be read must abort; treating an
+	// unreadable side as an empty file set turns I/O/cache failures into mass
+	// deletions.
+	merged, err := tfs.MergeCommit(localHash, remoteHash, []string{"local intent"})
+	if err == nil {
+		t.Fatalf("MergeCommit succeeded (merged=%v) with unreadable input trees; want an error", merged)
+	}
+	if merged {
+		t.Fatal("MergeCommit reported merged=true despite returning an error")
+	}
+}
+
+func writeCommitWithMissingTree(t *testing.T, tfs *TreeFS, parent plumbing.Hash, msg string) plumbing.Hash {
+	t.Helper()
+	commit := &object.Commit{
+		Author: object.Signature{
+			Name: "beadwork", Email: "beadwork@localhost", When: time.Now(),
+		},
+		Committer: object.Signature{
+			Name: "beadwork", Email: "beadwork@localhost", When: time.Now(),
+		},
+		Message:      msg,
+		TreeHash:     plumbing.NewHash("1111111111111111111111111111111111111111"),
+		ParentHashes: []plumbing.Hash{parent},
+	}
+	obj := tfs.Repo().Storer.NewEncodedObject()
+	if err := commit.Encode(obj); err != nil {
+		t.Fatalf("encode corrupt commit: %v", err)
+	}
+	hash, err := tfs.Repo().Storer.SetEncodedObject(obj)
+	if err != nil {
+		t.Fatalf("store corrupt commit: %v", err)
+	}
+	return hash
 }
 
 func TestSnapshotConsistentAfterMergeCommit(t *testing.T) {
