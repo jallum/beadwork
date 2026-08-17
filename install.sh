@@ -33,8 +33,8 @@ case "$ARCH" in
     *) fail "unsupported architecture: $ARCH" ;;
 esac
 
-# Fetch latest version from GitHub API
-VERSION=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name"' | sed 's/.*"v\(.*\)".*/\1/')
+# Fetch latest version via unauthenticated /releases/latest redirect to avoid getting rate-limited on shared egress.
+VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${REPO}/releases/latest" | sed 's|.*/tag/v||')
 [ -z "$VERSION" ] && fail "could not determine latest version"
 
 ASSET="beadwork_${VERSION}_${OS}_${ARCH}.tar.gz"
