@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-08-17T13:29:05Z",
+  "description": "No spec subject\n\ntargetRemotes (internal/repo/repo.go:477) probes every remote for refs/heads/beadwork and, when more than one has it, sorts alphabetically and uses the first. The configured remote (bw config remote / git config beadwork.remote) is only consulted in the resolveSingleRemote fallback, which runs only when NO remote has the branch.\n\nReal-world failure: a fork setup with remotes macmorgan, origin (jallum), upstream (own fork), all carrying a beadwork branch, and remote=upstream configured. bw sync picks macmorgan (alphabetically first), tries to push to someone else's repo, and fails with 'permission denied'. If the alphabetically-first remote had been writable, tickets would have been pushed to an unintended repo.\n\nFix direction: honor the configured remote first whenever it is set and exists, and only fall back to the has-beadwork scan when nothing is configured. The multi-remote warning should become an error (or prompt) rather than a silent alphabetical pick.",
+  "id": "beadwork-50a",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "bw sync ignores configured remote when multiple remotes have the beadwork branch",
+  "type": "bug",
+  "updated_at": "2026-08-17T13:29:05Z"
+}
