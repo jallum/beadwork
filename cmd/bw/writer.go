@@ -197,6 +197,19 @@ func ResolvingWriter(w Writer) Writer {
 	return &resolvingWriter{Writer: w}
 }
 
+// rawSink returns the writer's non-resolving sink. Machine-readable output
+// (JSON) must be written through this: routing serialized JSON through
+// markdown token resolution corrupts any content that merely resembles a
+// display token (e.g. an Elixir literal `%{type: "x", id: <y>}` inside a
+// description matches {type:...} and gets rewritten), and TTY mode would
+// additionally wrap and colorize it.
+func rawSink(w Writer) Writer {
+	if rw, ok := w.(*resolvingWriter); ok {
+		return rw.Writer
+	}
+	return w
+}
+
 // PlainWriter returns a Writer that resolves tokenized markdown to plain text.
 func PlainWriter(out io.Writer) Writer {
 	return ResolvingWriter(plainWriter(out))

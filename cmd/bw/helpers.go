@@ -221,9 +221,11 @@ func parsePriority(s string) (int, error) {
 	return n, nil
 }
 
+// fprintJSON writes v as indented JSON through the writer's raw sink —
+// never through markdown token resolution (see rawSink).
 func fprintJSON(w Writer, v interface{}) {
 	data, _ := json.MarshalIndent(v, "", "  ")
-	fmt.Fprintln(w, string(data))
+	fmt.Fprintln(rawSink(w), string(data))
 }
 
 // nearestOpen takes tips from the blocker chain and, for each closed tip,
