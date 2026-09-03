@@ -1,0 +1,17 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "closed_at": "2026-08-17T20:44:43Z",
+  "created": "2026-07-08T06:38:10Z",
+  "description": "GitHub issue #138: https://github.com/jallum/beadwork/issues/138\n\nWe sometimes get this error when attempting to `bw sync`:\n\n```\nerror: walk local commits: object not found\n```\n\nI'm not sure how to reproduce it or what causes it, but usually a second round of `bw sync` will fix it.",
+  "id": "bw-gh-138",
+  "labels": [
+    "github"
+  ],
+  "priority": 2,
+  "status": "closed",
+  "title": "error: walk local commits: object not found",
+  "type": "task",
+  "updated_at": "2026-08-17T20:44:43Z"
+}

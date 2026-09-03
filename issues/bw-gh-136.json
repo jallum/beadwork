@@ -1,0 +1,16 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-06-30T07:21:11Z",
+  "description": "GitHub issue #136: https://github.com/jallum/beadwork/issues/136\n\nWould it be possible to add a way to disable the version check that automatically creates a bead like \"Update beadwork to vx.x.x\"? For instance, an environment variable named `BEADWORK_DISABLE_AUTOMATIC_UPDATE_BEAD` or something like that could be detected by the application and used to disable the check. \n\nWhat do you think?",
+  "id": "bw-gh-136",
+  "labels": [
+    "github"
+  ],
+  "priority": 2,
+  "status": "open",
+  "title": "Allow disabling the automatic version check",
+  "type": "task",
+  "updated_at": "2026-06-30T07:21:11Z"
+}

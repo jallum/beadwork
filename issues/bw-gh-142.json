@@ -1,0 +1,16 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-07-31T01:24:57Z",
+  "description": "GitHub issue #142: https://github.com/jallum/beadwork/issues/142\n\n## What happens\n\nEvery `bw` command fails immediately on a repo using git's reftable ref backend:\n\n```\n$ bw ready\nerror: open repo: core.repositoryformatversion does not support extension: refstorage\n```\n\nReproduce on any git 2.45+:\n\n```\ngit init --ref-format=reftable r \u0026\u0026 cd r\ngit commit --allow-empty -m init\nbw ready\n```\n\n## Why\n\nreftable keeps every ref in `.git/reftable/`. `.git/refs/heads/` is empty and `.git/HEAD` is the stub `ref: refs/heads/.invalid`. go-git reads `.git/refs/**` plus `packed-refs`, and `verifyExtensions` rejects `extensions.refstorage` outright.\n\nUnlike `worktreeConfig` (#117) or negative fetch refspecs, this one is **not** safe to bypass by stripping the extension from config: go-git would then open the repo and see zero refs instead of erroring, which is worse than the current failure.\n\n## Why I care\n\nMy team's monorepo has been migrated to reftable, so I can't use bw on it at all. Migrating back isn't available to me either:\n\n```\n$ git refs migrate --ref-format=files --dry-run\nerror: migrating repositories with worktrees is not supported yet\n```\n\n\n## Upstream, and a misleading error message\n\nreftable support is requested upstream as [go-git#1827](https://github.com/go-git/go-git/issues/1827), open since January with no activity — so waiting for go-git seems unlikely to pay off soon.\n\nWorth knowing when reading the error above: it blames `core.repositoryformatversion`, but the repo *is* at `repositoryformatversion = 1`, which should take a different branch in `verifyExtensions` and report `unknown extension: refstorage` instead. The wording is wrong because of [go-git#2155](https://github.com/go-git/go-git/issues/2155) — `config.Unmarshal` never reads `core.repositoryformatversion`, so `cfg.Core.RepositoryFormatVersion` is always `\"\"` and every repo is forced down the v0 branch. Unrelated to this issue, but it makes the error misleading if you go looking at the format version.\n\n## Possible approach\n\nreftable changes ref storage but not object storage, so objects are unaffected. bw already shells out to git for fetch and push, so resolving and updating refs through git (`git rev-parse`, `git update-ref`) and handing hashes to go-git might be sufficient — rather than waiting on reftable support in go-git, which doesn't exist in v5.\n\nI'm going to take a stab at a proof of concept, but it looks like a meaningfully bigger undertaking than the refspec fix, and I'd rather hear whether this is a direction you'd want before going far with it.\n",
+  "id": "bw-gh-142",
+  "labels": [
+    "github"
+  ],
+  "priority": 2,
+  "status": "open",
+  "title": "Support repos using the reftable ref backend (extensions.refstorage=reftable)",
+  "type": "task",
+  "updated_at": "2026-07-31T01:34:02Z"
+}

@@ -1,0 +1,17 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "closed_at": "2026-05-30T12:14:03Z",
+  "created": "2026-05-13T20:11:05Z",
+  "description": "GitHub issue #129: https://github.com/jallum/beadwork/issues/129\n\nDid you purposefully leave out comment deletion, or is that not desired for some reason?\n\nLoving beadwork otherwise!",
+  "id": "bw-gh-129",
+  "labels": [
+    "github"
+  ],
+  "priority": 2,
+  "status": "closed",
+  "title": "Feature request: Comment deletion",
+  "type": "task",
+  "updated_at": "2026-05-30T12:14:03Z"
+}
