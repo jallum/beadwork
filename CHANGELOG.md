@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.13.3 — 2026-09-03
+
+- **`bw sync` no longer fails with `object not found` / `packfile not found` or silently corrupts the beadwork branch** — `git fetch` can trigger auto-gc, which repacks the object database out of process and deletes packfiles that `bw`'s long-lived in-memory git handle still had indexed. Depending on timing, sync would either die with:
+
+  ```
+  error: walk local commits: object not found
+  ```
+
+  or, worse, read a merge input as *empty* and write a merge commit that wiped the branch's contents. Sync now reopens its git state after every successful fetch, so it always sees the freshly-fetched objects and refs. As defense in depth, merge inputs that can't be read are now hard errors instead of being treated as empty trees, commit walks that fail partway abort instead of returning a short ancestor set, and both the merge and the push refuse to produce a beadwork branch that is missing `.bwconfig`. A regression test reproduces the external-repack scenario end to end. (Fixes #138.)
+
+- **`install.sh` no longer gets rate-limited** — the installer looked up the latest release via `api.github.com`, which allows only 60 unauthenticated requests per hour per IP. On shared egress (CI runners, office NATs) this frequently failed with "could not determine latest version". It now follows the unauthenticated `github.com/.../releases/latest` redirect instead, which has no rate limit.
+
 ## 0.13.2 — 2026-06-19
 
 - **`bw close --recursive` / `-r`** — close an issue *and its entire subtree* in a single commit. Descendants close leaf-up (children before parents); already-closed members are skipped silently, so a re-run mops up stragglers. The root records your `--reason` verbatim while each descendant records `closed with parent <root-id>`. External issues that become fully unblocked are surfaced (and deduped); unblocks internal to the subtree are suppressed as noise. The non-recursive path is unchanged.
