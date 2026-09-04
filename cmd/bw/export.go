@@ -137,7 +137,7 @@ func cmdExport(store *issue.Store, args []string, w Writer, _ *config.Config) (*
 		if err != nil {
 			return nil, err
 		}
-		fmt.Fprintln(w, string(data))
+		fmt.Fprintln(rawSink(w), string(data))
 	}
 	return nil, nil
 }

@@ -106,7 +106,7 @@ func cmdRegistryList(args []string, w Writer, cfg *config.Config) (*config.Confi
 
 	if a.JSON() {
 		data, _ := json.MarshalIndent(list, "", "  ")
-		fmt.Fprintln(w, string(data))
+		fmt.Fprintln(rawSink(w), string(data))
 		return nil, nil
 	}
 
