@@ -12,11 +12,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/filemode"
-	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/go-git/go-git/v5/plumbing/storer"
+	"github.com/jallum/go-git/v5"
+	"github.com/jallum/go-git/v5/plumbing"
+	"github.com/jallum/go-git/v5/plumbing/filemode"
+	"github.com/jallum/go-git/v5/plumbing/object"
+	"github.com/jallum/go-git/v5/plumbing/storer"
 )
 
 // DirEntry represents a single entry returned by ReadDir.

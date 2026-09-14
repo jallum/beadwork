@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/jallum/go-git/v5"
+	"github.com/jallum/go-git/v5/plumbing"
+	"github.com/jallum/go-git/v5/plumbing/object"
 )
 
 // initGitRepo creates a git repo with one commit on the default branch.

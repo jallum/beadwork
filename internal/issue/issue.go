@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/jallum/beadwork/internal/treefs"
+	"github.com/jallum/go-git/v5/plumbing"
 )
 
 type Comment struct {
