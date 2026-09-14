@@ -26,11 +26,15 @@
     {
       "text": "Opened bw PR #146 (https://github.com/jallum/beadwork/pull/146, branch beadwork-ic3/pin-go-git-fork) pinning go.mod to jallum/go-git@bw-pin (the fix commit plus a module rename to github.com/jallum/go-git/v5, required for a remote go.mod dependency to resolve). Includes TestSyncAfterLooseObjectsMaintenance in internal/repo, a regression test that runs real 'git maintenance run --task=loose-objects' twice against a live bw repo and calls Sync -- confirmed failing on the old dependency, passing on the fork. Full bw test suite + go vet pass. Note: fork's go.mod needs go1.25.0 (bw was on 1.24.4); toolchain auto-download should cover it, flagged in the PR for CI to confirm. Revert this pin once go-git/go-git#2390 lands in a tagged v5.x release.",
       "timestamp": "2026-09-14T13:55:55Z"
+    },
+    {
+      "text": "bw PR #146 CI is green after a second commit: pinning go.mod to the fork bumped the effective go directive to 1.25.0 (the fork's own requirement), which made GOTOOLCHAIN auto-download go1.25.0 -- and that auto-downloaded toolchain doesn't bundle a prebuilt 'covdata' tool, which 'go test -coverpkg=./...' needs internally to synthesize coverage for internal/testutil (a package with no test files). Fixed by scoping -coverpkg to only packages that actually have tests (also the more correct scope on its own merits). Verified locally under the same toolchain before pushing; CI run https://github.com/jallum/beadwork/actions/runs/34854174451 passed.",
+      "timestamp": "2026-09-14T14:15:27Z"
     }
   ],
   "priority": 1,
   "status": "open",
   "title": "[BUG] go-git ignores loose-*.pack written by git maintenance loose-objects task; bw fails with object not found",
   "type": "bug",
-  "updated_at": "2026-09-14T13:55:55Z"
+  "updated_at": "2026-09-14T14:15:27Z"
 }
