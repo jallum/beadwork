@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-09-14T11:07:18Z",
+  "description": "Reproduced from user zip (bw-repro). go-git v5.17.0 (and upstream main) storage/filesystem/dotgit/dotgit.go objectPacks() only discovers packs named pack-\u003chash\u003e.pack. C git reads any *.idx in objects/pack. git's 'loose-objects' maintenance task (daily under maintenance.strategy=incremental, enabled by 'git maintenance start'/'register' and Scalar) writes loose-\u003chash\u003e.pack. Run 1 packs loose objects but leaves them on disk (bw still works); run 2 prune-packed deletes the loose copies -\u003e objects exist only in loose-*.pack -\u003e bw sees 'object not found' (sync: 'walk remote commits: object not found'; list: 'open treefs: read commit: object not found'). NOT caused by geometric repack or gc --auto (verified: those only write pack-*). Workaround: git repack -a -d (verified on both repos); prevent recurrence with git config maintenance.loose-objects.enabled false. Fix options: (a) detect non-pack- packs on open and error with actionable message / auto-repack via execGit; (b) patch go-git pack discovery (needs path-based API, objectPackPath builds pack-\u003chash\u003e). Related: bw-gh-138 (stale handle after fetch, different).",
+  "id": "beadwork-z41",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "[BUG] go-git ignores loose-*.pack written by git maintenance loose-objects task; bw fails with object not found",
+  "type": "bug",
+  "updated_at": "2026-09-14T11:07:18Z"
+}
