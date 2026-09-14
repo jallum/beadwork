@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-09-14T14:43:05Z",
   "created": "2026-09-14T14:26:38Z",
   "description": "GitHub issue https://github.com/jallum/beadwork/issues/145. showMap (cmd/bw/show.go) computes BLOCKED BY via store.Tips(iss.BlockedBy, rev) + nearestOpen, which climbs the blocker-of-blocker chain (via the reverse edge map) all the way to open root tips, discarding the direct blocker whenever it itself has any blockers of its own -- regardless of whether the direct blocker is open. bw show --json (.blocked_by), bw list ([blocked by: ...]), and bw blocked (Blocked by: ...) all report iss.BlockedBy directly (filtered to non-closed) and agree with each other; bw show's markdown rendering disagrees. Repro: A blocks B blocks C; bw show C should say 'blocked by B' but says 'blocked by A'. Fix: render iss.BlockedBy directly (skipping closed ones), matching list/blocked, dropping the Tips/nearestOpen climb from showMap. Existing tests TestCmdShowTipsDeepChain and TestCmdShowBlockedByClosedTipWalksBack currently assert the buggy climbing behavior as correct and need updating to the direct-blocker contract.",
   "id": "beadwork-qn4",
   "labels": [],
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "[BUG] bw show renders transitive root blockers under BLOCKED BY instead of direct blockers",
   "type": "bug",
-  "updated_at": "2026-09-14T14:26:40Z"
+  "updated_at": "2026-09-14T14:43:05Z"
 }
