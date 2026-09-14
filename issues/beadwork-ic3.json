@@ -2,13 +2,14 @@
   "assignee": "Jason Allum",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-09-14T13:55:06Z",
   "created": "2026-09-14T13:44:47Z",
   "description": "Temporary dependency switch until go-git/go-git#2390 (loose-pack-discovery fix, tracked in beadwork-z41) merges upstream. Point go.mod at the fork's bw-pin branch (jallum/go-git@bw-pin, module renamed to github.com/jallum/go-git/v5 since Go requires a module's own go.mod to declare the path it's imported under) instead of upstream go-git v5.17.0. Add a regression test (internal/repo) that reproduces the loose-*.pack failure via real 'git maintenance run --task=loose-objects' run twice, proving Sync fails on unpatched go-git and succeeds against the fork. Revert this pin once an upstream v5.x release including the fix is tagged.",
   "id": "beadwork-ic3",
   "labels": [],
   "priority": 1,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Pin go-git to jallum/go-git fork with loose-pack-discovery fix",
   "type": "task",
-  "updated_at": "2026-09-14T13:44:54Z"
+  "updated_at": "2026-09-14T13:55:06Z"
 }
