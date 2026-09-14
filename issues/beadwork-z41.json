@@ -10,11 +10,15 @@
     {
       "text": "Upstream: go-git issue #2345 (2026-08-26) is this exact bug. PR #2346 (2026-08-27) fixes it but targets main/v6, is 47 files +2811/-1895 tangled with a packhandle refactor, CONFLICTING, no reviews, no v5 backport. bw is on v5.17.0; latest v5.19.2 and v6.0.0-alpha.5 still filter on pack- prefix. Waiting on upstream is not viable. Plan: billy fs shim in bw that aliases loose-\u003chash\u003e.{pack,idx} as pack-\u003chash\u003e.* for go-git's dotgit discovery; delete when an adoptable go-git release fixes discovery.",
       "timestamp": "2026-09-14T12:40:18Z"
+    },
+    {
+      "text": "Upstream fix drafted and submitted: https://github.com/go-git/go-git/pull/2390 (draft), targeting go-git releases/v5.x, from fork jallum/go-git branch fix/loose-pack-discovery. TDD: added TestObjectPacksLooseNamed + TestDeleteOldObjectPackAndIndexLooseNamed to storage/filesystem/dotgit (red against upstream master, green after fix). Fix recognizes loose- alongside pack- in objectPacks discovery, objectPackOpen (tries both prefixes), and DeleteOldObjectPackAndIndex (resolves actual on-disk prefix before stat/remove). Full go-git test suite + go vet pass. Diff is 128+/13- across dotgit.go + dotgit_test.go only -- deliberately independent of the much larger v6-only PR #2346. Once merged and tagged upstream, bump bw's go.mod (currently go-git v5.17.0) to the fixed v5.x release; until then bw's own workaround (git repack -a -d + disable maintenance.loose-objects) still applies.",
+      "timestamp": "2026-09-14T13:24:37Z"
     }
   ],
   "priority": 1,
   "status": "open",
   "title": "[BUG] go-git ignores loose-*.pack written by git maintenance loose-objects task; bw fails with object not found",
   "type": "bug",
-  "updated_at": "2026-09-14T12:40:18Z"
+  "updated_at": "2026-09-14T13:24:37Z"
 }
