@@ -8,6 +8,17 @@ BW_BIN          ?= $(BIN_DIR)/bw
 COVER_PROFILE   ?= coverage.out
 CLI_COVER       ?= cli-coverage.out
 
+# Packages with no _test.go files of their own (e.g. internal/testutil,
+# shared scaffolding for other packages' tests) are excluded from
+# -coverpkg. Including one makes `go test` synthesize a zero-coverage
+# entry for it via `go tool covdata`, and an auto-downloaded Go
+# toolchain (GOTOOLCHAIN=auto fetching a `go` version newer than the one
+# actually installed — triggered by any dependency, direct or indirect,
+# whose go.mod requires one) doesn't bundle that tool prebuilt, so the
+# merge fails with "no such tool \"covdata\"" even though every
+# individual package's tests still pass. See beadwork-ic3.
+COVERPKGS := $(shell $(GO) list -f '{{if or .TestGoFiles .XTestGoFiles}}{{.ImportPath}}{{end}}' ./... | paste -sd, -)
+
 .PHONY: help
 help:
 	@awk 'BEGIN{FS=":.*##"} /^[a-zA-Z_-]+:.*##/ {printf "  %-14s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -32,7 +43,7 @@ test: ## go test ./... — fast, no coverage
 .PHONY: test-cover
 test-cover: ## go test with the same coverage flags CI uses
 	CLI_COVER_PROFILE=$(CURDIR)/$(CLI_COVER) \
-	$(GO) test ./... -coverprofile=$(COVER_PROFILE) -covermode=atomic -coverpkg=./...
+	$(GO) test ./... -coverprofile=$(COVER_PROFILE) -covermode=atomic -coverpkg=$(COVERPKGS)
 
 .PHONY: cover
 cover: test-cover ## Show coverage summary after running tests
