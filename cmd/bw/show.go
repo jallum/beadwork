@@ -123,15 +123,9 @@ func showChildren(w Writer, iss *issue.Issue, store *issue.Store) {
 
 // showMap renders BLOCKED BY and UNBLOCKS sections using the md package.
 func showMap(w Writer, iss *issue.Issue, store *issue.Store) {
-	_, rev := store.LoadEdges()
-
-	if len(iss.BlockedBy) > 0 {
-		tips, _ := store.Tips(iss.BlockedBy, rev)
-		actionable := nearestOpen(tips, iss.ID, store)
-		if len(actionable) > 0 {
-			fmt.Fprintln(w)
-			fmt.Fprintln(w, md.BlockedBy(actionable))
-		}
+	if openBlockers := openDirectBlockers(iss, store); len(openBlockers) > 0 {
+		fmt.Fprintln(w)
+		fmt.Fprintln(w, md.BlockedBy(openBlockers))
 	}
 
 	if len(iss.Blocks) > 0 {
@@ -148,6 +142,22 @@ func showMap(w Writer, iss *issue.Issue, store *issue.Store) {
 			fmt.Fprintln(w, md.Unblocks(deps))
 		}
 	}
+}
+
+// openDirectBlockers resolves iss.BlockedBy to issues, dropping closed
+// ones — the same set `bw list` and `bw blocked` render. (--json's
+// blocked_by is the raw, unfiltered field and can still include closed
+// blockers.)
+func openDirectBlockers(iss *issue.Issue, store *issue.Store) []*issue.Issue {
+	var open []*issue.Issue
+	for _, id := range iss.BlockedBy {
+		dep, err := store.Get(id)
+		if err != nil || dep.Status == "closed" {
+			continue
+		}
+		open = append(open, dep)
+	}
+	return open
 }
 
 func showComments(w Writer, iss *issue.Issue) {

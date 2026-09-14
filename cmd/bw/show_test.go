@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"slices"
+	"sort"
 	"strings"
 	"testing"
 
@@ -217,11 +219,66 @@ func TestCmdShowRichDeps(t *testing.T) {
 	}
 }
 
-func TestCmdShowTipsDeepChain(t *testing.T) {
+// Regression for https://github.com/jallum/beadwork/issues/145.
+func TestCmdShowBlockedByIsDirectNotTransitiveRoot(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	// C blocks B blocks A — showing A should display C (the tip), not B
+	a, _ := env.Store.Create("A root blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("B middle", issue.CreateOpts{})
+	c, _ := env.Store.Create("C leaf", issue.CreateOpts{})
+	d, _ := env.Store.Create("D direct unblocked blocker", issue.CreateOpts{})
+	e, _ := env.Store.Create("E second root of B", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Link(b.ID, c.ID)
+	env.Store.Link(d.ID, c.ID)
+	env.Store.Link(e.ID, b.ID)
+	env.Repo.Commit("setup chain")
+
+	var buf bytes.Buffer
+	_, err := cmdShow(env.Store, []string{c.ID}, PlainWriter(&buf), nil)
+	if err != nil {
+		t.Fatalf("cmdShow: %v", err)
+	}
+	out := buf.String()
+
+	if !strings.Contains(out, "BLOCKED BY") {
+		t.Fatalf("should show BLOCKED BY section: %q", out)
+	}
+	if !strings.Contains(out, b.ID) {
+		t.Errorf("should show direct blocker B (%s): %q", b.ID, out)
+	}
+	if !strings.Contains(out, d.ID) {
+		t.Errorf("should show direct blocker D (%s): %q", d.ID, out)
+	}
+	if strings.Contains(out, a.ID) {
+		t.Errorf("should NOT show A (%s) — A blocks B, not C: %q", a.ID, out)
+	}
+	if strings.Contains(out, e.ID) {
+		t.Errorf("should NOT show E (%s) — E blocks B, not C: %q", e.ID, out)
+	}
+
+	var jsonBuf bytes.Buffer
+	if _, err := cmdShow(env.Store, []string{c.ID, "--json"}, PlainWriter(&jsonBuf), nil); err != nil {
+		t.Fatalf("cmdShow --json: %v", err)
+	}
+	var got issue.Issue
+	if err := json.Unmarshal(jsonBuf.Bytes(), &got); err != nil {
+		t.Fatalf("JSON parse: %v", err)
+	}
+	sortedBlockedBy := append([]string{}, got.BlockedBy...)
+	sort.Strings(sortedBlockedBy)
+	wantBlockedBy := []string{b.ID, d.ID}
+	sort.Strings(wantBlockedBy)
+	if !slices.Equal(sortedBlockedBy, wantBlockedBy) {
+		t.Errorf("--json blocked_by = %v, want %v", sortedBlockedBy, wantBlockedBy)
+	}
+}
+
+func TestCmdShowBlockedByDirectNotTip(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
 	a, _ := env.Store.Create("Target", issue.CreateOpts{})
 	b, _ := env.Store.Create("Middle", issue.CreateOpts{})
 	c, _ := env.Store.Create("Leaf tip", issue.CreateOpts{})
@@ -239,91 +296,40 @@ func TestCmdShowTipsDeepChain(t *testing.T) {
 	if !strings.Contains(out, "BLOCKED BY") {
 		t.Errorf("should show BLOCKED BY section: %q", out)
 	}
-	if !strings.Contains(out, "Leaf tip") {
-		t.Errorf("should show leaf tip title: %q", out)
+	if !strings.Contains(out, "Middle") {
+		t.Errorf("should show direct blocker Middle: %q", out)
 	}
-	if !strings.Contains(out, c.ID) {
-		t.Errorf("should show leaf tip ID %s: %q", c.ID, out)
+	if !strings.Contains(out, b.ID) {
+		t.Errorf("should show direct blocker ID %s: %q", b.ID, out)
 	}
-	// Middle node should NOT appear in BLOCKED BY
-	if strings.Contains(out, "Middle") {
-		t.Errorf("should NOT show middle node: %q", out)
+	if strings.Contains(out, "Leaf tip") {
+		t.Errorf("should NOT show C, which blocks B rather than A: %q", out)
 	}
 }
 
-func TestCmdShowBlockedByClosedTipWalksBack(t *testing.T) {
+// Regression for https://github.com/jallum/beadwork/issues/145: closing a
+// direct blocker must not resurrect its own blocker in BLOCKED BY.
+func TestCmdShowBlockedByClosedDirectBlockerHidesItsOwnBlocker(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
 
-	// D blocks C blocks B blocks A — D is closed.
-	// Showing A should display C (nearest open ancestor of the closed tip).
-	a, _ := env.Store.Create("Target", issue.CreateOpts{})
-	b, _ := env.Store.Create("Middle", issue.CreateOpts{})
-	c, _ := env.Store.Create("Workable", issue.CreateOpts{})
-	d, _ := env.Store.Create("Done leaf", issue.CreateOpts{})
-	env.Store.Link(d.ID, c.ID)
-	env.Store.Link(c.ID, b.ID)
-	env.Store.Link(b.ID, a.ID)
-	env.Store.Close(d.ID, "")
+	a, _ := env.Store.Create("A root blocker", issue.CreateOpts{})
+	b, _ := env.Store.Create("B middle", issue.CreateOpts{})
+	c, _ := env.Store.Create("C leaf", issue.CreateOpts{})
+	env.Store.Link(a.ID, b.ID)
+	env.Store.Link(b.ID, c.ID)
+	env.Store.Close(b.ID, "")
 	env.Repo.Commit("setup chain")
 
 	var buf bytes.Buffer
-	_, err := cmdShow(env.Store, []string{a.ID}, PlainWriter(&buf), nil)
+	_, err := cmdShow(env.Store, []string{c.ID}, PlainWriter(&buf), nil)
 	if err != nil {
 		t.Fatalf("cmdShow: %v", err)
 	}
 	out := buf.String()
 
-	if !strings.Contains(out, "Workable") {
-		t.Errorf("should show nearest open blocker C: %q", out)
-	}
-	if !strings.Contains(out, c.ID) {
-		t.Errorf("should show C's ID %s: %q", c.ID, out)
-	}
-	// Closed leaf D should NOT appear
-	if strings.Contains(out, "Done leaf") {
-		t.Errorf("should NOT show closed leaf D: %q", out)
-	}
-}
-
-func TestCmdShowBlockedByClosedTipsDedup(t *testing.T) {
-	env := testutil.NewEnv(t)
-	defer env.Cleanup()
-
-	// D blocks C, E blocks C, C blocks A — D and E both closed.
-	// Showing A should display C once (deduped).
-	a, _ := env.Store.Create("Target", issue.CreateOpts{})
-	c, _ := env.Store.Create("Shared blocker", issue.CreateOpts{})
-	d, _ := env.Store.Create("Done D", issue.CreateOpts{})
-	e, _ := env.Store.Create("Done E", issue.CreateOpts{})
-	env.Store.Link(d.ID, c.ID)
-	env.Store.Link(e.ID, c.ID)
-	env.Store.Link(c.ID, a.ID)
-	env.Store.Close(d.ID, "")
-	env.Store.Close(e.ID, "")
-	env.Repo.Commit("setup")
-
-	var buf bytes.Buffer
-	_, err := cmdShow(env.Store, []string{a.ID}, PlainWriter(&buf), nil)
-	if err != nil {
-		t.Fatalf("cmdShow: %v", err)
-	}
-	out := buf.String()
-
-	if !strings.Contains(out, "Shared blocker") {
-		t.Errorf("should show C: %q", out)
-	}
-	// Should only appear once in BLOCKED BY
-	idx1 := strings.Index(out, c.ID)
-	if idx1 < 0 {
-		t.Fatalf("C's ID not found: %q", out)
-	}
-	// Check no second occurrence after BLOCKED BY header
-	blockedByIdx := strings.Index(out, "BLOCKED BY")
-	afterHeader := out[blockedByIdx:]
-	count := strings.Count(afterHeader, c.ID)
-	if count != 1 {
-		t.Errorf("C's ID should appear once in BLOCKED BY, got %d: %q", count, afterHeader)
+	if strings.Contains(out, "BLOCKED BY") {
+		t.Errorf("B is closed, so C is unblocked — should NOT show BLOCKED BY: %q", out)
 	}
 }
 

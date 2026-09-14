@@ -226,63 +226,6 @@ func fprintJSON(w Writer, v interface{}) {
 	fmt.Fprintln(w, string(data))
 }
 
-// nearestOpen takes tips from the blocker chain and, for each closed tip,
-// walks back via Blocks toward currentID to find the nearest open ancestor.
-// Only follows edges that lie on the transitive blocker path of currentID,
-// preventing siblings (other issues blocked by the same closed blocker) from
-// being returned incorrectly.
-func nearestOpen(tips []*issue.Issue, currentID string, store *issue.Store) []*issue.Issue {
-	// Build the set of all transitive blockers of currentID so the
-	// walk-back only follows edges on paths leading to currentID.
-	blockers := make(map[string]bool)
-	var gather func(string)
-	gather = func(id string) {
-		if blockers[id] {
-			return
-		}
-		blockers[id] = true
-		if iss, err := store.Get(id); err == nil {
-			for _, bid := range iss.BlockedBy {
-				gather(bid)
-			}
-		}
-	}
-	if iss, err := store.Get(currentID); err == nil {
-		for _, bid := range iss.BlockedBy {
-			gather(bid)
-		}
-	}
-
-	seen := make(map[string]bool)
-	var result []*issue.Issue
-
-	var walk func(*issue.Issue)
-	walk = func(t *issue.Issue) {
-		if t.ID == currentID || seen[t.ID] {
-			return
-		}
-		seen[t.ID] = true
-		if t.Status != "closed" {
-			result = append(result, t)
-			return
-		}
-		// Closed: follow Blocks entries that lie on the path to currentID.
-		for _, id := range t.Blocks {
-			if !blockers[id] {
-				continue
-			}
-			if next, err := store.Get(id); err == nil {
-				walk(next)
-			}
-		}
-	}
-
-	for _, tip := range tips {
-		walk(tip)
-	}
-	return result
-}
-
 // sectionHeader returns name styled as a section header (Bold).
 // Used by start.go, upgrade.go, delete.go.
 func sectionHeader(w Writer, name string) string {
