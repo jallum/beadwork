@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-09-14T14:42:45Z",
+  "description": "Follow-up from beadwork-qn4 / GitHub issue 145's fix review. cmdShow's --json path (cmd/bw/show.go) does fprintJSON(w, iss), dumping the raw Issue.BlockedBy field verbatim. Close() (internal/issue/update.go) never prunes a closed issue's ID out of the issues it blocks, so a closed blocker still appears in blocked_by. bw list and bw blocked both filter closed blockers out (internal/issue/blocking.go ClosedBlockerSet / IsClosed), so as soon as any blocker closes, --json disagrees with list/blocked/plain-show on what an issue is 'blocked by'. This is a narrower version of the same inconsistency issue 145 reported for plain show, just not the part that got fixed there. Repro: A blocks B, close A, then 'bw show B --json | jq .blocked_by' still shows [\"\u003cA\u003e\"] while bw list/bw blocked/plain bw show correctly omit it. Fix options: (a) filter blocked_by in the JSON response the same way list/blocked do (changes what --json reports, a compat consideration for scripts already filtering client-side); (b) prune BlockedBy/Blocks references when Close() runs (changes what's persisted, affects history/audit of past dependency state). Needs a decision before implementing.",
+  "id": "beadwork-k6s",
+  "labels": [],
+  "priority": 3,
+  "status": "open",
+  "title": "[BUG] bw show --json blocked_by includes closed blockers, unlike bw list/bw blocked",
+  "type": "bug",
+  "updated_at": "2026-09-14T14:42:45Z"
+}
