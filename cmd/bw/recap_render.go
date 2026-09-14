@@ -30,7 +30,7 @@ func renderRecapJSON(w Writer, r recap.Recap) error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintln(w, string(data))
+	fmt.Fprintln(rawSink(w), string(data))
 	return nil
 }
 
@@ -351,7 +351,7 @@ func renderCrossRepo(w Writer, all []repoRecap, ra recapArgs) error {
 		if err != nil {
 			return err
 		}
-		fmt.Fprintln(w, string(data))
+		fmt.Fprintln(rawSink(w), string(data))
 		return nil
 	}
 
