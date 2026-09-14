@@ -18,11 +18,15 @@
     {
       "text": "Verified the upstream fix (go-git/go-git PR #2390, fork jallum/go-git@fix/loose-pack-discovery) against bw itself: built bw from a scratch worktree with 'go mod edit -replace github.com/go-git/go-git/v5=\u003cpatched fork\u003e', then reran both reproductions.\n1) User's zip repro (bw-repro/repro.sh): bw sync now says 'up to date' instead of 'error: walk remote commits: object not found'.\n2) Real-world trigger, rebuilt from scratch: a fresh bw repo, 40 issues, then `git maintenance run --task=loose-objects` run twice (2nd run prunes the loose copies, leaving objects only in loose-*.pack). Ran a 3rd time too, for a repo whose .git/objects/pack/ contains ONLY loose-*.pack files, zero pack-*. With the patched binary: bw list, bw create, and bw sync all work at every stage.\nConfirms the PR fixes bw's actual failure mode, not just the synthetic repro. Next: wait on upstream review of #2390; once merged/tagged, bump go.mod. No further action needed to validate the fix itself.",
       "timestamp": "2026-09-14T13:39:36Z"
+    },
+    {
+      "text": "Follow-up ticket beadwork-ic3: pin bw's go.mod to the fork (jallum/go-git@bw-pin) with a regression test, as a stopgap until go-git/go-git#2390 merges upstream.",
+      "timestamp": "2026-09-14T13:44:54Z"
     }
   ],
   "priority": 1,
   "status": "open",
   "title": "[BUG] go-git ignores loose-*.pack written by git maintenance loose-objects task; bw fails with object not found",
   "type": "bug",
-  "updated_at": "2026-09-14T13:39:36Z"
+  "updated_at": "2026-09-14T13:44:54Z"
 }
