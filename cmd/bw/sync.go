@@ -8,10 +8,10 @@ import (
 
 	"github.com/jallum/beadwork/internal/config"
 
-	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/jallum/beadwork/internal/intent"
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/repo"
+	"github.com/jallum/go-git/v5/plumbing"
 	"golang.org/x/term"
 )
 
