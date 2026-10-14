@@ -5,6 +5,7 @@ STATICCHECK     ?= staticcheck
 STATICCHECK_VER ?= latest
 BIN_DIR         ?= bin
 BW_BIN          ?= $(BIN_DIR)/bw
+BUILD_METADATA  ?=
 COVER_PROFILE   ?= coverage.out
 CLI_COVER       ?= cli-coverage.out
 
@@ -53,11 +54,11 @@ cover: test-cover ## Show coverage summary after running tests
 
 .PHONY: bw
 bw: $(BIN_DIR) ## Build the bw binary into ./bin/bw for local use
-	$(GO) build -o $(BW_BIN) ./cmd/bw
+	$(GO) build -ldflags "-X main.buildMetadata=$(BUILD_METADATA)" -o $(BW_BIN) ./cmd/bw
 
 .PHONY: install
 install: ## go install ./cmd/bw to your $GOBIN
-	$(GO) install ./cmd/bw
+	$(GO) install -ldflags "-X main.buildMetadata=$(BUILD_METADATA)" ./cmd/bw
 
 .PHONY: tidy
 tidy: ## go mod tidy

@@ -10,6 +10,11 @@ etc.) and lives permanently in the repo. It is the first thing an agent sees
 about beadwork — often before it has any other context about the project's
 workflow.
 
+The snippet continues to point to `bw prime` when a project configures a custom
+`prompts.prime` file. The selected template supplies the workflow; customization
+does not require changing the snippet. See [prompts.md](prompts.md#project-customization)
+for configuration.
+
 1. **Be minimal.** This is a pointer, not documentation. The full workflow lives
    in `bw prime`. Anything explained here that is also in prime creates
    duplication that can drift. Keep this to what the agent needs to know

@@ -56,6 +56,8 @@ func TestCmdStartJSON(t *testing.T) {
 
 	iss, _ := env.Store.Create("Start JSON", issue.CreateOpts{})
 	env.Repo.Commit("create " + iss.ID)
+	// JSON mode does not load or render the configured briefing.
+	configurePrompt(t, env, "start", "missing.md")
 
 	var buf bytes.Buffer
 	_, err := cmdStart(env.Store, []string{iss.ID, "--assignee", "bob", "--json"}, PlainWriter(&buf), nil)

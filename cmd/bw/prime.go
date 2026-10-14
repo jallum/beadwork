@@ -24,6 +24,10 @@ type PrimeData struct {
 
 func cmdPrime(store *issue.Store, _ []string, w Writer, _ *config.Config) (*config.Config, error) {
 	r := store.Committer.(*repo.Repo)
+	src, name, err := loadPrompt(r, "prime", prompts.Prime)
+	if err != nil {
+		return nil, err
+	}
 	cfg := r.ListConfig()
 	gitCtx := r.GetGitContext()
 
@@ -57,7 +61,7 @@ func cmdPrime(store *issue.Store, _ []string, w Writer, _ *config.Config) (*conf
 	}
 
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, "prime", prompts.Prime, data, bwFn); err != nil {
+	if err := tmpl.Execute(&buf, name, src, data, bwFn); err != nil {
 		return nil, err
 	}
 

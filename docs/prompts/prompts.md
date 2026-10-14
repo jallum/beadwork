@@ -4,6 +4,9 @@ Beadwork's prompt system teaches agents to use beadwork effectively. This
 document covers what the system is trying to accomplish, how the prompts
 relate to each other, and how to validate that changes are working.
 
+The architecture and behavior goals below describe the embedded default prompts.
+Projects can replace the `prime` context and `start` briefing with custom files.
+
 Per-prompt design requirements live in dedicated docs:
 - [`agents.md`](agents.md) — the boot loader
 - [`prime.md`](prime.md) — the mental model
@@ -65,6 +68,8 @@ how to plan, how to work, how to delegate. Includes live state (ready work,
 WIP). This is the canonical reference — everything an agent needs to use
 beadwork effectively in one read.
 
+The source is `prompts/prime.md` unless `prompts.prime` selects a custom file.
+
 **Why it's separate:** Loaded on demand, so it can be thorough without
 permanently consuming context. Dynamic rendering means it can include
 current state (ready queue, WIP list) that makes it immediately actionable.
@@ -77,6 +82,10 @@ Rendered by `bw start <id>`. Delivers concrete landing instructions
 specific to the ticket type and project configuration. Prime teaches
 principles; start delivers the procedure at the moment the agent needs it.
 
+The source is `prompts/start.md` unless `prompts.start` selects a custom file.
+The issue summary, description, and comments are printed before either template.
+`bw start --json` does not load or render a briefing.
+
 **Why it's separate:** Procedure at point of action is more effective than
 procedure in a mental-model document. A sub-agent may see *only* this
 prompt — it must be self-contained.
@@ -88,6 +97,33 @@ See [`start.md`](start.md) for design requirements.
 Tells the user what to add to CLAUDE.md. Used by `bw init`, not by agents
 directly. Exists to bootstrap the system — once agents.md is in place,
 onboard.md's job is done.
+
+## Project customization
+
+`bw config list` always shows `prompts.prime` and `prompts.start`. Their empty
+defaults select the built-in templates; `bw config get <key>` returns the same
+default even if the key has never been set. Reads do not persist those defaults.
+
+```sh
+bw config set prompts.prime .beadwork/prompts/prime.md
+bw config set prompts.start .beadwork/prompts/start.md
+bw config list
+```
+
+Relative paths are resolved from the current checkout's repository root, including
+subdirectories, `-C`, and worktrees. Absolute paths are supported. Settings sync
+on the `beadwork` branch; commit custom files on your code branch so they are
+available in each checkout. The files replace entire prompts and receive the same
+Go template variables and `{{ bw ... }}` function as the embedded templates.
+
+Changes to custom files take effect on the next command invocation without
+rebuilding. Set `prompts.prime` or `prompts.start` to `""` to restore its embedded
+default. An empty file suppresses the selected prompt. Missing files and invalid
+templates return errors. Custom prompts are maintained by the project and do not
+automatically receive upstream prompt improvements.
+
+See the [template reference](../design-templates.md) for variables and examples.
+The onboarding snippet and `onboard` prompt remain embedded.
 
 ## Experimentation
 
@@ -119,13 +155,23 @@ so they survive compaction and session boundaries.
 
 ### Build and test loop
 
-1. **Edit** the prompt source in `prompts/`.
-2. **Compile**: `go build -o ./bw-test ./cmd/bw`
-3. **Install**: `mv $(which bw) $(which bw).orig && ln -sf "$(pwd)/bw-test" ~/.local/bin/bw`
-4. **Verify**: `bw prime --x-render-as markdown` — confirm your changes appear.
-5. **Test against an agent** — give it a task that exercises the behavior
+For experiments with `prime` or `start`, use custom files in the test repo:
+
+1. **Edit** a variant in `.beadwork/prompts/`.
+2. **Select it** with `bw config set prompts.prime <path>` or
+   `bw config set prompts.start <path>`.
+3. **Verify**: `bw config list`, then `bw prime --x-render-as markdown` or
+   `bw start <test-ticket-id>` — confirm the selected variant appears. Starting
+   the test ticket claims it; create a fresh ticket for each start experiment.
+4. **Test against an agent** — give it a task that exercises the behavior
    you're trying to influence, and observe what it does.
-6. **Restore**: `mv ~/.local/bin/bw.orig ~/.local/bin/bw`
+5. **Restore** the built-in template with `bw config set prompts.prime ""` or
+   `bw config set prompts.start ""`.
+
+To change the embedded defaults or the onboarding prompts, edit the source in
+`prompts/` and rebuild with `make bw BUILD_METADATA=prompt-test`. Check
+`./bin/bw --version`, then use that binary in the test repo or put it on the test
+agent's PATH. See [CONTRIBUTING.md](../../CONTRIBUTING.md) for build labels.
 
 ### Testing with a second agent instance
 

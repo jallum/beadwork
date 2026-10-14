@@ -51,6 +51,28 @@ func cmdStart(store *issue.Store, args []string, w Writer, _ *config.Config) (*c
 
 	r := store.Committer.(*repo.Repo)
 
+	// Load and parse the briefing before claiming the issue. JSON output does
+	// not include a briefing and does not require the configured prompt file.
+	var briefing *tmpl.Template
+	if !sa.JSON {
+		src, name, err := loadPrompt(r, "start", prompts.Start)
+		if err != nil {
+			return nil, err
+		}
+		bwFn := func(args ...string) string {
+			if cmd := commandMap[args[0]]; cmd != nil {
+				var buf bytes.Buffer
+				cmd.Run(store, args[1:], TokenWriter(&buf), nil)
+				return strings.TrimRight(buf.String(), "\n")
+			}
+			return ""
+		}
+		briefing, err = tmpl.Parse(name, src, bwFn)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// Default assignee to git user.name
 	assignee := sa.Assignee
 	if assignee == "" {
@@ -104,17 +126,8 @@ func cmdStart(store *issue.Store, args []string, w Writer, _ *config.Config) (*c
 		WorkflowReview: cfg["workflow.review"],
 	}
 
-	bwFn := func(args ...string) string {
-		if cmd := commandMap[args[0]]; cmd != nil {
-			var buf bytes.Buffer
-			cmd.Run(store, args[1:], TokenWriter(&buf), nil)
-			return strings.TrimRight(buf.String(), "\n")
-		}
-		return ""
-	}
-
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, "start", prompts.Start, data, bwFn); err != nil {
+	if err := briefing.Execute(&buf, data); err != nil {
 		return nil, err
 	}
 

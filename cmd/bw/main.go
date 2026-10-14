@@ -14,6 +14,17 @@ import (
 
 const version = "0.13.3"
 
+// buildMetadata optionally identifies custom builds, set with -ldflags -X.
+// Keep version numeric for the release comparison and upgrade code.
+var buildMetadata string
+
+func displayVersion() string {
+	if buildMetadata != "" {
+		return version + "+" + buildMetadata
+	}
+	return version
+}
+
 // globalNoColor is set by commands (e.g. recap --no-color) to force
 // non-colored output even when stdout is a TTY. Consulted at render setup.
 var globalNoColor bool
@@ -85,7 +96,7 @@ func main() {
 
 	switch cmd {
 	case "--version", "-v":
-		fmt.Fprintln(w, "bw "+version)
+		fmt.Fprintln(w, "bw "+displayVersion())
 		return
 	case "--help", "-h":
 		printUsage(w)

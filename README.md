@@ -102,6 +102,53 @@ bw prime                       Print workflow context for agents
 
 `bw onboard` prints a snippet for your project's agent instructions file (CLAUDE.md, GEMINI.md, etc.). Once installed, agents automatically load workflow context via `bw prime` at the start of each session.
 
+### Custom prompts
+
+`bw config list` always includes the prompt options, even before you set them:
+
+```text
+prompts.prime=
+prompts.start=
+```
+
+| Option | Controls | Default |
+|--------|----------|---------|
+| `prompts.prime` | Workflow context printed by `bw prime` | Empty: built-in `prime.md` |
+| `prompts.start` | Briefing printed by `bw start <id>` | Empty: built-in `start.md` |
+
+Replace the built-in workflow context or issue briefing with your own Markdown
+files:
+
+```sh
+bw config set prompts.prime .beadwork/prompts/prime.md
+bw config set prompts.start .beadwork/prompts/start.md
+bw config get prompts.prime
+```
+
+Relative paths are resolved from the current checkout's repository root, including
+when invoked from a subdirectory, through `-C`, or in a worktree. Absolute paths
+are also supported. Settings live on the `beadwork` branch and sync with issues;
+commit the prompt files on your code branch so they are available in each checkout.
+
+Custom files replace the entire selected prompt and support the same Go template
+variables and `{{ bw ... }}` function as the built-in templates. `bw start` still
+prints the issue summary, description, and comments before its custom briefing.
+`bw start --json` does not load or render a prompt.
+
+Unset settings use the built-in prompts. Set a value to an empty string to restore
+the default, for example `bw config set prompts.prime ""`. An empty prompt file
+suppresses that prompt. Missing files and invalid templates return errors instead
+of falling back to the built-in prompt. `bw config get` returns an empty value for
+an unset prompt option. Listing or reading defaults does not save them to the
+`beadwork` branch.
+
+See [the template reference](docs/design-templates.md) for available variables and
+an example. Custom prompts are maintained by your project and do not automatically
+receive changes to the built-in templates.
+
+For labeled local builds, such as `bw 0.13.3+xpmatteo`, see the
+[custom build instructions](CONTRIBUTING.md).
+
 ## Design
 
 All data lives on a git orphan branch, manipulated directly in the object database via [go-git](https://github.com/go-git/go-git). Every operation is an atomic commit. Sync uses fetch-rebase-push with intent replay on conflict.

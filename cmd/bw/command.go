@@ -193,7 +193,7 @@ var commands = []Command{
 	{
 		Name:        "start",
 		Summary:     "Start working on an issue",
-		Description: "Move an issue to in_progress and assign it. Refuses to start blocked issues.\nDefaults assignee to git user.name if not provided.",
+		Description: "Move an issue to in_progress and assign it. Refuses to start blocked issues.\nDefaults assignee to git user.name if not provided.\nThe briefing uses prompts.start when configured (see bw config --help). --json skips the briefing.",
 		NeedsStore:  true,
 		Positionals: []Positional{
 			{Name: "<id>", Required: true, Help: "Issue ID"},
@@ -439,12 +439,15 @@ var commands = []Command{
 	{
 		Name:        "config",
 		Summary:     "View/set config options",
-		Description: "View or modify configuration. Subcommands: get, set, list.",
+		Description: "View or modify configuration. Subcommands: get, set, list.\nGet/list include prompts.prime and prompts.start even when unset (default: empty).\nSet either to a custom prompt file path. Relative paths use the current checkout's repository root; an empty value restores the built-in prompt.",
 		Positionals: []Positional{
 			{Name: "get|set|list", Required: true, Help: "Subcommand"},
 		},
 		Examples: []Example{
 			{Cmd: "bw config set default.priority 2"},
+			{Cmd: "bw config set prompts.prime .beadwork/prompts/prime.md"},
+			{Cmd: "bw config set prompts.start .beadwork/prompts/start.md"},
+			{Cmd: `bw config set prompts.prime ""`, Help: "Restore the built-in prime prompt"},
 			{Cmd: "bw config get default.priority"},
 			{Cmd: "bw config list"},
 		},
@@ -472,10 +475,11 @@ var commands = []Command{
 		Run:     wrapNoArgs(cmdOnboard),
 	},
 	{
-		Name:       "prime",
-		Summary:    "Print workflow context for agents",
-		NeedsStore: true,
-		Run:        cmdPrime,
+		Name:        "prime",
+		Summary:     "Print workflow context for agents",
+		Description: "Print workflow context for agents. Uses the built-in template unless prompts.prime selects a custom Markdown file.\nView the option with bw config list; set it with bw config set prompts.prime <path>.\nRelative paths use the current checkout's repository root. An empty setting restores the built-in prompt.",
+		NeedsStore:  true,
+		Run:         cmdPrime,
 	},
 	{
 		Name:        "recap",
