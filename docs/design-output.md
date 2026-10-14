@@ -63,6 +63,14 @@ through without resolution. Useful for integration tests (assert on `{p:1}`
 and `{id:bw-xyz}` tokens directly) and debugging. The `--x-` prefix marks
 it as internal (consistent with `--x-render-as`).
 
+## Custom Prompt Output
+
+`bw prime` and the `bw start` briefing render either an embedded default or the
+file selected by `prompts.prime` / `prompts.start`. Both sources use the same
+template rendering and output writers. `{{ bw ... }}` captures tokenized command
+output for inline rendering. `bw start --json` skips prompt rendering entirely.
+See the [template reference](design-templates.md) for configuration and variables.
+
 ## TTY-Only Affordances
 
 The TTY path adds things that don't exist in markdown:

@@ -16,6 +16,13 @@ type ConfigArgs struct {
 	Value  string // for set
 }
 
+// Defaults are visible through get/list without writing them to .bwconfig.
+// Empty prompt paths select the embedded templates.
+var repoConfigDefaults = map[string]string{
+	"prompts.prime": "",
+	"prompts.start": "",
+}
+
 func parseConfigArgs(raw []string) (ConfigArgs, error) {
 	if len(raw) == 0 {
 		return ConfigArgs{}, fmt.Errorf("usage: bw config get|set|list")
@@ -47,10 +54,16 @@ func cmdConfig(store *issue.Store, args []string, w Writer, _ *config.Config) (*
 		return nil, err
 	}
 	r := store.Committer.(*repo.Repo)
+	cfg := r.ListConfig()
+	for key, value := range repoConfigDefaults {
+		if _, ok := cfg[key]; !ok {
+			cfg[key] = value
+		}
+	}
 
 	switch ca.Subcmd {
 	case "get":
-		val, ok := r.GetConfig(ca.Key)
+		val, ok := cfg[ca.Key]
 		if !ok {
 			return nil, fmt.Errorf("key not found: %s", ca.Key)
 		}
@@ -67,7 +80,6 @@ func cmdConfig(store *issue.Store, args []string, w Writer, _ *config.Config) (*
 		fmt.Fprintf(w, "%s=%s\n", ca.Key, ca.Value)
 
 	case "list":
-		cfg := r.ListConfig()
 		keys := make([]string, 0, len(cfg))
 		for k := range cfg {
 			keys = append(keys, k)

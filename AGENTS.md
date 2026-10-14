@@ -16,9 +16,16 @@ Key commands: `bw create`, `bw ready` (find unblocked work), `bw start` (claim a
 
 - `cmd/bw/` — CLI entry point and all subcommands
 - `internal/` — core packages: `issue`, `repo`, `intent`, `template`, `treefs`, `wrap`
-- `prompts/` — prompt templates embedded into the binary (`prime.md`, `start.md`, `agents.md`, `onboard.md`)
+- `prompts/` — default prompt templates embedded into the binary (`prime.md`, `start.md`, `agents.md`, `onboard.md`)
 - `test/` — acceptance test harness
 
 ## Agent onboarding
 
 When a project adopts beadwork, `bw onboard` prints a snippet (sourced from `prompts/agents.md`) for the user to add to their `AGENTS.md` or `CLAUDE.md`. That snippet points agents at `bw prime`, which delivers full workflow context dynamically.
+
+Projects can replace the `prime` context and `start` briefing with Markdown files
+using `bw config set prompts.prime <path>` and `bw config set prompts.start <path>`.
+`bw config list` shows both options; empty values select the embedded defaults.
+Relative paths use the current checkout's repository root, including worktrees.
+See `docs/design-templates.md` for the template reference. For labeled local
+builds, use `make bw BUILD_METADATA=local` and check `./bin/bw --version`.

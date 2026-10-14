@@ -1,6 +1,13 @@
 # start.md
 
-Design requirements for the start prompt (`prompts/start.md`).
+Design requirements for the built-in start prompt (`prompts/start.md`).
+
+Projects can replace the briefing with `bw config set prompts.start <path>`.
+`bw config list` shows `prompts.start=` when the built-in template is selected;
+`bw config set prompts.start ""` restores it. Custom files replace the briefing
+after the issue summary, description, and comments. `bw start --json` skips the
+prompt. File-read and syntax errors fail before the issue is claimed; execution
+errors occur after claiming. See the [template reference](../design-templates.md).
 
 For end goals, prompt architecture, and experimentation methodology,
 see [`prompts.md`](prompts.md).

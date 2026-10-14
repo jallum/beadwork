@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+- **Custom workflow prompts** — configure `prompts.prime` and `prompts.start` with
+  `bw config set <key> <path>` to replace the embedded templates with Markdown
+  files. Relative paths use the current checkout's repository root, including
+  worktrees. Go template variables and `{{ bw ... }}` remain available. Empty
+  settings restore the built-in prompts; empty files suppress them. Missing files
+  and invalid templates return errors. `bw start --json` skips prompt loading.
+- **Discoverable prompt settings** — `bw config list` always includes both prompt
+  options with empty defaults. `bw config get` returns those defaults for unset
+  prompt options without writing settings or creating commits.
+- **Custom build labels** — `make bw BUILD_METADATA=<label>` and `make install
+  BUILD_METADATA=<label>` append `+<label>` to `bw --version`, while upgrade checks
+  continue comparing the base release number.
+
 ## 0.13.3 — 2026-09-03
 
 - **`bw sync` no longer fails with `object not found` / `packfile not found` or silently corrupts the beadwork branch** — `git fetch` can trigger auto-gc, which repacks the object database out of process and deletes packfiles that `bw`'s long-lived in-memory git handle still had indexed. Depending on timing, sync would either die with:

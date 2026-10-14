@@ -365,6 +365,13 @@ func TestConfigListOutput(t *testing.T) {
 
 	out := bw(t, env.Dir, "config", "list")
 	assertContains(t, out, "prefix=test")
+	assertContains(t, out, "prompts.prime=\n")
+	assertContains(t, out, "prompts.start=\n")
+	for _, key := range []string{"prompts.prime", "prompts.start"} {
+		if got := bw(t, env.Dir, "config", "get", key); got != "\n" {
+			t.Errorf("config get %s = %q, want empty default", key, got)
+		}
+	}
 }
 
 func TestConfigGetOutput(t *testing.T) {

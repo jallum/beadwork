@@ -1,6 +1,12 @@
 # prime.md
 
-Design requirements for the prime prompt (`prompts/prime.md`).
+Design requirements for the built-in prime prompt (`prompts/prime.md`).
+
+`bw prime` uses this template by default. Projects can replace it with
+`bw config set prompts.prime <path>`. `bw config list` shows `prompts.prime=` when
+the built-in template is selected; `bw config set prompts.prime ""` restores it.
+The requirements below describe the embedded default. See the
+[template reference](../design-templates.md) for custom files and available data.
 
 For end goals, prompt architecture, and experimentation methodology,
 see [`prompts.md`](prompts.md).
@@ -66,7 +72,7 @@ see [`prompts.md`](prompts.md).
 
 9. **Adapt to project configuration.** Per-task conditionals (PR review,
    etc.) live in start.md and render at point of action. Prime shows the
-   full mental model to all agents regardless of configuration.
+   full mental model to all agents unless the project selects a custom prime.
 
 10. **Be the canonical reference.** AGENTS.md is deliberately minimal — just
     a pointer to `bw prime`. This prompt is the single source of truth for

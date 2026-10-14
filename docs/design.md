@@ -25,6 +25,25 @@ parent/
 
 Every listing query is a directory read. Parent-child relationships use the same marker pattern, with cycle detection preventing circular hierarchies. Two agents working on different issues never touch the same file.
 
+## Configuration
+
+Project settings are `key=value` entries in `.bwconfig` on the `beadwork` branch.
+`bw config set <key> <value>` commits a setting; `bw config get <key>` and
+`bw config list` read settings without creating commits. Settings sync alongside
+issues.
+
+The CLI includes empty defaults for `prompts.prime` and `prompts.start` in get/list
+output even when they are absent from `.bwconfig`. Empty values select the embedded
+templates. A configured path selects a Markdown template from the current checkout
+or an absolute file path. Prompt files live outside the `beadwork` branch; commit
+them on your code branch so each checkout can load them. See the
+[template reference](design-templates.md) for path resolution and rendering.
+
+The host-local YAML config (`~/.bw`, or the path in `BW_CONFIG`) holds registry
+settings and is separate from these project settings. `BUILD_METADATA` is a build
+option, documented in [CONTRIBUTING.md](../CONTRIBUTING.md), rather than a project
+setting.
+
 ## Attachments
 
 Arbitrary binary or text blobs may be stored alongside an issue under the
