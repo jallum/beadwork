@@ -14,7 +14,7 @@ func TestCommandMapContainsAllCommands(t *testing.T) {
 	expected := []string{
 		"init", "create", "show", "list", "update",
 		"close", "reopen", "delete", "label",
-		"dep", "ready",
+		"dep", "ready", "ui",
 		"sync", "export", "import",
 		"config", "upgrade", "onboard", "prime",
 	}

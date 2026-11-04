@@ -41,6 +41,7 @@ bw init                                           # initialize in any git repo
 bw onboard                                        # print bootstrap snippet for CLAUDE.md / GEMINI.md
 bw create "Fix auth bug" --type bug -p 1          # create an issue
 bw ready                                          # list unblocked work
+bw ui                                             # start the read-only local web UI
 bw comment bw-a1b2 "Fixed in latest deploy"       # add a comment
 bw close bw-a1b2                                  # close it
 bw sync                                           # push to remote
@@ -70,6 +71,7 @@ bw history <id> [--limit N]         Show commit history for an issue
 ```
 bw ready [--json]              List unblocked issues
 bw blocked [--json]            List issues waiting on dependencies
+bw ui [--port N]               Start the read-only local web UI
 ```
 
 **Dependencies**

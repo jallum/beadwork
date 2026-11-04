@@ -329,6 +329,20 @@ var commands = []Command{
 		Run:        cmdBlocked,
 	},
 	{
+		Name:        "ui",
+		Summary:     "Start the read-only local web UI",
+		Description: "Start a local read-only view of the Beadwork queue.\nThe server listens on 127.0.0.1 and stops when this command stops.",
+		Flags: []Flag{
+			{Long: "--port", Value: "N", Help: "Local port (default 8787; use 0 for any free port)"},
+		},
+		Examples: []Example{
+			{Cmd: "bw ui"},
+			{Cmd: "bw ui --port 0"},
+		},
+		NeedsStore: true,
+		Run:        cmdUI,
+	},
+	{
 		Name:        "defer",
 		Summary:     "Defer an issue until a date",
 		Description: "Set an issue's status to deferred with a target date.\nDeferred issues are hidden from ready.\nUnlike due dates (--due on create/update), deferring changes the issue status and hides it from bw ready.",
@@ -545,7 +559,7 @@ var commandGroups = []struct {
 	cmds []string
 }{
 	{"Working With Issues", []string{"create", "show", "list", "update", "start", "close", "reopen", "delete", "comment", "label", "defer", "undefer", "history", "attach"}},
-	{"Finding Work", []string{"ready", "blocked"}},
+	{"Finding Work", []string{"ready", "blocked", "ui"}},
 	{"Dependencies", []string{"dep"}},
 	{"Sync & Data", []string{"sync", "export", "import"}},
 	{"Cross-Repo & Activity", []string{"recap", "registry"}},

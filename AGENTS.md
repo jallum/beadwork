@@ -8,9 +8,9 @@ AI agents lose context constantly — compaction, session boundaries, crashes. B
 
 ## How it works
 
-`bw init` adds a `beadwork` branch to any git repo. Issues live there as JSON files with status, priority, dependencies, labels, comments, and parent/child relationships. The CLI (`bw`) is the only interface — agents use it the same way a human would.
+`bw init` adds a `beadwork` branch to any git repo. Issues live there as JSON files with status, priority, dependencies, labels, comments, and parent/child relationships. The CLI (`bw`) is the primary interface. The optional `bw ui` command gives humans a read-only local view of the same data.
 
-Key commands: `bw create`, `bw ready` (find unblocked work), `bw start` (claim a task), `bw close`, `bw sync`. Every command supports `--help`.
+Key commands: `bw create`, `bw ready` (find unblocked work), `bw start` (claim a task), `bw close`, `bw sync`, and `bw ui`. Every command supports `--help`.
 
 ## Repo structure
 
