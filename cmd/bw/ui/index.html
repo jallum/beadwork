@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Beadwork Queue</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0c0f0e;
+        --panel: #131817;
+        --panel-strong: #18201d;
+        --line: #28322f;
+        --text: #edf4f0;
+        --muted: #91a29b;
+        --green: #74d69c;
+        --green-soft: #183628;
+        --amber: #e6b960;
+        --amber-soft: #392d17;
+        --red: #f18888;
+        --red-soft: #3b2020;
+        --blue: #83b7ef;
+        --blue-soft: #182d42;
+        --radius: 14px;
+        font-family:
+          Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 12% -10%, #183d2b 0, transparent 32rem),
+          radial-gradient(circle at 92% 5%, #192c3d 0, transparent 27rem),
+          var(--bg);
+      }
+
+      button, input { font: inherit; }
+      button { color: inherit; }
+
+      .shell {
+        width: min(1540px, calc(100% - 36px));
+        margin: 0 auto;
+        padding: 30px 0 48px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 24px;
+      }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        color: var(--green);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(30px, 4vw, 54px);
+        line-height: 1;
+        letter-spacing: -0.045em;
+      }
+
+      .subtitle {
+        max-width: 720px;
+        margin: 13px 0 0;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.55;
+      }
+
+      .connection {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-top: 4px;
+        padding: 9px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(19, 24, 23, 0.82);
+        color: var(--muted);
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .connection-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--amber);
+        box-shadow: 0 0 0 4px rgba(230, 185, 96, 0.12);
+      }
+
+      .connection.live .connection-dot {
+        background: var(--green);
+        box-shadow: 0 0 0 4px rgba(116, 214, 156, 0.12);
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(120px, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .stat {
+        padding: 16px 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgba(19, 24, 23, 0.82);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.16);
+      }
+
+      .stat-label {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .stat-value {
+        display: block;
+        margin-top: 6px;
+        font-size: 28px;
+        font-weight: 780;
+        letter-spacing: -0.04em;
+      }
+
+      .frontier {
+        margin-bottom: 18px;
+        padding: 18px;
+        border: 1px solid #2c4d3c;
+        border-radius: var(--radius);
+        background: linear-gradient(145deg, rgba(25, 52, 39, 0.8), rgba(19, 24, 23, 0.84));
+      }
+
+      .section-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 13px;
+      }
+
+      .section-heading h2 {
+        margin: 0;
+        font-size: 16px;
+        letter-spacing: -0.01em;
+      }
+
+      .section-heading span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .frontier-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 10px;
+      }
+
+      .frontier-card {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid rgba(116, 214, 156, 0.25);
+        border-radius: 11px;
+        background: rgba(12, 15, 14, 0.55);
+        text-align: left;
+        cursor: pointer;
+        transition: border-color 120ms ease, transform 120ms ease;
+      }
+
+      .frontier-card:hover {
+        border-color: var(--green);
+        transform: translateY(-1px);
+      }
+
+      .frontier-card strong { display: block; margin-top: 6px; line-height: 1.35; }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .search {
+        min-width: 0;
+        flex: 1;
+        padding: 11px 13px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        outline: none;
+        color: var(--text);
+        background: rgba(19, 24, 23, 0.9);
+      }
+
+      .search:focus { border-color: #557367; }
+
+      .control {
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+        cursor: pointer;
+      }
+
+      .control:hover { background: var(--panel-strong); }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 430px);
+        gap: 16px;
+        align-items: start;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgba(19, 24, 23, 0.88);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+        overflow: hidden;
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 55px;
+        padding: 0 17px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .panel-header h2 { margin: 0; font-size: 15px; }
+      .panel-header span { color: var(--muted); font-size: 12px; }
+
+      .queue-list {
+        max-height: calc(100vh - 330px);
+        min-height: 420px;
+        overflow: auto;
+      }
+
+      .issue-row {
+        --depth: 0;
+        display: grid;
+        grid-template-columns: 23px 102px minmax(0, 1fr) auto;
+        gap: 9px;
+        align-items: center;
+        width: 100%;
+        padding: 11px 13px 11px calc(13px + var(--depth) * 22px);
+        border: 0;
+        border-bottom: 1px solid rgba(40, 50, 47, 0.68);
+        background: transparent;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .issue-row:hover, .issue-row.selected { background: rgba(35, 47, 43, 0.82); }
+      .issue-row.selected { box-shadow: inset 3px 0 var(--green); }
+      .issue-icon { color: var(--muted); font-size: 14px; text-align: center; }
+      .issue-id { color: var(--blue); font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .issue-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+
+      .badges { display: flex; align-items: center; gap: 6px; }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 22px;
+        padding: 2px 7px;
+        border-radius: 999px;
+        background: #202a27;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 750;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      .badge.ready { color: var(--green); background: var(--green-soft); }
+      .badge.blocked { color: var(--red); background: var(--red-soft); }
+      .badge.progress { color: var(--amber); background: var(--amber-soft); }
+      .badge.epic { color: var(--blue); background: var(--blue-soft); }
+
+      .detail {
+        position: sticky;
+        top: 16px;
+        min-height: 480px;
+      }
+
+      .detail-body { padding: 20px; }
+      .empty { padding: 54px 22px; color: var(--muted); text-align: center; line-height: 1.55; }
+      .detail-id { color: var(--blue); font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .detail h3 { margin: 8px 0 12px; font-size: 23px; line-height: 1.25; letter-spacing: -0.025em; }
+      .meta { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 18px; }
+      .description { color: #c9d5d0; font-size: 14px; line-height: 1.62; white-space: pre-wrap; }
+      .detail-section { margin-top: 22px; }
+      .detail-section h4 { margin: 0 0 9px; color: var(--muted); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+      .link-list { display: flex; flex-wrap: wrap; gap: 7px; }
+      .issue-link {
+        padding: 6px 8px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #101513;
+        color: var(--blue);
+        cursor: pointer;
+        font: 11px ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .comment { margin-top: 8px; padding: 10px 11px; border-left: 2px solid #446357; background: #101513; color: #c9d5d0; font-size: 13px; line-height: 1.5; }
+      .comment time { display: block; margin-top: 6px; color: var(--muted); font-size: 10px; }
+
+      .copy-command {
+        width: 100%;
+        margin-top: 22px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: #101513;
+        cursor: pointer;
+        font: 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 13px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .error-banner {
+        display: none;
+        margin-bottom: 12px;
+        padding: 11px 13px;
+        border: 1px solid #693535;
+        border-radius: 10px;
+        background: var(--red-soft);
+        color: var(--red);
+        font-size: 13px;
+      }
+      .error-banner.visible { display: block; }
+
+      @media (max-width: 900px) {
+        .topbar { flex-direction: column; }
+        .stats { grid-template-columns: repeat(2, 1fr); }
+        .layout { grid-template-columns: 1fr; }
+        .detail { position: static; }
+        .queue-list { max-height: none; }
+      }
+
+      @media (max-width: 600px) {
+        .shell { width: min(100% - 20px, 1540px); padding-top: 20px; }
+        .toolbar { flex-wrap: wrap; }
+        .search { flex-basis: 100%; }
+        .issue-row { grid-template-columns: 20px 88px minmax(0, 1fr); }
+        .issue-row .badges { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Git-native work queue</p>
+          <h1>Beadwork Queue</h1>
+          <p class="subtitle">A read-only live view of this repository's Beadwork queue.</p>
+        </div>
+        <div id="connection" class="connection">
+          <span class="connection-dot"></span>
+          <span id="connection-text">Connecting</span>
+        </div>
+      </header>
+
+      <div id="error" class="error-banner"></div>
+      <section id="stats" class="stats" aria-label="Queue summary"></section>
+
+      <section class="frontier">
+        <div class="section-heading">
+          <h2>Ready now</h2>
+          <span>Beadwork's current unblocked frontier</span>
+        </div>
+        <div id="frontier" class="frontier-list"></div>
+      </section>
+
+      <div class="toolbar">
+        <input id="search" class="search" type="search" placeholder="Filter by ID, title, description, or label" />
+        <button id="closed-toggle" class="control" type="button">Show closed</button>
+        <button id="refresh" class="control" type="button">Refresh</button>
+      </div>
+
+      <section class="layout">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Complete queue</h2>
+            <span id="visible-count">0 items</span>
+          </div>
+          <div id="queue" class="queue-list"></div>
+        </div>
+
+        <aside class="panel detail">
+          <div class="panel-header">
+            <h2>Issue detail</h2>
+            <span>Read only</span>
+          </div>
+          <div id="detail" class="detail-body empty">Select an issue to inspect its scope and dependencies.</div>
+        </aside>
+      </section>
+
+      <footer class="footer">
+        <span id="repo">Repository: loading</span>
+        <span id="revision">Revision: loading</span>
+      </footer>
+    </main>
+
+    <script>
+      let queueState = null;
+      let selectedId = null;
+      let showClosed = false;
+      let query = "";
+
+      const elements = {
+        connection: document.querySelector("#connection"),
+        connectionText: document.querySelector("#connection-text"),
+        error: document.querySelector("#error"),
+        stats: document.querySelector("#stats"),
+        frontier: document.querySelector("#frontier"),
+        queue: document.querySelector("#queue"),
+        detail: document.querySelector("#detail"),
+        search: document.querySelector("#search"),
+        closedToggle: document.querySelector("#closed-toggle"),
+        refresh: document.querySelector("#refresh"),
+        visibleCount: document.querySelector("#visible-count"),
+        repo: document.querySelector("#repo"),
+        revision: document.querySelector("#revision"),
+      };
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function issueMap() {
+        return new Map((queueState?.issues ?? []).map((issue) => [issue.id, issue]));
+      }
+
+      function unresolvedBlockers(issue, issuesById) {
+        return (issue.blocked_by ?? []).filter((id) => issuesById.get(id)?.status !== "closed");
+      }
+
+      function queueKind(issue, readyIds, issuesById) {
+        if (issue.status === "in_progress" || issue.status === "in_review") return "progress";
+        if (readyIds.has(issue.id)) return "ready";
+        if (unresolvedBlockers(issue, issuesById).length > 0) return "blocked";
+        return issue.status;
+      }
+
+      function kindLabel(kind) {
+        return {
+          ready: "Ready",
+          blocked: "Blocked",
+          progress: "In progress",
+          open: "Open",
+          closed: "Closed",
+          deferred: "Deferred",
+        }[kind] ?? kind;
+      }
+
+      function kindIcon(kind, type) {
+        if (type === "epic") return "◆";
+        return { ready: "○", blocked: "⊘", progress: "◐", closed: "✓", deferred: "❄" }[kind] ?? "·";
+      }
+
+      function sorted(issues) {
+        return [...issues].sort((a, b) =>
+          a.priority - b.priority || a.id.localeCompare(b.id, undefined, { numeric: true }),
+        );
+      }
+
+      function visibleIssues() {
+        if (!queueState) return [];
+        const all = queueState.issues;
+        const byId = issueMap();
+        const needle = query.trim().toLowerCase();
+        const matched = new Set();
+
+        for (const issue of all) {
+          if (!showClosed && issue.status === "closed") continue;
+          const text = [issue.id, issue.title, issue.description, ...(issue.labels ?? [])]
+            .join(" ")
+            .toLowerCase();
+          if (!needle || text.includes(needle)) matched.add(issue.id);
+        }
+
+        for (const id of [...matched]) {
+          let parent = byId.get(id)?.parent;
+          while (parent) {
+            matched.add(parent);
+            parent = byId.get(parent)?.parent;
+          }
+        }
+
+        return all.filter((issue) => matched.has(issue.id));
+      }
+
+      function flattenTree(issues) {
+        const byParent = new Map();
+        const ids = new Set(issues.map((issue) => issue.id));
+
+        for (const issue of issues) {
+          const parent = issue.parent && ids.has(issue.parent) ? issue.parent : "";
+          const children = byParent.get(parent) ?? [];
+          children.push(issue);
+          byParent.set(parent, children);
+        }
+
+        const rows = [];
+        function walk(parent, depth) {
+          for (const issue of sorted(byParent.get(parent) ?? [])) {
+            rows.push({ issue, depth });
+            walk(issue.id, depth + 1);
+          }
+        }
+        walk("", 0);
+        return rows;
+      }
+
+      function renderStats() {
+        const issues = queueState?.issues ?? [];
+        const readyIds = new Set((queueState?.ready ?? []).map((issue) => issue.id));
+        const byId = issueMap();
+        const blocked = issues.filter((issue) =>
+          issue.status !== "closed" && unresolvedBlockers(issue, byId).length > 0,
+        ).length;
+        const progress = issues.filter((issue) => ["in_progress", "in_review"].includes(issue.status)).length;
+        const closed = issues.filter((issue) => issue.status === "closed").length;
+
+        const stats = [
+          ["Ready", readyIds.size],
+          ["In progress", progress],
+          ["Blocked", blocked],
+          ["Open total", issues.filter((issue) => issue.status === "open").length],
+          ["Closed", closed],
+        ];
+
+        elements.stats.innerHTML = stats
+          .map(([label, value]) => `<div class="stat"><span class="stat-label">${label}</span><strong class="stat-value">${value}</strong></div>`)
+          .join("");
+      }
+
+      function renderFrontier() {
+        const ready = queueState?.ready ?? [];
+        if (ready.length === 0) {
+          elements.frontier.innerHTML = '<div class="empty">No unblocked work is available.</div>';
+          return;
+        }
+
+        elements.frontier.innerHTML = ready
+          .map((issue) => `
+            <button class="frontier-card" type="button" data-issue="${escapeHtml(issue.id)}">
+              <span class="issue-id">${escapeHtml(issue.id)} · P${issue.priority}</span>
+              <strong>${escapeHtml(issue.title)}</strong>
+            </button>
+          `)
+          .join("");
+      }
+
+      function renderQueue() {
+        const visible = visibleIssues();
+        const rows = flattenTree(visible);
+        const readyIds = new Set((queueState?.ready ?? []).map((issue) => issue.id));
+        const byId = issueMap();
+
+        elements.visibleCount.textContent = `${visible.length} item${visible.length === 1 ? "" : "s"}`;
+        elements.queue.innerHTML = rows
+          .map(({ issue, depth }) => {
+            const kind = queueKind(issue, readyIds, byId);
+            return `
+              <button
+                class="issue-row ${selectedId === issue.id ? "selected" : ""}"
+                style="--depth:${depth}"
+                type="button"
+                data-issue="${escapeHtml(issue.id)}"
+              >
+                <span class="issue-icon">${kindIcon(kind, issue.type)}</span>
+                <span class="issue-id">${escapeHtml(issue.id)}</span>
+                <span class="issue-title">${escapeHtml(issue.title)}</span>
+                <span class="badges">
+                  ${issue.type === "epic" ? '<span class="badge epic">Epic</span>' : ""}
+                  <span class="badge ${kind}">${kindLabel(kind)}</span>
+                  <span class="badge">P${issue.priority}</span>
+                </span>
+              </button>
+            `;
+          })
+          .join("");
+      }
+
+      function issueLinks(ids, emptyText) {
+        if (!ids?.length) return `<span class="description">${emptyText}</span>`;
+        return `<div class="link-list">${ids
+          .map((id) => `<button type="button" class="issue-link" data-issue="${escapeHtml(id)}">${escapeHtml(id)}</button>`)
+          .join("")}</div>`;
+      }
+
+      function renderDetail() {
+        if (!queueState || !selectedId) {
+          elements.detail.className = "detail-body empty";
+          elements.detail.textContent = "Select an issue to inspect its scope and dependencies.";
+          return;
+        }
+
+        const byId = issueMap();
+        const issue = byId.get(selectedId);
+        if (!issue) return;
+        const readyIds = new Set(queueState.ready.map((item) => item.id));
+        const kind = queueKind(issue, readyIds, byId);
+        const children = sorted(queueState.issues.filter((item) => item.parent === issue.id)).map((item) => item.id);
+        const comments = issue.comments ?? [];
+
+        elements.detail.className = "detail-body";
+        elements.detail.innerHTML = `
+          <div class="detail-id">${escapeHtml(issue.id)}</div>
+          <h3>${escapeHtml(issue.title)}</h3>
+          <div class="meta">
+            <span class="badge ${kind}">${kindLabel(kind)}</span>
+            <span class="badge">P${issue.priority}</span>
+            <span class="badge ${issue.type === "epic" ? "epic" : ""}">${escapeHtml(issue.type)}</span>
+            ${(issue.labels ?? []).map((label) => `<span class="badge">${escapeHtml(label)}</span>`).join("")}
+          </div>
+          <div class="description">${escapeHtml(issue.description || "No description.")}</div>
+
+          <div class="detail-section">
+            <h4>Blocked by</h4>
+            ${issueLinks(issue.blocked_by, "No blockers")}
+          </div>
+          <div class="detail-section">
+            <h4>Unblocks</h4>
+            ${issueLinks(issue.blocks, "No dependent issues")}
+          </div>
+          <div class="detail-section">
+            <h4>Children</h4>
+            ${issueLinks(children, "No child issues")}
+          </div>
+          ${comments.length ? `
+            <div class="detail-section">
+              <h4>Comments</h4>
+              ${comments.map((comment) => `<div class="comment">${escapeHtml(comment.text)}<time>${escapeHtml(new Date(comment.timestamp).toLocaleString())}</time></div>`).join("")}
+            </div>
+          ` : ""}
+          <button id="copy-command" class="copy-command" type="button">bw show ${escapeHtml(issue.id)}</button>
+        `;
+
+        document.querySelector("#copy-command")?.addEventListener("click", async (event) => {
+          await navigator.clipboard.writeText(`bw show ${issue.id}`);
+          event.currentTarget.textContent = "Copied";
+          setTimeout(() => { event.currentTarget.textContent = `bw show ${issue.id}`; }, 900);
+        });
+      }
+
+      function render() {
+        if (!queueState) return;
+        renderStats();
+        renderFrontier();
+        renderQueue();
+        renderDetail();
+        elements.repo.textContent = `Repository: ${queueState.repo}`;
+        elements.revision.textContent = `Revision: ${queueState.revision.slice(0, 12)} · ${new Date(queueState.generatedAt).toLocaleTimeString()}`;
+      }
+
+      function selectIssue(id) {
+        selectedId = id;
+        renderQueue();
+        renderDetail();
+      }
+
+      document.body.addEventListener("click", (event) => {
+        const target = event.target.closest("[data-issue]");
+        if (target) selectIssue(target.dataset.issue);
+      });
+
+      elements.search.addEventListener("input", (event) => {
+        query = event.target.value;
+        renderQueue();
+      });
+
+      elements.closedToggle.addEventListener("click", () => {
+        showClosed = !showClosed;
+        elements.closedToggle.textContent = showClosed ? "Hide closed" : "Show closed";
+        renderQueue();
+      });
+
+      elements.refresh.addEventListener("click", async () => {
+        elements.refresh.disabled = true;
+        try {
+          const response = await fetch("/api/refresh", { method: "POST" });
+          if (!response.ok) throw new Error((await response.json()).error || "Refresh failed");
+          queueState = await response.json();
+          render();
+        } catch (error) {
+          showError(error.message);
+        } finally {
+          elements.refresh.disabled = false;
+        }
+      });
+
+      function showError(message) {
+        elements.error.textContent = message;
+        elements.error.classList.add("visible");
+      }
+
+      function clearError() {
+        elements.error.classList.remove("visible");
+      }
+
+      async function start() {
+        try {
+          const response = await fetch("/api/state");
+          if (!response.ok) throw new Error((await response.json()).error || "Could not load queue");
+          queueState = await response.json();
+          selectedId = queueState.ready[0]?.id ?? queueState.issues[0]?.id ?? null;
+          render();
+        } catch (error) {
+          showError(error.message);
+        }
+
+        const events = new EventSource("/events");
+        events.onopen = () => {
+          elements.connection.classList.add("live");
+          elements.connectionText.textContent = "Live";
+          clearError();
+        };
+        events.onerror = () => {
+          elements.connection.classList.remove("live");
+          elements.connectionText.textContent = "Reconnecting";
+        };
+        events.addEventListener("state", (message) => {
+          queueState = JSON.parse(message.data);
+          render();
+        });
+        events.addEventListener("queue-error", (message) => {
+          showError(JSON.parse(message.data).message);
+        });
+      }
+
+      start();
+    </script>
+  </body>
+</html>
+

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **`bw ui`** — starts a read-only web view of the current repository's Beadwork queue on `127.0.0.1`. The UI is embedded in the `bw` binary and reads issue data directly from the `beadwork` branch.
+
 ## 0.13.3 — 2026-09-03
 
 - **`bw sync` no longer fails with `object not found` / `packfile not found` or silently corrupts the beadwork branch** — `git fetch` can trigger auto-gc, which repacks the object database out of process and deletes packfiles that `bw`'s long-lived in-memory git handle still had indexed. Depending on timing, sync would either die with:
