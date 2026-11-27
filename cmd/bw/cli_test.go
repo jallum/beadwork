@@ -339,6 +339,7 @@ func TestListJSONReportsTruncationOnStderr(t *testing.T) {
 	env.CommitIntent("create 12 issues")
 
 	assertContains(t, bwFail(t, env.Dir, "list", "--json", "--limit", "typo"), "invalid --limit: typo")
+	assertContains(t, bwFail(t, env.Dir, "list", "--json", "--limit"), "--limit requires a value")
 
 	for _, tc := range []struct {
 		name string
@@ -476,6 +477,38 @@ func beadworkRef(t *testing.T, dir string) string {
 		t.Fatal(err)
 	}
 	return strings.TrimSpace(string(out))
+}
+
+func TestAttachLiteralDoubleDashNameKeepsGlobalFlags(t *testing.T) {
+	source := testutil.NewEnv(t)
+	defer source.Cleanup()
+	target := testutil.NewEnv(t)
+	defer target.Cleanup()
+	iss, err := source.Store.Create("Attachment target", issue.CreateOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	source.CommitIntent("create " + iss.ID)
+	if _, err := target.Store.Create(iss.Title, issue.CreateOpts{ID: iss.ID}); err != nil {
+		t.Fatal(err)
+	}
+	target.CommitIntent("create " + iss.ID)
+	file := filepath.Join(source.Dir, "sample.txt")
+	if err := os.WriteFile(file, []byte("fixture"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	sourceBefore := beadworkRef(t, source.Dir)
+	targetBefore := beadworkRef(t, target.Dir)
+	bw(t, source.Dir, "attach", iss.ID, file, "--name", "--", "--dry-run")
+	if beadworkRef(t, source.Dir) != sourceBefore {
+		t.Fatal("dry run wrote to source")
+	}
+
+	bw(t, source.Dir, "attach", iss.ID, file, "--name", "--", "-C", target.Dir)
+	if beadworkRef(t, source.Dir) != sourceBefore || beadworkRef(t, target.Dir) == targetBefore {
+		t.Fatal("attach must update only the repo selected by -C")
+	}
 }
 
 func TestCommentFileIntentReplaysExactBody(t *testing.T) {

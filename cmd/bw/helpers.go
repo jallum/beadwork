@@ -53,9 +53,6 @@ func fatal(msg string) {
 
 func hasFlag(args []string, flag string) bool {
 	for _, a := range args {
-		if a == "--" {
-			break
-		}
 		if a == flag {
 			return true
 		}
@@ -65,10 +62,7 @@ func hasFlag(args []string, flag string) bool {
 
 func removeFlag(args []string, flag string) []string {
 	out := make([]string, 0, len(args))
-	for i, a := range args {
-		if a == "--" {
-			return append(out, args[i:]...)
-		}
+	for _, a := range args {
 		if a != flag {
 			out = append(out, a)
 		}
@@ -78,9 +72,6 @@ func removeFlag(args []string, flag string) []string {
 
 func flagValue(args []string, flag string) (string, bool) {
 	for i, a := range args {
-		if a == "--" {
-			break
-		}
 		if a == flag && i+1 < len(args) {
 			return args[i+1], true
 		}
@@ -92,9 +83,6 @@ func removeFlagValue(args []string, flag string) ([]string, bool) {
 	out := make([]string, 0, len(args))
 	found := false
 	for i := 0; i < len(args); i++ {
-		if args[i] == "--" {
-			return append(out, args[i:]...), found
-		}
 		if args[i] == flag && i+1 < len(args) {
 			found = true
 			i++ // skip value
@@ -121,9 +109,10 @@ var aliases = map[string]string{
 // Args holds parsed command-line arguments separated into boolean flags,
 // key-value flags, and positional arguments.
 type Args struct {
-	bools map[string]bool
-	flags map[string]string
-	pos   []string
+	bools        map[string]bool
+	flags        map[string]string
+	missingValue string
+	pos          []string
 }
 
 // ParseArgs separates raw args into booleans, key-value pairs, and positionals.
@@ -160,6 +149,8 @@ func ParseArgs(raw []string, valueFlags []string, boolFlags []string) (Args, err
 			if i+1 < len(raw) {
 				a.flags[tok] = raw[i+1]
 				i++
+			} else {
+				a.missingValue = tok
 			}
 		} else if bf[tok] {
 			a.bools[tok] = true

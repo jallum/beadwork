@@ -29,13 +29,13 @@ type CommentArgs struct {
 
 // foldCommentOptionValues groups a comment option with its value so global
 // flags such as --help and -C cannot consume a filename or author.
-func foldCommentOptionValues(args []string) []string {
+func foldCommentOptionValues(args []string) ([]string, []string) {
 	folded := make([]string, 0, len(args))
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
 		switch arg {
 		case "--":
-			return append(folded, args[i:]...)
+			return folded, args[i:]
 		case "-a", "--author", "-F", "--file":
 			if i+1 < len(args) {
 				folded = append(folded, arg+"="+args[i+1])
@@ -51,19 +51,15 @@ func foldCommentOptionValues(args []string) []string {
 		}
 		folded = append(folded, arg)
 	}
-	return folded
+	return folded, nil
 }
 
 func parseCommentArgs(raw []string) (CommentArgs, error) {
 	var ca CommentArgs
 	var pos []string
 	hasFile := false
-	args := foldCommentOptionValues(raw)
-	for i, arg := range args {
-		if arg == "--" {
-			pos = append(pos, args[i+1:]...)
-			break
-		}
+	args, literal := foldCommentOptionValues(raw)
+	for _, arg := range args {
 		name, value, attached := strings.Cut(arg, "=")
 		switch {
 		case name == "-F" || name == "--file":
@@ -84,6 +80,10 @@ func parseCommentArgs(raw []string) (CommentArgs, error) {
 		default:
 			pos = append(pos, arg)
 		}
+	}
+
+	if len(literal) > 0 {
+		pos = append(pos, literal[1:]...)
 	}
 
 	switch {

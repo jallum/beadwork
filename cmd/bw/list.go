@@ -55,6 +55,9 @@ func parseListArgs(raw []string) (ListArgs, error) {
 		}
 		la.Priority = &p
 	}
+	if a.missingValue == "--limit" {
+		return la, fmt.Errorf("--limit requires a value")
+	}
 	limit, limitSet, err := a.IntErr("--limit")
 	if err != nil {
 		return la, err

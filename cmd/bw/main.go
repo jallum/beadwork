@@ -40,7 +40,7 @@ func resolveRenderMode(args []string) string {
 }
 
 func main() {
-	allArgs := normalizeCommentCLIArgs(os.Args[1:])
+	allArgs, literalCommentArgs := normalizeCommentCLIArgs(os.Args[1:])
 	var w Writer
 	switch resolveRenderMode(allArgs) {
 	case "tty":
@@ -107,6 +107,7 @@ func main() {
 	// Cross-repo routing: if the first ID-shaped positional references a
 	// different registered prefix, rewrite repoDir so the command targets
 	// that repo. Never overrides an explicit -C.
+	args = append(args, literalCommentArgs...)
 	resolveCrossRepo(cfg, args)
 
 	var store *issue.Store
@@ -160,27 +161,25 @@ func bwNow() time.Time {
 	return time.Now()
 }
 
-func normalizeCommentCLIArgs(args []string) []string {
+func normalizeCommentCLIArgs(args []string) ([]string, []string) {
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "-C":
 			i++ // the only global flag allowed before a subcommand
 		case "comment", "comments":
-			return append(args[:i+1:i+1], foldCommentOptionValues(args[i+1:])...)
+			options, literal := foldCommentOptionValues(args[i+1:])
+			return append(args[:i+1:i+1], options...), literal
 		default:
-			return args
+			return args, nil
 		}
 	}
-	return args
+	return args, nil
 }
 
 // extractDirFlag removes all -C <dir> pairs from args and sets repoDir.
 func extractDirFlag(cfg *config.Config, args []string) []string {
 	out := make([]string, 0, len(args))
 	for i := 0; i < len(args); i++ {
-		if args[i] == "--" {
-			return append(out, args[i:]...)
-		}
 		if args[i] == "-C" {
 			if i+1 >= len(args) {
 				fatal("-C requires an argument")
