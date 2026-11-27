@@ -2,7 +2,7 @@
 
 ## 0.13.4 — 2026-11-26
 
-- `bw comment -F PATH` and `--file PATH` read a multiline body from a file. Use `--file -` to read stdin. Unknown flags, conflicting body sources, and extra positional arguments now fail before a comment is added.
+- `bw comment -F PATH` and `--file PATH` read a multiline body from a file. Use `--file -` to read stdin. Unknown flags, conflicting body sources, and extra positional arguments now fail before a comment is added. Sync replay preserves whitespace, quotes, and backslashes in comment bodies.
 - `bw list --json` reports truncated results on stderr as `{"truncated":true,"shown":10,"total":12}`. Stdout still contains the issue array. Text output reports how many issues were omitted. Use `--limit 0` for all matches with the same filters.
 - Includes the go-git loose-pack discovery fix (#146).
 

@@ -27,47 +27,75 @@ type CommentArgs struct {
 	JSON   bool
 }
 
+// foldCommentOptionValues groups a comment option with its value so global
+// flags such as --help and -C cannot consume a filename or author.
+func foldCommentOptionValues(args []string) []string {
+	folded := make([]string, 0, len(args))
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		switch arg {
+		case "--":
+			return append(folded, args[i:]...)
+		case "-a", "--author", "-F", "--file":
+			if i+1 < len(args) {
+				folded = append(folded, arg+"="+args[i+1])
+				i++
+				continue
+			}
+		case "-C", "--x-render-as":
+			if i+1 < len(args) {
+				folded = append(folded, args[i:i+2]...)
+				i++
+				continue
+			}
+		}
+		folded = append(folded, arg)
+	}
+	return folded
+}
+
 func parseCommentArgs(raw []string) (CommentArgs, error) {
-	if len(raw) == 0 {
-		return CommentArgs{}, errors.New(commentUsage)
+	var ca CommentArgs
+	var pos []string
+	hasFile := false
+	args := foldCommentOptionValues(raw)
+	for i, arg := range args {
+		if arg == "--" {
+			pos = append(pos, args[i+1:]...)
+			break
+		}
+		name, value, attached := strings.Cut(arg, "=")
+		switch {
+		case name == "-F" || name == "--file":
+			if !attached || value == "" {
+				return ca, fmt.Errorf("--file requires a path (use - for stdin)")
+			}
+			ca.File = value
+			hasFile = true
+		case name == "-a" || name == "--author":
+			if !attached {
+				return ca, fmt.Errorf("--author requires a value")
+			}
+			ca.Author = value
+		case arg == "--json":
+			ca.JSON = true
+		case strings.HasPrefix(name, "-") && name != "-" && !strings.ContainsAny(name, " \t\r\n"):
+			return ca, fmt.Errorf("unknown flag: %s", arg)
+		default:
+			pos = append(pos, arg)
+		}
 	}
-
-	rest := expandAliases(raw, []Flag{
-		{Long: "--author", Short: "-a", Value: "NAME"},
-		{Long: "--file", Short: "-F", Value: "PATH"},
-		{Long: "--json"},
-	})
-	a, err := ParseArgs(rest, []string{"--author", "--file"}, []string{"--json"})
-	if err != nil {
-		return CommentArgs{}, err
-	}
-	pos := a.Pos()
-	if len(pos) < 1 {
-		return CommentArgs{}, errors.New(commentUsage)
-	}
-	if len(pos) > 2 {
-		return CommentArgs{}, fmt.Errorf("too many arguments: quote multi-word comment text, or pass it with --file")
-	}
-
-	hasFile := a.Has("--file")
-	hasText := len(pos) == 2
 
 	switch {
-	case hasFile && hasText:
-		return CommentArgs{}, fmt.Errorf("provide the comment body as <text> or --file, not both")
-	case !hasFile && !hasText:
-		return CommentArgs{}, errors.New(commentUsage)
-	case hasFile && a.String("--file") == "":
-		return CommentArgs{}, fmt.Errorf("--file requires a path (use - for stdin)")
+	case len(pos) == 0 || (len(pos) == 1 && !hasFile):
+		return ca, errors.New(commentUsage)
+	case len(pos) > 2:
+		return ca, fmt.Errorf("too many arguments: quote multi-word comment text, or pass it with --file")
+	case len(pos) == 2 && hasFile:
+		return ca, fmt.Errorf("provide the comment body as <text> or --file, not both")
 	}
-
-	ca := CommentArgs{
-		ID:     pos[0],
-		File:   a.String("--file"),
-		Author: a.String("--author"),
-		JSON:   a.JSON(),
-	}
-	if hasText {
+	ca.ID = pos[0]
+	if len(pos) == 2 {
 		ca.Text = pos[1]
 	}
 	return ca, nil

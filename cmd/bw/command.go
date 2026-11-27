@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/jallum/beadwork/internal/config"
 	"github.com/jallum/beadwork/internal/issue"
@@ -46,28 +45,17 @@ type Command struct {
 // expandAliases replaces short flags with their long equivalents.
 func expandAliases(raw []string, flags []Flag) []string {
 	shorts := make(map[string]string, len(flags))
-	valueFlags := make(map[string]bool, len(flags))
 	for _, f := range flags {
 		if f.Short != "" {
 			shorts[f.Short] = f.Long
 		}
-		valueFlags[f.Long] = f.Value != ""
 	}
-	result := append([]string(nil), raw...)
-	for i := 0; i < len(raw); i++ {
-		if raw[i] == "--" {
-			break
-		}
-		name, value, attached := strings.Cut(raw[i], "=")
-		if long, ok := shorts[name]; ok {
-			name = long
-			result[i] = name
-			if attached {
-				result[i] += "=" + value
-			}
-		}
-		if valueFlags[name] && !attached {
-			i++
+	result := make([]string, len(raw))
+	for i, tok := range raw {
+		if long, ok := shorts[tok]; ok {
+			result[i] = long
+		} else {
+			result[i] = tok
 		}
 	}
 	return result
@@ -128,7 +116,7 @@ var commands = []Command{
 		Name:        "list",
 		Aliases:     []string{"ls"},
 		Summary:     "List issues",
-		Description: "List issues matching filters. Defaults to open and in-progress issues, limit 10.\n\nWith --json, stdout is an issue array. If a limit omits matches, stderr contains\na JSON object with truncated, shown, and total fields. Use --limit 0 to disable the limit.",
+		Description: "List issues matching filters. Defaults to open and in-progress issues, limit 10.\n\nWith --json, stdout contains the issue array (null for no matches). If a limit\nomits matches, stderr contains a JSON object with truncated, shown, and total fields. Use --limit 0 to disable the limit.",
 		Flags: []Flag{
 			{Long: "--status", Short: "-s", Value: "STATUS", Help: "Filter by status"},
 			{Long: "--assignee", Short: "-a", Value: "WHO", Help: "Filter by assignee"},

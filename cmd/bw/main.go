@@ -40,8 +40,9 @@ func resolveRenderMode(args []string) string {
 }
 
 func main() {
+	allArgs := normalizeCommentCLIArgs(os.Args[1:])
 	var w Writer
-	switch resolveRenderMode(os.Args) {
+	switch resolveRenderMode(allArgs) {
 	case "tty":
 		width := 80
 		if term.IsTerminal(int(os.Stdout.Fd())) {
@@ -59,7 +60,6 @@ func main() {
 		fatal(err.Error())
 	}
 
-	allArgs := os.Args[1:]
 	allArgs = extractDirFlag(cfg, allArgs)
 
 	if len(allArgs) < 1 {
@@ -117,7 +117,9 @@ func main() {
 			fatal(err.Error())
 		}
 		store.DryRun = dryRun
-		maybeCheckForUpgrade(store, w)
+		if c.Name != "comment" {
+			maybeCheckForUpgrade(store, w)
+		}
 	}
 
 	originalCfg := cfg
@@ -125,6 +127,10 @@ func main() {
 	newCfg, err := c.Run(store, args, w, cfg)
 	if err != nil {
 		fatal(err.Error())
+	}
+	// A rejected comment must leave the board untouched.
+	if store != nil && c.Name == "comment" {
+		maybeCheckForUpgrade(store, w)
 	}
 	if newCfg != nil {
 		cfg = newCfg
@@ -152,6 +158,20 @@ func bwNow() time.Time {
 		}
 	}
 	return time.Now()
+}
+
+func normalizeCommentCLIArgs(args []string) []string {
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "-C":
+			i++ // the only global flag allowed before a subcommand
+		case "comment", "comments":
+			return append(args[:i+1:i+1], foldCommentOptionValues(args[i+1:])...)
+		default:
+			return args
+		}
+	}
+	return args
 }
 
 // extractDirFlag removes all -C <dir> pairs from args and sets repoDir.

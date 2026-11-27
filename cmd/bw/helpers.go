@@ -129,12 +129,7 @@ type Args struct {
 // ParseArgs separates raw args into booleans, key-value pairs, and positionals.
 // valueFlags lists flags that consume the next token as a value (e.g. "--status").
 // boolFlags lists boolean flags (e.g. "--json", "--all").
-//
-// Any "-"-prefixed token that is not a recognized flag (or alias) returns an
-// error, so a stray flag-looking token (e.g. "-F") fails loudly instead of
-// being silently swallowed as a positional. Two escape hatches preserve
-// legitimate uses: a bare "-" is treated as a positional (the stdin sentinel),
-// and "--" terminates flag parsing so every token after it is a positional.
+// Any "--" prefixed token not in valueFlags or boolFlags returns an error.
 func ParseArgs(raw []string, valueFlags []string, boolFlags []string) (Args, error) {
 	vf := make(map[string]bool, len(valueFlags))
 	for _, f := range valueFlags {
@@ -152,34 +147,23 @@ func ParseArgs(raw []string, valueFlags []string, boolFlags []string) (Args, err
 
 	for i := 0; i < len(raw); i++ {
 		tok := raw[i]
-		if tok == "--" {
-			a.pos = append(a.pos, raw[i+1:]...)
-			break
+		if long, ok := aliases[tok]; ok {
+			tok = long
 		}
 
-		name, value, attached := strings.Cut(tok, "=")
-		if long, ok := aliases[name]; ok {
-			name = long
-		}
-
-		// Preserve dash-leading text such as "- first bullet".
-		if name == "-" || !strings.HasPrefix(name, "-") || strings.ContainsAny(name, " \t\r\n") {
-			a.pos = append(a.pos, tok)
+		if !strings.HasPrefix(tok, "--") {
+			a.pos = append(a.pos, raw[i])
 			continue
 		}
 
-		switch {
-		case vf[name] && attached:
-			a.flags[name] = value
-		case vf[name]:
-			if i+1 == len(raw) || raw[i+1] == "--" {
-				return a, fmt.Errorf("%s requires a value", name)
+		if vf[tok] {
+			if i+1 < len(raw) {
+				a.flags[tok] = raw[i+1]
+				i++
 			}
-			i++
-			a.flags[name] = raw[i]
-		case bf[name] && !attached:
-			a.bools[name] = true
-		default:
+		} else if bf[tok] {
+			a.bools[tok] = true
+		} else {
 			return a, fmt.Errorf("unknown flag: %s", tok)
 		}
 	}

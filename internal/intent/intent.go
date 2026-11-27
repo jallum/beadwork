@@ -2,6 +2,7 @@ package intent
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/jallum/beadwork/internal/issue"
@@ -319,9 +320,14 @@ func replayComment(store *issue.Store, parts []string, raw string) error {
 	if len(parts) < 1 {
 		return fmt.Errorf("malformed comment intent")
 	}
-	text := ExtractQuoted(raw)
-	if text == "" && len(parts) > 1 {
-		text = strings.Join(parts[1:], " ")
+	text := strings.Join(parts[1:], " ")
+	quoted := strings.TrimPrefix(raw, "comment "+parts[0]+" ")
+	if strings.HasPrefix(quoted, `"`) {
+		var err error
+		text, err = strconv.Unquote(quoted)
+		if err != nil {
+			return fmt.Errorf("malformed comment body: %w", err)
+		}
 	}
 	_, err := store.Comment(parts[0], text, "")
 	if err != nil {

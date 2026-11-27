@@ -9,7 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/jallum/beadwork/internal/intent"
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/testutil"
 )
@@ -325,8 +327,6 @@ func TestListDefaultLimit(t *testing.T) {
 	}
 }
 
-// --- Ready command ---
-
 func TestListJSONReportsTruncationOnStderr(t *testing.T) {
 	env := testutil.NewEnv(t)
 	defer env.Cleanup()
@@ -337,6 +337,8 @@ func TestListJSONReportsTruncationOnStderr(t *testing.T) {
 		}
 	}
 	env.CommitIntent("create 12 issues")
+
+	assertContains(t, bwFail(t, env.Dir, "list", "--json", "--limit", "typo"), "invalid --limit: typo")
 
 	for _, tc := range []struct {
 		name string
@@ -398,7 +400,7 @@ func TestCommentFileAndInvalidFlags(t *testing.T) {
 	for _, flag := range []string{"-m", "--message"} {
 		assertContains(t, bwFail(t, env.Dir, "comment", iss.ID, flag, "lost body"), "unknown flag: "+flag)
 	}
-	assertContains(t, bwFail(t, env.Dir, "comment", iss.ID, "lost body", "-F"), "--file requires a value")
+	assertContains(t, bwFail(t, env.Dir, "comment", iss.ID, "lost body", "-F"), "--file requires a path")
 
 	bodyPath := filepath.Join(env.Dir, "body file.txt")
 	if err := os.WriteFile(bodyPath, []byte("first line\n\nlast line\n"), 0600); err != nil {
@@ -406,6 +408,12 @@ func TestCommentFileAndInvalidFlags(t *testing.T) {
 	}
 	bw(t, env.Dir, "comment", iss.ID, "-F="+bodyPath)
 	bw(t, env.Dir, "comment", iss.ID, "--file="+bodyPath)
+	for _, name := range []string{"--help", "-h", "-C", "--dry-run", "--no-color", "--"} {
+		if err := os.WriteFile(filepath.Join(env.Dir, name), []byte(name+" body"), 0600); err != nil {
+			t.Fatal(err)
+		}
+		bw(t, env.Dir, "-C", env.Dir, "comments", iss.ID, "-F", name)
+	}
 	bw(t, env.Dir, "comment", iss.ID, "- first bullet")
 	bw(t, env.Dir, "comment", iss.ID, "--", "-a")
 	bw(t, env.Dir, "comment", iss.ID, "--", "--help")
@@ -415,7 +423,11 @@ func TestCommentFileAndInvalidFlags(t *testing.T) {
 	if err := json.Unmarshal([]byte(bw(t, env.Dir, "show", iss.ID, "--json")), &updated); err != nil {
 		t.Fatal(err)
 	}
-	want := []string{"first line\n\nlast line", "first line\n\nlast line", "- first bullet", "-a", "--help", "-C"}
+	want := []string{
+		"first line\n\nlast line", "first line\n\nlast line",
+		"--help body", "-h body", "-C body", "--dry-run body", "--no-color body", "-- body",
+		"- first bullet", "-a", "--help", "-C",
+	}
 	if len(updated.Comments) != len(want) {
 		t.Fatalf("got %d stored comments, want %d", len(updated.Comments), len(want))
 	}
@@ -425,6 +437,85 @@ func TestCommentFileAndInvalidFlags(t *testing.T) {
 		}
 	}
 }
+
+func TestInvalidCommentDoesNotCreateUpgradeIssue(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+	iss, err := env.Store.Create("Comment target", issue.CreateOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	env.CommitIntent("create " + iss.ID)
+
+	t.Setenv("HOME", env.Dir)
+	t.Setenv("XDG_CACHE_HOME", env.Dir)
+	cache, err := os.UserCacheDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cache = filepath.Join(cache, "bw")
+	if err := os.MkdirAll(cache, 0700); err != nil {
+		t.Fatal(err)
+	}
+	entry := fmt.Sprintf(`{"last_check":%q,"latest_version":"99.0.0"}`, time.Now().Format(time.RFC3339))
+	if err := os.WriteFile(filepath.Join(cache, "version-check.json"), []byte(entry), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	before := beadworkRef(t, env.Dir)
+	assertContains(t, bwFail(t, env.Dir, "comment", iss.ID, "body", "--unknown"), "unknown flag: --unknown")
+	if after := beadworkRef(t, env.Dir); after != before {
+		t.Fatalf("invalid comment moved beadwork: %s → %s", before, after)
+	}
+}
+
+func beadworkRef(t *testing.T, dir string) string {
+	t.Helper()
+	out, err := exec.Command("git", "-C", dir, "rev-parse", "refs/heads/beadwork").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return strings.TrimSpace(string(out))
+}
+
+func TestCommentFileIntentReplaysExactBody(t *testing.T) {
+	source := testutil.NewEnv(t)
+	defer source.Cleanup()
+	iss, err := source.Store.Create("Comment target", issue.CreateOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	source.CommitIntent("create " + iss.ID)
+	body := " leading space\n\nlast line\twith \"quotes\" and a \\"
+	bodyPath := filepath.Join(source.Dir, "body.txt")
+	if err := os.WriteFile(bodyPath, []byte(body+"\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	bw(t, source.Dir, "comment", iss.ID, "--file", bodyPath)
+	message, err := exec.Command("git", "-C", source.Dir, "log", "-1", "--format=%B", "refs/heads/beadwork").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	target := testutil.NewEnv(t)
+	defer target.Cleanup()
+	if _, err := target.Store.Create(iss.Title, issue.CreateOpts{ID: iss.ID}); err != nil {
+		t.Fatal(err)
+	}
+	target.CommitIntent("create " + iss.ID)
+	if errs := intent.Replay(target.Store, []string{string(message)}); len(errs) != 0 {
+		t.Fatal(errs)
+	}
+	got, err := target.Store.Get(iss.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Comments) != 1 || got.Comments[0].Text != body {
+		t.Fatalf("replayed comments = %+v, want one body %q", got.Comments, body)
+	}
+}
+
+// --- Ready command ---
 
 func TestReadyOutput(t *testing.T) {
 	env := testutil.NewEnv(t)

@@ -55,8 +55,12 @@ func parseListArgs(raw []string) (ListArgs, error) {
 		}
 		la.Priority = &p
 	}
-	if a.Has("--limit") {
-		la.Limit = a.Int("--limit")
+	limit, limitSet, err := a.IntErr("--limit")
+	if err != nil {
+		return la, err
+	}
+	if limitSet {
+		la.Limit = limit
 		la.LimitSet = true
 	}
 	return la, nil
