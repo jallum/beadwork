@@ -53,6 +53,9 @@ func fatal(msg string) {
 
 func hasFlag(args []string, flag string) bool {
 	for _, a := range args {
+		if a == "--" {
+			break
+		}
 		if a == flag {
 			return true
 		}
@@ -62,7 +65,10 @@ func hasFlag(args []string, flag string) bool {
 
 func removeFlag(args []string, flag string) []string {
 	out := make([]string, 0, len(args))
-	for _, a := range args {
+	for i, a := range args {
+		if a == "--" {
+			return append(out, args[i:]...)
+		}
 		if a != flag {
 			out = append(out, a)
 		}
@@ -72,6 +78,9 @@ func removeFlag(args []string, flag string) []string {
 
 func flagValue(args []string, flag string) (string, bool) {
 	for i, a := range args {
+		if a == "--" {
+			break
+		}
 		if a == flag && i+1 < len(args) {
 			return args[i+1], true
 		}
@@ -83,6 +92,9 @@ func removeFlagValue(args []string, flag string) ([]string, bool) {
 	out := make([]string, 0, len(args))
 	found := false
 	for i := 0; i < len(args); i++ {
+		if args[i] == "--" {
+			return append(out, args[i:]...), found
+		}
 		if args[i] == flag && i+1 < len(args) {
 			found = true
 			i++ // skip value
@@ -117,7 +129,12 @@ type Args struct {
 // ParseArgs separates raw args into booleans, key-value pairs, and positionals.
 // valueFlags lists flags that consume the next token as a value (e.g. "--status").
 // boolFlags lists boolean flags (e.g. "--json", "--all").
-// Any "--" prefixed token not in valueFlags or boolFlags returns an error.
+//
+// Any "-"-prefixed token that is not a recognized flag (or alias) returns an
+// error, so a stray flag-looking token (e.g. "-F") fails loudly instead of
+// being silently swallowed as a positional. Two escape hatches preserve
+// legitimate uses: a bare "-" is treated as a positional (the stdin sentinel),
+// and "--" terminates flag parsing so every token after it is a positional.
 func ParseArgs(raw []string, valueFlags []string, boolFlags []string) (Args, error) {
 	vf := make(map[string]bool, len(valueFlags))
 	for _, f := range valueFlags {
@@ -135,23 +152,34 @@ func ParseArgs(raw []string, valueFlags []string, boolFlags []string) (Args, err
 
 	for i := 0; i < len(raw); i++ {
 		tok := raw[i]
-		if long, ok := aliases[tok]; ok {
-			tok = long
+		if tok == "--" {
+			a.pos = append(a.pos, raw[i+1:]...)
+			break
 		}
 
-		if !strings.HasPrefix(tok, "--") {
-			a.pos = append(a.pos, raw[i])
+		name, value, attached := strings.Cut(tok, "=")
+		if long, ok := aliases[name]; ok {
+			name = long
+		}
+
+		// Preserve dash-leading text such as "- first bullet".
+		if name == "-" || !strings.HasPrefix(name, "-") || strings.ContainsAny(name, " \t\r\n") {
+			a.pos = append(a.pos, tok)
 			continue
 		}
 
-		if vf[tok] {
-			if i+1 < len(raw) {
-				a.flags[tok] = raw[i+1]
-				i++
+		switch {
+		case vf[name] && attached:
+			a.flags[name] = value
+		case vf[name]:
+			if i+1 == len(raw) || raw[i+1] == "--" {
+				return a, fmt.Errorf("%s requires a value", name)
 			}
-		} else if bf[tok] {
-			a.bools[tok] = true
-		} else {
+			i++
+			a.flags[name] = raw[i]
+		case bf[name] && !attached:
+			a.bools[name] = true
+		default:
 			return a, fmt.Errorf("unknown flag: %s", tok)
 		}
 	}

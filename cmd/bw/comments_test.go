@@ -93,6 +93,171 @@ func TestCmdCommentWithShortAuthor(t *testing.T) {
 	}
 }
 
+func TestCmdCommentFromFile(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Test issue", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	body := "Line one\n\nLine three with a trailing dash -F\n"
+	path := env.Dir + "/body.md"
+	os.WriteFile(path, []byte(body), 0644)
+
+	var buf bytes.Buffer
+	_, err := cmdComment(env.Store, []string{iss.ID, "--file", path}, PlainWriter(&buf), nil)
+	if err != nil {
+		t.Fatalf("cmdComment --file: %v", err)
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if len(got.Comments) != 1 {
+		t.Fatalf("expected 1 comment, got %d", len(got.Comments))
+	}
+	// Trailing newline trimmed; internal blank line preserved.
+	want := "Line one\n\nLine three with a trailing dash -F"
+	if got.Comments[0].Text != want {
+		t.Errorf("text = %q, want %q", got.Comments[0].Text, want)
+	}
+}
+
+func TestCmdCommentFromFileShortFlag(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Test issue", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	path := env.Dir + "/body.txt"
+	os.WriteFile(path, []byte("from -F flag"), 0644)
+
+	var buf bytes.Buffer
+	_, err := cmdComment(env.Store, []string{iss.ID, "-F", path}, PlainWriter(&buf), nil)
+	if err != nil {
+		t.Fatalf("cmdComment -F: %v", err)
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.Comments[0].Text != "from -F flag" {
+		t.Errorf("text = %q, want %q", got.Comments[0].Text, "from -F flag")
+	}
+}
+
+func TestCmdCommentFromStdin(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Test issue", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	orig := commentStdin
+	commentStdin = strings.NewReader("multi\nline\nstdin body\n")
+	defer func() { commentStdin = orig }()
+
+	var buf bytes.Buffer
+	_, err := cmdComment(env.Store, []string{iss.ID, "--file", "-"}, PlainWriter(&buf), nil)
+	if err != nil {
+		t.Fatalf("cmdComment --file -: %v", err)
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if got.Comments[0].Text != "multi\nline\nstdin body" {
+		t.Errorf("text = %q, want %q", got.Comments[0].Text, "multi\nline\nstdin body")
+	}
+}
+
+func TestCmdCommentBareFlagInTextPositionRejected(t *testing.T) {
+	// The reported sharp edge: a bare "-F" must not be silently posted as the
+	// comment text. It now errors and stores nothing.
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Test issue", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	var buf bytes.Buffer
+	_, err := cmdComment(env.Store, []string{iss.ID, "-F"}, PlainWriter(&buf), nil)
+	if err == nil {
+		t.Fatal("expected error for bare -F, not a silently-posted comment")
+	}
+
+	got, _ := env.Store.Get(iss.ID)
+	if len(got.Comments) != 0 {
+		t.Fatalf("expected no comment stored, got %d: %+v", len(got.Comments), got.Comments)
+	}
+}
+
+func TestCmdCommentUnknownFlagInTextPositionRejected(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Test issue", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	var buf bytes.Buffer
+	_, err := cmdComment(env.Store, []string{iss.ID, "-x"}, PlainWriter(&buf), nil)
+	if err == nil {
+		t.Fatal("expected error for unknown flag -x in text position")
+	}
+	got, _ := env.Store.Get(iss.ID)
+	if len(got.Comments) != 0 {
+		t.Fatalf("expected no comment stored, got %d", len(got.Comments))
+	}
+}
+
+func TestCmdCommentTextAndFileConflict(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Test issue", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	path := env.Dir + "/body.txt"
+	os.WriteFile(path, []byte("file body"), 0644)
+
+	var buf bytes.Buffer
+	_, err := cmdComment(env.Store, []string{iss.ID, "inline text", "--file", path}, PlainWriter(&buf), nil)
+	if err == nil {
+		t.Fatal("expected error when both <text> and --file are given")
+	}
+}
+
+func TestCmdCommentLeadingDashBodyViaDoubleDash(t *testing.T) {
+	// A legitimate body that starts with a dash is still postable via "--".
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Test issue", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	var buf bytes.Buffer
+	_, err := cmdComment(env.Store, []string{iss.ID, "--", "-1 looks like a flag"}, PlainWriter(&buf), nil)
+	if err != nil {
+		t.Fatalf("cmdComment with -- escape: %v", err)
+	}
+	got, _ := env.Store.Get(iss.ID)
+	if got.Comments[0].Text != "-1 looks like a flag" {
+		t.Errorf("text = %q, want %q", got.Comments[0].Text, "-1 looks like a flag")
+	}
+}
+
+func TestCmdCommentEmptyFileRejected(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, _ := env.Store.Create("Test issue", issue.CreateOpts{})
+	env.CommitIntent("create " + iss.ID)
+
+	path := env.Dir + "/empty.txt"
+	os.WriteFile(path, []byte("\n\n"), 0644)
+
+	var buf bytes.Buffer
+	_, err := cmdComment(env.Store, []string{iss.ID, "--file", path}, PlainWriter(&buf), nil)
+	if err == nil {
+		t.Fatal("expected error for empty comment body")
+	}
+}
+
 // --- Show integration ---
 
 func TestFprintCommentsWithComments(t *testing.T) {

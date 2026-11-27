@@ -12,7 +12,7 @@ import (
 	"golang.org/x/term"
 )
 
-const version = "0.13.3"
+const version = "0.13.4"
 
 // globalNoColor is set by commands (e.g. recap --no-color) to force
 // non-colored output even when stdout is a TTY. Consulted at render setup.
@@ -158,6 +158,9 @@ func bwNow() time.Time {
 func extractDirFlag(cfg *config.Config, args []string) []string {
 	out := make([]string, 0, len(args))
 	for i := 0; i < len(args); i++ {
+		if args[i] == "--" {
+			return append(out, args[i:]...)
+		}
 		if args[i] == "-C" {
 			if i+1 >= len(args) {
 				fatal("-C requires an argument")

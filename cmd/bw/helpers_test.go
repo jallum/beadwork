@@ -103,15 +103,80 @@ func TestParseArgsEmpty(t *testing.T) {
 }
 
 func TestParseArgsValueFlagAtEnd(t *testing.T) {
-	a, err := ParseArgs([]string{"--status"}, []string{"--status"}, nil)
+	_, err := ParseArgs([]string{"--status"}, []string{"--status"}, nil)
+	if err == nil || !strings.Contains(err.Error(), "--status requires a value") {
+		t.Fatalf("error = %v, want missing value error", err)
+	}
+}
+
+func TestParseArgsRejectsUnknownShortFlag(t *testing.T) {
+	// A stray single-dash token must error rather than being swallowed as a
+	// positional (the -F sharp edge: bw comment <id> -F silently posted "-F").
+	_, err := ParseArgs([]string{"bw-1234", "-F"}, nil, nil)
+	if err == nil {
+		t.Fatal("expected error for unknown short flag -F")
+	}
+	if !strings.Contains(err.Error(), "-F") {
+		t.Errorf("error = %q, want it to name the offending flag -F", err.Error())
+	}
+}
+
+func TestParseArgsRejectsUnknownLongFlag(t *testing.T) {
+	_, err := ParseArgs([]string{"--bogus"}, nil, []string{"--json"})
+	if err == nil {
+		t.Fatal("expected error for unknown long flag --bogus")
+	}
+}
+
+func TestParseArgsBareDashIsPositional(t *testing.T) {
+	// "-" is the stdin sentinel (e.g. bw import -), not a flag.
+	a, err := ParseArgs([]string{"-"}, nil, nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("bare - should be a positional, got error: %v", err)
 	}
-	if a.Has("--status") {
-		t.Error("expected Has(--status) to be false when no value follows")
+	if a.PosFirst() != "-" {
+		t.Errorf("PosFirst() = %q, want -", a.PosFirst())
 	}
-	if a.String("--status") != "" {
-		t.Errorf("status = %q, want empty", a.String("--status"))
+}
+
+func TestParseArgsDashLeadingTextIsPositional(t *testing.T) {
+	// Markdown bullets start with "-" but hold whitespace, which no flag does.
+	body := "- first bullet\n- second"
+	a, err := ParseArgs([]string{"id", body, "- one line"}, nil, []string{"--json"})
+	if err != nil {
+		t.Fatalf("dash-leading text should be positional, got error: %v", err)
+	}
+	pos := a.Pos()
+	if len(pos) != 3 || pos[1] != body || pos[2] != "- one line" {
+		t.Errorf("pos = %q, want [id %q %q]", pos, body, "- one line")
+	}
+	if _, err := ParseArgs([]string{"id", "-m"}, nil, nil); err == nil {
+		t.Error("a bare -m must still be rejected as an unknown flag")
+	}
+}
+
+func TestParseArgsDoubleDashEndsFlagParsing(t *testing.T) {
+	// Everything after "--" is positional, even flag-looking tokens — the
+	// escape hatch for bodies/values that legitimately start with a dash.
+	a, err := ParseArgs([]string{"id", "--", "-F", "--not-a-flag"}, nil, []string{"--json"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	pos := a.Pos()
+	if len(pos) != 3 || pos[0] != "id" || pos[1] != "-F" || pos[2] != "--not-a-flag" {
+		t.Errorf("pos = %v, want [id -F --not-a-flag]", pos)
+	}
+}
+
+func TestParseArgsDashValueConsumedNotRejected(t *testing.T) {
+	// A value flag consumes the next token verbatim, so a dash-leading value
+	// (e.g. --file -) is fine and is not mistaken for an unknown flag.
+	a, err := ParseArgs([]string{"--file", "-"}, []string{"--file"}, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if a.String("--file") != "-" {
+		t.Errorf("--file = %q, want -", a.String("--file"))
 	}
 }
 

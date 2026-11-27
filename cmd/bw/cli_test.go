@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -325,6 +326,105 @@ func TestListDefaultLimit(t *testing.T) {
 }
 
 // --- Ready command ---
+
+func TestListJSONReportsTruncationOnStderr(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	for i := 0; i < 12; i++ {
+		if _, err := env.Store.Create(fmt.Sprintf("Issue %d", i), issue.CreateOpts{}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	env.CommitIntent("create 12 issues")
+
+	for _, tc := range []struct {
+		name string
+		args []string
+		want int
+	}{
+		{name: "default limit", want: 10},
+		{name: "explicit limit", args: []string{"--limit", "5"}, want: 5},
+		{name: "all with explicit limit", args: []string{"--all", "--limit", "5"}, want: 5},
+		{name: "exact match", args: []string{"--limit", "12"}, want: 12},
+		{name: "all", args: []string{"--all"}, want: 12},
+		{name: "unlimited", args: []string{"--limit", "0"}, want: 12},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var stderr bytes.Buffer
+			cmd := exec.Command(bwBin, append([]string{"list", "--json"}, tc.args...)...)
+			cmd.Dir = env.Dir
+			cmd.Env = bwTestEnv(t, env.Dir)
+			cmd.Stderr = &stderr
+			stdout, err := cmd.Output()
+			if err != nil {
+				t.Fatalf("bw list --json: %v\n%s", err, stderr.String())
+			}
+			var issues []issue.Issue
+			if err := json.Unmarshal(stdout, &issues); err != nil || len(issues) != tc.want {
+				t.Fatalf("stdout: got %d issues, want %d; JSON error: %v", len(issues), tc.want, err)
+			}
+			if tc.want == 12 {
+				if stderr.Len() != 0 {
+					t.Fatalf("complete list emitted a warning: %s", &stderr)
+				}
+				return
+			}
+			var diagnostic struct {
+				Truncated bool
+				Shown     int
+				Total     int
+			}
+			if err := json.Unmarshal(stderr.Bytes(), &diagnostic); err != nil {
+				t.Fatalf("stderr is not JSON: %q: %v", &stderr, err)
+			}
+			if !diagnostic.Truncated || diagnostic.Shown != len(issues) || diagnostic.Total != 12 {
+				t.Fatalf("wrong truncation diagnostic: %s", &stderr)
+			}
+		})
+	}
+}
+
+func TestCommentFileAndInvalidFlags(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, err := env.Store.Create("Comment target", issue.CreateOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	env.CommitIntent("create " + iss.ID)
+
+	for _, flag := range []string{"-m", "--message"} {
+		assertContains(t, bwFail(t, env.Dir, "comment", iss.ID, flag, "lost body"), "unknown flag: "+flag)
+	}
+	assertContains(t, bwFail(t, env.Dir, "comment", iss.ID, "lost body", "-F"), "--file requires a value")
+
+	bodyPath := filepath.Join(env.Dir, "body file.txt")
+	if err := os.WriteFile(bodyPath, []byte("first line\n\nlast line\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	bw(t, env.Dir, "comment", iss.ID, "-F="+bodyPath)
+	bw(t, env.Dir, "comment", iss.ID, "--file="+bodyPath)
+	bw(t, env.Dir, "comment", iss.ID, "- first bullet")
+	bw(t, env.Dir, "comment", iss.ID, "--", "-a")
+	bw(t, env.Dir, "comment", iss.ID, "--", "--help")
+	bw(t, env.Dir, "comment", iss.ID, "--", "-C")
+
+	var updated issue.Issue
+	if err := json.Unmarshal([]byte(bw(t, env.Dir, "show", iss.ID, "--json")), &updated); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"first line\n\nlast line", "first line\n\nlast line", "- first bullet", "-a", "--help", "-C"}
+	if len(updated.Comments) != len(want) {
+		t.Fatalf("got %d stored comments, want %d", len(updated.Comments), len(want))
+	}
+	for i, comment := range updated.Comments {
+		if comment.Text != want[i] {
+			t.Errorf("comment %d = %q, want %q", i, comment.Text, want[i])
+		}
+	}
+}
 
 func TestReadyOutput(t *testing.T) {
 	env := testutil.NewEnv(t)

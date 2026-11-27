@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/jallum/beadwork/internal/config"
 	"github.com/jallum/beadwork/internal/issue"
@@ -45,17 +46,28 @@ type Command struct {
 // expandAliases replaces short flags with their long equivalents.
 func expandAliases(raw []string, flags []Flag) []string {
 	shorts := make(map[string]string, len(flags))
+	valueFlags := make(map[string]bool, len(flags))
 	for _, f := range flags {
 		if f.Short != "" {
 			shorts[f.Short] = f.Long
 		}
+		valueFlags[f.Long] = f.Value != ""
 	}
-	result := make([]string, len(raw))
-	for i, tok := range raw {
-		if long, ok := shorts[tok]; ok {
-			result[i] = long
-		} else {
-			result[i] = tok
+	result := append([]string(nil), raw...)
+	for i := 0; i < len(raw); i++ {
+		if raw[i] == "--" {
+			break
+		}
+		name, value, attached := strings.Cut(raw[i], "=")
+		if long, ok := shorts[name]; ok {
+			name = long
+			result[i] = name
+			if attached {
+				result[i] += "=" + value
+			}
+		}
+		if valueFlags[name] && !attached {
+			i++
 		}
 	}
 	return result
@@ -116,7 +128,7 @@ var commands = []Command{
 		Name:        "list",
 		Aliases:     []string{"ls"},
 		Summary:     "List issues",
-		Description: "List issues matching filters. Defaults to open and in-progress issues, limit 10.",
+		Description: "List issues matching filters. Defaults to open and in-progress issues, limit 10.\n\nWith --json, stdout is an issue array. If a limit omits matches, stderr contains\na JSON object with truncated, shown, and total fields. Use --limit 0 to disable the limit.",
 		Flags: []Flag{
 			{Long: "--status", Short: "-s", Value: "STATUS", Help: "Filter by status"},
 			{Long: "--assignee", Short: "-a", Value: "WHO", Help: "Filter by assignee"},
@@ -125,7 +137,7 @@ var commands = []Command{
 			{Long: "--label", Value: "LABEL", Help: "Filter by label"},
 			{Long: "--grep", Short: "-g", Value: "TEXT", Help: "Search title and description"},
 			{Long: "--parent", Value: "ID", Help: "Filter by parent issue ID"},
-			{Long: "--limit", Value: "N", Help: "Max results (default 10)"},
+			{Long: "--limit", Value: "N", Help: "Max results (default 10, 0 for no limit)"},
 			{Long: "--all", Help: "Show all issues (no status/limit filter)"},
 			{Long: "--deferred", Help: "Show only deferred issues"},
 			{Long: "--overdue", Help: "Show only overdue issues"},
@@ -212,17 +224,20 @@ var commands = []Command{
 		Name:        "comment",
 		Aliases:     []string{"comments"},
 		Summary:     "Add a comment to an issue",
-		Description: "Add a comment to an issue. Use bw show to view comments.",
+		Description: "Add a comment to an issue. Use bw show to view comments.\n\nThe body comes from the <text> argument, or from --file <path> (use --file - to\nread it from stdin). --file avoids shell-quoting and heredoc fragility for\nmulti-line bodies. Use -- before literal text that looks like a flag.",
 		Positionals: []Positional{
 			{Name: "<id>", Required: true, Help: "Issue ID"},
-			{Name: "<text>", Required: true, Help: "Comment text"},
+			{Name: "<text>", Required: false, Help: "Comment text (omit when using --file)"},
 		},
 		Flags: []Flag{
 			{Long: "--author", Short: "-a", Value: "NAME", Help: "Comment author"},
+			{Long: "--file", Short: "-F", Value: "PATH", Help: "Read comment body from file (use - for stdin)"},
 			{Long: "--json", Help: "Output as JSON"},
 		},
 		Examples: []Example{
 			{Cmd: `bw comment bw-a3f8 "Fixed in latest deploy"`},
+			{Cmd: `bw comment bw-a3f8 --file notes.md`, Help: "Read the body from a file"},
+			{Cmd: `bw comment bw-a3f8 -F - < notes.md`, Help: "Read the body from stdin"},
 		},
 		NeedsStore: true,
 		Run:        cmdComment,
