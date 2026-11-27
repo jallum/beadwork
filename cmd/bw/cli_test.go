@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -8,7 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/jallum/beadwork/internal/intent"
 	"github.com/jallum/beadwork/internal/issue"
 	"github.com/jallum/beadwork/internal/testutil"
 )
@@ -321,6 +324,227 @@ func TestListDefaultLimit(t *testing.T) {
 	}
 	if zeroLines != 12 {
 		t.Errorf("expected 12 issue lines with --limit 0, got %d", zeroLines)
+	}
+}
+
+func TestListJSONReportsTruncationOnStderr(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	for i := 0; i < 12; i++ {
+		if _, err := env.Store.Create(fmt.Sprintf("Issue %d", i), issue.CreateOpts{}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	env.CommitIntent("create 12 issues")
+
+	assertContains(t, bwFail(t, env.Dir, "list", "--json", "--limit", "typo"), "invalid --limit: typo")
+	assertContains(t, bwFail(t, env.Dir, "list", "--json", "--limit"), "--limit requires a value")
+
+	for _, tc := range []struct {
+		name string
+		args []string
+		want int
+	}{
+		{name: "default limit", want: 10},
+		{name: "explicit limit", args: []string{"--limit", "5"}, want: 5},
+		{name: "all with explicit limit", args: []string{"--all", "--limit", "5"}, want: 5},
+		{name: "exact match", args: []string{"--limit", "12"}, want: 12},
+		{name: "all", args: []string{"--all"}, want: 12},
+		{name: "unlimited", args: []string{"--limit", "0"}, want: 12},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var stderr bytes.Buffer
+			cmd := exec.Command(bwBin, append([]string{"list", "--json"}, tc.args...)...)
+			cmd.Dir = env.Dir
+			cmd.Env = bwTestEnv(t, env.Dir)
+			cmd.Stderr = &stderr
+			stdout, err := cmd.Output()
+			if err != nil {
+				t.Fatalf("bw list --json: %v\n%s", err, stderr.String())
+			}
+			var issues []issue.Issue
+			if err := json.Unmarshal(stdout, &issues); err != nil || len(issues) != tc.want {
+				t.Fatalf("stdout: got %d issues, want %d; JSON error: %v", len(issues), tc.want, err)
+			}
+			if tc.want == 12 {
+				if stderr.Len() != 0 {
+					t.Fatalf("complete list emitted a warning: %s", &stderr)
+				}
+				return
+			}
+			var diagnostic struct {
+				Truncated bool
+				Shown     int
+				Total     int
+			}
+			if err := json.Unmarshal(stderr.Bytes(), &diagnostic); err != nil {
+				t.Fatalf("stderr is not JSON: %q: %v", &stderr, err)
+			}
+			if !diagnostic.Truncated || diagnostic.Shown != len(issues) || diagnostic.Total != 12 {
+				t.Fatalf("wrong truncation diagnostic: %s", &stderr)
+			}
+		})
+	}
+}
+
+func TestCommentFileAndInvalidFlags(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+
+	iss, err := env.Store.Create("Comment target", issue.CreateOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	env.CommitIntent("create " + iss.ID)
+
+	for _, flag := range []string{"-m", "--message"} {
+		assertContains(t, bwFail(t, env.Dir, "comment", iss.ID, flag, "lost body"), "unknown flag: "+flag)
+	}
+	assertContains(t, bwFail(t, env.Dir, "comment", iss.ID, "lost body", "-F"), "--file requires a path")
+
+	bodyPath := filepath.Join(env.Dir, "body file.txt")
+	if err := os.WriteFile(bodyPath, []byte("first line\n\nlast line\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	bw(t, env.Dir, "comment", iss.ID, "-F="+bodyPath)
+	bw(t, env.Dir, "comment", iss.ID, "--file="+bodyPath)
+	for _, name := range []string{"--help", "-h", "-C", "--dry-run", "--no-color", "--"} {
+		if err := os.WriteFile(filepath.Join(env.Dir, name), []byte(name+" body"), 0600); err != nil {
+			t.Fatal(err)
+		}
+		bw(t, env.Dir, "-C", env.Dir, "comments", iss.ID, "-F", name)
+	}
+	bw(t, env.Dir, "comment", iss.ID, "- first bullet")
+	bw(t, env.Dir, "comment", iss.ID, "--", "-a")
+	bw(t, env.Dir, "comment", iss.ID, "--", "--help")
+	bw(t, env.Dir, "comment", iss.ID, "--", "-C")
+
+	var updated issue.Issue
+	if err := json.Unmarshal([]byte(bw(t, env.Dir, "show", iss.ID, "--json")), &updated); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{
+		"first line\n\nlast line", "first line\n\nlast line",
+		"--help body", "-h body", "-C body", "--dry-run body", "--no-color body", "-- body",
+		"- first bullet", "-a", "--help", "-C",
+	}
+	if len(updated.Comments) != len(want) {
+		t.Fatalf("got %d stored comments, want %d", len(updated.Comments), len(want))
+	}
+	for i, comment := range updated.Comments {
+		if comment.Text != want[i] {
+			t.Errorf("comment %d = %q, want %q", i, comment.Text, want[i])
+		}
+	}
+}
+
+func TestInvalidCommentDoesNotCreateUpgradeIssue(t *testing.T) {
+	env := testutil.NewEnv(t)
+	defer env.Cleanup()
+	iss, err := env.Store.Create("Comment target", issue.CreateOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	env.CommitIntent("create " + iss.ID)
+
+	t.Setenv("HOME", env.Dir)
+	t.Setenv("XDG_CACHE_HOME", env.Dir)
+	cache, err := os.UserCacheDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cache = filepath.Join(cache, "bw")
+	if err := os.MkdirAll(cache, 0700); err != nil {
+		t.Fatal(err)
+	}
+	entry := fmt.Sprintf(`{"last_check":%q,"latest_version":"99.0.0"}`, time.Now().Format(time.RFC3339))
+	if err := os.WriteFile(filepath.Join(cache, "version-check.json"), []byte(entry), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	before := beadworkRef(t, env.Dir)
+	assertContains(t, bwFail(t, env.Dir, "comment", iss.ID, "body", "--unknown"), "unknown flag: --unknown")
+	if after := beadworkRef(t, env.Dir); after != before {
+		t.Fatalf("invalid comment moved beadwork: %s → %s", before, after)
+	}
+}
+
+func beadworkRef(t *testing.T, dir string) string {
+	t.Helper()
+	out, err := exec.Command("git", "-C", dir, "rev-parse", "refs/heads/beadwork").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return strings.TrimSpace(string(out))
+}
+
+func TestAttachLiteralDoubleDashNameKeepsGlobalFlags(t *testing.T) {
+	source := testutil.NewEnv(t)
+	defer source.Cleanup()
+	target := testutil.NewEnv(t)
+	defer target.Cleanup()
+	iss, err := source.Store.Create("Attachment target", issue.CreateOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	source.CommitIntent("create " + iss.ID)
+	if _, err := target.Store.Create(iss.Title, issue.CreateOpts{ID: iss.ID}); err != nil {
+		t.Fatal(err)
+	}
+	target.CommitIntent("create " + iss.ID)
+	file := filepath.Join(source.Dir, "sample.txt")
+	if err := os.WriteFile(file, []byte("fixture"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	sourceBefore := beadworkRef(t, source.Dir)
+	targetBefore := beadworkRef(t, target.Dir)
+	bw(t, source.Dir, "attach", iss.ID, file, "--name", "--", "--dry-run")
+	if beadworkRef(t, source.Dir) != sourceBefore {
+		t.Fatal("dry run wrote to source")
+	}
+
+	bw(t, source.Dir, "attach", iss.ID, file, "--name", "--", "-C", target.Dir)
+	if beadworkRef(t, source.Dir) != sourceBefore || beadworkRef(t, target.Dir) == targetBefore {
+		t.Fatal("attach must update only the repo selected by -C")
+	}
+}
+
+func TestCommentFileIntentReplaysExactBody(t *testing.T) {
+	source := testutil.NewEnv(t)
+	defer source.Cleanup()
+	iss, err := source.Store.Create("Comment target", issue.CreateOpts{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	source.CommitIntent("create " + iss.ID)
+	body := " leading space\n\nlast line\twith \"quotes\" and a \\"
+	bodyPath := filepath.Join(source.Dir, "body.txt")
+	if err := os.WriteFile(bodyPath, []byte(body+"\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	bw(t, source.Dir, "comment", iss.ID, "--file", bodyPath)
+	message, err := exec.Command("git", "-C", source.Dir, "log", "-1", "--format=%B", "refs/heads/beadwork").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	target := testutil.NewEnv(t)
+	defer target.Cleanup()
+	if _, err := target.Store.Create(iss.Title, issue.CreateOpts{ID: iss.ID}); err != nil {
+		t.Fatal(err)
+	}
+	target.CommitIntent("create " + iss.ID)
+	if errs := intent.Replay(target.Store, []string{string(message)}); len(errs) != 0 {
+		t.Fatal(errs)
+	}
+	got, err := target.Store.Get(iss.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Comments) != 1 || got.Comments[0].Text != body {
+		t.Fatalf("replayed comments = %+v, want one body %q", got.Comments, body)
 	}
 }
 

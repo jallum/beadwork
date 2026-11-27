@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/jallum/beadwork/internal/config"
 
@@ -53,8 +55,15 @@ func parseListArgs(raw []string) (ListArgs, error) {
 		}
 		la.Priority = &p
 	}
-	if a.Has("--limit") {
-		la.Limit = a.Int("--limit")
+	if a.missingValue == "--limit" {
+		return la, fmt.Errorf("--limit requires a value")
+	}
+	limit, limitSet, err := a.IntErr("--limit")
+	if err != nil {
+		return la, err
+	}
+	if limitSet {
+		la.Limit = limit
 		la.LimitSet = true
 	}
 	return la, nil
@@ -103,28 +112,37 @@ func cmdList(store *issue.Store, args []string, w Writer, _ *config.Config) (*co
 		return nil, err
 	}
 
+	total := len(issues)
+	if limit > 0 && total > limit {
+		issues = issues[:limit]
+	}
+	shown := len(issues)
+
 	if la.JSON {
-		if limit > 0 && len(issues) > limit {
-			issues = issues[:limit]
-		}
 		fprintJSON(w, issues)
-	} else {
-		if len(issues) == 0 {
-			fmt.Fprintln(w, "no issues found")
-			return nil, nil
+		if shown < total {
+			diagnostic := struct {
+				Truncated bool `json:"truncated"`
+				Shown     int  `json:"shown"`
+				Total     int  `json:"total"`
+			}{Truncated: true, Shown: shown, Total: total}
+			return nil, json.NewEncoder(os.Stderr).Encode(diagnostic)
 		}
-		displayed := issues
-		if limit > 0 && len(displayed) > limit {
-			displayed = displayed[:limit]
-		}
-		closedBlockers := store.ClosedBlockerSet(displayed)
-		now := store.Now()
-		for _, iss := range displayed {
-			fmt.Fprintln(w, md.IssueOneLinerWithDue(iss, now, closedBlockers))
-		}
-		if limit > 0 && len(issues) > limit {
-			fmt.Fprintf(w, "... and %d more (use --limit or --all)\n", len(issues)-limit)
-		}
+		return nil, nil
+	}
+
+	if shown == 0 {
+		fmt.Fprintln(w, "no issues found")
+		return nil, nil
+	}
+
+	closedBlockers := store.ClosedBlockerSet(issues)
+	now := store.Now()
+	for _, iss := range issues {
+		fmt.Fprintln(w, md.IssueOneLinerWithDue(iss, now, closedBlockers))
+	}
+	if shown < total {
+		fmt.Fprintf(w, "... and %d more (use --limit 0 for all matches)\n", total-shown)
 	}
 	return nil, nil
 }

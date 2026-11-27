@@ -109,9 +109,10 @@ var aliases = map[string]string{
 // Args holds parsed command-line arguments separated into boolean flags,
 // key-value flags, and positional arguments.
 type Args struct {
-	bools map[string]bool
-	flags map[string]string
-	pos   []string
+	bools        map[string]bool
+	flags        map[string]string
+	missingValue string
+	pos          []string
 }
 
 // ParseArgs separates raw args into booleans, key-value pairs, and positionals.
@@ -148,6 +149,8 @@ func ParseArgs(raw []string, valueFlags []string, boolFlags []string) (Args, err
 			if i+1 < len(raw) {
 				a.flags[tok] = raw[i+1]
 				i++
+			} else {
+				a.missingValue = tok
 			}
 		} else if bf[tok] {
 			a.bools[tok] = true

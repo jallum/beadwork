@@ -12,7 +12,7 @@ import (
 	"golang.org/x/term"
 )
 
-const version = "0.13.3"
+const version = "0.13.4"
 
 // globalNoColor is set by commands (e.g. recap --no-color) to force
 // non-colored output even when stdout is a TTY. Consulted at render setup.
@@ -40,8 +40,9 @@ func resolveRenderMode(args []string) string {
 }
 
 func main() {
+	allArgs, literalCommentArgs := normalizeCommentCLIArgs(os.Args[1:])
 	var w Writer
-	switch resolveRenderMode(os.Args) {
+	switch resolveRenderMode(allArgs) {
 	case "tty":
 		width := 80
 		if term.IsTerminal(int(os.Stdout.Fd())) {
@@ -59,7 +60,6 @@ func main() {
 		fatal(err.Error())
 	}
 
-	allArgs := os.Args[1:]
 	allArgs = extractDirFlag(cfg, allArgs)
 
 	if len(allArgs) < 1 {
@@ -107,6 +107,7 @@ func main() {
 	// Cross-repo routing: if the first ID-shaped positional references a
 	// different registered prefix, rewrite repoDir so the command targets
 	// that repo. Never overrides an explicit -C.
+	args = append(args, literalCommentArgs...)
 	resolveCrossRepo(cfg, args)
 
 	var store *issue.Store
@@ -117,7 +118,9 @@ func main() {
 			fatal(err.Error())
 		}
 		store.DryRun = dryRun
-		maybeCheckForUpgrade(store, w)
+		if c.Name != "comment" {
+			maybeCheckForUpgrade(store, w)
+		}
 	}
 
 	originalCfg := cfg
@@ -125,6 +128,10 @@ func main() {
 	newCfg, err := c.Run(store, args, w, cfg)
 	if err != nil {
 		fatal(err.Error())
+	}
+	// A rejected comment must leave the board untouched.
+	if store != nil && c.Name == "comment" {
+		maybeCheckForUpgrade(store, w)
 	}
 	if newCfg != nil {
 		cfg = newCfg
@@ -152,6 +159,21 @@ func bwNow() time.Time {
 		}
 	}
 	return time.Now()
+}
+
+func normalizeCommentCLIArgs(args []string) ([]string, []string) {
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "-C":
+			i++ // the only global flag allowed before a subcommand
+		case "comment", "comments":
+			options, literal := foldCommentOptionValues(args[i+1:])
+			return append(args[:i+1:i+1], options...), literal
+		default:
+			return args, nil
+		}
+	}
+	return args, nil
 }
 
 // extractDirFlag removes all -C <dir> pairs from args and sets repoDir.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.4 — 2026-11-26
+
+- `bw comment -F PATH` and `--file PATH` read a multiline body from a file. Use `--file -` to read stdin. Unknown flags, conflicting body sources, and extra positional arguments now fail before a comment is added. Sync replay preserves whitespace, quotes, and backslashes in comment bodies.
+- `bw list --json` reports truncated results on stderr as `{"truncated":true,"shown":10,"total":12}`. Stdout still contains the issue array. Text output reports how many issues were omitted. Use `--limit 0` for all matches with the same filters.
+- Includes the go-git loose-pack discovery fix (#146).
+
 ## 0.13.3 — 2026-09-03
 
 - **`bw sync` no longer fails with `object not found` / `packfile not found` or silently corrupts the beadwork branch** — `git fetch` can trigger auto-gc, which repacks the object database out of process and deletes packfiles that `bw`'s long-lived in-memory git handle still had indexed. Depending on timing, sync would either die with:
